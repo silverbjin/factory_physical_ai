@@ -1,0 +1,97 @@
+{
+  "schema_version": "1.0",
+  "task": "TASK-MVP-001",
+  "run_id": "mvp-001-unit-20260828T064559Z",
+  "validation_timestamp": "2026-08-28T06:45:59Z",
+  "base_commit": "1e7cb881e63154b6f9ffd46482bd02c26f4b074a",
+  "workspace_state": {
+    "mvp_001_changes_committed": false,
+    "status": "MVP-001 source, test, and evidence files are untracked in the workspace.",
+    "provenance_note": "base_commit predates the uncommitted MVP-001 implementation and must not be interpreted as containing it."
+  },
+  "scope": "Factory Agent semantic boundary only; deterministic fake semantic provider; no execution layer",
+  "input": "Line B에 Brake ECU Type-B 1개를 공급해줘.",
+  "source_files": [
+    {
+      "path": "src/contracts/__init__.py",
+      "sha256": "e1765420b6c8a2056cbcb3713addf0476bbc3c0b8e85a4cf907e6d05d1768c62"
+    },
+    {
+      "path": "src/contracts/mission.py",
+      "sha256": "9c127a891216fc1843cf95e49f2ba30e8eec3ecec0c7bd9aa6c35c6a16e3f12b"
+    },
+    {
+      "path": "src/factory_agent/__init__.py",
+      "sha256": "e5e5286914712d4d976569d4bd9c518cd93a6615a96c038533ea42a3e6d7babc"
+    },
+    {
+      "path": "src/factory_agent/provider.py",
+      "sha256": "d66a3b724190c77df0d2228dca013cf1f6c0261e850fbefc4cbb38444e35c0f8"
+    },
+    {
+      "path": "src/factory_agent/fake_provider.py",
+      "sha256": "ea61908bb52918e64f3d0e83404772cc4fd7d4ed96a3bb1e6d0495c67bdabf07"
+    },
+    {
+      "path": "src/factory_agent/service.py",
+      "sha256": "b623c97edaa41e2b3f1fac9196b1c967a5568693a3fb2a61a29c0a38a1804f93"
+    },
+    {
+      "path": "tests/test_factory_agent.py",
+      "sha256": "60befcaf14b8b03832dd9b5764ea480955dc057d0424e55f6defa0ab4dcabae7"
+    }
+  ],
+  "test_command": "PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=src python3 -m unittest discover -s tests -v",
+  "test_result": {
+    "status": "PASS",
+    "tests_run": 16,
+    "tests_passed": 16,
+    "tests_failed": 0,
+    "errors": 0
+  },
+  "compile_check": {
+    "command": "PYTHONPYCACHEPREFIX=<temporary-directory> python3 -m compileall -q src tests",
+    "status": "PASS"
+  },
+  "validated_output": {
+    "schema_version": "v1",
+    "request_id": "35ae5d55-ca49-4962-ba84-2d0093e46f7f",
+    "mission_id": "0d47cf1c-31c9-4f80-a8ac-6bd1a8726194",
+    "mission_type": "line_side_parts_transfer",
+    "part_id": "Brake ECU Type-B",
+    "quantity": 1,
+    "destination": "Line B",
+    "requested_by": "operator",
+    "created_at": "2026-08-28T00:00:00Z",
+    "fixture_kind": "deterministic_fake_provider"
+  },
+  "checks": {
+    "canonical_mission_parses": true,
+    "runtime_metadata_is_service_owned": true,
+    "required_fields_present": true,
+    "malformed_provider_fails_closed": true,
+    "provider_reproducible_at_semantic_proposal_level": true,
+    "execution_layer_command_absent": true,
+    "tracked_git_diff_check": "PASS",
+    "all_intended_files_no_index_whitespace_check": "PASS"
+  },
+  "integrity_verification": {
+    "method": "git diff --check plus git diff --no-index --check /dev/null for every intended MVP-001 file",
+    "coverage": "tracked and untracked intended MVP-001 files",
+    "status": "PASS"
+  },
+  "changed_files": [
+    "src/contracts/__init__.py",
+    "src/contracts/mission.py",
+    "src/factory_agent/__init__.py",
+    "src/factory_agent/provider.py",
+    "src/factory_agent/fake_provider.py",
+    "src/factory_agent/service.py",
+    "tests/test_factory_agent.py",
+    "results/mvp/MVP-001.json"
+  ],
+  "limitations": [
+    "No robot, ROS 2, VLA, WMS, persistence, retry, timeout, or reconciliation behavior is implemented.",
+    "The provider is a deterministic test fixture; no hosted-model behavior, production readiness, or agent accuracy is measured."
+  ]
+}
