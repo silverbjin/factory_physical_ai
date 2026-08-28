@@ -1,0 +1,91 @@
+{
+  "schema_version": "1.0",
+  "task": "TASK-MVP-003",
+  "status": "PASS",
+  "run_id": "mvp-003-tool-gateway-fix-20260828T163853Z",
+  "validation_timestamp": "2026-08-28T16:38:53Z",
+  "base_commit": "ce828f1bf50feaf5a704f80fda603d397bffa552",
+  "workspace_state": {
+    "mvp_003_changes_committed": false,
+    "modified_task_files": [
+      "src/factory_tools/__init__.py",
+      "src/factory_tools/gateway.py",
+      "tests/test_factory_tools.py",
+      "results/mvp/MVP-003.json"
+    ]
+  },
+  "scope": "One in-process deterministic factory-tool gateway with WMS and Robot Skill fakes only; no execution adapter or recovery policy.",
+  "source_files": [
+    {
+      "path": "src/factory_tools/__init__.py",
+      "sha256": "7bdaa8d3f083195485b94e3c143286763c883be5c180142e94df527a911a340e"
+    },
+    {
+      "path": "src/factory_tools/gateway.py",
+      "sha256": "ea3186ac80ac37570d2ddf48e1394f4d69338bd718ba0008a3809c44e6000351"
+    },
+    {
+      "path": "tests/test_factory_tools.py",
+      "sha256": "3a872eb2f92850b11165925ec1b52e5c8a0cbdb1c203cefeb10da7c8e6bd7827"
+    }
+  ],
+  "focused_test_result": {
+    "command": "PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=src python3 -m unittest tests/test_factory_tools.py -v",
+    "status": "PASS",
+    "tests_run": 8,
+    "tests_passed": 8,
+    "tests_failed": 0,
+    "errors": 0
+  },
+  "regression_test_result": {
+    "command": "PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=src python3 -m unittest discover -s tests -v",
+    "status": "PASS",
+    "tests_run": 36,
+    "tests_passed": 36,
+    "tests_failed": 0,
+    "errors": 0
+  },
+  "compile_check": {
+    "command": "PYTHONPYCACHEPREFIX=<temporary-directory> python3 -m compileall -q src tests",
+    "status": "PASS"
+  },
+  "validated_capabilities": {
+    "inventory_fixture": {
+      "part_id": "Brake ECU Type-B",
+      "source_location": "Rack A19",
+      "available_quantity": 1,
+      "source_kind": "mock"
+    },
+    "typed_gateway_operations": [
+      "query_inventory",
+      "transfer_part",
+      "get_action_status"
+    ],
+    "malformed_requests_fail_closed": true,
+    "unavailable_sku_returns_typed_failure": true,
+    "skill_fixture_is_deterministic_and_fault_injectable": true,
+    "action_status_query_has_full_typed_envelope": true,
+    "raw_ros_nav2_moveit_access_absent": true
+  },
+  "review_findings": {
+    "TASK-MVP-003-REV-H01": "FIXED: ActionStatusQuery and ActionStatusResult require schema_version, mission_id, request_id, action_id, and UTC timestamp for success and typed failure observations."
+  },
+  "exit_criteria": {
+    "one_factory_tool_gateway_exists": "PASS",
+    "wms_fake_supports_canonical_mission": "PASS",
+    "robot_skill_fake_supports_canonical_mission": "PASS",
+    "action_status_can_be_reconciled": "PASS",
+    "typed_errors_exist": "PASS",
+    "deterministic_tests_pass": "PASS"
+  },
+  "integrity_verification": {
+    "task_file_method": "git diff --no-index --check /dev/null for each intended source, test, and evidence file, including untracked files",
+    "task_file_status": "PASS",
+    "repository_git_diff_check": "PASS; this check excludes untracked files, which are covered by task_file_method. Unrelated workflow-prompt edits were preserved."
+  },
+  "limitations": [
+    "No Agent-to-gateway integration, robot dispatch, ROS 2, Nav2, MoveIt, ros2_control, VLA, external process, or network behavior was implemented.",
+    "Timeout classification, reconciliation policy, retries, and mission-state recovery remain TASK-MVP-004 responsibilities.",
+    "Persistence, SQLite, and structured lifecycle evidence emission remain later-task responsibilities."
+  ]
+}

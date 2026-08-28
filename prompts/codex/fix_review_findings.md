@@ -31,6 +31,13 @@ The goal is to correct only the findings that prevent `TASK_ID` from being accep
 5. Do not ask the user to paste file paths or task requirements that can be discovered from the repository.
 6. Also read `prompts/codex/task_history_recording.md`.
 
+Follow the TASK history recording policy defined there.
+
+`prompts/codex/task_history_recording.md` defines portfolio/audit recording behavior only.
+It does not override frozen task requirements, contracts, architecture, acceptance criteria, evidence rules, or the latest independent review findings.
+
+If `prompts/codex/task_history_recording.md` is required by repository workflow but cannot be found or read, stop before modifying files and report the missing workflow dependency.
+
 Never blindly fix a stale review finding that is no longer reproducible.
 
 ---
@@ -68,6 +75,16 @@ You MUST NOT:
 
 Preserve unrelated user changes.
 
+TASK history files under:
+
+```text
+docs/task_history/
+```
+
+are expected portfolio/audit workflow artifacts when created according to `prompts/codex/task_history_recording.md`.
+
+They are not considered scope expansion or later-task implementation.
+
 ---
 
 ## 4. Pre-fix Inspection
@@ -76,9 +93,10 @@ Before modifying files:
 
 1. Read applicable `AGENTS.md`.
 2. Read `prompts/codex/read_only_review.md`.
-3. Read the exact task specification.
-4. Read relevant context, plan, frozen contracts, architecture, ADRs, and prior-task prerequisites.
-5. Inspect:
+3. Read `prompts/codex/task_history_recording.md`.
+4. Read the exact task specification.
+5. Read relevant context, plan, frozen contracts, architecture, ADRs, and prior-task prerequisites.
+6. Inspect:
 
 ```bash
 git status --short
@@ -86,12 +104,21 @@ git diff --stat
 git diff
 ```
 
-6. Reproduce or statically verify each acceptance-blocking finding.
-7. Briefly report:
+7. Reproduce or statically verify each acceptance-blocking finding.
+8. Determine the current TASK history state under:
+
+```text
+docs/task_history/<TASK_ID>/
+```
+
+9. Briefly report:
+
    - findings confirmed;
    - findings no longer reproducible;
    - files expected to change;
    - tests expected to change/add;
+   - evidence expected to change;
+   - expected TASK history output;
    - any finding that may require Git-history correction.
 
 Then proceed with the smallest safe correction.
@@ -101,8 +128,6 @@ Then proceed with the smallest safe correction.
 ## 5. Invariant-Fix Rules
 
 When a review finding says an invariant can be bypassed, fix the invariant at the domain boundary, not only at one call site.
-
-Examples:
 
 ### Caller-configurable safety bound
 
@@ -174,6 +199,21 @@ Include:
 
 Continue fixing independent source/test issues that do not require history rewriting.
 
+Store the result of this analysis as:
+
+```text
+GIT_HISTORY_STATUS
+```
+
+with one of:
+
+```text
+NO HISTORY ACTION REQUIRED
+HISTORY ACTION REQUIRED
+```
+
+This Git-history status is separate from TASK history documentation under `docs/task_history/`.
+
 ---
 
 ## 7. Tests
@@ -200,6 +240,8 @@ Run:
 
 Do not claim a finding fixed if its regression test still fails.
 
+Record actual commands, pass/fail counts, and failures for later Evidence and TASK History recording.
+
 ---
 
 ## 8. Evidence
@@ -207,7 +249,7 @@ Do not claim a finding fixed if its regression test still fails.
 If task evidence exists:
 
 - update/regenerate it according to repository conventions;
-- include the actual changed files;
+- include the actual changed implementation/test files required by the evidence schema;
 - include actual test commands and results;
 - update hashes for modified sources;
 - correct stale claims;
@@ -215,11 +257,31 @@ If task evidence exists:
 
 If an evidence defect depends on immutable Git history that cannot be corrected without authorization, report it instead of fabricating clean provenance.
 
+### 8.1 TASK-history / Evidence boundary
+
+TASK history files are human-readable portfolio/audit records.
+
+Unless a frozen evidence contract explicitly requires otherwise, files under:
+
+```text
+docs/task_history/
+```
+
+are not implementation evidence and are excluded from:
+
+- implementation source hash sets;
+- implementation changed-file manifests;
+- Exit Criteria implementation-file counts.
+
+This prevents a recursive dependency where Evidence must include the history document that itself reports the Evidence result.
+
+If a frozen evidence schema explicitly requires every repository change, follow that schema and report the ordering implications rather than silently violating it.
+
 ---
 
-## 9. Final Self-check
+## 9. Technical Fix Self-check
 
-Before reporting completion, verify:
+Before recording TASK history, verify:
 
 - all BLOCKER findings are resolved;
 - all HIGH findings are resolved;
@@ -232,9 +294,204 @@ Before reporting completion, verify:
 - evidence matches current implementation;
 - unrelated user changes remain untouched.
 
+For every prior acceptance-blocking finding, assign exactly one status:
+
+```text
+FIXED
+NOT REPRODUCIBLE
+BLOCKED
+```
+
+Determine the technical corrective status now:
+
+```text
+READY FOR INDEPENDENT RE-REVIEW
+```
+
+or:
+
+```text
+NOT READY FOR INDEPENDENT RE-REVIEW
+```
+
+Do not yet return the final user-facing report.
+
+Do not perform the independent review in this workflow.
+
 ---
 
-## 10. Required Final Report
+## 10. TASK History Recording — Mandatory Workflow Step
+
+After Sections 7–9 are complete, persist the corrective work using:
+
+```text
+prompts/codex/task_history_recording.md
+```
+
+This step is mandatory for the Fix workflow.
+
+### 10.1 Determine history sequence
+
+Inspect:
+
+```text
+docs/task_history/<TASK_ID>/
+```
+
+Determine the next sequential history number `SEQ` according to the recording policy.
+
+Never overwrite, rename, delete, or renumber an existing history entry.
+
+### 10.2 Create Fix history
+
+Create:
+
+```text
+docs/task_history/<TASK_ID>/<SEQ>_fix.md
+```
+
+Use Korean for portfolio-readable narrative where English is not required.
+
+Preserve exact technical identifiers including:
+
+- `TASK_ID`;
+- Finding IDs;
+- severity values;
+- file paths;
+- class/function/variable names;
+- contract/schema fields;
+- commands;
+- test names;
+- error messages;
+- `PASS` / `FAIL`;
+- `FIXED` / `NOT REPRODUCIBLE` / `BLOCKED`;
+- `READY FOR INDEPENDENT RE-REVIEW`;
+- `HISTORY ACTION REQUIRED`;
+- hashes and commit IDs.
+
+At minimum record:
+
+- 기준 Review;
+- 수정 대상 Findings;
+- root cause;
+- 변경 파일과 목적;
+- 각 Finding에 대한 수정 내용;
+- regression tests added/strengthened;
+- focused/full regression results;
+- Evidence update;
+- remaining findings;
+- `GIT_HISTORY_STATUS`;
+- technical corrective status;
+- next step: independent Read-only Review.
+
+### 10.3 Update TASK summary
+
+Create or update:
+
+```text
+docs/task_history/<TASK_ID>/README.md
+```
+
+Append the current Fix run to the chronological workflow table.
+
+Do not delete or rewrite earlier Implementation / Review / Fix entries.
+
+Do not claim `ACCEPT` because Fix completed successfully.
+
+The proper state after a successful Fix is conceptually:
+
+```text
+Fix: READY FOR INDEPENDENT RE-REVIEW
+Review: PENDING
+```
+
+The bare `TASK_ID` review workflow is responsible for eventual `ACCEPT` / `REJECT`.
+
+### 10.4 Update global TASK history index
+
+Create or update:
+
+```text
+docs/task_history/README.md
+```
+
+Refresh only the row for `TASK_ID` while preserving all other TASK entries.
+
+Use a state that distinguishes Fix completion from independent acceptance, such as:
+
+```text
+FIXED / RE-REVIEW PENDING
+```
+
+Do not mark the TASK as `ACCEPTED` until an independent Read-only Review actually returns `ACCEPT`.
+
+### 10.5 TASK history write failure policy
+
+If any mandatory TASK history output cannot be created or updated:
+
+- do not alter source code merely to hide the documentation failure;
+- do not fabricate a successful write;
+- report the exact failure;
+- preserve the technical corrective status separately;
+- treat the overall Fix workflow as incomplete.
+
+For example:
+
+```text
+Technical corrective status: READY FOR INDEPENDENT RE-REVIEW
+TASK history recording: FAIL
+Overall Fix workflow: NOT READY
+```
+
+Do not return the successful final Fix status until mandatory TASK history recording succeeds.
+
+---
+
+## 11. TASK History Verification
+
+After recording history, verify:
+
+```text
+docs/task_history/<TASK_ID>/<SEQ>_fix.md
+docs/task_history/<TASK_ID>/README.md
+docs/task_history/README.md
+```
+
+Confirm:
+
+1. all required files exist;
+2. the correct `TASK_ID` is used;
+3. the next valid `SEQ` was used;
+4. no previous history entry was overwritten or deleted;
+5. every corrected Finding ID and severity matches the review;
+6. Finding statuses match actual correction results;
+7. root-cause descriptions match the implemented fix;
+8. test commands/results match actual validation;
+9. Evidence path/status matches the updated evidence;
+10. `GIT_HISTORY_STATUS` is recorded accurately;
+11. technical corrective status matches Section 9;
+12. TASK README workflow order is chronological;
+13. global TASK index contains the current TASK and does not falsely claim `ACCEPTED`.
+
+Then inspect:
+
+```bash
+git status --short
+git diff --stat
+git diff --check
+```
+
+At this stage:
+
+- correctly generated `docs/task_history/` files are expected workflow artifacts;
+- they must not be classified as unintended implementation changes;
+- unrelated non-history changes must still be reported.
+
+If TASK history verification fails, the overall Fix workflow is not ready for handoff.
+
+---
+
+## 12. Required Final Report
 
 Return:
 
@@ -252,7 +509,19 @@ For each prior finding:
 
 ## Files Changed
 
+Separate correction artifacts from portfolio/audit history.
+
+### Implementation / Test / Evidence
+
 List files and purpose.
+
+### TASK History
+
+List:
+
+- `docs/task_history/<TASK_ID>/<SEQ>_fix.md`
+- `docs/task_history/<TASK_ID>/README.md`
+- `docs/task_history/README.md`
 
 ## Tests Run
 
@@ -268,7 +537,7 @@ List command and pass/fail counts.
 
 List only findings still relevant.
 
-## History Status
+## Git History Status
 
 Return one:
 
@@ -284,6 +553,14 @@ HISTORY ACTION REQUIRED
 
 with the required explanation.
 
+## TASK History Status
+
+- History policy loaded: YES/NO
+- Fix history:
+- TASK summary:
+- Global history index:
+- History verification: PASS/FAIL
+
 ## Final Status
 
 Return exactly one:
@@ -298,13 +575,23 @@ or:
 TASK_ID fixes are NOT ready for independent re-review.
 ```
 
+The successful status is allowed only when:
+
+- technical corrective status is `READY FOR INDEPENDENT RE-REVIEW`;
+- all mandatory tests and validation required by the Fix workflow pass;
+- required Evidence is truthful and current;
+- no unresolved Git-history requirement prevents acceptance, unless the review explicitly allows it to be deferred;
+- mandatory TASK history recording and verification pass.
+
+If not ready, list only blocking reasons.
+
 If ready, do not perform the independent review in this workflow.
 
 The next user command should be the bare task ID so that the separate read-only review workflow runs independently.
 
 ---
 
-## 11. Final Constraints
+## 13. Final Constraints
 
 - Fix the cause, not the symptom.
 - Fix only acceptance-blocking findings by default.
@@ -313,27 +600,12 @@ The next user command should be the bare task ID so that the separate read-only 
 - Do not rewrite Git history without explicit permission.
 - Do not stage or commit unless explicitly requested.
 - Do not declare acceptance yourself.
+- Read and follow `prompts/codex/task_history_recording.md`.
+- TASK history recording is mandatory for Fix workflow completion.
+- Record TASK history only after technical fix validation and Evidence handling are resolved.
+- Do not treat TASK history as implementation evidence unless a frozen contract explicitly requires it.
+- Do not overwrite prior TASK history.
+- Distinguish Git history status from TASK history documentation status.
 - Finish by handing the task back to the independent read-only review workflow.
 
-## 12. Documentation
-
-Persist the corrective work using the TASK history policy.
-
-Create the next sequential:
-
-docs/task_history/<TASK_ID>/<SEQ>_fix.md
-
-Update:
-
-docs/task_history/<TASK_ID>/README.md
-docs/task_history/README.md
-
-Record:
-- findings addressed;
-- root cause;
-- changed files;
-- regression tests added/strengthened;
-- evidence updates;
-- remaining findings;
-- history-action requirement;
-- readiness for independent re-review.
+Begin the corrective workflow for the task identifier supplied in the current user message.
