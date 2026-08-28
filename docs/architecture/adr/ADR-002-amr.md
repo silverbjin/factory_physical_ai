@@ -10,7 +10,7 @@ The business scenario needs navigation state and failure recovery. P0-002 verifi
 
 ## Decision
 
-Use a deterministic navigation-skill mock for Day-10 and Agent evaluation. For later integration, reuse installed Nav2 through an adapter that accepts only allowlisted named destinations. Nav2 owns local execution/recovery/lifecycle; the mission executor owns business retry, reassignment, and HITL after a typed terminal result.
+For Day-10, represent navigation only through the deterministic Robot Skill Fake boundary defined by the canonical scope; no real Nav2 execution or navigation failure scenario is part of the acceptance test. For later integration, reuse installed Nav2 through an adapter that accepts only allowlisted named destinations. Nav2 owns local execution/recovery/lifecycle; the mission executor owns business retry, reassignment, and HITL after a typed terminal result.
 
 ## Alternatives
 
@@ -28,7 +28,7 @@ No physical navigation evidence in MVP; mock behavior must be explicitly labelle
 
 ## MVP usage
 
-Named destination request returns deterministic success, blocked, timeout, or unavailable results.
+No real Nav2 execution is required. No navigation failure scenario is part of the Day-10 acceptance test. Navigation variants, including blocked, timeout, unavailable, reroute, and reassignment behavior, belong to later ROS/AMR integration tasks.
 
 ## Final usage
 

@@ -1,30 +1,9 @@
-# Day-10 MVP Scope v1
+# Day-10 MVP Architecture Scope Reference
 
-> Status: Frozen by TASK-P0-002 on 2026-08-28. This scope authorizes no implementation by itself.
+> Status: Reconciled by TASK-P0-002R on 2026-08-28.
 
-## Objective
+The authoritative and only acceptance-scenario definition is [plans/day10_mvp_scope_v1.md](../../plans/day10_mvp_scope_v1.md). This architecture reference must not add a mission, failure, recovery, or acceptance variant.
 
-Demonstrate one simulated, production-oriented line-side logistics mission: a validated natural-language goal is processed through deterministic mission control, produces typed mock tool/skill calls, recovers from one injected failure, persists its state/action record, and emits machine-readable evidence.
+For Day-10, the architecture applies that canonical scope to one local process with deterministic in-process `mock` fixtures, SQLite, and machine-readable evidence. The Agent may propose semantic capabilities only; the deterministic runtime validates every side effect and handles the canonical timeout reconciliation. Physical robot/camera/VLA, real factory services, real Nav2/MoveIt integration, and real-provider calls are not Day-10 acceptance work.
 
-## In scope
-
-- One local process: deterministic mission executor, finite state-transition table, one HITL state, and SQLite checkpoint/action store.
-- One fake model provider; no provider credential, network call, or real-model claim.
-- One in-process factory-tool gateway containing typed, deterministic `mock` fixtures for WMS/Fleet/PHM, named navigation, VLA skill, and verification.
-- Canonical mission: `Supply Brake ECU Type-B to Line B.`
-- One representative injected recovery path selected from inventory mismatch, robot unavailable/PHM restriction, navigation unavailable, or VLA failure.
-- JSONL trace/run metadata containing the MVP contract profile, including IDs, outcome, error/retryability, and mock source declaration.
-
-## Explicitly out of scope
-
-- LeRobot install, model download, teleoperation, Dataset V1, training, camera capture, or physical manipulation.
-- ROS 2 nodes, Nav2 maps/worlds, Gazebo world configuration, MoveIt configuration, `ros2_control` hardware/controller setup, or robot motion.
-- Docker Compose, PostgreSQL, OpenTelemetry collector, Grafana, real LLM provider calls, multi-agent orchestration, or UI.
-
-## Boundary rules
-
-The Agent proposes an allowlisted semantic capability. The deterministic executor validates and records every side effect. Fixtures return typed observations only. Later Nav2 owns local navigation recovery; MoveIt and `ros2_control` own staging/collision/trajectory/controller behavior; the Agent and VLA cannot bypass those boundaries.
-
-## Exit evidence for the later MVP-001 task
-
-The implementation task must produce automated tests plus a run manifest/trace showing one mission ID, durable state transitions, one bounded recovery, no duplicate action after reconciliation, and final typed verification. Mock results must never be presented as hardware, VLA, or provider measurements.
+Future integration boundaries remain unchanged: Nav2 owns local navigation execution/recovery, MoveIt and `ros2_control` own motion/controller authority, and the deterministic runtime owns business-level policy after typed terminal results. Those later boundaries do not create additional Day-10 scenarios.

@@ -1,0 +1,17 @@
+{
+  "task": "TASK-P0-002",
+  "verification_task": "TASK-P0-002R",
+  "status": "GO",
+  "architecture_version": "v1.0",
+  "mvp_scope": "day10",
+  "scope_invariant": "1 Mission + 1 Failure + 1 Recovery + Evidence",
+  "canonical_failure": "ambiguous_robot_skill_timeout",
+  "canonical_recovery": "reconcile_then_one_bounded_retry",
+  "critical_findings_resolved": ["F-01", "F-02", "F-03"],
+  "high_findings_resolved_for_architecture": ["F-04", "F-05", "F-06", "F-07", "F-10"],
+  "deferred_findings": ["F-08", "F-09", "F-11", "F-12", "F-15"],
+  "accepted_constraints": ["F-13", "F-14", "F-16"],
+  "physical_robot_authorized": false,
+  "vla_runtime_authorized": false,
+  "mvp_001_authorized": true
+}

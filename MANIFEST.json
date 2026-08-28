@@ -1,0 +1,46 @@
+{
+  "plans/day10_mvp_scope_v1.md": {
+    "lines": 76,
+    "sha256": "77aea740f18845a52311a5bfaeb2ddd08faa300dc7e3a86d8edd07432ab8ded0"
+  },
+  "docs/mvp_commit_guide.md": {
+    "lines": 84,
+    "sha256": "7c696868445d63a459727110f4ba72ea4b0653fdab5ed933193d2b409c80a339"
+  },
+  "docs/post_p0_002_verification_prompt.md": {
+    "lines": 45,
+    "sha256": "fcaa8c1ddde0ea5e50c82d2adf15a8414205fab71a9a19afbdb48d062dcfc16a"
+  },
+  "tasks/TASK-MVP-008.md": {
+    "lines": 112,
+    "sha256": "cf03931d44dc8bfd7b30b32a58092ca8d2b4761a5142ee3255f970e7ba0b3d9a"
+  },
+  "tasks/TASK-MVP-002.md": {
+    "lines": 107,
+    "sha256": "b003e332bdafb7180f61f6f70dd804aaa4ec04f6bca90d6f973bbc9d6756b7c8"
+  },
+  "tasks/TASK-MVP-004.md": {
+    "lines": 92,
+    "sha256": "2a443e2b46126101401868a66453f2aa85ee73331759464f1599e6f05ced7084"
+  },
+  "tasks/TASK-MVP-005.md": {
+    "lines": 94,
+    "sha256": "9f115cd91b4a647caf3b96adc51cf9664e980293ba658924b11ac208fe9958a6"
+  },
+  "tasks/TASK-MVP-006.md": {
+    "lines": 75,
+    "sha256": "d948533f031dce2a97cec7c31a56b558b3cadd11933d7780462f574f92365d7a"
+  },
+  "tasks/TASK-MVP-003.md": {
+    "lines": 96,
+    "sha256": "0d1d0c3c54ec839e2a1c550b49562e1f43f1206ea04d319b8a6ff6987c34419f"
+  },
+  "tasks/TASK-MVP-007.md": {
+    "lines": 82,
+    "sha256": "a7269feb49369af386ac26d4c7fe520ce398e907d2c836976d49a132e18ce767"
+  },
+  "tasks/TASK-MVP-001.md": {
+    "lines": 122,
+    "sha256": "dd352abb693f67f5da0ce2951f9acc362bf927daf722c30d5e069ee727170510"
+  }
+}
