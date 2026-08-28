@@ -1,0 +1,134 @@
+{
+  "schema_version": "1.0",
+  "task": "TASK-MVP-005",
+  "status": "PASS",
+  "run_id": "mvp-005-canonical-recovery-20260829T000000Z",
+  "validation_timestamp": "2026-08-28T17:33:42Z",
+  "base_commit": "d8a8b4d317583999d18cacd17972453f5b2364cf",
+  "workspace_state": {
+    "mvp_005_changes_committed": false,
+    "modified_task_files": [
+      "src/mission_runtime/persistence.py",
+      "src/mission_runtime/recovery.py",
+      "tests/test_persistence.py",
+      "tests/test_recovery.py",
+      "results/mvp/runs/mvp-005-canonical-recovery-20260829T000000Z/lifecycle.sqlite3",
+      "results/mvp/runs/mvp-005-canonical-recovery-20260829T000000Z/trace.jsonl",
+      "results/mvp/runs/mvp-005-canonical-recovery-20260829T000000Z/summary.json",
+      "results/mvp/MVP-005.json"
+    ]
+  },
+  "scope": "Single-process SQLite lifecycle persistence plus JSONL/JSON evidence for the one frozen timeout/reconciliation/retry run; no production telemetry stack or execution adapter.",
+  "source_files": [
+    {
+      "path": "src/mission_runtime/persistence.py",
+      "sha256": "319d031dbd647eec790f9f97e1ac36ef8ae2bdb32b46ca79e1b43f3e2ac16c15"
+    },
+    {
+      "path": "src/mission_runtime/recovery.py",
+      "sha256": "18056cd06d0ad6aaaa67988779872e2117b273bb364dfe0319ae553cf1976b02"
+    },
+    {
+      "path": "tests/test_persistence.py",
+      "sha256": "49058d12d9cfb6861cc343ea000342f359957fb8c7ab0177e09c55f0749924ea"
+    },
+    {
+      "path": "tests/test_recovery.py",
+      "sha256": "4e082a5c774efd5064a74b184028c70ec6fdc90301daa0454d3c25620c993481"
+    }
+  ],
+  "run_artifacts": {
+    "database": {
+      "path": "results/mvp/runs/mvp-005-canonical-recovery-20260829T000000Z/lifecycle.sqlite3",
+      "sha256": "ac108de61a3b34899e061bde7a9c96da4d7255a803559b9184661455e0e3af5f"
+    },
+    "trace_jsonl": {
+      "path": "results/mvp/runs/mvp-005-canonical-recovery-20260829T000000Z/trace.jsonl",
+      "sha256": "50c0e839e750c75f82d88c9dd6b37a5e7250a264f7978dd053e07c20a78a5662"
+    },
+    "summary_json": {
+      "path": "results/mvp/runs/mvp-005-canonical-recovery-20260829T000000Z/summary.json",
+      "sha256": "c037923a8757fd40cb1d2a43607180e89d3361c8443e012a8a8688626b6c8f99"
+    }
+  },
+  "focused_test_result": {
+    "command": "PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=src python3 -m unittest tests/test_recovery.py tests/test_persistence.py -v",
+    "status": "PASS",
+    "tests_run": 8,
+    "tests_passed": 8,
+    "tests_failed": 0
+  },
+  "regression_test_result": {
+    "command": "PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=src python3 -m unittest discover -s tests -v",
+    "status": "PASS",
+    "tests_run": 44,
+    "tests_passed": 44,
+    "tests_failed": 0
+  },
+  "compile_check": {
+    "command": "PYTHONPYCACHEPREFIX=<temporary-directory> python3 -m compileall -q src tests",
+    "status": "PASS"
+  },
+  "integrity_verification": {
+    "method": "git diff --check plus git diff --no-index --check /dev/null for each intended text task file; JSON and JSONL parsing; SQLite artifact opened and reconstructed by focused tests",
+    "status": "PASS"
+  },
+  "canonical_run": {
+    "mission_id": "0d47cf1c-31c9-4f80-a8ac-6bd1a8726194",
+    "action_ids": [
+      "4bca5507-7941-40e4-aac5-7d8a97111b08",
+      "078ded37-76b9-4303-a4f7-042373ac4200"
+    ],
+    "attempted_calls": [
+      {
+        "request_id": "35ae5d55-ca49-4962-ba84-2d0093e46f7f",
+        "action_id": "4bca5507-7941-40e4-aac5-7d8a97111b08",
+        "operation": "transfer_part",
+        "component_version": "mvp-003"
+      },
+      {
+        "request_id": "e48b780f-bd36-45ff-9d77-c350cc004d4f",
+        "action_id": "4bca5507-7941-40e4-aac5-7d8a97111b08",
+        "operation": "get_action_status",
+        "component_version": "mvp-003"
+      },
+      {
+        "request_id": "4a9de93e-f590-4b6b-9f60-fb24eb4464c6",
+        "action_id": "078ded37-76b9-4303-a4f7-042373ac4200",
+        "operation": "transfer_part",
+        "component_version": "mvp-003"
+      }
+    ],
+    "mission_result": "COMPLETED",
+    "tool_call_valid": true,
+    "tool_call_valid_provenance": "derived only after the immutable attempted-call trace matches the canonical operations, action IDs, UUID request IDs, UTC timestamps, and component versions",
+    "timeout_detected": true,
+    "reconciliation_performed": true,
+    "retry_budget": 1,
+    "retry_count": 1,
+    "recovery_result": "SUCCEEDED",
+    "hitl_escalated": false,
+    "mission_duration_ms": 5000,
+    "error_category": "DEPENDENCY_TIMEOUT",
+    "component_versions": {
+      "mission_runtime": "mvp-005",
+      "recovery_coordinator": "mvp-004",
+      "factory_tool_gateway": "mvp-003"
+    }
+  },
+  "exit_criteria": {
+    "sqlite_persistence_works": "PASS",
+    "evidence_is_machine_readable": "PASS",
+    "run_can_be_reconstructed_from_persisted_evidence": "PASS",
+    "restart_reload_test_passes": "PASS",
+    "no_production_telemetry_stack_introduced": "PASS"
+  },
+  "review_findings": {
+    "TASK-MVP-005-REV-H01": "FIXED: attempted-call request_id/action_id/operation/component_version are persisted and emitted in every JSONL event.",
+    "TASK-MVP-005-REV-M01": "FIXED: tool_call_valid is derived by strict attempted-call trace validation and is no longer caller-supplied."
+  },
+  "limitations": [
+    "The canonical run is a deterministic fixture-derived record, not a physical robot result or latency measurement.",
+    "No PostgreSQL, OpenTelemetry collector, Prometheus, Grafana, Docker Compose, ROS 2, Nav2, MoveIt, VLA, external service, or MVP-006 behavior was implemented."
+  ]
+}

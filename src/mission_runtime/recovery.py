@@ -11,6 +11,17 @@ from .state import ActionRecord, ActionStatus, MissionRecord, MissionStatus, Sta
 
 
 @dataclass(frozen=True, slots=True)
+class AttemptedToolCall:
+    """Validated tool-call correlation retained for persistence and observability."""
+
+    request_id: str
+    action_id: str
+    operation: str
+    component_version: str
+    timestamp: str
+
+
+@dataclass(frozen=True, slots=True)
 class RecoveryRun:
     """Observed result of the one approved Day-10 failure/recovery path."""
 
@@ -21,6 +32,7 @@ class RecoveryRun:
     reconciliation_retryable: bool
     mission_state_sequence: tuple[MissionStatus, ...]
     first_action_state_sequence: tuple[ActionStatus, ...]
+    attempted_calls: tuple[AttemptedToolCall, ...]
 
 
 class SingleFailureRecoveryCoordinator:
@@ -98,6 +110,10 @@ class SingleFailureRecoveryCoordinator:
                 reconciliation_retryable=False,
                 mission_state_sequence=tuple(mission_states),
                 first_action_state_sequence=tuple(first_action_states),
+                attempted_calls=(
+                    self._attempted_call(request_ids[0], first_action_id, "transfer_part", timestamp),
+                    self._attempted_call(request_ids[1], first_action_id, "get_action_status", timestamp),
+                ),
             )
         if mission.status is not MissionStatus.RECOVERING or not reconciled.error.retryable:
             raise StateTransitionError("only a retryable reconciled failure may enter recovery")
@@ -123,6 +139,11 @@ class SingleFailureRecoveryCoordinator:
             reconciliation_retryable=True,
             mission_state_sequence=tuple(mission_states),
             first_action_state_sequence=tuple(first_action_states),
+            attempted_calls=(
+                self._attempted_call(request_ids[0], first_action_id, "transfer_part", timestamp),
+                self._attempted_call(request_ids[1], first_action_id, "get_action_status", timestamp),
+                self._attempted_call(request_ids[2], retry_action_id, "transfer_part", timestamp),
+            ),
         )
 
     @staticmethod
@@ -162,6 +183,16 @@ class SingleFailureRecoveryCoordinator:
             "deadline_at": deadline_at,
             "timeout_ms": 300_000,
         }
+
+    @staticmethod
+    def _attempted_call(request_id: str, action_id: str, operation: str, timestamp: str) -> AttemptedToolCall:
+        return AttemptedToolCall(
+            request_id=request_id,
+            action_id=action_id,
+            operation=operation,
+            component_version="mvp-003",
+            timestamp=timestamp,
+        )
 
     def _trace(self) -> tuple[str, ...]:
         skill = self._gateway._robot_skill

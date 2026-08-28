@@ -64,6 +64,14 @@ class SingleFailureRecoveryTests(unittest.TestCase):
             ),
         )
         self.assertEqual(run.call_trace, ("transfer:timeout", "status:reconciled_failure", "transfer:success"))
+        self.assertEqual(
+            [(call.request_id, call.action_id, call.operation, call.component_version) for call in run.attempted_calls],
+            [
+                (REQUEST_IDS[0], FIRST_ACTION_ID, "transfer_part", "mvp-003"),
+                (REQUEST_IDS[1], FIRST_ACTION_ID, "get_action_status", "mvp-003"),
+                (REQUEST_IDS[2], RETRY_ACTION_ID, "transfer_part", "mvp-003"),
+            ],
+        )
         self.assertTrue(run.reconciliation_retryable)
         self.assertEqual(run.mission.retry_count, 1)
         self.assertEqual(run.mission.status, MissionStatus.COMPLETED)
