@@ -1,13 +1,31 @@
 {
   "schema_version": "1.0",
   "task": "TASK-MVP-002",
-  "run_id": "mvp-002-state-model-20260828T080636Z",
-  "validation_timestamp": "2026-08-28T08:06:36Z",
-  "base_commit": "51a9bef2043ca6df4a1a81e7754c34c4bdb12279",
+  "run_id": "mvp-002-state-model-fix-20260828T151948Z",
+  "validation_timestamp": "2026-08-28T15:19:48Z",
+  "base_commit": "06fded7b3a4145d64280c384cd72167cabd70ded",
   "workspace_state": {
-    "mvp_002_changes_committed": false,
-    "task_files": "untracked",
-    "unrelated_workspace_change": ".gitignore is untracked and was not modified by TASK-MVP-002"
+    "mvp_002_invariant_fixes_committed": false,
+    "modified_task_files": [
+      "src/mission_runtime/state.py",
+      "tests/test_mission_runtime.py",
+      "results/mvp/MVP-002.json"
+    ],
+    "unrelated_workspace_changes_preserved": [
+      "AGENTS.md",
+      "prompts/"
+    ]
+  },
+  "commit_provenance": {
+    "commit": "06fded7b3a4145d64280c384cd72167cabd70ded",
+    "commit_files": [
+      ".gitignore",
+      "results/mvp/MVP-002.json",
+      "src/mission_runtime/__init__.py",
+      "src/mission_runtime/state.py",
+      "tests/test_mission_runtime.py"
+    ],
+    "scope_note": ".gitignore was pre-existing before MVP-002 implementation and was not modified by the invariant-fix work; it is disclosed because it was included in the prior MVP-002 commit."
   },
   "scope": "Finite deterministic mission/action state model only; no execution adapter, persistence, ROS, VLA, or physical robot behavior",
   "source_files": [
@@ -17,25 +35,26 @@
     },
     {
       "path": "src/mission_runtime/state.py",
-      "sha256": "d5193de46081da0606064a9c293d3e20ace99341f13edcc2850da473b87d2ef8"
+      "sha256": "207782244144f5780698c0cb60bbe9cf6acb806936ecb540191660e88491e99c"
     },
     {
       "path": "tests/test_mission_runtime.py",
-      "sha256": "5a6d7f4e8f42f5af84d9b5c2dd1c384c1ae82ae4347cf0d2e1984ea18e8e6ab5"
+      "sha256": "7949c3657e8a03c5cc29d9c354b4275f13e9ff7e560eaa29e73625c8b50c1f95"
     }
   ],
   "transition_test_result": {
+    "command": "PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=src python3 -m unittest tests/test_mission_runtime.py -v",
     "status": "PASS",
-    "tests_run": 10,
-    "tests_passed": 10,
+    "tests_run": 12,
+    "tests_passed": 12,
     "tests_failed": 0,
     "errors": 0
   },
   "regression_test_result": {
     "command": "PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=src python3 -m unittest discover -s tests -v",
     "status": "PASS",
-    "tests_run": 26,
-    "tests_passed": 26,
+    "tests_run": 28,
+    "tests_passed": 28,
     "tests_failed": 0,
     "errors": 0
   },
@@ -50,7 +69,7 @@
       "EXECUTING -> COMPLETED",
       "EXECUTING -> RECONCILING",
       "RECONCILING -> RECOVERING",
-      "RECOVERING -> EXECUTING (one bounded retry)",
+      "RECOVERING -> EXECUTING (exactly one bounded retry)",
       "RECONCILING -> ESCALATED (non-retryable failure)"
     ],
     "action": [
@@ -62,13 +81,21 @@
   },
   "checks": {
     "finite_mission_transition_table": true,
+    "initial_state_construction_only": true,
+    "terminal_state_constructor_bypass_rejected": true,
+    "retry_limit_is_not_caller_controlled": true,
     "action_lifecycle_implemented": true,
     "unknown_is_not_success": true,
     "invalid_transitions_rejected": true,
     "hitl_escalation_terminal_state": true,
     "action_record_is_immutable": true
   },
-  "changed_files": [
+  "integrity_verification": {
+    "task_file_method": "git diff --no-index --check /dev/null for each intended TASK-MVP-002 file",
+    "task_file_status": "PASS",
+    "repository_git_diff_check": "NOT_PASS: pre-existing AGENTS.md trailing blank-line warning; not modified by this task"
+  },
+  "implementation_files": [
     "src/mission_runtime/__init__.py",
     "src/mission_runtime/state.py",
     "tests/test_mission_runtime.py",

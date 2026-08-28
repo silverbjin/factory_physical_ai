@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass, replace
-from datetime import datetime, timedelta, timezone
+from dataclasses import dataclass, field, replace
+from datetime import datetime, timedelta
 from enum import Enum
 from typing import ClassVar
 from uuid import UUID
@@ -56,10 +56,6 @@ def _require_utc_timestamp(value: str, field_name: str) -> None:
         raise ValueError(f"{field_name} must be an ISO-8601 UTC timestamp")
 
 
-def _utc_now() -> str:
-    return datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
-
-
 @dataclass(frozen=True, slots=True)
 class ActionRecord:
     """A typed physical-action lifecycle record, independent of any adapter."""
@@ -70,7 +66,7 @@ class ActionRecord:
     schema_version: str
     timestamp: str
     deadline: str
-    status: ActionStatus = ActionStatus.REQUESTED
+    status: ActionStatus = field(default=ActionStatus.REQUESTED, init=False)
     error: str | None = None
     retryable: bool = False
     component_version: str = "mvp-002"
@@ -105,20 +101,21 @@ class ActionRecord:
         *,
         error: str | None = None,
         retryable: bool = False,
-        timestamp: str | None = None,
+        timestamp: str,
     ) -> "ActionRecord":
         """Apply a deterministic adapter observation; arbitrary outcomes are rejected."""
         if not isinstance(target, ActionStatus):
             raise StateTransitionError("target must be an ActionStatus")
         if target not in self._TRANSITIONS[self.status]:
             raise StateTransitionError(f"invalid action transition: {self.status.value} -> {target.value}")
-        return replace(
+        transitioned = replace(
             self,
-            status=target,
             error=error,
             retryable=retryable,
-            timestamp=timestamp or _utc_now(),
+            timestamp=timestamp,
         )
+        object.__setattr__(transitioned, "status", target)
+        return transitioned
 
 
 @dataclass(frozen=True, slots=True)
@@ -126,9 +123,10 @@ class MissionRecord:
     """Finite mission lifecycle driven only by validated action observations."""
 
     mission_id: str
-    status: MissionStatus = MissionStatus.CREATED
-    retry_count: int = 0
-    retry_limit: int = 1
+    status: MissionStatus = field(default=MissionStatus.CREATED, init=False)
+    retry_count: int = field(default=0, init=False)
+
+    _RETRY_LIMIT: ClassVar[int] = 1
 
     _TRANSITIONS: ClassVar[dict[MissionStatus, frozenset[MissionStatus]]] = {
         MissionStatus.CREATED: frozenset({MissionStatus.READY, MissionStatus.ESCALATED}),
@@ -151,10 +149,8 @@ class MissionRecord:
             raise ValueError("status must be a MissionStatus")
         if isinstance(self.retry_count, bool) or not isinstance(self.retry_count, int) or self.retry_count < 0:
             raise ValueError("retry_count must be a non-negative integer")
-        if isinstance(self.retry_limit, bool) or not isinstance(self.retry_limit, int) or self.retry_limit < 0:
-            raise ValueError("retry_limit must be a non-negative integer")
-        if self.retry_count > self.retry_limit:
-            raise ValueError("retry_count cannot exceed retry_limit")
+        if self.retry_count > self._RETRY_LIMIT:
+            raise ValueError("retry_count cannot exceed the Day-10 retry limit")
 
     def transition(self, target: MissionStatus) -> "MissionRecord":
         """Transition through the finite table, consuming only the bounded retry."""
@@ -163,10 +159,15 @@ class MissionRecord:
         if target not in self._TRANSITIONS[self.status]:
             raise StateTransitionError(f"invalid mission transition: {self.status.value} -> {target.value}")
         if self.status is MissionStatus.RECOVERING and target is MissionStatus.EXECUTING:
-            if self.retry_count >= self.retry_limit:
+            if self.retry_count >= self._RETRY_LIMIT:
                 raise StateTransitionError("mission retry limit exhausted")
-            return replace(self, status=target, retry_count=self.retry_count + 1)
-        return replace(self, status=target)
+            retry_count = self.retry_count + 1
+        else:
+            retry_count = self.retry_count
+        transitioned = replace(self)
+        object.__setattr__(transitioned, "status", target)
+        object.__setattr__(transitioned, "retry_count", retry_count)
+        return transitioned
 
     def apply_action_observation(self, action: ActionRecord) -> "MissionRecord":
         """Map validated action results to mission states; UNKNOWN is never success."""

@@ -449,3 +449,146 @@ The repository should ultimately support a defensible story:
 > A production-oriented LLM Agent accepts a manufacturing logistics goal, queries structured factory state, orchestrates AMR and a fine-tuned VLA manipulation skill through controlled interfaces, verifies outcomes, recovers from representative failures, and produces measurable evaluation/Chaos/Soak evidence.
 
 If an implementation decision does not materially strengthen this story, question whether it belongs in scope.
+
+---
+
+## 17. Codex Task Router
+
+Use the user's command form to select the repository workflow.
+
+### 1. Bare Task ID → Independent Read-only Review
+
+When the user's entire prompt is exactly one project task identifier, for example:
+
+```text
+TASK-MVP-003
+```
+
+or:
+
+```text
+TASK-W2-001
+```
+
+then:
+
+1. Read `prompts/codex/read_only_review.md` in full.
+2. Use the exact identifier as `TASK_ID`.
+3. Perform the independent READ-ONLY review defined there.
+4. Do not modify repository files.
+
+---
+
+### 2. `Implement <TASK_ID>` → Task Implementation
+
+When the user's entire prompt matches:
+
+```text
+Implement <TASK_ID>
+```
+
+for example:
+
+```text
+Implement TASK-MVP-003
+```
+
+or:
+
+```text
+Implement TASK-W2-001
+```
+
+then:
+
+1. Read `prompts/codex/implement_task.md` in full before modifying files.
+2. Extract the exact task identifier and use it as `TASK_ID`.
+3. Follow every rule in `prompts/codex/implement_task.md`.
+4. Locate the task specification, context, plan, frozen contracts, ADRs, prerequisites, tests, and evidence automatically from the repository.
+5. Do not ask the user to provide repository paths that can be discovered automatically.
+6. Implement only `TASK_ID`.
+7. Do not start the next task.
+8. Do not stage or commit unless explicitly requested.
+
+---
+
+### 3. Explicit Commands Override Automatic Routing
+
+The two shorthand routes above apply only when the entire user message matches one of these forms:
+
+```text
+<TASK_ID>
+Implement <TASK_ID>
+```
+
+If the user includes additional instructions, constraints, or another explicit action, follow the user's explicit request and use the applicable repository instructions.
+
+Examples:
+
+```text
+Fix only the HIGH findings for TASK-MVP-003
+Explain TASK-MVP-003
+Show the status of TASK-W2-001
+Implement TASK-MVP-003 but do not generate evidence
+```
+
+These are not automatically treated as the standard shorthand workflow unless the explicit instruction itself says to use it.
+
+---
+
+### 4. Workflow Separation
+
+Keep implementation and acceptance review separate.
+
+Recommended lifecycle:
+
+```text
+Implement TASK-MVP-003
+        ↓
+implementation + self-tests + evidence
+        ↓
+TASK-MVP-003
+        ↓
+independent read-only review
+        ↓
+ACCEPT / REJECT
+```
+
+Do not turn the implementation workflow into the independent read-only review or vice versa.
+
+### 5. Review-Finding Fix Route
+
+`Fix <TASK_ID>` → Fix all findings for the TASK
+
+When the user's entire prompt matches:
+
+```text
+Fix <TASK_ID>
+```
+
+for example:
+
+```text
+Fix TASK-MVP-002
+```
+
+then:
+
+1. Read `prompts/codex/fix_review_findings.md` in full.
+2. Extract the exact identifier as `TASK_ID`.
+3. If the latest review is available in the current conversation, use it, but independently verify every finding against the current repository.
+4. If the review is not available in the current conversation, reconstruct acceptance-blocking findings using `prompts/codex/read_only_review.md` diagnostically before editing.
+5. Fix BLOCKER, HIGH, and only those MEDIUM findings that keep an Acceptance Gate at FAIL.
+6. Do not fix LOW findings by default.
+7. Do not start the next task.
+8. Do not rewrite Git history unless explicitly authorized.
+9. Run focused tests, full regression, Exit Criteria, and evidence updates required by the corrective workflow.
+10. Finish by telling the user whether the task is ready for independent re-review.
+
+After a successful fix, the normal next command is the bare task ID:
+
+```text
+<TASK_ID>
+```
+
+which triggers the independent read-only review.

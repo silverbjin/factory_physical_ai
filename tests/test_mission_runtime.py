@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import sys
 import unittest
-from dataclasses import FrozenInstanceError
+from dataclasses import FrozenInstanceError, replace
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
@@ -29,6 +29,10 @@ def action_record() -> ActionRecord:
 
 def executing_mission() -> MissionRecord:
     return MissionRecord(MISSION_ID).transition(MissionStatus.READY).transition(MissionStatus.EXECUTING)
+
+
+def recovering_mission() -> MissionRecord:
+    return executing_mission().transition(MissionStatus.RECONCILING).transition(MissionStatus.RECOVERING)
 
 
 class MissionRuntimeTests(unittest.TestCase):
@@ -75,12 +79,12 @@ class MissionRuntimeTests(unittest.TestCase):
         self.assertEqual(mission.status, MissionStatus.RECOVERING)
 
     def test_recovering_uses_only_one_bounded_retry(self) -> None:
-        mission = MissionRecord(MISSION_ID, status=MissionStatus.RECOVERING).transition(MissionStatus.EXECUTING)
+        mission = recovering_mission().transition(MissionStatus.EXECUTING)
 
         self.assertEqual(mission.status, MissionStatus.EXECUTING)
         self.assertEqual(mission.retry_count, 1)
         with self.assertRaises(StateTransitionError):
-            MissionRecord(MISSION_ID, status=MissionStatus.RECOVERING, retry_count=1).transition(
+            mission.transition(MissionStatus.RECONCILING).transition(MissionStatus.RECOVERING).transition(
                 MissionStatus.EXECUTING
             )
 
@@ -102,7 +106,7 @@ class MissionRuntimeTests(unittest.TestCase):
         with self.assertRaises(StateTransitionError):
             MissionRecord(MISSION_ID).transition(MissionStatus.EXECUTING)
         with self.assertRaises(StateTransitionError):
-            action_record().transition(ActionStatus.SUCCEEDED)
+            action_record().transition(ActionStatus.SUCCEEDED, timestamp=TIMESTAMP)
 
     def test_unknown_is_not_success_and_cannot_transition_to_success(self) -> None:
         unknown_action = action_record().transition(ActionStatus.EXECUTING, timestamp=TIMESTAMP).transition(
@@ -111,7 +115,7 @@ class MissionRuntimeTests(unittest.TestCase):
 
         self.assertNotEqual(unknown_action.status, ActionStatus.SUCCEEDED)
         with self.assertRaises(StateTransitionError):
-            unknown_action.transition(ActionStatus.SUCCEEDED)
+            unknown_action.transition(ActionStatus.SUCCEEDED, timestamp=TIMESTAMP)
 
     def test_action_record_has_required_lifecycle_fields_and_is_immutable(self) -> None:
         action = action_record()
@@ -133,6 +137,28 @@ class MissionRuntimeTests(unittest.TestCase):
         )
         with self.assertRaises(FrozenInstanceError):
             action.status = ActionStatus.SUCCEEDED  # type: ignore[misc]
+
+    def test_terminal_states_cannot_bypass_transition_tables(self) -> None:
+        with self.assertRaises(TypeError):
+            ActionRecord(
+                mission_id=MISSION_ID,
+                action_id=ACTION_ID,
+                idempotency_key="mission-0d47cf1c-action-1",
+                schema_version="v1",
+                timestamp=TIMESTAMP,
+                deadline=DEADLINE,
+                status=ActionStatus.SUCCEEDED,
+            )
+        with self.assertRaises(TypeError):
+            MissionRecord(MISSION_ID, status=MissionStatus.COMPLETED)
+        with self.assertRaises(ValueError):
+            replace(action_record(), status=ActionStatus.SUCCEEDED)
+
+    def test_retry_limit_is_not_caller_controlled(self) -> None:
+        with self.assertRaises(TypeError):
+            MissionRecord(MISSION_ID, retry_count=1)
+        with self.assertRaises(TypeError):
+            MissionRecord(MISSION_ID, retry_limit=99)
 
 
 if __name__ == "__main__":
