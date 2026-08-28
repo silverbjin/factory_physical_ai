@@ -592,3 +592,30 @@ After a successful fix, the normal next command is the bare task ID:
 ```
 
 which triggers the independent read-only review.
+
+### 6. MVP Automation Route
+
+When the user's entire prompt is exactly:
+
+```text
+Run MVP
+```
+
+then:
+
+1. Read `prompts/codex/mvp_task_automation.md` in full.
+2. Follow the resumable MVP automation defined there.
+3. Process only `TASK-MVP-001` through `TASK-MVP-008`.
+4. Resume from the earliest task that is not independently `ACCEPTED`.
+5. Do not skip a rejected or blocked task.
+6. Do not begin Week tasks.
+7. Do not rewrite Git history without explicit user authorization.
+
+This route is separate from the existing shorthand routes:
+
+```text
+Implement <TASK_ID>  → single-task Implementation
+<TASK_ID>            → single-task Read-only Review
+Fix <TASK_ID>        → single-task Fix
+Run MVP              → automated MVP-001~008 orchestration
+```
