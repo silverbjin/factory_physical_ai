@@ -1,0 +1,35 @@
+{
+  "schema_version": "1.0",
+  "task": "TASK-MVP-004",
+  "status": "PASS",
+  "run_id": "mvp-004-single-failure-recovery-20260828T164901Z",
+  "validation_timestamp": "2026-08-28T16:49:01Z",
+  "base_commit": "2c0270cf51805f1d91673b8794a03cc4c8ebb84d",
+  "workspace_state": {
+    "mvp_004_changes_committed": false,
+    "modified_task_files": [
+      "src/factory_tools/gateway.py",
+      "src/factory_tools/__init__.py",
+      "src/mission_runtime/recovery.py",
+      "tests/test_recovery.py",
+      "results/mvp/MVP-004.json"
+    ]
+  },
+  "scope": "One deterministic Robot Skill timeout scenario, mandatory reconciliation, and exactly one runtime-owned retry; no execution adapter or persistence.",
+  "source_files": [
+    {"path": "src/factory_tools/gateway.py", "sha256": "1171c723797cf75894a87204249bd193be391894159a43c95aaccdf12afa2f99"},
+    {"path": "src/factory_tools/__init__.py", "sha256": "ea9cc20963bfd7e386a6d4add32ef4f0227216b71b52a88f73437a30d4b28053"},
+    {"path": "src/mission_runtime/recovery.py", "sha256": "d6ee72a4172cfbdb490459ef41fe88ca372b729e650c4821714ce174d66b4af6"},
+    {"path": "tests/test_recovery.py", "sha256": "7cbe5dd8e58b99ea9192f35d7d893345ccd08ccbb2c1bd6d850d7650b699fbaf"}
+  ],
+  "focused_test_result": {"command": "PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=src python3 -m unittest tests/test_recovery.py -v", "status": "PASS", "tests_run": 3, "tests_passed": 3, "tests_failed": 0},
+  "regression_test_result": {"command": "PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=src python3 -m unittest discover -s tests -v", "status": "PASS", "tests_run": 39, "tests_passed": 39, "tests_failed": 0},
+  "compile_check": {"command": "PYTHONPYCACHEPREFIX=<temporary-directory> python3 -m compileall -q src tests", "status": "PASS"},
+  "state_sequence": ["CREATED", "READY", "EXECUTING", "RECONCILING", "RECOVERING", "EXECUTING", "COMPLETED"],
+  "action_sequence": ["REQUESTED", "EXECUTING", "UNKNOWN", "RECONCILING", "FAILED"],
+  "call_sequence": ["transfer:timeout", "status:reconciled_failure", "transfer:success"],
+  "measured_retry_count": 1,
+  "validated_capabilities": {"timeout_creates_unknown": true, "reconciliation_precedes_retry": true, "retryability_read_from_typed_result": true, "exactly_one_retry": true, "retry_succeeds": true, "non_retryable_reconciliation_escalates": true, "runtime_policy_is_not_agent_controlled": true},
+  "exit_criteria": {"one_failure_only": "PASS", "unknown_reconciliation_observable": "PASS", "retry_bounded": "PASS", "final_result_deterministic": "PASS", "no_duplicate_unbounded_execution": "PASS", "tests_pass": "PASS"},
+  "limitations": ["No physical robot, ROS 2, Nav2, MoveIt, VLA, persistence, SQLite, Agent integration, or external process/network behavior was implemented.", "This evidence is a deterministic test fixture result, not a physical-action outcome."]
+}

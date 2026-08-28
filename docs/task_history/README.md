@@ -3,3 +3,4 @@
 | TASK | 상태 | Implementation | Review | Fix | 최종 결과 |
 |---|---|---:|---:|---:|---|
 | TASK-MVP-003 | ACCEPTED | 0 | 2 | 1 | ACCEPT |
+| TASK-MVP-004 | ACCEPTED | 1 | 1 | 0 | ACCEPT |

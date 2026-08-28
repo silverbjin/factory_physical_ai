@@ -8,7 +8,7 @@ from datetime import datetime, timedelta
 from enum import Enum
 from uuid import UUID
 
-from mission_runtime import ActionStatus
+from mission_runtime.state import ActionStatus
 
 
 class ToolValidationError(ValueError):
@@ -23,6 +23,7 @@ class ToolResultKind(str, Enum):
 class ToolErrorCategory(str, Enum):
     VALIDATION = "VALIDATION"
     RESOURCE_UNAVAILABLE = "RESOURCE_UNAVAILABLE"
+    DEPENDENCY_TIMEOUT = "DEPENDENCY_TIMEOUT"
     EXECUTION_FAILED = "EXECUTION_FAILED"
 
 
@@ -365,13 +366,119 @@ class DeterministicRobotSkillFake:
         )
 
 
+class DeterministicTimeoutRecoverySkillFake:
+    """One scripted timeout, then reconciliation, then one successful retry."""
+
+    def __init__(self, *, reconciliation_retryable: bool = True) -> None:
+        self._reconciliation_retryable = reconciliation_retryable
+        self._attempts = 0
+        self._first_action_id: str | None = None
+        self._first_reconciled = False
+        self._actions: dict[str, TransferResult] = {}
+        self.call_trace: list[str] = []
+
+    def transfer_part(self, request: TransferPartRequest) -> TransferResult:
+        if request.action_id in self._actions:
+            return self._actions[request.action_id]
+        if self._attempts == 0:
+            self._attempts = 1
+            self._first_action_id = request.action_id
+            self.call_trace.append("transfer:timeout")
+            result = TransferResult(
+                result=ToolResultKind.FAILURE,
+                schema_version=request.schema_version,
+                mission_id=request.mission_id,
+                request_id=request.request_id,
+                action_id=request.action_id,
+                idempotency_key=request.idempotency_key,
+                timestamp=request.timestamp,
+                deadline_at=request.deadline_at,
+                timeout_ms=request.timeout_ms,
+                status=ActionStatus.UNKNOWN,
+                error=ToolError(
+                    code="robot_skill_timeout",
+                    message="deterministic fixture produced an ambiguous timeout",
+                    category=ToolErrorCategory.DEPENDENCY_TIMEOUT,
+                    retryable=False,
+                ),
+            )
+        elif self._attempts == 1:
+            if not self._first_reconciled:
+                raise ToolValidationError("reconciliation is required before the one approved retry")
+            self._attempts = 2
+            self.call_trace.append("transfer:success")
+            result = TransferResult(
+                result=ToolResultKind.SUCCESS,
+                schema_version=request.schema_version,
+                mission_id=request.mission_id,
+                request_id=request.request_id,
+                action_id=request.action_id,
+                idempotency_key=request.idempotency_key,
+                timestamp=request.timestamp,
+                deadline_at=request.deadline_at,
+                timeout_ms=request.timeout_ms,
+                status=ActionStatus.SUCCEEDED,
+            )
+        else:
+            raise ToolValidationError("only one recovery retry is supported")
+        self._actions[request.action_id] = result
+        return result
+
+    def get_action_status(self, query: ActionStatusQuery) -> ActionStatusResult:
+        if query.action_id == self._first_action_id:
+            self._first_reconciled = True
+            self.call_trace.append("status:reconciled_failure")
+            return ActionStatusResult(
+                result=ToolResultKind.FAILURE,
+                schema_version=query.schema_version,
+                mission_id=query.mission_id,
+                request_id=query.request_id,
+                action_id=query.action_id,
+                timestamp=query.timestamp,
+                status=ActionStatus.FAILED,
+                error=ToolError(
+                    code="reconciled_timeout_failure",
+                    message="timeout action was reconciled as failed",
+                    category=ToolErrorCategory.DEPENDENCY_TIMEOUT,
+                    retryable=self._reconciliation_retryable,
+                ),
+            )
+        action = self._actions.get(query.action_id)
+        if action is None:
+            return ActionStatusResult(
+                result=ToolResultKind.FAILURE,
+                schema_version=query.schema_version,
+                mission_id=query.mission_id,
+                request_id=query.request_id,
+                action_id=query.action_id,
+                timestamp=query.timestamp,
+                status=None,
+                error=ToolError(
+                    code="action_not_found",
+                    message="action is not present in the deterministic skill fixture",
+                    category=ToolErrorCategory.RESOURCE_UNAVAILABLE,
+                    retryable=False,
+                ),
+            )
+        return ActionStatusResult(
+            result=action.result,
+            schema_version=query.schema_version,
+            mission_id=query.mission_id,
+            request_id=query.request_id,
+            action_id=query.action_id,
+            timestamp=query.timestamp,
+            status=action.status,
+            error=action.error,
+        )
+
+
 class FactoryToolGateway:
     """Only in-process entry point for typed WMS and Robot Skill fixture calls."""
 
     def __init__(
         self,
         inventory: DeterministicInventoryFake | None = None,
-        robot_skill: DeterministicRobotSkillFake | None = None,
+        robot_skill: DeterministicRobotSkillFake | DeterministicTimeoutRecoverySkillFake | None = None,
     ) -> None:
         self._inventory = inventory or DeterministicInventoryFake()
         self._robot_skill = robot_skill or DeterministicRobotSkillFake()
