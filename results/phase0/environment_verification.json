@@ -1,0 +1,28 @@
+{
+  "schema_version": "1.0",
+  "generated_at": "2026-08-28T04:11:45Z",
+  "host": {"kernel": "6.18.33.2-microsoft-standard-WSL2", "python": "Python 3.12.3"},
+  "checks": [
+    {"name":"os","status":"PASS","detail":"Ubuntu 24.04.4 LTS"},
+    {"name":"wsl","status":"WARN","detail":"WSL kernel detected; native robot hardware requires a separate validation gate"},
+    {"name":"git","status":"PASS","detail":"git version 2.43.0"},
+    {"name":"python3","status":"PASS","detail":"Python 3.12.3"},
+    {"name":"ros2","status":"PASS","detail":"usage: ros2 [-h] [--use-python-default-buffering]"},
+    {"name":"docker","status":"PASS","detail":"Docker version 29.6.1, build 8900f1d"},
+    {"name":"node","status":"PASS","detail":"v18.19.1"},
+    {"name":"ros_environment","status":"PASS","detail":"ROS_DISTRO=jazzy"},
+    {"name":"docker_daemon","status":"WARN","detail":"daemon unavailable or access denied; no image pull attempted"},
+    {"name":"gpu","status":"WARN","detail":"nvidia-smi exists but GPU/NVML is not accessible"},
+    {"name":"python:rclpy","status":"PASS","detail":"importable"},
+    {"name":"python:torch","status":"WARN","detail":"not installed in current interpreter"},
+    {"name":"python:lerobot","status":"WARN","detail":"not installed in current interpreter"},
+    {"name":"python:langgraph","status":"WARN","detail":"not installed in current interpreter"},
+    {"name":"python:pydantic","status":"WARN","detail":"not installed in current interpreter"},
+    {"name":"python:sqlalchemy","status":"WARN","detail":"not installed in current interpreter"},
+    {"name":"python:opentelemetry","status":"WARN","detail":"not installed in current interpreter"},
+    {"name":"python:prometheus_client","status":"PASS","detail":"importable"},
+    {"name":"camera_devices","status":"WARN","detail":"no /dev/video* device observed"},
+    {"name":"robot_serial_devices","status":"WARN","detail":"no /dev/ttyUSB* or /dev/ttyACM* device observed"}
+  ],
+  "required_failures": 0
+}
