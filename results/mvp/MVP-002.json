@@ -1,0 +1,81 @@
+{
+  "schema_version": "1.0",
+  "task": "TASK-MVP-002",
+  "run_id": "mvp-002-state-model-20260828T080636Z",
+  "validation_timestamp": "2026-08-28T08:06:36Z",
+  "base_commit": "51a9bef2043ca6df4a1a81e7754c34c4bdb12279",
+  "workspace_state": {
+    "mvp_002_changes_committed": false,
+    "task_files": "untracked",
+    "unrelated_workspace_change": ".gitignore is untracked and was not modified by TASK-MVP-002"
+  },
+  "scope": "Finite deterministic mission/action state model only; no execution adapter, persistence, ROS, VLA, or physical robot behavior",
+  "source_files": [
+    {
+      "path": "src/mission_runtime/__init__.py",
+      "sha256": "c58cca0a3db7cb011a8e508cb22d9c1284c01830cf700d66587511315be618ec"
+    },
+    {
+      "path": "src/mission_runtime/state.py",
+      "sha256": "d5193de46081da0606064a9c293d3e20ace99341f13edcc2850da473b87d2ef8"
+    },
+    {
+      "path": "tests/test_mission_runtime.py",
+      "sha256": "5a6d7f4e8f42f5af84d9b5c2dd1c384c1ae82ae4347cf0d2e1984ea18e8e6ab5"
+    }
+  ],
+  "transition_test_result": {
+    "status": "PASS",
+    "tests_run": 10,
+    "tests_passed": 10,
+    "tests_failed": 0,
+    "errors": 0
+  },
+  "regression_test_result": {
+    "command": "PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=src python3 -m unittest discover -s tests -v",
+    "status": "PASS",
+    "tests_run": 26,
+    "tests_passed": 26,
+    "tests_failed": 0,
+    "errors": 0
+  },
+  "compile_check": {
+    "command": "PYTHONPYCACHEPREFIX=<temporary-directory> python3 -m compileall -q src tests",
+    "status": "PASS"
+  },
+  "validated_transitions": {
+    "mission": [
+      "CREATED -> READY",
+      "READY -> EXECUTING",
+      "EXECUTING -> COMPLETED",
+      "EXECUTING -> RECONCILING",
+      "RECONCILING -> RECOVERING",
+      "RECOVERING -> EXECUTING (one bounded retry)",
+      "RECONCILING -> ESCALATED (non-retryable failure)"
+    ],
+    "action": [
+      "REQUESTED -> EXECUTING",
+      "EXECUTING -> UNKNOWN",
+      "UNKNOWN -> RECONCILING",
+      "RECONCILING -> FAILED (retryable or non-retryable)"
+    ]
+  },
+  "checks": {
+    "finite_mission_transition_table": true,
+    "action_lifecycle_implemented": true,
+    "unknown_is_not_success": true,
+    "invalid_transitions_rejected": true,
+    "hitl_escalation_terminal_state": true,
+    "action_record_is_immutable": true
+  },
+  "changed_files": [
+    "src/mission_runtime/__init__.py",
+    "src/mission_runtime/state.py",
+    "tests/test_mission_runtime.py",
+    "results/mvp/MVP-002.json"
+  ],
+  "limitations": [
+    "This task defines only in-memory state models; SQLite persistence, action dispatch, timeout/reconciliation I/O, and evidence event emission are later tasks.",
+    "No physical robot, ROS 2, Nav2, MoveIt, VLA, hosted LLM SDK, Docker, PostgreSQL, Grafana, or multi-agent behavior was implemented."
+  ]
+}
