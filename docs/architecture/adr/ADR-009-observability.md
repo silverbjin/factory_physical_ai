@@ -10,7 +10,7 @@ The project requires correlatable mission/tool/skill evidence, latency, failure 
 
 ## Decision
 
-MVP emits structured JSONL events and a machine-readable run manifest with `mission_id`, `request_id`, timestamps, state transition, model/tool/skill version, latency, failure category, retry/HITL decision, and artifact references. Expose Prometheus-compatible metrics when the runtime is created. Add OpenTelemetry traces plus a collector and Prometheus/Grafana only when service topology is validated.
+MVP emits structured JSONL events and a machine-readable run manifest with `mission_id`, `request_id`, timestamps, state transition, model/tool/skill version, latency, failure category, retry/HITL decision, and artifact references. A metrics endpoint is optional for MVP. Add OpenTelemetry traces plus a collector and Prometheus/Grafana only when service topology is validated.
 
 ## Alternatives
 

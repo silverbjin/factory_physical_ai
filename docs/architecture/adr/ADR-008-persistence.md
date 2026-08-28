@@ -10,7 +10,7 @@ Mission state, idempotency, evaluation metadata, and trace references must survi
 
 ## Decision
 
-Use SQLite for the single-process MVP mission/action/checkpoint store. Migrate to PostgreSQL before multi-process deployment, concurrent mission execution, or soak evidence. Redis is not a source of truth and is deferred unless an explicit queue/cache requirement arises.
+Use SQLite for the single-process MVP mission/action/checkpoint store and bounded single-process regression/Chaos/soak evidence. Migrate to PostgreSQL before multi-process deployment, concurrent mission execution, or a claim requiring service-topology durability. Redis is not a source of truth and is deferred unless an explicit queue/cache requirement arises.
 
 ## Alternatives
 
@@ -40,4 +40,4 @@ Docker daemon access is denied. LangGraph documentation distinguishes SQLite for
 
 ## Review trigger
 
-Migrate before concurrent workers, external deployment, or 24-hour soak validation begins.
+Migrate before concurrent workers, external deployment, or a multi-service durability/soak claim begins.

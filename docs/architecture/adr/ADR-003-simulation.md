@@ -6,11 +6,11 @@ Accepted for MVP; deferred for physical simulation.
 
 ## Context
 
-The host lacks Gazebo/Isaac/Nav2 packages and GPU capability is unverified. Failure coverage matters more than visual fidelity.
+The host has Gazebo `gz sim` and Nav2 components, but lacks a configured world/map, robot/controller configuration, and validated native hardware topology. GPU capability remains unverified. Failure coverage matters more than visual fidelity.
 
 ## Decision
 
-Use deterministic, fixture-driven skill/factory simulators for the Day-10 MVP and Chaos scenarios. Defer headless Gazebo/ROS 2 simulation selection until a native PC, package compatibility, and a concrete adapter test justify it.
+Use deterministic, fixture-driven skill/factory simulators for the Day-10 MVP and Chaos scenarios. Defer use of the installed Gazebo/ROS 2 simulation capability until a concrete adapter test justifies it; do not spend the MVP window creating maps or visual polish.
 
 ## Alternatives
 
@@ -36,7 +36,7 @@ Headless Gazebo/ROS 2 integration is preferred if it exercises a real adapter; p
 
 ## Validation evidence
 
-ROS package inspection found no Nav2 or Gazebo package. GPU/NVML access is blocked.
+P0-002 inspection verified `gz sim`, Nav2 components, and minimal Nav2 simulation packages. GPU/NVML access remains blocked; no simulator world or robot configuration has been validated.
 
 ## Review trigger
 

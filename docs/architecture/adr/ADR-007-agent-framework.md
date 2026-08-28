@@ -10,7 +10,7 @@ The project needs durable missions, recovery, HITL, testability, and bounded phy
 
 ## Decision
 
-Implement a small custom deterministic mission state machine with an LLM/provider boundary. Persist state and side-effect action records independently. Treat LangGraph as an optional later orchestration adapter/spike, never as a replacement for executor safety, idempotency, or reconciliation.
+Implement a small custom deterministic mission state machine with an LLM/provider boundary: a finite transition table, SQLite checkpoint/action records, and one explicit HITL state. Persist state and side-effect action records independently. Treat LangGraph as an optional later orchestration adapter/spike, never as a replacement for executor safety, idempotency, or reconciliation.
 
 ## Alternatives
 

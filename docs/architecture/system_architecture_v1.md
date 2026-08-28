@@ -28,8 +28,8 @@ This is a project interpretation of SDF-style manufacturing integration, not a c
 | ID | Area | Status | Frozen direction and rationale |
 |---|---|---|---|
 | D1 | Manipulator | Deferred | LeRobot-supported leader/follower preferred, but no physical device was verified (ADR-001). |
-| D2 | AMR | Accepted for MVP | Deterministic navigation mock first; native ROS 2 AMR/Nav2 path later (ADR-002). |
-| D3 | Simulation | Accepted for MVP | Fixture-driven simulator first; physical simulation deferred until it proves an integration boundary (ADR-003). |
+| D2 | AMR | Accepted for MVP | Deterministic navigation mock first; reuse installed Nav2 capability for later native AMR/simulator integration (ADR-002). |
+| D3 | Simulation | Accepted for MVP | Fixture-driven simulator first; installed Gazebo/Nav2 capability is available only when it proves a real adapter boundary (ADR-003). |
 | D4 | VLA / LeRobot | Proposed | LeRobot + SmolVLA candidate; local install/CUDA gate is still open (ADR-004). |
 | D5 | Camera | Proposed | One fixed RGB 640x480@30 FPS source, with timestamp/calibration metadata (ADR-005). |
 | D6 | LLM strategy | Accepted for architecture | Hosted API behind a provider-neutral typed-tool adapter; tests use a fake provider (ADR-006). |
@@ -73,10 +73,11 @@ The verified host is WSL2 and has no robot device evidence; actual robot executi
 2. The executor snapshots structured WMS, Fleet, and PHM state through adapters.
 3. The Agent may propose only an approved, typed tool/skill call.
 4. The executor validates schema, authorization, current state, and bounded policy budgets before dispatch.
-5. The adapter returns a typed observation/result, including retryability and a correlation ID.
-6. Verification is required before physical-action success is committed.
-7. On a failure, deterministic policy either retries within budget, asks the Agent for an approved recovery, or creates a HITL request.
-8. Every transition and external call is correlated by `mission_id`, recorded durably, and exported as evaluation evidence.
+5. A side-effecting adapter accepts an `action_id` and returns a typed observation/result, including retryability and a correlation ID.
+6. A timeout or restart leaves the action `unknown`; the executor queries/reconciles the same `action_id` before retrying, resuming, or escalating.
+7. Verification is required before physical-action success is committed.
+8. On a failure, deterministic policy either retries within budget, asks the Agent for an approved recovery, or creates a HITL request.
+9. Every transition and external call is correlated by `mission_id`, recorded durably, and exported as evaluation evidence.
 
 ## MVP mocks and final integration
 
@@ -88,6 +89,12 @@ The verified host is WSL2 and has no robot device evidence; actual robot executi
 | vision verification | deterministic fixture | camera-backed verifier with calibrated observation contract |
 | persistence | SQLite file, local | PostgreSQL after multi-process/soak requirements are active |
 | traces/metrics | JSONL structured logs and local Prometheus-compatible metrics | OpenTelemetry collector + Prometheus/Grafana or equivalent |
+
+## Day-10 MVP composition (frozen)
+
+The Day-10 software MVP is intentionally one local process with one deterministic mission executor, one fake model provider, one in-process factory-tool gateway, a SQLite file, and JSONL evidence. The gateway exposes typed deterministic fixtures for WMS/Fleet/PHM plus named navigation, VLA, and verification results. It proves one canonical mission, one injected failure/recovery path, durable checkpoint/action records, and a final typed result.
+
+It does **not** start a real provider call, Docker Compose, PostgreSQL, OpenTelemetry collector, Nav2 map, Gazebo world, ROS 2 robot node, camera capture, VLA model download, teleoperation, or physical action. Those are independent later validation gates and must not block MVP-001.
 
 ## ROS 2 plan
 
@@ -102,3 +109,5 @@ Names are a contract plan, not currently running nodes:
 ```
 
 The bridge accepts only validated skill requests from the executor and returns structured results. It does not expose a ROS CLI or raw topic publishing interface to the Agent. Lifecycle/health diagnostics and `ROS_DOMAIN_ID` configuration are validation requirements of the ROS integration task.
+
+For a later native adapter, Nav2 owns named-goal execution, planner/controller behavior, configured local recovery, and lifecycle. The executor owns only business-level policy after a typed terminal result: bounded retry, wait, reassignment, escalation, and auditable state transition. MoveIt owns staging poses, planning scene/collision validation, and trajectory execution; `ros2_control` owns controller and hardware lifecycle. The VLA skill cannot bypass either boundary.

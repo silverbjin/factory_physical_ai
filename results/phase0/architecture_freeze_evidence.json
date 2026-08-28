@@ -1,0 +1,18 @@
+{
+  "schema_version": "1.0",
+  "evidence_kind": "documentation_audit",
+  "generated_at": "2026-08-28T05:47:15Z",
+  "git_commit": "0a3afe7d6a64aa7bdedf1a374df051e7f0ab7cac",
+  "scope": "P0-002 architecture freeze; no runtime, hardware, or model claim",
+  "checks": [
+    {"name":"day10_scope","status":"PASS","detail":"docs/architecture/day10_mvp_scope_v1.md"},
+    {"name":"mock_only","status":"PASS","detail":"docs/architecture/day10_mvp_scope_v1.md"},
+    {"name":"nav2_ownership","status":"PASS","detail":"docs/contracts/contract_plan.md"},
+    {"name":"moveit_ownership","status":"PASS","detail":"docs/contracts/contract_plan.md"},
+    {"name":"reconciliation","status":"PASS","detail":"docs/contracts/contract_plan.md"},
+    {"name":"vla_gate","status":"PASS","detail":"docs/architecture/adr/ADR-004-vla-stack.md"},
+    {"name":"sequencing","status":"PASS","detail":"plans/next_tasks_after_phase0.md"},
+    {"name":"review_resolution","status":"PASS","detail":"docs/reviews/P0-001_architecture_review.md"}
+  ],
+  "required_failures": 0
+}

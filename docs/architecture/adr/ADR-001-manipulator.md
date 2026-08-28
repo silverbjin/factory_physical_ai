@@ -2,7 +2,7 @@
 
 ## Status
 
-Deferred — no physical manipulator, serial device, or camera was verified on the current host.
+Deferred — no physical manipulator, serial device, or camera was verified **inside the current WSL development environment**.
 
 ## Context
 
@@ -36,7 +36,7 @@ Single constrained pick/place cell with mechanical limits, operator start/stop, 
 
 ## Validation evidence
 
-`results/phase0/environment_verification.json` records no serial/camera devices. Official LeRobot SmolVLA rollout documentation describes supported leader/follower and OpenCV-camera fields: https://huggingface.co/docs/lerobot/v0.4.4/smolvla
+`results/phase0/environment_verification.json` records no serial/camera devices exposed to WSL; this is not evidence that hardware is unavailable on a native robot PC. Official LeRobot SmolVLA rollout documentation describes supported leader/follower and OpenCV-camera fields: https://huggingface.co/docs/lerobot/v0.4.4/smolvla
 
 ## Review trigger
 

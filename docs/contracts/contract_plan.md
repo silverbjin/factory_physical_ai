@@ -12,6 +12,7 @@ Every request, event, and result crossing a component boundary must include the 
 | `mission_id` | Required stable UUID for the business mission. |
 | `request_id` | Required unique UUID per attempted call. |
 | `idempotency_key` | Required for every side-effecting operation; stable across safe retries. |
+| `action_id` | Required for a side-effecting navigation or manipulation dispatch; stable through reconciliation. |
 | `correlation_id` / `trace_id` | Required for observability; may equal `mission_id` initially. |
 | `timestamp` | Required ISO 8601 UTC emission time. |
 | `deadline_at` and `timeout_ms` | Required execution deadline and local timeout semantics. |
@@ -43,3 +44,14 @@ Use machine-readable categories: `VALIDATION`, `AUTHORIZATION`, `SAFETY_POLICY`,
 - `retryable` is supplied by the adapter but policy decides whether a retry is allowed.
 - Timeouts do not imply a physical action failed or succeeded. The executor must reconcile the action ID before retrying or resuming.
 - Contract changes require a version bump, compatibility note, and contract-test update before implementation.
+
+## Day-10 MVP contract profile
+
+The full envelope remains the target contract. MVP-001 requires only `schema_version`, `mission_id`, `request_id`, `idempotency_key`/`action_id` for side effects, timestamp/deadline, result/error/retryability, and `component_version`. `trace_id` may equal `mission_id`; evidence references and extended metadata are added only when the relevant boundary exists. In-process fixtures must declare `source_kind: mock` in their result payload.
+
+## ROS 2 / VLA control ownership and reconciliation
+
+- The Agent proposes an approved semantic capability only. It cannot emit a pose, path, trajectory, ROS command, controller command, or unvalidated action chunk.
+- The navigation contract accepts an allowlisted `destination_id`; the deterministic adapter maps it to a Nav2 goal. Nav2 owns local planning, controller operation, configured recoveries, and lifecycle. The mission executor owns business retry/reassignment/HITL after a typed terminal result.
+- The manipulation contract uses MoveIt for named staging poses, planning scene/collision validation, pre-grasp/retreat, and trajectory execution; `ros2_control` owns controller and hardware lifecycle. A VLA policy operates only inside the explicitly approved skill/workspace boundary and cannot bypass those gates.
+- Every physical side effect has an `action_id` with durable states `requested`, `running`, `succeeded`, `failed`, `unknown`, and `reconciled`. A timeout/restart transitions to `unknown`; the executor must query the adapter's action status and record `reconciled` before a retry, resume, or escalation. The Agent cannot infer or select the physical outcome.

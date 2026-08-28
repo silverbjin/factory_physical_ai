@@ -28,7 +28,7 @@ API latency/cost/availability become dependencies; fake-provider tests cannot es
 
 ## MVP usage
 
-Fake provider by default; real API opt-in only with explicit local credentials and budget.
+Fake provider by default; real API opt-in only with explicit local credentials and budget. A real provider is not a Day-10 MVP dependency.
 
 ## Final usage
 
@@ -40,4 +40,4 @@ No provider SDK or credentials were inspected. OpenAI documents custom function 
 
 ## Review trigger
 
-Run a credential-safe structured-tool smoke test and measure latency/cost before accepting a specific model default.
+Run a credential-safe structured-tool smoke test and record safe model/version, latency, token/cost fields when supplied, and failure category before accepting a specific model default, a real-provider demo, or an Agent benchmark claim.

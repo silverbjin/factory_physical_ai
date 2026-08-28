@@ -10,7 +10,7 @@ The portfolio needs direct VLA fine-tuning and dataset iteration. Current host h
 
 ## Decision
 
-Propose LeRobot with the `smolvla` extra and `lerobot/smolvla_base` as the initial VLA candidate. Store versioned local dataset manifests and run metadata; fine-tune only on an approved CUDA host. Keep an ACT baseline as a contingency, not a parallel model program.
+Propose LeRobot with the `smolvla` extra and `lerobot/smolvla_base` as the initial VLA candidate. Store versioned local dataset manifests and run metadata; fine-tune only on an approved CUDA host. Keep an ACT baseline as a contingency, not a parallel model program. Before Dataset V1, complete a time-boxed VLA readiness decision: `GO` requires documented GPU/VRAM/driver facts, Torch CUDA visibility, LeRobot import, selected manipulator/camera path, and approved cost; `NO-GO` blocks Dataset V1/training and is escalated rather than replaced by synthetic evidence.
 
 ## Alternatives
 
@@ -40,4 +40,4 @@ Fine-tuned SmolVLA deployed behind a versioned VLA Skill contract with dataset/c
 
 ## Review trigger
 
-Accept after isolated install/import, CUDA visibility, selected dataset recorder, and a non-training policy/config smoke validation. Reconsider to ACT if the declared GPU budget cannot support the selected route.
+Accept after the VLA readiness `GO` criteria, isolated install/import, selected dataset recorder, and a non-training policy/config smoke validation. Complete the decision within two focused working days of beginning the VLA readiness task; reconsider ACT only if the documented GPU budget cannot support SmolVLA.

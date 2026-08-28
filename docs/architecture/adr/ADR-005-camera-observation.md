@@ -10,7 +10,7 @@ VLA needs timestamped image and robot-state observations, while verification nee
 
 ## Decision
 
-Use one fixed external RGB camera for V1 at 640x480, 30 FPS, with monotonic capture timestamps. LeRobot/OpenCV owns VLA recording; a versioned observation adapter provides selected frames/metadata to ROS verification when needed. Record extrinsic/intrinsic calibration and clock-source metadata; a wrist camera is out of V1.
+Use one fixed external RGB camera for V1, with 640x480 at 30 FPS as a starting hypothesis rather than a verified requirement. LeRobot/OpenCV owns VLA recording; a versioned observation adapter provides selected frames/metadata to ROS verification when needed. Record extrinsic/intrinsic calibration and clock-source metadata; a wrist camera is out of V1.
 
 ## Alternatives
 
@@ -40,4 +40,4 @@ No `/dev/video*` device or `v4l2-ctl` was observed. LeRobot SmolVLA documentatio
 
 ## Review trigger
 
-Accept after capture enumeration, frame-rate/timestamp test, calibration manifest, and a short supervised recording.
+Accept after capture enumeration, measured frame-rate/timestamp alignment, calibration manifest, storage-bandwidth check, and a short supervised recording.

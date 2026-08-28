@@ -12,7 +12,7 @@
 | Python | CPython 3.12.3; ROS Python integration is present | Verified. Project runtime will be an isolated Python 3.12 virtual environment after baseline tooling is added. |
 | Node | Node.js 18.19.1 / npm 9.2.0 | Verified; optional only, not an MVP dependency. |
 | Git | 2.43.0 | Verified. |
-| ROS 2 | ROS 2 Jazzy, Fast DDS (`rmw_fastrtps_cpp`); `rclpy`, `rviz2`, and `robot_state_publisher` installed | Verified. `nav2_bringup`, TurtleBot, Gazebo, and simulator packages were not found. |
+| ROS 2 | ROS 2 Jazzy, Fast DDS (`rmw_fastrtps_cpp`); `rclpy`, `rviz2`, `robot_state_publisher`, Nav2 components/commander, MoveIt 2, `ros2_control`, `robot_localization`, diagnostics tooling, and Gazebo `gz sim` are installed | Verified by P0-002 package/executable inspection. This is reusable capability, not evidence of a configured robot, map, controller, or hardware connection. |
 | Docker | Docker CLI 29.6.1 is installed; daemon access is denied for the current user | CLI verified; image/service smoke tests are blocked until Docker access is granted. No image was pulled. |
 | Python packages | `prometheus_client` and `rclpy` import; `torch`, `lerobot`, `langgraph`, `pydantic`, `sqlalchemy`, and OpenTelemetry were not installed in the system interpreter | Verified. Do not use the system interpreter as the application environment. |
 | Physical devices | No `/dev/video*`, `/dev/ttyUSB*`, or `/dev/ttyACM*` devices observed; `lsusb` and `v4l2-ctl` unavailable | No camera or manipulator was verified. WSL USB passthrough, if needed, is `TBD`. |
@@ -29,7 +29,7 @@ The project deliberately separates a development/control plane from a future rob
 | VLA data tools and inference | Not enabled until hardware readiness gate | Robot-adjacent GPU edge PC, or a controlled remote inference service |
 | VLA fine-tuning | Not feasible on verified local state | Approved cloud/remote CUDA host with recorded GPU, cost, and dependency evidence |
 | ROS 2 drivers, camera capture, motion | Dry-run/mock only | Native Linux robot PC; never inside an unvalidated WSL hardware path |
-| PostgreSQL / telemetry | Not enabled in MVP | Containerized service host after Docker-access gate |
+| PostgreSQL / telemetry | SQLite + JSONL evidence; no Docker dependency | PostgreSQL and collector stack only for concurrent/multi-service deployment claims |
 
 ## Chosen package and tooling strategy
 
@@ -59,7 +59,7 @@ telemetry collector                              AMR / manipulator adapters
 
 ## Constraints and validation gates
 
-1. **GPU gate:** WSL/host GPU access must be restored; record GPU model, driver, CUDA availability, VRAM, and a `torch.cuda.is_available()` result before VLA install/training.
+1. **VLA readiness gate:** before Dataset V1 work, time-box a GPU/hardware decision. A `GO` requires a documented CUDA host, GPU/VRAM/driver facts, Torch CUDA visibility, LeRobot import, selected manipulator/camera path, and approved training budget. A `NO-GO` blocks Dataset V1/training rather than substituting synthetic VLA evidence; the mocked Agent MVP continues independently.
 2. **Docker gate:** grant scoped Docker daemon access or use a supported remote daemon before Compose-based services are adopted.
 3. **hardware gate:** enumerate and identify a leader/follower manipulator, camera, and safety stop; then run no-motion connectivity checks before any calibration or teleoperation.
 4. **ROS network gate:** run native-PC ROS discovery and namespaced dry-run checks on the actual robot network.

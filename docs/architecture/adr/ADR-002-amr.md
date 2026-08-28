@@ -6,11 +6,11 @@ Accepted for MVP; final hardware selection deferred.
 
 ## Context
 
-The business scenario needs navigation state and failure recovery, but Phase 0 found ROS 2 Jazzy without Nav2, TurtleBot, or an AMR device.
+The business scenario needs navigation state and failure recovery. P0-002 verified ROS 2 Jazzy with Nav2 components, `nav2_simple_commander`, and minimal TB3/TB4 simulation packages, but no AMR device, map, controller configuration, or native robot-PC validation.
 
 ## Decision
 
-Use a deterministic navigation-skill mock for Day-10 and Agent evaluation. Target a minimal native ROS 2 Nav2/simulator or available AMR adapter only after the Agent vertical slice is proven.
+Use a deterministic navigation-skill mock for Day-10 and Agent evaluation. For later integration, reuse installed Nav2 through an adapter that accepts only allowlisted named destinations. Nav2 owns local execution/recovery/lifecycle; the mission executor owns business retry, reassignment, and HITL after a typed terminal result.
 
 ## Alternatives
 
@@ -36,7 +36,7 @@ Adapter to a native ROS 2 navigation stack with health and arrival verification.
 
 ## Validation evidence
 
-Environment verification found ROS 2 Jazzy and no Nav2/TurtleBot packages or robot device.
+P0-002 package/executable inspection verified Nav2 components, `nav2_simple_commander`, and minimal TB3/TB4 simulation packages. It verified no robot device or configured navigation environment.
 
 ## Review trigger
 
