@@ -9,6 +9,9 @@ from datetime import datetime, timedelta
 from pathlib import Path
 from uuid import UUID
 
+from factory_tools import ToolResultKind
+
+from .normal import NormalRun
 from .recovery import AttemptedToolCall, RecoveryRun
 from .state import ActionRecord, ActionStatus, MissionStatus
 
@@ -285,6 +288,120 @@ class MissionLifecycleStore:
                 )
         return summary
 
+    def persist_normal_run(
+        self,
+        run: NormalRun,
+        *,
+        run_id: str,
+        started_at: str,
+        completed_at: str,
+    ) -> dict[str, object]:
+        """Persist the single canonical normal path without enabling recovery behavior."""
+        _identifier(run_id, "run_id")
+        started = _utc_timestamp(started_at, "started_at")
+        completed = _utc_timestamp(completed_at, "completed_at")
+        if completed < started:
+            raise PersistenceValidationError("completed_at must not precede started_at")
+        self._validate_normal_run(run)
+
+        duration_ms = int((completed - started).total_seconds() * 1000)
+        summary = {
+            "schema_version": "v1",
+            "run_id": run_id,
+            "operator_text": run.operator_text,
+            "mission_id": run.mission.mission_id,
+            "action_ids": [run.action.action_id],
+            "part_id": run.mission_request.part_id,
+            "quantity": run.mission_request.quantity,
+            "destination": run.mission_request.destination,
+            "source_location": run.inventory.source_location,
+            "attempted_calls": [self._call_dict(call) for call in run.attempted_calls],
+            "mission_result": run.mission.status.value,
+            "tool_call_valid": True,
+            "state_transitions": {
+                "mission": [state.value for state in run.mission_state_sequence],
+                "actions": {run.action.action_id: [state.value for state in run.action_state_sequence]},
+            },
+            "timeout_detected": False,
+            "reconciliation_performed": False,
+            "retry_budget": 1,
+            "retry_count": 0,
+            "recovery_result": "NOT_REQUIRED",
+            "hitl_escalated": False,
+            "mission_duration_ms": duration_ms,
+            "error_category": None,
+            "component_versions": {
+                "factory_agent": "mvp-001",
+                "mission_runtime": "mvp-006",
+                "factory_tool_gateway": run.transfer.component_version,
+            },
+            "started_at": started_at,
+            "completed_at": completed_at,
+        }
+        events = self._normal_events(run, run_id, started_at, completed_at)
+        with self._connection:
+            self._connection.execute(
+                """INSERT INTO runs VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                (
+                    run_id,
+                    run.mission.mission_id,
+                    run.mission.status.value,
+                    1,
+                    0,
+                    0,
+                    1,
+                    0,
+                    "NOT_REQUIRED",
+                    0,
+                    duration_ms,
+                    None,
+                    json.dumps(summary["component_versions"], sort_keys=True),
+                    started_at,
+                    completed_at,
+                ),
+            )
+            self._connection.execute(
+                "INSERT INTO missions VALUES (?, ?, ?, ?)",
+                (run_id, run.mission.mission_id, run.mission.status.value, 0),
+            )
+            self._connection.execute(
+                "INSERT INTO actions VALUES (?, ?, ?, ?, ?, ?, ?)",
+                (
+                    run_id,
+                    run.action.action_id,
+                    run.action.mission_id,
+                    run.action.idempotency_key,
+                    run.action.status.value,
+                    run.action.deadline,
+                    run.action.component_version,
+                ),
+            )
+            for ordinal, status in enumerate(run.mission_state_sequence):
+                self._connection.execute(
+                    "INSERT INTO mission_transitions VALUES (?, ?, ?, ?)",
+                    (run_id, ordinal, status.value, completed_at),
+                )
+            self._persist_action_states(run_id, run.action, run.action_state_sequence, completed_at)
+            for ordinal, call in enumerate(run.attempted_calls):
+                self._connection.execute(
+                    "INSERT INTO attempted_calls VALUES (?, ?, ?, ?, ?, ?, ?)",
+                    (
+                        run_id,
+                        ordinal,
+                        call.request_id,
+                        call.action_id,
+                        call.operation,
+                        call.component_version,
+                        call.timestamp,
+                    ),
+                )
+            for ordinal, event in enumerate(events):
+                self._connection.execute(
+                    "INSERT INTO events VALUES (?, ?, ?, ?, ?)",
+                    (run_id, ordinal, event["event_type"], event.get("action_id"), json.dumps(event, sort_keys=True)),
+                )
+        return summary
+
     @staticmethod
     def _call_dict(call: AttemptedToolCall) -> dict[str, str]:
         return {
@@ -311,6 +428,65 @@ class MissionLifecycleStore:
             _identifier(call.component_version, "component_version")
             _utc_timestamp(call.timestamp, "attempted_call.timestamp")
         return run.attempted_calls
+
+    @staticmethod
+    def _validate_normal_run(run: NormalRun) -> None:
+        request = run.mission_request
+        if (
+            run.operator_text != "Line B에 Brake ECU Type-B 1개를 공급해줘."
+            or request.part_id != "Brake ECU Type-B"
+            or request.quantity != 1
+            or request.destination != "Line B"
+            or run.mission.status is not MissionStatus.COMPLETED
+            or run.mission.retry_count != 0
+            or run.action.status is not ActionStatus.SUCCEEDED
+            or run.inventory.result is not ToolResultKind.SUCCESS
+            or run.inventory.source_location != "Rack A19"
+            or run.transfer.result is not ToolResultKind.SUCCESS
+            or run.transfer.status is not ActionStatus.SUCCEEDED
+        ):
+            raise PersistenceValidationError("canonical normal E2E result is required")
+        if (
+            run.mission.mission_id != request.mission_id
+            or run.action.mission_id != request.mission_id
+            or run.inventory.mission_id != request.mission_id
+            or run.transfer.mission_id != request.mission_id
+        ):
+            raise PersistenceValidationError("normal E2E component correlation is invalid")
+        if run.transfer.action_id != run.action.action_id or run.transfer.idempotency_key != run.action.idempotency_key:
+            raise PersistenceValidationError("normal E2E transfer correlation is invalid")
+        if run.mission_state_sequence != (
+            MissionStatus.CREATED,
+            MissionStatus.READY,
+            MissionStatus.EXECUTING,
+            MissionStatus.COMPLETED,
+        ):
+            raise PersistenceValidationError("normal E2E mission transition sequence is invalid")
+        if run.action_state_sequence != (
+            ActionStatus.REQUESTED,
+            ActionStatus.EXECUTING,
+            ActionStatus.SUCCEEDED,
+        ):
+            raise PersistenceValidationError("normal E2E action transition sequence is invalid")
+        expected = ((run.action.action_id, "query_inventory"), (run.action.action_id, "transfer_part"))
+        if len(run.attempted_calls) != len(expected):
+            raise PersistenceValidationError("normal E2E requires one inventory query and one transfer attempt")
+        inventory_call, transfer_call = run.attempted_calls
+        if (
+            inventory_call.request_id != run.inventory.request_id
+            or inventory_call.component_version != run.inventory.component_version
+            or inventory_call.timestamp != run.inventory.timestamp
+            or transfer_call.request_id != run.transfer.request_id
+            or transfer_call.component_version != run.transfer.component_version
+            or transfer_call.timestamp != run.transfer.timestamp
+        ):
+            raise PersistenceValidationError("normal E2E attempted-call correlation is invalid")
+        for call, (action_id, operation) in zip(run.attempted_calls, expected, strict=True):
+            _uuid(call.request_id, "request_id")
+            if call.action_id != action_id or call.operation != operation:
+                raise PersistenceValidationError("normal E2E attempted tool call is invalid")
+            _identifier(call.component_version, "component_version")
+            _utc_timestamp(call.timestamp, "attempted_call.timestamp")
 
     def _persist_action_states(
         self, run_id: str, action: ActionRecord, states: tuple[ActionStatus, ...], timestamp: str
@@ -369,6 +545,41 @@ class MissionLifecycleStore:
                 "timestamp": completed_at,
                 "status": run.mission.status.value,
                 "retry_count": run.mission.retry_count,
+            },
+        )
+
+    @staticmethod
+    def _normal_events(
+        run: NormalRun,
+        run_id: str,
+        started_at: str,
+        completed_at: str,
+    ) -> tuple[dict[str, object], ...]:
+        inventory_call, transfer_call = run.attempted_calls
+        return (
+            {
+                "schema_version": "v1",
+                "run_id": run_id,
+                "mission_id": run.mission.mission_id,
+                **MissionLifecycleStore._call_dict(inventory_call),
+                "event_type": "inventory_resolved",
+                "timestamp": started_at,
+                "part_id": run.mission_request.part_id,
+                "quantity": run.mission_request.quantity,
+                "source_location": run.inventory.source_location,
+                "source_kind": run.inventory.source_kind,
+            },
+            {
+                "schema_version": "v1",
+                "run_id": run_id,
+                "mission_id": run.mission.mission_id,
+                **MissionLifecycleStore._call_dict(transfer_call),
+                "event_type": "transfer_succeeded",
+                "timestamp": completed_at,
+                "idempotency_key": run.action.idempotency_key,
+                "destination": run.mission_request.destination,
+                "status": run.transfer.status.value,
+                "source_kind": run.transfer.source_kind,
             },
         )
 
@@ -487,3 +698,61 @@ def write_run_artifacts(
         summary_path=summary_path,
         summary=summary,
     )
+
+
+def write_normal_run_artifacts(
+    run: NormalRun,
+    *,
+    run_root: Path,
+    run_id: str,
+    started_at: str,
+    completed_at: str,
+) -> RunArtifacts:
+    """Write normal-path SQLite/JSONL/JSON artifacts under the standard run directory."""
+    if run_root.name != run_id:
+        raise PersistenceValidationError("run_root directory name must equal run_id")
+    store = MissionLifecycleStore(run_root / "lifecycle.sqlite3")
+    try:
+        summary = store.persist_normal_run(
+            run,
+            run_id=run_id,
+            started_at=started_at,
+            completed_at=completed_at,
+        )
+        events = store._connection.execute(
+            "SELECT payload_json FROM events WHERE run_id = ? ORDER BY ordinal", (run_id,)
+        ).fetchall()
+    finally:
+        store.close()
+    trace_path = run_root / "trace.jsonl"
+    summary_path = run_root / "summary.json"
+    with trace_path.open("w", encoding="utf-8") as trace_file:
+        for event in events:
+            trace_file.write(event["payload_json"] + "\n")
+    with summary_path.open("w", encoding="utf-8") as summary_file:
+        json.dump(summary, summary_file, indent=2, sort_keys=True)
+        summary_file.write("\n")
+    return RunArtifacts(
+        run_id=run_id,
+        database_path=run_root / "lifecycle.sqlite3",
+        trace_path=trace_path,
+        summary_path=summary_path,
+        summary=summary,
+    )
+
+
+def write_normal_e2e_latest(artifacts: RunArtifacts, output_path: Path) -> Path:
+    """Write the task-required latest normal E2E evidence with artifact references."""
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    payload = {
+        **artifacts.summary,
+        "artifact_paths": {
+            "sqlite": str(artifacts.database_path),
+            "trace_jsonl": str(artifacts.trace_path),
+            "summary_json": str(artifacts.summary_path),
+        },
+    }
+    with output_path.open("w", encoding="utf-8") as output_file:
+        json.dump(payload, output_file, indent=2, sort_keys=True)
+        output_file.write("\n")
+    return output_path

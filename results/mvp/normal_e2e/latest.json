@@ -1,0 +1,66 @@
+{
+  "action_ids": [
+    "33ce8e48-98dd-4cc2-9618-59cf77f17eb9"
+  ],
+  "artifact_paths": {
+    "sqlite": "results/mvp/runs/mvp-006-canonical-normal-20260829T000000Z-fix1/lifecycle.sqlite3",
+    "summary_json": "results/mvp/runs/mvp-006-canonical-normal-20260829T000000Z-fix1/summary.json",
+    "trace_jsonl": "results/mvp/runs/mvp-006-canonical-normal-20260829T000000Z-fix1/trace.jsonl"
+  },
+  "attempted_calls": [
+    {
+      "action_id": "33ce8e48-98dd-4cc2-9618-59cf77f17eb9",
+      "component_version": "mvp-003",
+      "operation": "query_inventory",
+      "request_id": "9fb6583f-7997-48fa-a41c-a10bd5714507",
+      "timestamp": "2026-08-29T00:00:00Z"
+    },
+    {
+      "action_id": "33ce8e48-98dd-4cc2-9618-59cf77f17eb9",
+      "component_version": "mvp-003",
+      "operation": "transfer_part",
+      "request_id": "e0354a9f-743f-4e01-a18c-4c0a03e4f5d4",
+      "timestamp": "2026-08-29T00:00:00Z"
+    }
+  ],
+  "completed_at": "2026-08-29T00:00:05Z",
+  "component_versions": {
+    "factory_agent": "mvp-001",
+    "factory_tool_gateway": "mvp-003",
+    "mission_runtime": "mvp-006"
+  },
+  "destination": "Line B",
+  "error_category": null,
+  "hitl_escalated": false,
+  "mission_duration_ms": 5000,
+  "mission_id": "0d47cf1c-31c9-4f80-a8ac-6bd1a8726194",
+  "mission_result": "COMPLETED",
+  "operator_text": "Line B\uc5d0 Brake ECU Type-B 1\uac1c\ub97c \uacf5\uae09\ud574\uc918.",
+  "part_id": "Brake ECU Type-B",
+  "quantity": 1,
+  "reconciliation_performed": false,
+  "recovery_result": "NOT_REQUIRED",
+  "retry_budget": 1,
+  "retry_count": 0,
+  "run_id": "mvp-006-canonical-normal-20260829T000000Z-fix1",
+  "schema_version": "v1",
+  "source_location": "Rack A19",
+  "started_at": "2026-08-29T00:00:00Z",
+  "state_transitions": {
+    "actions": {
+      "33ce8e48-98dd-4cc2-9618-59cf77f17eb9": [
+        "REQUESTED",
+        "EXECUTING",
+        "SUCCEEDED"
+      ]
+    },
+    "mission": [
+      "CREATED",
+      "READY",
+      "EXECUTING",
+      "COMPLETED"
+    ]
+  },
+  "timeout_detected": false,
+  "tool_call_valid": true
+}

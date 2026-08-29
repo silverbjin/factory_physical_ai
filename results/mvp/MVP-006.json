@@ -1,0 +1,114 @@
+{
+  "schema_version": "1.0",
+  "task": "TASK-MVP-006",
+  "status": "PASS",
+  "validation_timestamp": "2026-08-28T18:00:59Z",
+  "base_commit": "4f88083c7527abc99a9b91f95198f1844172ee19",
+  "workspace_state": {
+    "mvp_006_changes_committed": false,
+    "modified_task_files": [
+      "src/mission_runtime/normal.py",
+      "src/mission_runtime/persistence.py",
+      "tests/test_normal_e2e.py",
+      "results/mvp/normal_e2e/latest.json",
+      "results/mvp/runs/mvp-006-canonical-normal-20260829T000000Z/lifecycle.sqlite3",
+      "results/mvp/runs/mvp-006-canonical-normal-20260829T000000Z/trace.jsonl",
+      "results/mvp/runs/mvp-006-canonical-normal-20260829T000000Z/summary.json",
+      "results/mvp/runs/mvp-006-canonical-normal-20260829T000000Z-fix1/lifecycle.sqlite3",
+      "results/mvp/runs/mvp-006-canonical-normal-20260829T000000Z-fix1/trace.jsonl",
+      "results/mvp/runs/mvp-006-canonical-normal-20260829T000000Z-fix1/summary.json",
+      "results/mvp/MVP-006.json"
+    ]
+  },
+  "scope": "One deterministic normal-path run from canonical Korean operator text through FactoryAgent, mock inventory and mock Robot Skill, mission completion, SQLite, and JSONL/JSON evidence.",
+  "source_files": [
+    {
+      "path": "src/mission_runtime/normal.py",
+      "sha256": "cf3daf1c170118a5e24ff4e5bd77d2e247fcb719c5759d0bec5351720bae600a"
+    },
+    {
+      "path": "src/mission_runtime/persistence.py",
+      "sha256": "9f60a6097d99742cb010f7d953a3bcac808a84223877f698a673f6c67afa85f9"
+    },
+    {
+      "path": "tests/test_normal_e2e.py",
+      "sha256": "18116d1de61cb1da5b44a234ab1dfac84c9615b80cacfed45043a63c69de5495"
+    }
+  ],
+  "normal_run": {
+    "run_id": "mvp-006-canonical-normal-20260829T000000Z-fix1",
+    "operator_text": "Line B에 Brake ECU Type-B 1개를 공급해줘.",
+    "mission_id": "0d47cf1c-31c9-4f80-a8ac-6bd1a8726194",
+    "action_id": "33ce8e48-98dd-4cc2-9618-59cf77f17eb9",
+    "part_id": "Brake ECU Type-B",
+    "quantity": 1,
+    "destination": "Line B",
+    "source_location": "Rack A19",
+    "logical_transfer_count": 1,
+    "mission_result": "COMPLETED",
+    "timeout_detected": false,
+    "reconciliation_performed": false,
+    "retry_count": 0,
+    "no_failure_fixture_enabled": true,
+    "tool_call_valid": true,
+    "state_transitions": {
+      "mission": ["CREATED", "READY", "EXECUTING", "COMPLETED"],
+      "action": ["REQUESTED", "EXECUTING", "SUCCEEDED"]
+    }
+  },
+  "run_artifacts": {
+    "latest": {
+      "path": "results/mvp/normal_e2e/latest.json",
+      "sha256": "9cf0d05690e444da778c8c71aa8995f3736ac678e32ec33914252be19a720b7a"
+    },
+    "database": {
+      "path": "results/mvp/runs/mvp-006-canonical-normal-20260829T000000Z-fix1/lifecycle.sqlite3",
+      "sha256": "a78555c2ce1ed194ba976bcd69734cde4ea249cca5545ff41acd8b49e1fb3417"
+    },
+    "trace_jsonl": {
+      "path": "results/mvp/runs/mvp-006-canonical-normal-20260829T000000Z-fix1/trace.jsonl",
+      "sha256": "dce0b947e690dc9d53b76dd32c63c812240ec90ee76c66e6b6a2032aa4d0ad69"
+    },
+    "summary_json": {
+      "path": "results/mvp/runs/mvp-006-canonical-normal-20260829T000000Z-fix1/summary.json",
+      "sha256": "22c125aa5d977654a435255c8b8d87f30e61b6f371da2da64773ef691ca472ee"
+    }
+  },
+  "focused_test_result": {
+    "command": "PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=src python3 -m unittest tests/test_normal_e2e.py -v",
+    "status": "PASS",
+    "tests_run": 3,
+    "tests_passed": 3,
+    "tests_failed": 0
+  },
+  "regression_test_result": {
+    "command": "PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=src python3 -m unittest discover -s tests -v",
+    "status": "PASS",
+    "tests_run": 47,
+    "tests_passed": 47,
+    "tests_failed": 0
+  },
+  "compile_check": {
+    "command": "PYTHONPYCACHEPREFIX=<temporary-directory> python3 -m compileall -q src tests",
+    "status": "PASS"
+  },
+  "integrity_verification": {
+    "method": "git diff --check; JSON and JSONL parsing; SQLite reload; SHA-256 verification of source/test/run artifacts",
+    "status": "PASS"
+  },
+  "exit_criteria": {
+    "normal_mission_passes_from_text_input_through_evidence_output": "PASS",
+    "no_failure_fixture_is_enabled": "PASS",
+    "one_transfer_only": "PASS",
+    "final_state_completed": "PASS",
+    "regression_tests_from_mvp_001_to_005_pass": "PASS"
+  },
+  "review_findings": {
+    "TASK-MVP-006-REV-H01": "FIXED: normal-run persistence now cross-checks attempted-call request_id/component_version/timestamp against typed inventory and transfer results, validates success results and mission/action correlation, and rejects tampered runs with PersistenceValidationError."
+  },
+  "limitations": [
+    "This is a deterministic fixture-derived software run, not physical robot execution or a performance measurement.",
+    "No timeout/recovery behavior is enabled for this normal-path task.",
+    "No ROS 2, Nav2, MoveIt, VLA, real WMS, hosted provider, Docker, PostgreSQL, telemetry stack, or MVP-007 behavior was implemented."
+  ]
+}
