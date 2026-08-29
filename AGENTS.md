@@ -619,3 +619,21 @@ Implement <TASK_ID>  → single-task Implementation
 Fix <TASK_ID>        → single-task Fix
 Run MVP              → automated MVP-001~008 orchestration
 ```
+
+
+### 7. MVP Portfolio Route
+
+When the user's entire prompt is exactly:
+
+```text
+Build MVP Portfolio
+```
+
+then:
+
+1. Read `prompts/codex/mvp_portfolio.md` in full.
+2. Build the portfolio package from the completed MVP repository.
+3. Read actual TASK history, Evidence, architecture/contracts, and Git history.
+4. Create/update only `docs/portfolio/mvp/`.
+5. Do not modify implementation, tests, evidence, contracts, ADRs, task specs, or Git history.
+6. Do not start Week tasks.
