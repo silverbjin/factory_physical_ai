@@ -1,0 +1,92 @@
+{
+  "action_ids": [
+    "4bca5507-7941-40e4-aac5-7d8a97111b08",
+    "078ded37-76b9-4303-a4f7-042373ac4200"
+  ],
+  "artifact_paths": {
+    "sqlite": "results/mvp/runs/mvp-007-canonical-failure-recovery-20260829T000000Z-fix1/lifecycle.sqlite3",
+    "summary_json": "results/mvp/runs/mvp-007-canonical-failure-recovery-20260829T000000Z-fix1/summary.json",
+    "trace_jsonl": "results/mvp/runs/mvp-007-canonical-failure-recovery-20260829T000000Z-fix1/trace.jsonl"
+  },
+  "attempted_calls": [
+    {
+      "action_id": "4bca5507-7941-40e4-aac5-7d8a97111b08",
+      "component_version": "mvp-003",
+      "operation": "transfer_part",
+      "request_id": "35ae5d55-ca49-4962-ba84-2d0093e46f7f",
+      "timestamp": "2026-08-29T00:00:00Z"
+    },
+    {
+      "action_id": "4bca5507-7941-40e4-aac5-7d8a97111b08",
+      "component_version": "mvp-003",
+      "operation": "get_action_status",
+      "request_id": "e48b780f-bd36-45ff-9d77-c350cc004d4f",
+      "timestamp": "2026-08-29T00:00:00Z"
+    },
+    {
+      "action_id": "078ded37-76b9-4303-a4f7-042373ac4200",
+      "component_version": "mvp-003",
+      "operation": "transfer_part",
+      "request_id": "4a9de93e-f590-4b6b-9f60-fb24eb4464c6",
+      "timestamp": "2026-08-29T00:00:00Z"
+    }
+  ],
+  "completed_at": "2026-08-29T00:00:05Z",
+  "component_versions": {
+    "factory_tool_gateway": "mvp-003",
+    "mission_runtime": "mvp-005",
+    "recovery_coordinator": "mvp-004"
+  },
+  "destination": "Line B",
+  "error_category": "DEPENDENCY_TIMEOUT",
+  "extra_execution_count": 0,
+  "hitl_escalated": false,
+  "inventory": {
+    "available_quantity": 1,
+    "component_version": "mvp-003",
+    "request_id": "9fb6583f-7997-48fa-a41c-a10bd5714507",
+    "source_kind": "mock",
+    "source_location": "Rack A19"
+  },
+  "logical_transfer_count": 2,
+  "mission_duration_ms": 5000,
+  "mission_id": "0d47cf1c-31c9-4f80-a8ac-6bd1a8726194",
+  "mission_result": "COMPLETED",
+  "operator_text": "Line B\uc5d0 Brake ECU Type-B 1\uac1c\ub97c \uacf5\uae09\ud574\uc918.",
+  "part_id": "Brake ECU Type-B",
+  "quantity": 1,
+  "reconciliation_performed": true,
+  "recovery_result": "SUCCEEDED",
+  "retry_budget": 1,
+  "retry_count": 1,
+  "run_id": "mvp-007-canonical-failure-recovery-20260829T000000Z-fix1",
+  "schema_version": "v1",
+  "started_at": "2026-08-29T00:00:00Z",
+  "state_transitions": {
+    "actions": {
+      "078ded37-76b9-4303-a4f7-042373ac4200": [
+        "REQUESTED",
+        "EXECUTING",
+        "SUCCEEDED"
+      ],
+      "4bca5507-7941-40e4-aac5-7d8a97111b08": [
+        "REQUESTED",
+        "EXECUTING",
+        "UNKNOWN",
+        "RECONCILING",
+        "FAILED"
+      ]
+    },
+    "mission": [
+      "CREATED",
+      "READY",
+      "EXECUTING",
+      "RECONCILING",
+      "RECOVERING",
+      "EXECUTING",
+      "COMPLETED"
+    ]
+  },
+  "timeout_detected": true,
+  "tool_call_valid": true
+}

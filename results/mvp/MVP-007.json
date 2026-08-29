@@ -1,0 +1,126 @@
+{
+  "schema_version": "1.0",
+  "task": "TASK-MVP-007",
+  "status": "PASS",
+  "validation_timestamp": "2026-08-29T01:28:19Z",
+  "base_commit": "4f88083c7527abc99a9b91f95198f1844172ee19",
+  "workspace_state": {
+    "mvp_006_and_mvp_007_changes_committed": false,
+    "modified_task_files": [
+      "src/mission_runtime/failure_recovery.py",
+      "tests/test_failure_recovery_e2e.py",
+      "results/mvp/failure_recovery/latest.json",
+      "results/mvp/runs/mvp-007-canonical-failure-recovery-20260829T000000Z/lifecycle.sqlite3",
+      "results/mvp/runs/mvp-007-canonical-failure-recovery-20260829T000000Z/trace.jsonl",
+      "results/mvp/runs/mvp-007-canonical-failure-recovery-20260829T000000Z/summary.json",
+      "results/mvp/MVP-007.json"
+    ],
+    "uncommitted_prerequisite_snapshot": "TASK-MVP-006 normal E2E modules/tests are listed in source_files because this run depends on their uncommitted accepted workspace state."
+  },
+  "scope": "One canonical WMS-success then frozen Robot Skill timeout/reconciliation/one-retry recovery run, using deterministic fakes and existing SQLite/JSONL persistence.",
+  "source_files": [
+    {
+      "path": "src/mission_runtime/normal.py",
+      "sha256": "cf3daf1c170118a5e24ff4e5bd77d2e247fcb719c5759d0bec5351720bae600a"
+    },
+    {
+      "path": "src/mission_runtime/persistence.py",
+      "sha256": "9f60a6097d99742cb010f7d953a3bcac808a84223877f698a673f6c67afa85f9"
+    },
+    {
+      "path": "src/mission_runtime/failure_recovery.py",
+      "sha256": "287aa4766f9128625b91db3054541edc379eba0b48b0dee3524105a859cfa382"
+    },
+    {
+      "path": "tests/test_normal_e2e.py",
+      "sha256": "18116d1de61cb1da5b44a234ab1dfac84c9615b80cacfed45043a63c69de5495"
+    },
+    {
+      "path": "tests/test_failure_recovery_e2e.py",
+      "sha256": "6d05b5a27bbb18292efe9ca8d19edac4cb155b36409a2d53f1b2918d78139c81"
+    }
+  ],
+  "failure_recovery_run": {
+    "run_id": "mvp-007-canonical-failure-recovery-20260829T000000Z-fix1",
+    "operator_text": "Line B에 Brake ECU Type-B 1개를 공급해줘.",
+    "mission_id": "0d47cf1c-31c9-4f80-a8ac-6bd1a8726194",
+    "action_ids": [
+      "4bca5507-7941-40e4-aac5-7d8a97111b08",
+      "078ded37-76b9-4303-a4f7-042373ac4200"
+    ],
+    "part_id": "Brake ECU Type-B",
+    "quantity": 1,
+    "destination": "Line B",
+    "source_location": "Rack A19",
+    "timeout_detected": true,
+    "reconciliation_performed": true,
+    "retry_budget": 1,
+    "retry_count": 1,
+    "recovery_result": "SUCCEEDED",
+    "mission_result": "COMPLETED",
+    "logical_transfer_count": 2,
+    "extra_execution_count": 0,
+    "tool_call_valid": true,
+    "state_transitions": {
+      "mission": ["CREATED", "READY", "EXECUTING", "RECONCILING", "RECOVERING", "EXECUTING", "COMPLETED"],
+      "first_action": ["REQUESTED", "EXECUTING", "UNKNOWN", "RECONCILING", "FAILED"],
+      "retry_action": ["REQUESTED", "EXECUTING", "SUCCEEDED"]
+    }
+  },
+  "run_artifacts": {
+    "latest": {
+      "path": "results/mvp/failure_recovery/latest.json",
+      "sha256": "e731886d24738145a144de5e6d91cc324d60e8ce1e12c4ce4bd8f90198ebce48"
+    },
+    "database": {
+      "path": "results/mvp/runs/mvp-007-canonical-failure-recovery-20260829T000000Z-fix1/lifecycle.sqlite3",
+      "sha256": "6f07c92262d792224d04423bdd67d102ef6fe4377b8d8134b9cdf63967aedff0"
+    },
+    "trace_jsonl": {
+      "path": "results/mvp/runs/mvp-007-canonical-failure-recovery-20260829T000000Z-fix1/trace.jsonl",
+      "sha256": "ecb0313c982279a4f44712a2adc66a8390466210453911f55a2aec152d7cb6cc"
+    },
+    "summary_json": {
+      "path": "results/mvp/runs/mvp-007-canonical-failure-recovery-20260829T000000Z-fix1/summary.json",
+      "sha256": "f75104f3d04fe03d7449434ffcc65b794a9f2595d3ea094b6e94862c314619b6"
+    }
+  },
+  "focused_test_result": {
+    "command": "PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=src python3 -m unittest tests/test_failure_recovery_e2e.py -v",
+    "status": "PASS",
+    "tests_run": 3,
+    "tests_passed": 3,
+    "tests_failed": 0
+  },
+  "regression_test_result": {
+    "command": "PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=src python3 -m unittest discover -s tests -v",
+    "status": "PASS",
+    "tests_run": 50,
+    "tests_passed": 50,
+    "tests_failed": 0
+  },
+  "compile_check": {
+    "command": "PYTHONPYCACHEPREFIX=<temporary-directory> python3 -m compileall -q src tests",
+    "status": "PASS"
+  },
+  "integrity_verification": {
+    "method": "git diff --check; JSON and JSONL parsing; SQLite transition query; SHA-256 verification of source/test/run artifacts",
+    "status": "PASS"
+  },
+  "exit_criteria": {
+    "exactly_one_failure_injected": "PASS",
+    "exactly_one_recovery_attempt": "PASS",
+    "reconciliation_precedes_retry": "PASS",
+    "final_mission_completes": "PASS",
+    "evidence_proves_sequence": "PASS",
+    "all_previous_regression_tests_pass": "PASS"
+  },
+  "review_findings": {
+    "TASK-MVP-007-REV-H01": "FIXED: E2E wrapper retains immutable inventory attempted-call metadata and cross-checks it with typed inventory/recovery/artifact summary correlation before writing evidence."
+  },
+  "limitations": [
+    "This is a deterministic fixture-derived software run, not physical robot execution or a measured operational recovery rate.",
+    "The only enabled failure is the frozen ambiguous Robot Skill timeout; no inventory mismatch, PHM, navigation, VLA, or other failure scenario is included.",
+    "No ROS 2, Nav2, MoveIt, VLA, real WMS, hosted provider, Docker, PostgreSQL, telemetry stack, or MVP-008 behavior was implemented."
+  ]
+}
