@@ -1,0 +1,440 @@
+{
+  "schema_version": "1.0",
+  "task": "TASK-P0-004",
+  "status": "NO_GO",
+  "generated_at": "2026-08-30T14:13:43.158445Z",
+  "git": {
+    "commit": "0c8409781bc8251bea228516f970678a4ced0066",
+    "branch": "task/p0-004-vla-readiness"
+  },
+  "host": {
+    "os": "Ubuntu 24.04.4 LTS",
+    "distribution_id": "ubuntu",
+    "distribution_version": "24.04",
+    "kernel": "6.18.33.2-microsoft-standard-WSL2",
+    "machine": "x86_64",
+    "is_wsl": true,
+    "logical_cpu_count": 8,
+    "memory": {
+      "source": "/proc/meminfo",
+      "total_bytes": 16615333888,
+      "available_bytes": 14172033024,
+      "swap_total_bytes": 4294967296,
+      "swap_free_bytes": 4294967296
+    },
+    "disk": {
+      "path": "/home/jinho/projects/factory_physical_ai_p0_004",
+      "total_bytes": 1081101176832,
+      "used_bytes": 42372546560,
+      "free_bytes": 983736274944
+    },
+    "environment_variables": {
+      "VIRTUAL_ENV": {
+        "set": false
+      },
+      "CONDA_PREFIX": {
+        "set": false
+      },
+      "CUDA_VISIBLE_DEVICES": {
+        "set": false
+      },
+      "ROS_DISTRO": {
+        "set": false
+      },
+      "ROS_DOMAIN_ID": {
+        "set": false
+      },
+      "VLA_DATASET_ROOT": {
+        "set": false
+      },
+      "HF_HOME": {
+        "set": false
+      },
+      "HF_TOKEN": {
+        "set": false
+      },
+      "HUGGING_FACE_HUB_TOKEN": {
+        "set": false
+      }
+    }
+  },
+  "python": {
+    "implementation": "CPython",
+    "version": "3.12.3",
+    "executable": "/usr/bin/python3",
+    "virtual_environment_active": false,
+    "virtual_environment_strategy": "project-local virtual environment; uv preferred by frozen environment plan",
+    "package_manager_strategy": "uv-managed project environment when available; do not mutate system Python",
+    "uv": {
+      "available": false,
+      "path": null,
+      "version_output": null
+    },
+    "pip": {
+      "available": true,
+      "returncode": 0,
+      "output": "pip 24.0 from /usr/lib/python3/dist-packages/pip (python 3.12)"
+    }
+  },
+  "gpu": {
+    "status": "FAIL",
+    "evidence_kind": "MEASURED",
+    "nvidia_smi_path": "/usr/lib/wsl/lib/nvidia-smi",
+    "nvidia_smi": {
+      "available": true,
+      "returncode": 255,
+      "output": "Failed to initialize NVML: GPU access blocked by the operating system\nFailed to properly shut down NVML: GPU access blocked by the operating system"
+    },
+    "torch_cuda_available": false,
+    "device_count": 0,
+    "device_names": [],
+    "cuda_runtime_version": null,
+    "basic_tensor_allocation": "NOT AVAILABLE",
+    "note": "A failed WSL check means GPU execution is unavailable in this environment; it does not characterize an uninspected remote CUDA host."
+  },
+  "torch": {
+    "importable": false,
+    "version": null,
+    "cuda_available": false,
+    "cuda_device_count": 0,
+    "cuda_runtime_version": null,
+    "device_names": [],
+    "allocation_test": "NOT AVAILABLE",
+    "import_error": "ModuleNotFoundError: No module named 'torch'"
+  },
+  "lerobot": {
+    "status": "FAIL",
+    "evidence_kind": "MEASURED",
+    "version": null,
+    "source_revision": null,
+    "imports": [
+      {
+        "module": "lerobot",
+        "status": "FAIL",
+        "error": "ModuleNotFoundError: No module named 'lerobot'"
+      },
+      {
+        "module": "lerobot.datasets.lerobot_dataset",
+        "status": "FAIL",
+        "error": "ModuleNotFoundError: No module named 'lerobot'"
+      },
+      {
+        "module": "lerobot.policies.smolvla.modeling_smolvla",
+        "status": "FAIL",
+        "error": "ModuleNotFoundError: No module named 'lerobot'"
+      }
+    ],
+    "dependency_conflict_observed": false,
+    "reproduction_command": "uv venv --python 3.12 .venv-vla && uv pip install --python .venv-vla/bin/python 'lerobot[smolvla]==0.4.4'",
+    "reproduction_command_status": "PROPOSED_NOT_EXECUTED; verify the pin and Python/CUDA compatibility on the approved host before installation",
+    "installation_performed": false
+  },
+  "smolvla": {
+    "status": "FAIL",
+    "evidence_kind": "MEASURED",
+    "planned_model_id": "lerobot/smolvla_base",
+    "policy_module_importable": false,
+    "model_config_discovery": "NOT AVAILABLE",
+    "model_download_attempted": false,
+    "model_load_attempted": false,
+    "training_attempted": false,
+    "compute_constraint": "An approved CUDA host with measured GPU/VRAM, working Torch CUDA, and a documented training budget is required before fine-tuning.",
+    "compute_constraint_evidence_kind": "INFERRED",
+    "memory_requirement": "TBD: measure on the selected CUDA host and training config"
+  },
+  "robot": {
+    "status": "DEFERRED",
+    "evidence_kind": "DEFERRED",
+    "serial_devices": [],
+    "environment_interpretation": "NOT EXPOSED IN CURRENT ENVIRONMENT",
+    "target_manipulator": "TBD after physical inventory; SO-101/SO-100 class preferred",
+    "connection_method": "TBD (likely USB/serial through a supported LeRobot adapter)",
+    "sdk_ros_dependency": "LeRobot adapter first; ROS/MoveIt boundary only if required",
+    "command_path": "leader input -> LeRobot teleoperator -> validated follower adapter",
+    "state_feedback_path": "follower adapter -> joint/gripper state -> recorder",
+    "gripper_path": "supported leader/follower gripper channel; unverified",
+    "safety_limitations": [
+      "no device identity",
+      "no mechanical/workspace limits recorded",
+      "no operator start/stop or E-stop path verified",
+      "no command was sent by this check"
+    ]
+  },
+  "camera": {
+    "status": "DEFERRED",
+    "evidence_kind": "MEASURED",
+    "devices": [],
+    "connection_type": "USB/OpenCV candidate; not selected",
+    "planned_configuration": {
+      "model": "TBD",
+      "resolution": "640x480 hypothesis",
+      "fps": "30 FPS hypothesis",
+      "color_format": "RGB expected; device-native format TBD",
+      "timestamp_source": "TBD on native robot PC",
+      "mounting": "one fixed external camera; exact mount TBD"
+    },
+    "expected_observation_fields": [
+      "observation.images.camera",
+      "observation.state",
+      "timestamp",
+      "calibration_revision"
+    ],
+    "capture": {
+      "attempted": false,
+      "status": "DEFERRED",
+      "detail": "no video device exposed in current environment"
+    }
+  },
+  "teleoperation": {
+    "status": "DEFERRED",
+    "evidence_kind": "DEFERRED",
+    "intended_mechanism": "LeRobot-supported leader/follower teleoperation",
+    "command_rate_expectation": "TBD from selected hardware adapter; must be measured",
+    "command_flow": [
+      "human leader input",
+      "LeRobot teleoperation interface",
+      "validated follower command adapter",
+      "manipulator"
+    ],
+    "observation_flow": [
+      "robot/camera state",
+      "timestamped observation capture",
+      "LeRobot dataset recorder"
+    ],
+    "state_feedback_available": false,
+    "gripper_control_verified": false,
+    "emergency_stop_manual_abort": "TBD on physical robot PC before any motion",
+    "sustained_teleoperation_attempted": false
+  },
+  "dataset_pipeline": {
+    "status": "PASS",
+    "evidence_kind": "INFERRED",
+    "dataset_collected": false,
+    "dataset_root": "data/vla",
+    "episode_structure": "LeRobot-compatible episodes containing synchronized observation, action, timestamp, task annotation, and episode metadata",
+    "observation_fields": [
+      "observation.images.camera",
+      "observation.state"
+    ],
+    "action_fields": [
+      "action"
+    ],
+    "timestamp_fields": [
+      "timestamp",
+      "frame_index",
+      "episode_index"
+    ],
+    "task_annotation": "natural-language manipulation instruction per episode",
+    "versioning": "immutable dataset version + manifest linked to collection config and git commit",
+    "validation": [
+      "schema and required-field checks",
+      "monotonic timestamp and observation/action alignment checks",
+      "episode completeness and frame-count checks",
+      "camera calibration/config revision checks",
+      "manual spot review before training"
+    ],
+    "storage_estimate": {
+      "classification": "INFERRED",
+      "assumptions": "one uncompressed RGB 640x480 stream at 30 FPS",
+      "raw_image_bytes_per_second": 27648000,
+      "raw_image_bytes_per_minute": 1658880000,
+      "note": "Actual encoded dataset size and robot-state overhead must be measured during the authorized smoke-recording task."
+    }
+  },
+  "service_boundary": {
+    "status": "PASS",
+    "evidence_kind": "INFERRED",
+    "implemented": false,
+    "planned_endpoints": [
+      "/health",
+      "/version",
+      "/execute"
+    ],
+    "required_fields": [
+      "schema_version",
+      "mission_id",
+      "request_id",
+      "action_id",
+      "skill",
+      "instruction",
+      "observation_refs",
+      "deadline_at",
+      "timeout_ms",
+      "status",
+      "error",
+      "component_version"
+    ],
+    "ownership": {
+      "deterministic_runtime": [
+        "authorization",
+        "timeout",
+        "retry budget",
+        "reconciliation",
+        "idempotency",
+        "business recovery"
+      ],
+      "vla": "bounded approved manipulation policy only",
+      "ros_moveit_ros2_control": "validated motion and hardware/controller authority"
+    }
+  },
+  "training_budget": {
+    "status": "FAIL",
+    "evidence_kind": "NOT AVAILABLE",
+    "approved": false,
+    "provider": null,
+    "limit": null
+  },
+  "checks": [
+    {
+      "id": "C1",
+      "area": "Python",
+      "status": "PASS",
+      "blocking": false,
+      "evidence_kind": "MEASURED",
+      "detail": "CPython 3.12.3"
+    },
+    {
+      "id": "C2",
+      "area": "GPU",
+      "status": "FAIL",
+      "blocking": true,
+      "evidence_kind": "MEASURED",
+      "detail": "No verified CUDA device and tensor-allocation path in this environment"
+    },
+    {
+      "id": "C3",
+      "area": "LeRobot",
+      "status": "FAIL",
+      "blocking": true,
+      "evidence_kind": "MEASURED",
+      "detail": "LeRobot and required SmolVLA workflow imports are unavailable"
+    },
+    {
+      "id": "C4",
+      "area": "SmolVLA",
+      "status": "FAIL",
+      "blocking": true,
+      "evidence_kind": "MEASURED",
+      "detail": "Local prerequisites are not ready"
+    },
+    {
+      "id": "C5",
+      "area": "Robot I/O",
+      "status": "DEFERRED",
+      "blocking": true,
+      "evidence_kind": "DEFERRED",
+      "detail": "NOT EXPOSED IN CURRENT ENVIRONMENT"
+    },
+    {
+      "id": "C6",
+      "area": "Camera",
+      "status": "DEFERRED",
+      "blocking": true,
+      "evidence_kind": "MEASURED",
+      "detail": "no video device exposed in current environment"
+    },
+    {
+      "id": "C7",
+      "area": "Teleoperation",
+      "status": "DEFERRED",
+      "blocking": true,
+      "evidence_kind": "DEFERRED",
+      "detail": "Physical command/state/gripper/stop paths remain unverified"
+    },
+    {
+      "id": "C8",
+      "area": "Dataset Pipeline",
+      "status": "PASS",
+      "blocking": false,
+      "evidence_kind": "INFERRED",
+      "detail": "Design is defined; no Dataset V1 data was collected"
+    },
+    {
+      "id": "C9",
+      "area": "Service Boundary",
+      "status": "PASS",
+      "blocking": false,
+      "evidence_kind": "INFERRED",
+      "detail": "Future typed boundary preserves deterministic and ROS ownership"
+    },
+    {
+      "id": "C10",
+      "area": "Training Budget",
+      "status": "FAIL",
+      "blocking": true,
+      "evidence_kind": "NOT AVAILABLE",
+      "detail": "No approved local, remote, or cloud CUDA training budget is documented"
+    }
+  ],
+  "blockers": [
+    {
+      "check_id": "C2",
+      "area": "GPU",
+      "status": "FAIL",
+      "detail": "No verified CUDA device and tensor-allocation path in this environment"
+    },
+    {
+      "check_id": "C3",
+      "area": "LeRobot",
+      "status": "FAIL",
+      "detail": "LeRobot and required SmolVLA workflow imports are unavailable"
+    },
+    {
+      "check_id": "C4",
+      "area": "SmolVLA",
+      "status": "FAIL",
+      "detail": "Local prerequisites are not ready"
+    },
+    {
+      "check_id": "C5",
+      "area": "Robot I/O",
+      "status": "DEFERRED",
+      "detail": "NOT EXPOSED IN CURRENT ENVIRONMENT"
+    },
+    {
+      "check_id": "C6",
+      "area": "Camera",
+      "status": "DEFERRED",
+      "detail": "no video device exposed in current environment"
+    },
+    {
+      "check_id": "C7",
+      "area": "Teleoperation",
+      "status": "DEFERRED",
+      "detail": "Physical command/state/gripper/stop paths remain unverified"
+    },
+    {
+      "check_id": "C10",
+      "area": "Training Budget",
+      "status": "FAIL",
+      "detail": "No approved local, remote, or cloud CUDA training budget is documented"
+    }
+  ],
+  "deferred_checks": [
+    {
+      "area": "Robot I/O",
+      "trigger": "native robot PC and selected manipulator are available for no-motion enumeration"
+    },
+    {
+      "area": "Camera",
+      "trigger": "selected camera is attached to the native robot PC for one-frame capture"
+    },
+    {
+      "area": "Teleoperation",
+      "trigger": "device identity, workspace limits, operator stop path, and supervised authorization exist"
+    },
+    {
+      "area": "SmolVLA capacity",
+      "trigger": "approved CUDA host and pinned isolated LeRobot environment are available"
+    }
+  ],
+  "next_task": "TASK-W1-001",
+  "next_task_authorized": false,
+  "safety": {
+    "robot_commands_sent": false,
+    "actuators_opened": false,
+    "training_started": false,
+    "model_downloaded": false,
+    "dataset_v1_collected": false
+  }
+}
