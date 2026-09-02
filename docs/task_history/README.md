@@ -2,6 +2,7 @@
 
 | TASK | 상태 | Implementation | Review | Fix | 최종 결과 |
 |---|---|---:|---:|---:|---|
+| TASK-P0-005 | IMPLEMENTED / REVIEW PENDING | 1 | 0 | 0 | REVIEW PENDING |
 | TASK-MVP-001 | ACCEPTED | 1 | 0 | 0 | ACCEPT |
 | TASK-MVP-002 | ACCEPTED | 1 | 0 | 0 | ACCEPT |
 | TASK-MVP-003 | ACCEPTED | 1 | 2 | 1 | ACCEPT |
