@@ -3,6 +3,7 @@
 | TASK | 상태 | Implementation | Review | Fix | 최종 결과 |
 |---|---|---:|---:|---:|---|
 | TASK-P0-005 | ACCEPTED | 1 | 1 | 0 | ACCEPT |
+| TASK-P0-006 | IMPLEMENTED / REVIEW PENDING | 1 | 0 | 0 | DEVICE_IO_BLOCKED / NOT YET ACCEPTED |
 | TASK-MVP-001 | ACCEPTED | 1 | 0 | 0 | ACCEPT |
 | TASK-MVP-002 | ACCEPTED | 1 | 0 | 0 | ACCEPT |
 | TASK-MVP-003 | ACCEPTED | 1 | 2 | 1 | ACCEPT |
