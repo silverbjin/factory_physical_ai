@@ -13,6 +13,7 @@
 | 순서 | 유형 | 결과 | 핵심 내용 | 상세 기록 |
 |---:|---|---|---|---|
 | 01 | Implementation | COMPLETE | isolated CUDA runtime, pinned LeRobot 0.4.4, SmolVLA code/config 검증과 machine-readable evidence를 구현했다. | `01_implementation.md` |
+| 02 | Review | ACCEPT | 독립 host 재실행과 regression/evidence 검증을 통과했다. NVIDIA partial diagnostic fail-closed 보강 1건은 MEDIUM으로 defer했다. | `02_review.md` |
 
 ## 3. 주요 설계 / 문제 해결 포인트
 
@@ -30,14 +31,14 @@
 - Focused regression: 3 PASS.
 - Full regression: 53 PASS.
 - Evidence: `../../../results/phase0/P0-005_vla_runtime.json`, SHA-256 `aafe0273a3fa8d28652494ea8f72fc396247fed81c6d5ab71311ff628e646aae`.
-- Independent review: NOT YET ACCEPTED.
+- Independent review: `ACCEPT TASK-P0-005`; BLOCKER 0, HIGH 0, MEDIUM 1, LOW 1.
 
 ## 5. 최종 상태
 
-`IMPLEMENTED / REVIEW PENDING`
-
-Implementation은 `COMPLETE`지만 independent Read-only Review의 `ACCEPT`는 아직 없다.
+`ACCEPT TASK-P0-005`
 
 ## 6. 포트폴리오 요약
 
 P0-004에서 막혔던 VLA software runtime을 system Python 변경 없이 `.venv-vla`에 격리했다. Driver의 CUDA 표기를 capability claim으로 사용하지 않고, pinned PyTorch `2.10.0+cu130`으로 실제 GPU tensor를 실행해 runtime을 증명했다. Repository baseline LeRobot `0.4.4`를 명시적으로 유지하면서 dataset/SmolVLA module과 non-training config를 검증했다. 동시에 6 GB VRAM의 model load와 training fit은 측정하지 않았음을 구조화 evidence에 남겨 과장을 차단했다. 전체 readiness와 `TASK-W1-001` 승인 권한은 후속 P0-004R에 보존했다.
+
+Independent Review는 canonical evidence를 별도 host-access verifier 실행과 비교해 `RUNTIME_READY`를 재현했고, 전체 regression 53건도 통과했다. NVIDIA 일부 진단이 실패해도 aggregate PASS가 될 수 있는 MEDIUM finding은 현재 evidence를 무효화하지 않아 defer했지만 P0-004R 재사용 전 보강을 권장했다. 사용자 제공 observation의 evidence-kind 표현은 LOW로 기록했다.
