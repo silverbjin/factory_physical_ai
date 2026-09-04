@@ -29,7 +29,7 @@ from typing import Any, Callable, Mapping, Sequence
 
 TASK_ID = "TASK-P0-006"
 SCHEMA_VERSION = "1.0"
-VERIFIER_VERSION = "1.0.0"
+VERIFIER_VERSION = "1.1.0"
 READY = "DEVICE_IO_READY"
 BLOCKED = "DEVICE_IO_BLOCKED"
 EXPECTED_P0_005_SHA256 = (
@@ -46,6 +46,34 @@ CHECK_STATUSES = {"PASS", "BLOCKED", "NOT_VERIFIED", "NOT_APPLICABLE"}
 MAX_DIAGNOSTIC_BYTES = 4096
 MAX_CAMERA_FRAMES = 5
 DEFAULT_DEVICE_DISCOVERY_TIMEOUT_SECONDS = 5.0
+RESULT_QUEUE_TIMEOUT_SECONDS = 1.0
+
+EXPECTED_CHECKS = (
+    ("C01", "Target hardware selected"),
+    ("C02", "Robot/controller physically discoverable"),
+    ("C03", "Stable device identity available"),
+    ("C04", "Required host permission/access available"),
+    ("C05", "Robot state-feedback path identified"),
+    ("C06", "Robot state observable without motion"),
+    ("C07", "Future actuator command path identified"),
+    ("C08", "Future gripper path identified or not applicable"),
+    ("C09", "Camera selected"),
+    ("C10", "Camera physically discoverable"),
+    ("C11", "Bounded camera frame acquisition succeeds"),
+    ("C12", "Camera configuration recorded"),
+    ("C13", "Workspace/motion constraints documented"),
+    ("C14", "Manual abort/E-stop path documented"),
+    ("C15", "Supervised teleoperation prerequisites classified"),
+    ("C16", "No physical motion occurred"),
+    ("C17", "No Week 1/dataset/model work occurred"),
+    ("C18", "Evidence and documentation internally consistent"),
+)
+BOUND_SOURCE_PATHS = (
+    "scripts/verify_robot_io_readiness.py",
+    "tests/test_verify_robot_io_readiness.py",
+    "docs/hardware/robot_camera_io_readiness_v1.md",
+    "plans/robot_camera_io_risks.md",
+)
 
 AccessChecker = Callable[[Path, int], bool]
 CameraProbe = Callable[[Path, int, float], dict[str, Any]]
@@ -131,6 +159,29 @@ def _git(repository_root: Path) -> dict[str, Any]:
         "branch": branch["output"] if branch["returncode"] == 0 else None,
         "working_tree_clean": status["returncode"] == 0 and not status["output"],
         "working_tree_status": status["output"].splitlines(),
+    }
+
+
+def _evidence_payload_sha256(evidence: Mapping[str, Any]) -> str:
+    """Bind evidence content without creating a self-referential hash."""
+
+    normalized = json.loads(json.dumps(evidence))
+    binding = normalized.get("content_binding")
+    if isinstance(binding, dict):
+        binding.pop("evidence_payload_sha256", None)
+    payload = json.dumps(
+        normalized,
+        ensure_ascii=False,
+        separators=(",", ":"),
+        sort_keys=True,
+    ).encode("utf-8")
+    return hashlib.sha256(payload).hexdigest()
+
+
+def _bound_source_hashes(repository_root: Path) -> dict[str, str | None]:
+    return {
+        relative_path: _sha256(repository_root / relative_path)
+        for relative_path in BOUND_SOURCE_PATHS
     }
 
 
@@ -447,11 +498,26 @@ def _bounded_device_discovery(
     return result
 
 
-def _state_worker(path: str, queue: Any) -> None:
+def _state_worker(path: str, result_queue: Any) -> None:
     try:
-        with Path(path).open("rb") as handle:
+        state_path = Path(path)
+        mode = state_path.stat().st_mode
+        if not stat.S_ISREG(mode):
+            result_queue.put(
+                {
+                    "status": "BLOCKED",
+                    "bytes_read": 0,
+                    "snapshot_sha256": None,
+                    "detail": (
+                        "state observation path is not a regular file; "
+                        "it was not opened"
+                    ),
+                }
+            )
+            return
+        with state_path.open("rb") as handle:
             value = handle.read(MAX_DIAGNOSTIC_BYTES)
-        queue.put(
+        result_queue.put(
             {
                 "status": "PASS",
                 "bytes_read": len(value),
@@ -460,7 +526,7 @@ def _state_worker(path: str, queue: Any) -> None:
             }
         )
     except Exception as exc:
-        queue.put(
+        result_queue.put(
             {
                 "status": "BLOCKED",
                 "bytes_read": 0,
@@ -470,46 +536,64 @@ def _state_worker(path: str, queue: Any) -> None:
         )
 
 
-def _bounded_state_probe(path: Path, timeout_seconds: float) -> dict[str, Any]:
-    try:
-        mode = path.stat().st_mode
-    except OSError as exc:
-        return {
-            "status": "BLOCKED",
-            "timed_out": False,
-            "detail": _bounded(f"{type(exc).__name__}: {exc}"),
-        }
-    if not stat.S_ISREG(mode):
-        return {
-            "status": "BLOCKED",
-            "timed_out": False,
-            "detail": "state observation path is not a regular file; it was not opened",
-        }
-    context = multiprocessing.get_context("spawn")
-    queue = context.Queue(maxsize=1)
-    process = context.Process(target=_state_worker, args=(str(path), queue))
-    process.start()
-    process.join(timeout_seconds)
+def _terminate_process(process: Any) -> None:
+    """Boundedly stop and reap a probe process."""
+
+    if not process.is_alive():
+        return
+    process.terminate()
+    process.join(1.0)
     if process.is_alive():
-        process.terminate()
+        process.kill()
         process.join(1.0)
+
+
+def _close_process_queue(process: Any, result_queue: Any) -> None:
+    """Release process and Queue resources after a bounded probe."""
+
+    _terminate_process(process)
+    try:
+        process.close()
+    finally:
+        result_queue.close()
+        result_queue.join_thread()
+
+
+def _bounded_state_probe(path: Path, timeout_seconds: float) -> dict[str, Any]:
+    """Bound metadata inspection, regular-file validation, and the state read."""
+
+    context = multiprocessing.get_context("fork")
+    result_queue = context.Queue(maxsize=1)
+    process = context.Process(target=_state_worker, args=(str(path), result_queue))
+    process.start()
+    try:
+        process.join(timeout_seconds)
         if process.is_alive():
-            process.kill()
-            process.join(1.0)
-        return {
-            "status": "BLOCKED",
-            "timed_out": True,
-            "detail": f"state snapshot exceeded {timeout_seconds:.3f}s timeout",
-        }
-    if queue.empty():
-        return {
-            "status": "BLOCKED",
-            "timed_out": False,
-            "detail": f"state probe exited without a diagnostic (exitcode={process.exitcode})",
-        }
-    result = queue.get_nowait()
-    result["timed_out"] = False
-    return result
+            _terminate_process(process)
+            return {
+                "status": "BLOCKED",
+                "timed_out": True,
+                "detail": (
+                    "state metadata/read probe exceeded "
+                    f"{timeout_seconds:.3f}s timeout"
+                ),
+            }
+        exitcode = process.exitcode
+        try:
+            result = result_queue.get(timeout=RESULT_QUEUE_TIMEOUT_SECONDS)
+        except queue_module.Empty:
+            return {
+                "status": "BLOCKED",
+                "timed_out": False,
+                "detail": (
+                    "state probe exited without a diagnostic "
+                    f"(exitcode={exitcode})"
+                ),
+            }
+        result["timed_out"] = False
+        return result
+    finally:
+        _close_process_queue(process, result_queue)
 
 
 def _camera_worker(path: str, frame_count: int, queue: Any) -> None:
@@ -569,41 +653,45 @@ def _camera_worker(path: str, frame_count: int, queue: Any) -> None:
 def _bounded_camera_probe(
     path: Path, frame_count: int, timeout_seconds: float
 ) -> dict[str, Any]:
-    context = multiprocessing.get_context("spawn")
-    queue = context.Queue(maxsize=1)
+    context = multiprocessing.get_context("fork")
+    result_queue = context.Queue(maxsize=1)
     process = context.Process(
-        target=_camera_worker, args=(str(path), frame_count, queue)
+        target=_camera_worker, args=(str(path), frame_count, result_queue)
     )
     process.start()
-    process.join(timeout_seconds)
-    if process.is_alive():
-        process.terminate()
-        process.join(1.0)
+    try:
+        process.join(timeout_seconds)
         if process.is_alive():
-            process.kill()
-            process.join(1.0)
-        return {
-            "status": "BLOCKED",
-            "opened": False,
-            "frames_requested": frame_count,
-            "frames_acquired": 0,
-            "frames_persisted": 0,
-            "timed_out": True,
-            "detail": f"camera probe exceeded {timeout_seconds:.3f}s timeout",
-        }
-    if queue.empty():
-        return {
-            "status": "BLOCKED",
-            "opened": False,
-            "frames_requested": frame_count,
-            "frames_acquired": 0,
-            "frames_persisted": 0,
-            "timed_out": False,
-            "detail": f"camera probe exited without a diagnostic (exitcode={process.exitcode})",
-        }
-    result = queue.get_nowait()
-    result["timed_out"] = False
-    return result
+            _terminate_process(process)
+            return {
+                "status": "BLOCKED",
+                "opened": False,
+                "frames_requested": frame_count,
+                "frames_acquired": 0,
+                "frames_persisted": 0,
+                "timed_out": True,
+                "detail": f"camera probe exceeded {timeout_seconds:.3f}s timeout",
+            }
+        exitcode = process.exitcode
+        try:
+            result = result_queue.get(timeout=RESULT_QUEUE_TIMEOUT_SECONDS)
+        except queue_module.Empty:
+            return {
+                "status": "BLOCKED",
+                "opened": False,
+                "frames_requested": frame_count,
+                "frames_acquired": 0,
+                "frames_persisted": 0,
+                "timed_out": False,
+                "detail": (
+                    "camera probe exited without a diagnostic "
+                    f"(exitcode={exitcode})"
+                ),
+            }
+        result["timed_out"] = False
+        return result
+    finally:
+        _close_process_queue(process, result_queue)
 
 
 def _check(check_id: str, area: str, status: str, provenance: str, detail: str) -> dict[str, Any]:
@@ -622,10 +710,18 @@ def _check(check_id: str, area: str, status: str, provenance: str, detail: str) 
 
 
 def decide_readiness(checks: Sequence[Mapping[str, Any]]) -> str:
-    mandatory = [item for item in checks if item.get("mandatory")]
-    if not mandatory:
+    if len(checks) != len(EXPECTED_CHECKS):
         return BLOCKED
-    return READY if all(item.get("status") == "PASS" for item in mandatory) else BLOCKED
+    if any(
+        not isinstance(item, Mapping)
+        or item.get("id") != expected_id
+        or item.get("area") != expected_area
+        or item.get("mandatory") is not True
+        or item.get("status") != "PASS"
+        for item, (expected_id, expected_area) in zip(checks, EXPECTED_CHECKS)
+    ):
+        return BLOCKED
+    return READY
 
 
 def _declared_section(
@@ -921,17 +1017,41 @@ def collect_evidence(
 
     release = _os_release()
     verifier_path = Path(__file__).resolve()
+    verifier_sha256 = _sha256(verifier_path)
+    git_facts = _git(repository_root)
+    source_hashes = _bound_source_hashes(repository_root)
     evidence: dict[str, Any] = {
         "schema_version": SCHEMA_VERSION,
         "task": TASK_ID,
         "verifier": {
             "version": VERIFIER_VERSION,
             "path": str(verifier_path),
-            "sha256": _sha256(verifier_path),
+            "sha256": verifier_sha256,
             "provenance": "MEASURED",
         },
         "generated_at": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
-        "git": _git(repository_root),
+        "git": git_facts,
+        "content_binding": {
+            "provenance": "DERIVED",
+            "generation_mode": (
+                "COMMITTED_TREE"
+                if git_facts["working_tree_clean"]
+                else "PRE_COMMIT_WORKTREE"
+            ),
+            "git_head_at_generation": git_facts["commit"],
+            "working_tree_dirty_at_generation": not git_facts["working_tree_clean"],
+            "verifier_sha256": verifier_sha256,
+            "source_sha256": source_hashes,
+            "evidence_payload_hash_scope": (
+                "canonical JSON with content_binding.evidence_payload_sha256 omitted"
+            ),
+            "evidence_payload_sha256": None,
+            "claim": (
+                "Git HEAD identifies the base commit at generation; when generation_mode "
+                "is PRE_COMMIT_WORKTREE, source hashes bind the uncommitted implementation "
+                "and do not claim provenance from a later commit."
+            ),
+        },
         "host": {
             "provenance": "MEASURED",
             "hostname": platform.node(),
@@ -1081,6 +1201,9 @@ def collect_evidence(
         for item in checks
         if item["mandatory"] and item["status"] != "PASS"
     ]
+    evidence["content_binding"]["evidence_payload_sha256"] = (
+        _evidence_payload_sha256(evidence)
+    )
     return evidence
 
 
@@ -1089,6 +1212,7 @@ def validate_evidence(evidence: Mapping[str, Any]) -> list[str]:
     required = {
         "task",
         "device_io_decision",
+        "content_binding",
         "host",
         "target_hardware",
         "device_discovery",
@@ -1110,16 +1234,120 @@ def validate_evidence(evidence: Mapping[str, Any]) -> list[str]:
         errors.append(f"missing required fields: {', '.join(missing)}")
     if evidence.get("task") != TASK_ID:
         errors.append("task identity mismatch")
-    checks = evidence.get("checks", [])
-    if not isinstance(checks, list) or [item.get("id") for item in checks] != [
-        f"C{index:02d}" for index in range(1, 19)
-    ]:
-        errors.append("checks must contain C01-C18 exactly once and in order")
-    expected_decision = decide_readiness(checks) if isinstance(checks, list) else BLOCKED
+    checks_value = evidence.get("checks", [])
+    checks: list[Mapping[str, Any]] = []
+    if not isinstance(checks_value, list):
+        errors.append("checks must be a list")
+    else:
+        for index, expected in enumerate(EXPECTED_CHECKS):
+            if index >= len(checks_value):
+                break
+            item = checks_value[index]
+            if not isinstance(item, Mapping):
+                errors.append(f"check at index {index} must be an object")
+                continue
+            checks.append(item)
+            expected_id, expected_area = expected
+            if item.get("id") != expected_id or item.get("area") != expected_area:
+                errors.append(
+                    f"check identity mismatch at index {index}: expected "
+                    f"{expected_id} {expected_area}"
+                )
+            if item.get("mandatory") is not True:
+                errors.append(f"{expected_id} must remain mandatory")
+            if item.get("status") not in CHECK_STATUSES:
+                errors.append(f"{expected_id} has invalid status")
+            if item.get("provenance") not in PROVENANCE:
+                errors.append(f"{expected_id} has invalid provenance")
+        if len(checks_value) != len(EXPECTED_CHECKS):
+            errors.append("checks must contain C01-C18 exactly once and in order")
+        elif len(checks) == len(EXPECTED_CHECKS):
+            ids = [item.get("id") for item in checks]
+            if len(set(ids)) != len(EXPECTED_CHECKS):
+                errors.append("check identities must be unique")
+
+    expected_decision = (
+        decide_readiness(checks_value) if isinstance(checks_value, list) else BLOCKED
+    )
     if evidence.get("device_io_decision") != expected_decision:
         errors.append("aggregate decision does not propagate mandatory check failures")
+    check_items = checks_value if isinstance(checks_value, list) else []
+    if evidence.get("device_io_decision") == READY and (
+        len(check_items) != len(EXPECTED_CHECKS)
+        or any(
+            not isinstance(item, Mapping)
+            or item.get("mandatory") is not True
+            or item.get("status") != "PASS"
+            for item in check_items
+        )
+    ):
+        errors.append("DEVICE_IO_READY requires every mandatory readiness check to PASS")
     if evidence.get("device_io_decision") not in {READY, BLOCKED}:
         errors.append("invalid device I/O decision")
+
+    expected_blockers = [
+        {
+            "check_id": item.get("id"),
+            "area": item.get("area"),
+            "status": item.get("status"),
+            "detail": item.get("detail"),
+        }
+        for item in check_items
+        if isinstance(item, Mapping)
+        and item.get("mandatory") is True
+        and item.get("status") != "PASS"
+    ]
+    if evidence.get("unresolved_blockers") != expected_blockers:
+        errors.append(
+            "unresolved_blockers must exactly match all mandatory non-PASS checks"
+        )
+
+    def validate_provenance(value: Any, location: str = "evidence") -> None:
+        if isinstance(value, Mapping):
+            for key, nested in value.items():
+                nested_location = f"{location}.{key}"
+                if (key == "provenance" or key.endswith("_provenance")) and (
+                    nested not in PROVENANCE
+                ):
+                    errors.append(f"{nested_location} has invalid provenance")
+                else:
+                    validate_provenance(nested, nested_location)
+        elif isinstance(value, list):
+            for index, nested in enumerate(value):
+                validate_provenance(nested, f"{location}[{index}]")
+
+    validate_provenance(evidence)
+
+    binding = evidence.get("content_binding")
+    git_facts = evidence.get("git")
+    verifier = evidence.get("verifier")
+    if not isinstance(binding, Mapping):
+        errors.append("content_binding must be an object")
+    else:
+        mode = binding.get("generation_mode")
+        if mode not in {"COMMITTED_TREE", "PRE_COMMIT_WORKTREE"}:
+            errors.append("content_binding has invalid generation_mode")
+        if isinstance(git_facts, Mapping):
+            if binding.get("git_head_at_generation") != git_facts.get("commit"):
+                errors.append("content_binding Git HEAD mismatch")
+            expected_dirty = not bool(git_facts.get("working_tree_clean"))
+            if binding.get("working_tree_dirty_at_generation") is not expected_dirty:
+                errors.append("content_binding working-tree state mismatch")
+            expected_mode = "PRE_COMMIT_WORKTREE" if expected_dirty else "COMMITTED_TREE"
+            if mode != expected_mode:
+                errors.append("content_binding generation mode contradicts Git state")
+        if isinstance(verifier, Mapping) and (
+            binding.get("verifier_sha256") != verifier.get("sha256")
+        ):
+            errors.append("content_binding verifier hash mismatch")
+        source_hashes = binding.get("source_sha256")
+        expected_source_hashes = _bound_source_hashes(
+            Path(__file__).resolve().parents[1]
+        )
+        if source_hashes != expected_source_hashes:
+            errors.append("content_binding source hashes do not match current files")
+        if binding.get("evidence_payload_sha256") != _evidence_payload_sha256(evidence):
+            errors.append("content_binding evidence payload hash mismatch")
     if evidence.get("task_w1_001_authorized") is not False:
         errors.append("TASK-W1-001 must remain unauthorized")
     if evidence.get("p0_004r_required") is not True:

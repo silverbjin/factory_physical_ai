@@ -2,19 +2,52 @@ from __future__ import annotations
 
 import importlib.util
 import json
+import multiprocessing
 import os
 import subprocess
 import sys
 import tempfile
 import time
 import unittest
+from copy import deepcopy
 from pathlib import Path
 from types import ModuleType
+from types import SimpleNamespace
 from typing import Any
+from unittest import mock
 
 
 REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
 SCRIPT_PATH = REPOSITORY_ROOT / "scripts" / "verify_robot_io_readiness.py"
+
+
+class _FakeFrame:
+    shape = (480, 640, 3)
+
+
+class _FakeVideoCapture:
+    def __init__(self, path: str) -> None:
+        self.path = path
+        self.released = False
+
+    def isOpened(self) -> bool:
+        return True
+
+    def read(self) -> tuple[bool, _FakeFrame]:
+        return True, _FakeFrame()
+
+    def get(self, property_id: int) -> float:
+        if property_id == 1:
+            return float(
+                sum(
+                    ord(char) << (8 * index)
+                    for index, char in enumerate("YUYV")
+                )
+            )
+        return 30.0
+
+    def release(self) -> None:
+        self.released = True
 
 
 def load_verifier() -> ModuleType:
@@ -153,6 +186,11 @@ class RobotIoReadinessTests(unittest.TestCase):
         }
         arguments.update(overrides)
         return self.verifier.collect_evidence(REPOSITORY_ROOT, **arguments)
+
+    def rebind(self, evidence: dict[str, Any]) -> None:
+        evidence["content_binding"]["evidence_payload_sha256"] = (
+            self.verifier._evidence_payload_sha256(evidence)
+        )
 
     def test_normal_synthetic_device_discovery_path_is_ready(self) -> None:
         evidence = self.collect()
@@ -301,6 +339,65 @@ class RobotIoReadinessTests(unittest.TestCase):
         self.assertEqual(evidence["device_io_decision"], "DEVICE_IO_BLOCKED")
         self.assertEqual(evidence["checks"][1]["status"], "BLOCKED")
 
+    def test_delayed_state_stat_is_bounded_and_propagates_to_readiness(self) -> None:
+        original_stat = Path.stat
+
+        def delayed_stat(path: Path, *args: Any, **kwargs: Any) -> os.stat_result:
+            if path == self.state_path:
+                time.sleep(1.0)
+            return original_stat(path, *args, **kwargs)
+
+        started = time.monotonic()
+        with mock.patch.object(Path, "stat", delayed_stat):
+            result = self.verifier._bounded_state_probe(
+                self.state_path,
+                timeout_seconds=0.05,
+            )
+        elapsed = time.monotonic() - started
+
+        self.assertLess(elapsed, 0.75)
+        self.assertEqual(result["status"], "BLOCKED")
+        self.assertTrue(result["timed_out"])
+        self.assertIn("metadata/read", result["detail"])
+
+        evidence = self.collect(state_probe=lambda path, timeout: dict(result))
+        self.assertEqual(evidence["checks"][5]["status"], "BLOCKED")
+        self.assertEqual(evidence["device_io_decision"], "DEVICE_IO_BLOCKED")
+        self.assertIn(
+            "C06",
+            {item["check_id"] for item in evidence["unresolved_blockers"]},
+        )
+
+    def test_completed_state_and_camera_workers_return_diagnostics_and_cleanup(self) -> None:
+        child_pids_before = {
+            process.pid for process in multiprocessing.active_children()
+        }
+        state_result = self.verifier._bounded_state_probe(
+            self.state_path,
+            timeout_seconds=1.0,
+        )
+        fake_cv2 = SimpleNamespace(
+            VideoCapture=_FakeVideoCapture,
+            CAP_PROP_FOURCC=1,
+            CAP_PROP_FPS=2,
+        )
+        with mock.patch.dict(sys.modules, {"cv2": fake_cv2}):
+            camera_result = self.verifier._bounded_camera_probe(
+                self.camera_path,
+                frame_count=1,
+                timeout_seconds=1.0,
+            )
+        child_pids_after = {
+            process.pid for process in multiprocessing.active_children()
+        }
+
+        self.assertEqual(state_result["status"], "PASS")
+        self.assertFalse(state_result["timed_out"])
+        self.assertEqual(camera_result["status"], "PASS")
+        self.assertEqual(camera_result["frames_acquired"], 1)
+        self.assertFalse(camera_result["timed_out"])
+        self.assertEqual(child_pids_after, child_pids_before)
+
     def test_evidence_validation_rejects_aggregate_mismatch(self) -> None:
         evidence = self.collect()
         evidence["checks"][0]["status"] = "BLOCKED"
@@ -310,6 +407,91 @@ class RobotIoReadinessTests(unittest.TestCase):
         self.assertTrue(
             any("aggregate decision" in error for error in errors), errors
         )
+
+    def test_validation_rejects_mandatory_flag_demotion_ready_bypass(self) -> None:
+        evidence = self.collect()
+        evidence["checks"][0]["status"] = "BLOCKED"
+        evidence["checks"][0]["mandatory"] = False
+        evidence["unresolved_blockers"] = []
+        evidence["device_io_decision"] = "DEVICE_IO_READY"
+        self.rebind(evidence)
+
+        errors = self.verifier.validate_evidence(evidence)
+
+        self.assertEqual(
+            self.verifier.decide_readiness(evidence["checks"]),
+            "DEVICE_IO_BLOCKED",
+        )
+        self.assertTrue(any("C01 must remain mandatory" in error for error in errors))
+        self.assertTrue(any("aggregate decision" in error for error in errors))
+        self.assertTrue(any("DEVICE_IO_READY requires" in error for error in errors))
+
+    def test_validation_rejects_invalid_check_status(self) -> None:
+        evidence = self.collect()
+        evidence["checks"][3]["status"] = "UNKNOWN"
+        evidence["device_io_decision"] = "DEVICE_IO_BLOCKED"
+        evidence["unresolved_blockers"] = [
+            {
+                "check_id": "C04",
+                "area": evidence["checks"][3]["area"],
+                "status": "UNKNOWN",
+                "detail": evidence["checks"][3]["detail"],
+            }
+        ]
+        self.rebind(evidence)
+
+        errors = self.verifier.validate_evidence(evidence)
+
+        self.assertTrue(any("C04 has invalid status" in error for error in errors))
+
+    def test_validation_rejects_invalid_check_and_material_provenance(self) -> None:
+        evidence = self.collect()
+        evidence["checks"][4]["provenance"] = "MEASURED_BY_ASSUMPTION"
+        evidence["camera"]["identity_provenance"] = "INFERRED"
+        self.rebind(evidence)
+
+        errors = self.verifier.validate_evidence(evidence)
+
+        self.assertTrue(any("C05 has invalid provenance" in error for error in errors))
+        self.assertTrue(
+            any(
+                "camera.identity_provenance has invalid provenance" in error
+                for error in errors
+            )
+        )
+
+    def test_validation_rejects_duplicate_or_changed_check_identity(self) -> None:
+        evidence = self.collect()
+        evidence["checks"][1]["id"] = "C01"
+        evidence["checks"][1]["area"] = evidence["checks"][0]["area"]
+        evidence["device_io_decision"] = "DEVICE_IO_BLOCKED"
+        self.rebind(evidence)
+
+        errors = self.verifier.validate_evidence(evidence)
+
+        self.assertTrue(any("check identity mismatch" in error for error in errors))
+        self.assertTrue(any("identities must be unique" in error for error in errors))
+
+    def test_validation_requires_exact_unresolved_blocker_projection(self) -> None:
+        evidence = self.collect()
+        evidence["checks"][2]["status"] = "NOT_VERIFIED"
+        evidence["device_io_decision"] = "DEVICE_IO_BLOCKED"
+        evidence["unresolved_blockers"] = []
+        self.rebind(evidence)
+
+        errors = self.verifier.validate_evidence(evidence)
+
+        self.assertTrue(
+            any("unresolved_blockers must exactly match" in error for error in errors)
+        )
+
+    def test_validation_rejects_content_binding_tampering(self) -> None:
+        evidence = deepcopy(self.collect())
+        evidence["target_hardware"]["selected"] = False
+
+        errors = self.verifier.validate_evidence(evidence)
+
+        self.assertTrue(any("evidence payload hash mismatch" in error for error in errors))
 
     def test_timeout_helper_is_bounded_and_reports_timeout(self) -> None:
         started = __import__("time").monotonic()
@@ -332,6 +514,24 @@ class RobotIoReadinessTests(unittest.TestCase):
                     {"mandatory": True, "status": "NOT_VERIFIED"},
                 ]
             ),
+            "DEVICE_IO_BLOCKED",
+        )
+        all_pass = [
+            {
+                "id": check_id,
+                "area": area,
+                "mandatory": True,
+                "status": "PASS",
+            }
+            for check_id, area in self.verifier.EXPECTED_CHECKS
+        ]
+        self.assertEqual(
+            self.verifier.decide_readiness(all_pass),
+            "DEVICE_IO_READY",
+        )
+        all_pass[0]["mandatory"] = False
+        self.assertEqual(
+            self.verifier.decide_readiness(all_pass),
             "DEVICE_IO_BLOCKED",
         )
 

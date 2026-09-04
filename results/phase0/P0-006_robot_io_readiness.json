@@ -2,24 +2,40 @@
   "schema_version": "1.0",
   "task": "TASK-P0-006",
   "verifier": {
-    "version": "1.0.0",
+    "version": "1.1.0",
     "path": "/home/jinho/projects/factory_physical_ai_p0_006/scripts/verify_robot_io_readiness.py",
-    "sha256": "3378cf47993eebba7df5c7ec535d1116e66ae5a9d825baa6389c160cc1db2217",
+    "sha256": "117f7a2ebbc2a79a87fb307675dcdbd3e9a9671265cb727e809eb153a8268364",
     "provenance": "MEASURED"
   },
-  "generated_at": "2026-09-03T14:10:05.496849Z",
+  "generated_at": "2026-09-04T03:14:26.012971Z",
   "git": {
     "provenance": "MEASURED",
-    "commit": "520156e6ce5344aa8268d4210b21c754e8d16c3a",
+    "commit": "aa813e6115452cc5b92d370d13fd266120ab384e",
     "branch": "task/p0-006-device-io-readiness",
     "working_tree_clean": false,
     "working_tree_status": [
-      "?? docs/hardware/",
-      "?? plans/robot_camera_io_risks.md",
-      "?? results/phase0/P0-006_robot_io_readiness.json",
-      "?? scripts/verify_robot_io_readiness.py",
-      "?? tests/test_verify_robot_io_readiness.py"
+      "M docs/hardware/robot_camera_io_readiness_v1.md",
+      " M plans/robot_camera_io_risks.md",
+      " M results/phase0/P0-006_robot_io_readiness.json",
+      " M scripts/verify_robot_io_readiness.py",
+      " M tests/test_verify_robot_io_readiness.py"
     ]
+  },
+  "content_binding": {
+    "provenance": "DERIVED",
+    "generation_mode": "PRE_COMMIT_WORKTREE",
+    "git_head_at_generation": "aa813e6115452cc5b92d370d13fd266120ab384e",
+    "working_tree_dirty_at_generation": true,
+    "verifier_sha256": "117f7a2ebbc2a79a87fb307675dcdbd3e9a9671265cb727e809eb153a8268364",
+    "source_sha256": {
+      "scripts/verify_robot_io_readiness.py": "117f7a2ebbc2a79a87fb307675dcdbd3e9a9671265cb727e809eb153a8268364",
+      "tests/test_verify_robot_io_readiness.py": "cd5ee90daa59c8ae27ce198fce0a1ffbfc48b78e870a5df5fff803402b82a56e",
+      "docs/hardware/robot_camera_io_readiness_v1.md": "ac3d1ca25690a9f498ef179b3fd1f5c472173457e7d64b761df4f4b4e5f5fe6c",
+      "plans/robot_camera_io_risks.md": "6967d45b82bfa7273207a1576f65b1df5086ab93e104939f69b6c1de6741b90d"
+    },
+    "evidence_payload_hash_scope": "canonical JSON with content_binding.evidence_payload_sha256 omitted",
+    "evidence_payload_sha256": "202b62e7a1cf84cf94dabaedd19c70c02d92923bb38611dc010018c5a9e4c9f2",
+    "claim": "Git HEAD identifies the base commit at generation; when generation_mode is PRE_COMMIT_WORKTREE, source hashes bind the uncommitted implementation and do not claim provenance from a later commit."
   },
   "host": {
     "provenance": "MEASURED",

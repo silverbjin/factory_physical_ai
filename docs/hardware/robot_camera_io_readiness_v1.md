@@ -2,7 +2,7 @@
 
 > Task: `TASK-P0-006`
 >
-> Verification date: 2026-09-03
+> Verification date: 2026-09-04
 >
 > Evidence: `results/phase0/P0-006_robot_io_readiness.json`
 >
@@ -24,6 +24,15 @@ TASK-P0-004R required: true
 
 No robot, joint, gripper, trajectory, teleoperation, model, dataset, ROS, or
 Agent command was executed.
+
+## Generation and content binding
+
+Canonical evidence records `git_head_at_generation`, whether the worktree was
+dirty, the verifier SHA-256, hashes of the verifier/test/readiness-document/risk
+sources, and a canonical evidence-payload SHA-256. A remediation evidence run
+performed before its eventual commit is labeled `PRE_COMMIT_WORKTREE`: its Git
+HEAD is the base commit, while its source hashes bind the exact uncommitted
+content. It must not be described as having been generated from a later commit.
 
 ## Evidence provenance
 
@@ -75,9 +84,11 @@ Robot read/write permission and controller endpoint access remain
 | Future gripper interface | Applicability/path unresolved; not invoked | `NOT_VERIFIED` |
 
 The verifier permits only an explicitly declared `regular_file_snapshot` marked
-`safe_read_only=true`, limits the read to 4096 bytes, and enforces a state-query
-timeout. Unknown SDK, vendor, serial, network, and controller operations are not
-executed.
+`safe_read_only=true`, limits the read to 4096 bytes, and encloses metadata
+inspection, regular-file validation, open, and read in one timeout-controlled
+child process. Diagnostic delivery uses bounded `Queue.get(timeout=...)`, and
+the process/queue resources are explicitly reaped and closed. Unknown SDK,
+vendor, serial, network, and controller operations are not executed.
 
 ## Camera identity and I/O
 
