@@ -1,0 +1,469 @@
+{
+  "schema_version": "1.0",
+  "task": "TASK-P0-006",
+  "verifier": {
+    "version": "1.1.0",
+    "path": "/home/jinho/projects/factory_physical_ai_p0_006/scripts/verify_robot_io_readiness.py",
+    "sha256": "117f7a2ebbc2a79a87fb307675dcdbd3e9a9671265cb727e809eb153a8268364",
+    "provenance": "MEASURED"
+  },
+  "generated_at": "2026-09-04T03:14:26.012971Z",
+  "git": {
+    "provenance": "MEASURED",
+    "commit": "aa813e6115452cc5b92d370d13fd266120ab384e",
+    "branch": "task/p0-006-device-io-readiness",
+    "working_tree_clean": false,
+    "working_tree_status": [
+      "M docs/hardware/robot_camera_io_readiness_v1.md",
+      " M plans/robot_camera_io_risks.md",
+      " M results/phase0/P0-006_robot_io_readiness.json",
+      " M scripts/verify_robot_io_readiness.py",
+      " M tests/test_verify_robot_io_readiness.py"
+    ]
+  },
+  "content_binding": {
+    "provenance": "DERIVED",
+    "generation_mode": "PRE_COMMIT_WORKTREE",
+    "git_head_at_generation": "aa813e6115452cc5b92d370d13fd266120ab384e",
+    "working_tree_dirty_at_generation": true,
+    "verifier_sha256": "117f7a2ebbc2a79a87fb307675dcdbd3e9a9671265cb727e809eb153a8268364",
+    "source_sha256": {
+      "scripts/verify_robot_io_readiness.py": "117f7a2ebbc2a79a87fb307675dcdbd3e9a9671265cb727e809eb153a8268364",
+      "tests/test_verify_robot_io_readiness.py": "cd5ee90daa59c8ae27ce198fce0a1ffbfc48b78e870a5df5fff803402b82a56e",
+      "docs/hardware/robot_camera_io_readiness_v1.md": "ac3d1ca25690a9f498ef179b3fd1f5c472173457e7d64b761df4f4b4e5f5fe6c",
+      "plans/robot_camera_io_risks.md": "6967d45b82bfa7273207a1576f65b1df5086ab93e104939f69b6c1de6741b90d"
+    },
+    "evidence_payload_hash_scope": "canonical JSON with content_binding.evidence_payload_sha256 omitted",
+    "evidence_payload_sha256": "202b62e7a1cf84cf94dabaedd19c70c02d92923bb38611dc010018c5a9e4c9f2",
+    "claim": "Git HEAD identifies the base commit at generation; when generation_mode is PRE_COMMIT_WORKTREE, source hashes bind the uncommitted implementation and do not claim provenance from a later commit."
+  },
+  "host": {
+    "provenance": "MEASURED",
+    "hostname": "DESKTOP-4B51LPI",
+    "os": "Ubuntu 24.04.4 LTS",
+    "kernel": "6.18.33.2-microsoft-standard-WSL2",
+    "machine": "x86_64",
+    "is_wsl": true,
+    "uid": 1000,
+    "gid": 1000,
+    "groups": [
+      4,
+      20,
+      24,
+      25,
+      27,
+      29,
+      30,
+      44,
+      46,
+      100,
+      107,
+      989,
+      1000
+    ],
+    "python": "3.12.3"
+  },
+  "prerequisites": {
+    "p0_005": {
+      "provenance": "MEASURED",
+      "accepted": true,
+      "evidence_path": "/home/jinho/projects/factory_physical_ai_p0_006/results/phase0/P0-005_vla_runtime.json",
+      "expected_sha256": "aafe0273a3fa8d28652494ea8f72fc396247fed81c6d5ab71311ff628e646aae",
+      "measured_sha256": "aafe0273a3fa8d28652494ea8f72fc396247fed81c6d5ab71311ff628e646aae",
+      "evidence_hash_match": true
+    },
+    "task_w1_001_authorized": false,
+    "p0_004r_required": true
+  },
+  "declarations": {
+    "provenance": "NOT_VERIFIED",
+    "source": null,
+    "errors": [
+      "operator declaration file was not supplied",
+      "target_hardware must be an object",
+      "interfaces must be an object",
+      "camera must be an object",
+      "workspace must be an object",
+      "abort must be an object"
+    ]
+  },
+  "target_hardware": {
+    "provenance": "NOT_VERIFIED",
+    "selected": false,
+    "details": null
+  },
+  "device_discovery": {
+    "status": "PASS",
+    "provenance": "MEASURED",
+    "device_root": "/dev",
+    "robot_candidates": [],
+    "camera_candidates": [],
+    "serial_stable_identities": [],
+    "camera_stable_identities": [],
+    "timed_out": false,
+    "timeout_seconds": 5.0
+  },
+  "robot_device": {
+    "provenance": "NOT_VERIFIED",
+    "selected_path": null,
+    "selected_metadata": null,
+    "stable_identity_path": null,
+    "stable_identity_metadata": null,
+    "physically_discoverable": false,
+    "stable_identity_available": false,
+    "required_access_available": false,
+    "permissions_changed": false,
+    "serial_or_controller_opened": false
+  },
+  "state_path": {
+    "provenance": "NOT_VERIFIED",
+    "identified": false,
+    "declaration": null,
+    "observation": {
+      "status": "NOT_VERIFIED",
+      "provenance": "NOT_VERIFIED",
+      "attempted": false,
+      "timed_out": false,
+      "detail": "no explicitly safe regular-file state observation was declared"
+    }
+  },
+  "command_path": {
+    "provenance": "NOT_VERIFIED",
+    "identified": false,
+    "declaration": null,
+    "executed": false
+  },
+  "gripper_path": {
+    "provenance": "NOT_VERIFIED",
+    "gripper_present": null,
+    "identified_or_not_applicable": false,
+    "declaration": null,
+    "executed": false
+  },
+  "camera": {
+    "identity_provenance": "NOT_VERIFIED",
+    "selected": false,
+    "declaration": null,
+    "device_provenance": "NOT_VERIFIED",
+    "selected_metadata": null,
+    "stable_identity_metadata": null,
+    "physically_discoverable": false,
+    "stable_identity_available": false,
+    "readable": false,
+    "acquisition": {
+      "status": "NOT_VERIFIED",
+      "provenance": "NOT_VERIFIED",
+      "attempted": false,
+      "timed_out": false,
+      "frames_requested": 1,
+      "frames_acquired": 0,
+      "frames_persisted": 0,
+      "detail": "selected camera is not safely available for bounded acquisition"
+    }
+  },
+  "workspace_safety_boundary": {
+    "provenance": "NOT_VERIFIED",
+    "declared_source_kind": null,
+    "documented": false,
+    "details": null,
+    "physically_exercised": false
+  },
+  "abort_estop": {
+    "provenance": "NOT_VERIFIED",
+    "classification": "NOT_VERIFIED",
+    "documented": false,
+    "details": null,
+    "functionally_tested_under_motion": false
+  },
+  "teleoperation_prerequisites": {
+    "provenance": "DERIVED",
+    "status": "BLOCKED",
+    "implemented": false,
+    "executed": false,
+    "task_w1_002_authorized": false
+  },
+  "checks": [
+    {
+      "id": "C01",
+      "area": "Target hardware selected",
+      "status": "BLOCKED",
+      "mandatory": true,
+      "provenance": "NOT_VERIFIED",
+      "detail": "target selection is unresolved"
+    },
+    {
+      "id": "C02",
+      "area": "Robot/controller physically discoverable",
+      "status": "NOT_VERIFIED",
+      "mandatory": true,
+      "provenance": "NOT_VERIFIED",
+      "detail": "target robot/controller is not selected"
+    },
+    {
+      "id": "C03",
+      "area": "Stable device identity available",
+      "status": "NOT_VERIFIED",
+      "mandatory": true,
+      "provenance": "NOT_VERIFIED",
+      "detail": "stable identity cannot be evaluated before target selection"
+    },
+    {
+      "id": "C04",
+      "area": "Required host permission/access available",
+      "status": "NOT_VERIFIED",
+      "mandatory": true,
+      "provenance": "NOT_VERIFIED",
+      "detail": "device access cannot be evaluated before target selection"
+    },
+    {
+      "id": "C05",
+      "area": "Robot state-feedback path identified",
+      "status": "BLOCKED",
+      "mandatory": true,
+      "provenance": "NOT_VERIFIED",
+      "detail": "credible state-feedback interface is not identified"
+    },
+    {
+      "id": "C06",
+      "area": "Robot state observable without motion",
+      "status": "NOT_VERIFIED",
+      "mandatory": true,
+      "provenance": "NOT_VERIFIED",
+      "detail": "no explicitly safe regular-file state observation was declared"
+    },
+    {
+      "id": "C07",
+      "area": "Future actuator command path identified",
+      "status": "BLOCKED",
+      "mandatory": true,
+      "provenance": "NOT_VERIFIED",
+      "detail": "future command path is not identified"
+    },
+    {
+      "id": "C08",
+      "area": "Future gripper path identified or not applicable",
+      "status": "BLOCKED",
+      "mandatory": true,
+      "provenance": "NOT_VERIFIED",
+      "detail": "gripper applicability/path is unresolved"
+    },
+    {
+      "id": "C09",
+      "area": "Camera selected",
+      "status": "BLOCKED",
+      "mandatory": true,
+      "provenance": "NOT_VERIFIED",
+      "detail": "camera selection is unresolved"
+    },
+    {
+      "id": "C10",
+      "area": "Camera physically discoverable",
+      "status": "NOT_VERIFIED",
+      "mandatory": true,
+      "provenance": "NOT_VERIFIED",
+      "detail": "camera is not selected"
+    },
+    {
+      "id": "C11",
+      "area": "Bounded camera frame acquisition succeeds",
+      "status": "NOT_VERIFIED",
+      "mandatory": true,
+      "provenance": "NOT_VERIFIED",
+      "detail": "selected camera is not safely available for bounded acquisition"
+    },
+    {
+      "id": "C12",
+      "area": "Camera configuration recorded",
+      "status": "NOT_VERIFIED",
+      "mandatory": true,
+      "provenance": "NOT_VERIFIED",
+      "detail": "camera configuration/acquisition result is incomplete"
+    },
+    {
+      "id": "C13",
+      "area": "Workspace/motion constraints documented",
+      "status": "BLOCKED",
+      "mandatory": true,
+      "provenance": "NOT_VERIFIED",
+      "detail": "workspace/safety constraints are incomplete"
+    },
+    {
+      "id": "C14",
+      "area": "Manual abort/E-stop path documented",
+      "status": "BLOCKED",
+      "mandatory": true,
+      "provenance": "NOT_VERIFIED",
+      "detail": "manual abort/E-stop strategy is unavailable or not verified"
+    },
+    {
+      "id": "C15",
+      "area": "Supervised teleoperation prerequisites classified",
+      "status": "BLOCKED",
+      "mandatory": true,
+      "provenance": "DERIVED",
+      "detail": "one or more prerequisites are blocked; teleoperation remains unauthorized"
+    },
+    {
+      "id": "C16",
+      "area": "No physical motion occurred",
+      "status": "PASS",
+      "mandatory": true,
+      "provenance": "DERIVED",
+      "detail": "verifier contains no robot/gripper/trajectory/teleoperation command path"
+    },
+    {
+      "id": "C17",
+      "area": "No Week 1/dataset/model work occurred",
+      "status": "PASS",
+      "mandatory": true,
+      "provenance": "DERIVED",
+      "detail": "verifier performed readiness diagnostics only"
+    },
+    {
+      "id": "C18",
+      "area": "Evidence and documentation internally consistent",
+      "status": "PASS",
+      "mandatory": true,
+      "provenance": "DERIVED",
+      "detail": "material invariants are consistent"
+    }
+  ],
+  "unresolved_blockers": [
+    {
+      "check_id": "C01",
+      "area": "Target hardware selected",
+      "status": "BLOCKED",
+      "detail": "target selection is unresolved"
+    },
+    {
+      "check_id": "C02",
+      "area": "Robot/controller physically discoverable",
+      "status": "NOT_VERIFIED",
+      "detail": "target robot/controller is not selected"
+    },
+    {
+      "check_id": "C03",
+      "area": "Stable device identity available",
+      "status": "NOT_VERIFIED",
+      "detail": "stable identity cannot be evaluated before target selection"
+    },
+    {
+      "check_id": "C04",
+      "area": "Required host permission/access available",
+      "status": "NOT_VERIFIED",
+      "detail": "device access cannot be evaluated before target selection"
+    },
+    {
+      "check_id": "C05",
+      "area": "Robot state-feedback path identified",
+      "status": "BLOCKED",
+      "detail": "credible state-feedback interface is not identified"
+    },
+    {
+      "check_id": "C06",
+      "area": "Robot state observable without motion",
+      "status": "NOT_VERIFIED",
+      "detail": "no explicitly safe regular-file state observation was declared"
+    },
+    {
+      "check_id": "C07",
+      "area": "Future actuator command path identified",
+      "status": "BLOCKED",
+      "detail": "future command path is not identified"
+    },
+    {
+      "check_id": "C08",
+      "area": "Future gripper path identified or not applicable",
+      "status": "BLOCKED",
+      "detail": "gripper applicability/path is unresolved"
+    },
+    {
+      "check_id": "C09",
+      "area": "Camera selected",
+      "status": "BLOCKED",
+      "detail": "camera selection is unresolved"
+    },
+    {
+      "check_id": "C10",
+      "area": "Camera physically discoverable",
+      "status": "NOT_VERIFIED",
+      "detail": "camera is not selected"
+    },
+    {
+      "check_id": "C11",
+      "area": "Bounded camera frame acquisition succeeds",
+      "status": "NOT_VERIFIED",
+      "detail": "selected camera is not safely available for bounded acquisition"
+    },
+    {
+      "check_id": "C12",
+      "area": "Camera configuration recorded",
+      "status": "NOT_VERIFIED",
+      "detail": "camera configuration/acquisition result is incomplete"
+    },
+    {
+      "check_id": "C13",
+      "area": "Workspace/motion constraints documented",
+      "status": "BLOCKED",
+      "detail": "workspace/safety constraints are incomplete"
+    },
+    {
+      "check_id": "C14",
+      "area": "Manual abort/E-stop path documented",
+      "status": "BLOCKED",
+      "detail": "manual abort/E-stop strategy is unavailable or not verified"
+    },
+    {
+      "check_id": "C15",
+      "area": "Supervised teleoperation prerequisites classified",
+      "status": "BLOCKED",
+      "detail": "one or more prerequisites are blocked; teleoperation remains unauthorized"
+    }
+  ],
+  "deferred_non_blockers": [
+    {
+      "item": "physical teleoperation implementation",
+      "owner": "TASK-W1-002",
+      "provenance": "DOCUMENTED"
+    },
+    {
+      "item": "Dataset V1",
+      "owner": "TASK-W1-003",
+      "provenance": "DOCUMENTED"
+    },
+    {
+      "item": "fine-tuning",
+      "owner": "TASK-W1-004",
+      "provenance": "DOCUMENTED"
+    },
+    {
+      "item": "training compute/budget resolution",
+      "owner": "TASK-P0-007",
+      "provenance": "DOCUMENTED"
+    },
+    {
+      "item": "final Phase 0 authorization",
+      "owner": "TASK-P0-004R",
+      "provenance": "DOCUMENTED"
+    }
+  ],
+  "safety": {
+    "provenance": "DERIVED",
+    "non_motion_verifier": true,
+    "robot_motion_commanded": false,
+    "joint_motion_commanded": false,
+    "gripper_motion_commanded": false,
+    "trajectory_execution_commanded": false,
+    "teleoperation_motion_commanded": false,
+    "unknown_vendor_interface_executed": false,
+    "robot_serial_or_controller_opened": false,
+    "camera_frames_persisted": false,
+    "permissions_or_security_policy_changed": false,
+    "dataset_work_started": false,
+    "model_work_started": false,
+    "integration_work_started": false
+  },
+  "task_w1_001_authorized": false,
+  "p0_004r_required": true,
+  "device_io_decision": "DEVICE_IO_BLOCKED"
+}
