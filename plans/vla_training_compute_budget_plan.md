@@ -36,6 +36,8 @@ provide all of the following with allowed provenance:
 1. concrete resource/provider or organizational host identity;
 2. availability/access and quota evidence;
 3. GPU/resource class and usable VRAM;
+   required VRAM for the selected workload/configuration, with
+   `available_vram_bytes >= required_vram_bytes`;
 4. compatibility with the accepted Python/LeRobot/PyTorch strategy;
 5. data/model/checkpoint transfer method;
 6. environment reconstruction and source revision method;
@@ -74,6 +76,16 @@ The repository filesystem capacity is measured by each verifier run. Storage
 cannot move beyond `STORAGE_NOT_VERIFIED` until model, dataset, checkpoint, and
 temporary-space requirements are evidenced. Planned paths do not imply that
 Dataset V1 or checkpoints exist.
+
+READY storage uses the exact, independently recomputed relationship:
+
+```text
+required = dataset + checkpoints + model cache + temporary space
+available >= required
+```
+
+All components retain distinct provenance; no dataset size is inferred by this
+task.
 
 ## Budget policy
 
@@ -114,6 +126,9 @@ verified `LOCAL_TRAINING` path. A policy name or availability boolean alone is
 never sufficient. Numeric or prepaid evidence must name the selected primary
 resource through `applies_to_resource_id`; an entitlement or price for a
 different resource cannot establish primary-path feasibility.
+Prepaid feasibility requires both remaining and required usage with the same
+unit and independently checks `remaining_quota >= required_quota`. It cannot
+carry contradictory numeric-cost fields while claiming no cost calculation.
 P0-007 cannot produce a measured training-duration input because it executes no
 training. Such an estimate must be `DECLARED_INPUT` or `DOCUMENTED`; only the
 formula result is `DERIVED`.
@@ -144,6 +159,9 @@ resource class, availability, runtime compatibility, provenance, and sources.
 This TASK defines no independently demonstrable redundancy exemption, so an
 empty fallback or a `fallback.required=false` assertion fails READY.
 The fallback resource ID must also be distinct from the primary resource ID.
+It must identify an NVIDIA CUDA GPU, prove available VRAM against the same
+workload requirement, reference the storage/artifact movement strategy, and
+pass a numeric or prepaid budget predicate applied to that fallback resource.
 
 ## Approval dependencies and future ownership
 

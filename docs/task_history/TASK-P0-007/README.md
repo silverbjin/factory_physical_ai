@@ -16,6 +16,8 @@
 | 02 | Fix | READY FOR INDEPENDENT RE-REVIEW / `TRAINING_RESOURCE_BLOCKED` | mode-specific material validation, cost recomputation, rehashed-tamper resistance, bounded filesystem metadata를 보강했다. | `02_fix.md` |
 | 03 | Review | REJECT / `TRAINING_RESOURCE_BLOCKED` | rehashed false-READY bypass, no-training cross-check 누락, unbounded RAM metadata, fix-history conflict를 확인했다. | `03_review.md` |
 | 04 | Fix | READY FOR INDEPENDENT RE-REVIEW / `TRAINING_RESOURCE_BLOCKED` | material/provenance 관계, training flag cross-check, bounded RAM probe를 강화하고 02 기록을 새 audit entry로 supersede했다. | `04_fix.md` |
+| 05 | Review | REJECT / `TRAINING_RESOURCE_BLOCKED` | compute/storage/prepaid/fallback 관계의 false-READY, missing no-training field, 남은 unbounded filesystem 경로를 확인했다. | `05_review.md` |
+| 06 | Fix | READY FOR INDEPENDENT RE-REVIEW / `TRAINING_RESOURCE_BLOCKED` | workload VRAM/storage/prepaid/fallback 관계를 재계산하고 missing no-training 및 remaining unbounded I/O를 fail closed 처리했다. | `06_fix.md` |
 
 ## 3. 주요 설계 / 문제 해결 포인트
 
@@ -30,16 +32,16 @@
 
 ## 4. 검증 결과
 
-- Focused tests: 49 PASS, 0 FAIL.
-- Coordinated/rehashed tamper group: 11 PASS, 0 FAIL.
-- Cost arithmetic/provenance group: 7 PASS, 0 FAIL.
-- Delayed filesystem/resource metadata group: 4 PASS, 0 FAIL.
-- Full regression: 125 PASS, 0 FAIL.
+- Focused tests: 56 PASS, 0 FAIL.
+- Latest corrective B04/B05 group: 5 PASS, 0 FAIL.
+- Bounded filesystem/resource I/O group: 6 PASS, 0 FAIL.
+- Independent rehashed review attacks: 5/5 BLOCKED.
+- Full regression: 132 PASS, 0 FAIL.
 - Canonical/safe reruns: expected exit `2`, stable `TRAINING_RESOURCE_BLOCKED`.
 - JSON/schema/invariant/source/predecessor hash validation: PASS.
-- Evidence: `../../../results/phase0/P0-007_training_resource_readiness.json`, SHA-256 `eda1a2549d038f5ccc3604bec00632def122f9676ad8636b1a0bbeff8a1d41b8`.
-- Evidence payload SHA-256: `07aeec9a4ac444ebcf618f89c9a02a681b980791601c35618544bbc56ac75ad8`.
-- Independent review: 03 review `REJECT`; 04 corrective implementation is ready for independent re-review.
+- Evidence: `../../../results/phase0/P0-007_training_resource_readiness.json`, SHA-256 `9f53dcc0de59c6e32f24ef45a9e91fc6a62641d553b93d4b864cc8520fe6a215`.
+- Evidence payload SHA-256: `128d0b72373c6605e4157bdbefc8746f1e952506d8dea6d9509d2c4909164325`.
+- Independent review: 05 re-review `REJECT`; 06 corrective implementation is ready for independent re-review.
 
 ## 5. 현재 상태
 
@@ -74,3 +76,14 @@ artifact가 READY로 승인되는 우회와 unbounded RAM metadata 경로를 발
 검증하고, 모든 training flag를 교차 검증하며, RAM metadata도 bounded worker로
 이동했다. 과거 02 audit record는 수정하지 않고 04의 단일 hash 기록으로
 supersede하여 audit trail을 보존했다.
+
+05 independent re-review에서는 이 보강을 확인했지만, component 합보다 작은
+storage requirement, usable capacity가 없는 primary/fallback, required usage와
+비교되지 않은 prepaid quota가 rehashed READY를 만드는 추가 관계 우회를
+발견했다. Missing runtime no-training fields의 false default와 일부 unbounded
+filesystem read/discovery 경로도 남아 있어 추가 교정이 필요하다.
+
+06 fix는 workload requirement와 available capacity를 primary/fallback에 결합하고,
+storage 합계 및 prepaid quota sufficiency를 독립 재계산했다. Missing no-training
+fields는 더 이상 false로 승격되지 않으며 JSON/hash/executable discovery도
+timeout boundary 안에서 실패를 보수적으로 전파한다.

@@ -3,6 +3,7 @@ from __future__ import annotations
 import importlib.util
 import json
 import multiprocessing
+import os
 import subprocess
 import sys
 import tempfile
@@ -72,6 +73,8 @@ class TrainingResourceReadinessTests(unittest.TestCase):
                 "device_count": 1,
                 "model_loaded": False,
                 "training_executed": False,
+                "optimizer_updates_executed": False,
+                "hyperparameter_search_executed": False,
             },
             "ram": {
                 "provenance": "MEASURED",
@@ -120,6 +123,7 @@ class TrainingResourceReadinessTests(unittest.TestCase):
             "identified": True,
             "resource_id": "remote-gpu-fixture-01",
             "provider_or_owner": "synthetic-test-provider",
+            "compute_kind": verifier.CUDA_GPU_RESOURCE,
             "availability": "AVAILABLE",
             "availability_provenance": "DECLARED_INPUT",
             "availability_source_reference": "fixture://resource-availability",
@@ -127,6 +131,10 @@ class TrainingResourceReadinessTests(unittest.TestCase):
             "vram_bytes": 24 * 1024 * 1024 * 1024,
             "vram_provenance": "DOCUMENTED",
             "vram_source_reference": "fixture://resource-class",
+            "required_vram_bytes": 16 * 1024 * 1024 * 1024,
+            "required_vram_provenance": "DOCUMENTED",
+            "required_vram_source_reference": "fixture://workload-vram-requirement",
+            "workload_config_reference": "fixture://training-configuration",
             "provenance": "DECLARED_INPUT",
             "source_reference": "fixture://resource-identity",
             "compatibility": "COMPATIBLE",
@@ -145,9 +153,16 @@ class TrainingResourceReadinessTests(unittest.TestCase):
                 "checkpoint_size_bytes": 2_000_000,
                 "checkpoint_size_provenance": "DECLARED_INPUT",
                 "checkpoint_size_source_reference": "fixture://checkpoint-size",
+                "model_cache_size_bytes": 1_000_000,
+                "model_cache_size_provenance": "DOCUMENTED",
+                "model_cache_size_source_reference": "fixture://model-cache-size",
+                "temporary_space_bytes": 6_000_000,
+                "temporary_space_provenance": "DECLARED_INPUT",
+                "temporary_space_source_reference": "fixture://temporary-space",
                 "required_capacity_bytes": 10_000_000,
                 "required_capacity_provenance": "DERIVED",
                 "required_capacity_source_reference": "fixture://capacity-calculation",
+                "capacity_formula": verifier.STORAGE_FORMULA,
                 "available_capacity_bytes": 80_000_000_000,
                 "available_capacity_provenance": "MEASURED",
                 "available_capacity_source_reference": "fixture://disk-measurement",
@@ -208,8 +223,16 @@ class TrainingResourceReadinessTests(unittest.TestCase):
             "strategy_id": "fallback-remote-gpu",
             "resource_id": "remote-gpu-fixture-02",
             "provider_or_owner": "synthetic-test-provider",
+            "compute_kind": verifier.CUDA_GPU_RESOURCE,
             "resource_class": "synthetic alternate GPU fixture",
             "resource": "synthetic fallback GPU fixture",
+            "vram_bytes": 24 * 1024 * 1024 * 1024,
+            "vram_provenance": "DOCUMENTED",
+            "vram_source_reference": "fixture://fallback-vram",
+            "required_vram_bytes": 16 * 1024 * 1024 * 1024,
+            "required_vram_provenance": "DOCUMENTED",
+            "required_vram_source_reference": "fixture://workload-vram-requirement",
+            "workload_config_reference": "fixture://training-configuration",
             "provenance": "DECLARED_INPUT",
             "source_reference": "fixture://fallback-identity",
             "availability_provenance": "DECLARED_INPUT",
@@ -219,9 +242,19 @@ class TrainingResourceReadinessTests(unittest.TestCase):
             "compatibility_source_reference": "fixture://fallback-runtime",
             "not_required_rule": None,
             "not_required_source_reference": None,
+            "storage_strategy_reference": "fixture://fallback-artifact-movement",
+            "storage_strategy_provenance": "DOCUMENTED",
+            "storage_strategy_source_reference": "fixture://fallback-storage-plan",
             "stop_condition": "stop if fallback is unavailable or outside policy",
             "detail": "synthetic test fixture only",
         }
+        plan["fallback"]["budget"] = deepcopy(plan["budget"])
+        plan["fallback"]["budget"].update(
+            {
+                "source_reference": "fixture://fallback-budget-approval",
+                "applies_to_resource_id": "remote-gpu-fixture-02",
+            }
+        )
         return plan
 
     def evidence(self, plan: dict[str, Any] | None = None) -> dict[str, Any]:
@@ -432,11 +465,16 @@ class TrainingResourceReadinessTests(unittest.TestCase):
             {
                 "resource_id": "LOCAL_ACCEPTED_P0_005_GPU",
                 "provider_or_owner": "local-test-owner",
+                "compute_kind": verifier.CUDA_GPU_RESOURCE,
                 "resource_class": "synthetic local GPU fixture",
                 "vram_bytes": 6 * 1024 * 1024 * 1024,
                 "source_reference": "fixture://local-resource",
                 "availability_source_reference": "fixture://local-availability",
                 "vram_source_reference": "fixture://local-vram",
+                "required_vram_bytes": 4 * 1024 * 1024 * 1024,
+                "required_vram_provenance": "DOCUMENTED",
+                "required_vram_source_reference": "fixture://bounded-model-memory-evidence",
+                "workload_config_reference": "fixture://training-configuration",
                 "compatibility_source_reference": "fixture://local-runtime",
             }
         )
@@ -726,6 +764,152 @@ class TrainingResourceReadinessTests(unittest.TestCase):
 
         self.assertEqual(evidence["training_resource_decision"], verifier.BLOCKED)
         self.assertEqual(evidence["checks"][10]["status"], "BLOCKED")
+        self.assertEqual(
+            verifier.validate_evidence(
+                evidence,
+                repository_root=REPOSITORY_ROOT,
+                verify_bound_files=True,
+            ),
+            [],
+        )
+
+    def test_storage_required_capacity_is_recomputed_from_components(self) -> None:
+        evidence = self.evidence()
+        storage = evidence["resource_plan"]["storage"]
+        storage["dataset_size_bytes"] = 70_000_000_000
+        storage["checkpoint_size_bytes"] = 70_000_000_000
+        storage["required_capacity_bytes"] = 10_000_000
+        self.refresh(evidence)
+
+        self.assertEqual(evidence["training_resource_decision"], verifier.BLOCKED)
+        self.assertEqual(evidence["checks"][10]["status"], "BLOCKED")
+        self.assertEqual(
+            verifier.validate_evidence(
+                evidence,
+                repository_root=REPOSITORY_ROOT,
+                verify_bound_files=True,
+            ),
+            [],
+        )
+
+    def test_primary_vram_must_cover_evidenced_workload_requirement(self) -> None:
+        evidence = self.evidence()
+        primary = evidence["resource_plan"]["primary_resource"]
+        primary["vram_bytes"] = 1
+        self.refresh(evidence)
+
+        self.assertEqual(evidence["training_resource_decision"], verifier.BLOCKED)
+        self.assertEqual(evidence["checks"][8]["status"], "BLOCKED")
+        self.assertEqual(
+            verifier.validate_evidence(
+                evidence,
+                repository_root=REPOSITORY_ROOT,
+                verify_bound_files=True,
+            ),
+            [],
+        )
+
+    def test_fallback_requires_compute_storage_and_budget_material(self) -> None:
+        mutations = (
+            lambda fallback: fallback.update(vram_bytes=1),
+            lambda fallback: fallback.update(storage_strategy_reference=None),
+            lambda fallback: fallback.pop("budget"),
+            lambda fallback: fallback["budget"].update(
+                estimated_compute_cost=1
+            ),
+        )
+        for mutate in mutations:
+            with self.subTest(mutation=mutate):
+                evidence = self.evidence()
+                mutate(evidence["resource_plan"]["fallback"])
+                self.refresh(evidence)
+
+                self.assertEqual(
+                    evidence["training_resource_decision"], verifier.BLOCKED
+                )
+                self.assertEqual(evidence["checks"][14]["status"], "BLOCKED")
+                self.assertEqual(
+                    verifier.validate_evidence(
+                        evidence,
+                        repository_root=REPOSITORY_ROOT,
+                        verify_bound_files=True,
+                    ),
+                    [],
+                )
+
+    def test_prepaid_quota_must_cover_evidenced_required_usage(self) -> None:
+        evidence = self.evidence()
+        budget = evidence["resource_plan"]["budget"]
+        budget.update(
+            {
+                "policy": "EXISTING_PREPAID_RESOURCE",
+                "provenance": "DOCUMENTED",
+                "source_reference": "fixture://prepaid-policy",
+                "applies_to_resource_id": "remote-gpu-fixture-01",
+                "feasibility": "WITHIN_POLICY",
+                "prepaid_resource_id": "remote-gpu-fixture-01",
+                "prepaid_resource_reference": "fixture://prepaid-resource",
+                "prepaid_resource_provenance": "DOCUMENTED",
+                "remaining_quota": 1e-300,
+                "quota_unit": "GPU-hours",
+                "quota_provenance": "DOCUMENTED",
+                "quota_source_reference": "fixture://remaining-quota",
+                "required_quota": 4.0,
+                "required_quota_unit": "GPU-hours",
+                "required_quota_provenance": "DECLARED_INPUT",
+                "required_quota_source_reference": "fixture://required-hours",
+                "approved_ceiling": None,
+                "unit_price": None,
+                "estimated_training_hours": None,
+                "estimated_compute_cost": None,
+                "cost_inputs": [],
+                "cost_formula": None,
+                "calculation_performed": False,
+            }
+        )
+        self.refresh(evidence)
+
+        errors = verifier.validate_evidence(
+            evidence,
+            repository_root=REPOSITORY_ROOT,
+            verify_bound_files=True,
+        )
+        self.assertEqual(evidence["training_resource_decision"], verifier.BLOCKED)
+        self.assertTrue(any("below evidenced required usage" in error for error in errors))
+
+        budget["remaining_quota"] = 4.0
+        self.refresh(evidence)
+        self.assertEqual(evidence["training_resource_decision"], verifier.READY)
+        self.assertEqual(
+            verifier.validate_evidence(
+                evidence,
+                repository_root=REPOSITORY_ROOT,
+                verify_bound_files=True,
+            ),
+            [],
+        )
+
+    def test_missing_runtime_no_training_fields_fail_closed(self) -> None:
+        for field in (
+            "training_executed",
+            "optimizer_updates_executed",
+            "hyperparameter_search_executed",
+        ):
+            with self.subTest(field=field):
+                evidence = self.evidence()
+                evidence["local_resources"]["torch_cuda"].pop(field)
+                self.refresh(evidence)
+
+                errors = verifier.validate_evidence(
+                    evidence,
+                    repository_root=REPOSITORY_ROOT,
+                    verify_bound_files=True,
+                )
+                self.assertEqual(
+                    evidence["training_resource_decision"], verifier.BLOCKED
+                )
+                self.assertEqual(evidence["checks"][17]["status"], "BLOCKED")
+                self.assertTrue(any("training activity fields" in error for error in errors))
 
     def test_hybrid_not_verified_primary_evidence_blocks_ready(self) -> None:
         evidence = self.evidence()
@@ -970,6 +1154,32 @@ class TrainingResourceReadinessTests(unittest.TestCase):
         self.assertEqual(
             {child.pid for child in multiprocessing.active_children()}, children_before
         )
+
+    def test_blocking_json_and_hash_reads_terminate(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            fifo = Path(temporary_directory) / "blocked-input"
+            os.mkfifo(fifo)
+
+            started = time.monotonic()
+            self.assertEqual(verifier._json(fifo, timeout_seconds=0.03), {})
+            json_elapsed = time.monotonic() - started
+
+            started = time.monotonic()
+            self.assertIsNone(verifier._sha256(fifo, timeout_seconds=0.03))
+            hash_elapsed = time.monotonic() - started
+
+        self.assertLess(json_elapsed, 0.75)
+        self.assertLess(hash_elapsed, 0.75)
+
+    def test_delayed_executable_discovery_terminates_conservatively(self) -> None:
+        started = time.monotonic()
+        with mock.patch.object(verifier.shutil, "which", lambda _name: time.sleep(0.5)):
+            result = verifier._nvidia(metadata_timeout_seconds=0.03)
+        elapsed = time.monotonic() - started
+
+        self.assertLess(elapsed, 0.75)
+        self.assertEqual(result["provenance"], "NOT_VERIFIED")
+        self.assertTrue(result["timed_out"])
 
 
 class TrainingResourceReadinessCliTests(unittest.TestCase):

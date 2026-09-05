@@ -30,7 +30,7 @@ from typing import Any, Mapping, Sequence
 
 TASK_ID = "TASK-P0-007"
 SCHEMA_VERSION = "1.0"
-VERIFIER_VERSION = "1.2.0"
+VERIFIER_VERSION = "1.3.0"
 READY = "TRAINING_RESOURCE_READY"
 BLOCKED = "TRAINING_RESOURCE_BLOCKED"
 
@@ -102,6 +102,7 @@ BOUND_SOURCE_PATHS = (
     "plans/vla_training_resource_risks.md",
 )
 MAX_DIAGNOSTIC_BYTES = 4096
+MAX_JSON_BYTES = 2 * 1024 * 1024
 DEFAULT_METADATA_TIMEOUT_SECONDS = 2.0
 RESULT_QUEUE_TIMEOUT_SECONDS = 0.5
 SUFFICIENT_PROVENANCE = PROVENANCE - {"NOT_VERIFIED"}
@@ -123,6 +124,11 @@ FALLBACK_NOT_REQUIRED_RULE = (
     "PRIMARY_RESOURCE_HAS_DOCUMENTED_REDUNDANCY_AND_POLICY_ACCEPTS_NO_SEPARATE_FALLBACK"
 )
 COST_FORMULA = "unit_price * estimated_training_hours"
+STORAGE_FORMULA = (
+    "dataset_size_bytes + checkpoint_size_bytes + model_cache_size_bytes + "
+    "temporary_space_bytes"
+)
+CUDA_GPU_RESOURCE = "NVIDIA_CUDA_GPU"
 IDENTITY_PROVENANCE = {"MEASURED", "DECLARED_INPUT", "DOCUMENTED"}
 COMPATIBILITY_PROVENANCE = {"MEASURED", "DOCUMENTED"}
 CAPACITY_PROVENANCE = {"MEASURED", "DECLARED_INPUT", "DOCUMENTED"}
@@ -155,6 +161,7 @@ def _run(
     timeout_seconds: float = 10.0,
     cwd: Path | None = None,
     env: Mapping[str, str] | None = None,
+    output_limit: int = MAX_DIAGNOSTIC_BYTES,
 ) -> dict[str, Any]:
     """Run a bounded, non-interactive diagnostic command."""
 
@@ -173,14 +180,14 @@ def _run(
             "available": True,
             "returncode": None,
             "timed_out": True,
-            "output": _bounded(str(exc)),
+            "output": _bounded(str(exc), output_limit),
         }
     except OSError as exc:
         return {
             "available": False,
             "returncode": None,
             "timed_out": False,
-            "output": _bounded(f"{type(exc).__name__}: {exc}"),
+            "output": _bounded(f"{type(exc).__name__}: {exc}", output_limit),
         }
 
     output = completed.stdout
@@ -190,25 +197,60 @@ def _run(
         "available": True,
         "returncode": completed.returncode,
         "timed_out": False,
-        "output": _bounded(output),
+        "output": _bounded(output, output_limit),
     }
 
 
-def _sha256(path: Path) -> str | None:
-    try:
-        digest = hashlib.sha256()
-        with path.open("rb") as handle:
-            for chunk in iter(lambda: handle.read(1024 * 1024), b""):
-                digest.update(chunk)
-        return digest.hexdigest()
-    except OSError:
+def _sha256(
+    path: Path, timeout_seconds: float = DEFAULT_METADATA_TIMEOUT_SECONDS
+) -> str | None:
+    helper = (
+        "import hashlib,sys\n"
+        "digest=hashlib.sha256()\n"
+        "with open(sys.argv[1],'rb') as handle:\n"
+        "    while True:\n"
+        "        chunk=handle.read(1048576)\n"
+        "        if not chunk:\n"
+        "            break\n"
+        "        digest.update(chunk)\n"
+        "print(digest.hexdigest())\n"
+    )
+    result = _run(
+        [sys.executable, "-I", "-c", helper, str(path)],
+        timeout_seconds=timeout_seconds,
+    )
+    digest = result.get("output")
+    if (
+        result.get("returncode") != 0
+        or not isinstance(digest, str)
+        or len(digest) != 64
+        or any(character not in "0123456789abcdef" for character in digest)
+    ):
         return None
+    return digest
 
 
-def _json(path: Path) -> dict[str, Any]:
+def _json(
+    path: Path, timeout_seconds: float = DEFAULT_METADATA_TIMEOUT_SECONDS
+) -> dict[str, Any]:
+    helper = (
+        "import json,sys; limit=int(sys.argv[2]); "
+        "f=open(sys.argv[1],'rb'); raw=f.read(limit+1); f.close(); "
+        "assert len(raw)<=limit, 'JSON input exceeds bound'; "
+        "value=json.loads(raw.decode('utf-8')); "
+        "assert isinstance(value,dict), 'JSON root must be object'; "
+        "print(json.dumps(value,separators=(',',':'),sort_keys=True))"
+    )
+    result = _run(
+        [sys.executable, "-I", "-c", helper, str(path), str(MAX_JSON_BYTES)],
+        timeout_seconds=timeout_seconds,
+        output_limit=MAX_JSON_BYTES,
+    )
+    if result.get("returncode") != 0:
+        return {}
     try:
-        value = json.loads(path.read_text(encoding="utf-8"))
-    except (OSError, json.JSONDecodeError):
+        value = json.loads(result["output"])
+    except (KeyError, json.JSONDecodeError):
         return {}
     return value if isinstance(value, dict) else {}
 
@@ -302,6 +344,11 @@ def _filesystem_metadata_worker(
                     )
                     values[key] = int(amount[0]) * multiplier
             result = {"status": "PASS", "values": values}
+        elif operation == "which":
+            result = {
+                "status": "PASS",
+                "resolved": shutil.which(path_value),
+            }
         else:
             result = {
                 "status": "NOT_VERIFIED",
@@ -409,11 +456,30 @@ def _filesystem(
     }
 
 
-def _nvidia() -> dict[str, Any]:
-    executable = shutil.which("nvidia-smi")
+def _nvidia(
+    metadata_timeout_seconds: float = DEFAULT_METADATA_TIMEOUT_SECONDS,
+) -> dict[str, Any]:
+    discovery = _bounded_filesystem_metadata(
+        Path("nvidia-smi"), "which", metadata_timeout_seconds
+    )
+    if discovery.get("timed_out") is True:
+        return {
+            "provenance": "NOT_VERIFIED",
+            "available": False,
+            "name": None,
+            "memory_total_mib": None,
+            "memory_free_mib": None,
+            "compute_capability": None,
+            "timed_out": True,
+            "discovery_probe": discovery,
+            "detail": "nvidia-smi discovery timed out",
+        }
+    executable = discovery.get("resolved") if discovery.get("status") == "PASS" else None
     fallback = Path("/usr/lib/wsl/lib/nvidia-smi")
     if executable is None:
-        fallback_metadata = _bounded_filesystem_metadata(fallback, "path_kind")
+        fallback_metadata = _bounded_filesystem_metadata(
+            fallback, "path_kind", metadata_timeout_seconds
+        )
         if fallback_metadata.get("is_file") is True:
             executable = str(fallback)
     if executable is None:
@@ -424,6 +490,8 @@ def _nvidia() -> dict[str, Any]:
             "memory_total_mib": None,
             "memory_free_mib": None,
             "compute_capability": None,
+            "timed_out": discovery.get("timed_out", False),
+            "discovery_probe": discovery,
             "detail": "nvidia-smi was not found",
         }
     query = _run(
@@ -444,6 +512,7 @@ def _nvidia() -> dict[str, Any]:
             "memory_free_mib": None,
             "compute_capability": None,
             "query": query,
+            "discovery_probe": discovery,
             "detail": "exactly one GPU could not be measured",
         }
     parts = [part.strip() for part in lines[0].split(",")]
@@ -460,6 +529,7 @@ def _nvidia() -> dict[str, Any]:
             "memory_free_mib": None,
             "compute_capability": None,
             "query": query,
+            "discovery_probe": discovery,
             "detail": "nvidia-smi returned an unparsable result",
         }
     return {
@@ -470,6 +540,7 @@ def _nvidia() -> dict[str, Any]:
         "memory_free_mib": free_mib,
         "compute_capability": capability,
         "query": query,
+        "discovery_probe": discovery,
         "detail": "GPU identity and capacity only; not model-training-fit evidence",
     }
 
@@ -519,6 +590,11 @@ def _torch_probe(
             "available": False,
             "timed_out": metadata.get("timed_out", False),
             "metadata_probe": metadata,
+            "model_loaded": False,
+            "tensor_allocation_probe_executed": False,
+            "training_executed": False,
+            "optimizer_updates_executed": False,
+            "hyperparameter_search_executed": False,
             "detail": "accepted VLA environment interpreter is not a verified file",
         }
     probe = (
@@ -548,6 +624,11 @@ def _torch_probe(
             "available": False,
             "query": result,
             "metadata_probe": metadata,
+            "model_loaded": False,
+            "tensor_allocation_probe_executed": False,
+            "training_executed": False,
+            "optimizer_updates_executed": False,
+            "hyperparameter_search_executed": False,
             "detail": "bounded PyTorch metadata probe did not return valid JSON",
         }
     values.update(
@@ -559,6 +640,8 @@ def _torch_probe(
             "model_loaded": False,
             "tensor_allocation_probe_executed": False,
             "training_executed": False,
+            "optimizer_updates_executed": False,
+            "hyperparameter_search_executed": False,
             "detail": "metadata/runtime visibility only; no model or training workload",
         }
     )
@@ -631,6 +714,7 @@ def unresolved_plan(repository_root: Path) -> dict[str, Any]:
             "identified": False,
             "resource_id": None,
             "provider_or_owner": None,
+            "compute_kind": None,
             "availability": "NOT_VERIFIED",
             "availability_provenance": "NOT_VERIFIED",
             "availability_source_reference": None,
@@ -638,6 +722,10 @@ def unresolved_plan(repository_root: Path) -> dict[str, Any]:
             "vram_bytes": None,
             "vram_provenance": "NOT_VERIFIED",
             "vram_source_reference": None,
+            "required_vram_bytes": None,
+            "required_vram_provenance": "NOT_VERIFIED",
+            "required_vram_source_reference": None,
+            "workload_config_reference": None,
             "provenance": "NOT_VERIFIED",
             "source_reference": None,
             "compatibility": "NOT_VERIFIED",
@@ -658,9 +746,16 @@ def unresolved_plan(repository_root: Path) -> dict[str, Any]:
             "checkpoint_size_bytes": None,
             "checkpoint_size_provenance": "NOT_VERIFIED",
             "checkpoint_size_source_reference": None,
+            "model_cache_size_bytes": None,
+            "model_cache_size_provenance": "NOT_VERIFIED",
+            "model_cache_size_source_reference": None,
+            "temporary_space_bytes": None,
+            "temporary_space_provenance": "NOT_VERIFIED",
+            "temporary_space_source_reference": None,
             "required_capacity_bytes": None,
             "required_capacity_provenance": "NOT_VERIFIED",
             "required_capacity_source_reference": None,
+            "capacity_formula": STORAGE_FORMULA,
             "available_capacity_bytes": None,
             "available_capacity_provenance": "NOT_VERIFIED",
             "available_capacity_source_reference": None,
@@ -701,6 +796,10 @@ def unresolved_plan(repository_root: Path) -> dict[str, Any]:
             "quota_unit": None,
             "quota_provenance": "NOT_VERIFIED",
             "quota_source_reference": None,
+            "required_quota": None,
+            "required_quota_unit": None,
+            "required_quota_provenance": "NOT_VERIFIED",
+            "required_quota_source_reference": None,
             "calculation_performed": False,
             "detail": "No approved numeric ceiling, prepaid resource, or verified local-only training path exists.",
         },
@@ -711,8 +810,16 @@ def unresolved_plan(repository_root: Path) -> dict[str, Any]:
             "strategy_id": None,
             "resource_id": None,
             "provider_or_owner": None,
+            "compute_kind": None,
             "resource_class": None,
             "resource": None,
+            "vram_bytes": None,
+            "vram_provenance": "NOT_VERIFIED",
+            "vram_source_reference": None,
+            "required_vram_bytes": None,
+            "required_vram_provenance": "NOT_VERIFIED",
+            "required_vram_source_reference": None,
+            "workload_config_reference": None,
             "provenance": "NOT_VERIFIED",
             "source_reference": None,
             "availability_provenance": "NOT_VERIFIED",
@@ -723,6 +830,17 @@ def unresolved_plan(repository_root: Path) -> dict[str, Any]:
             "not_required_rule": None,
             "not_required_source_reference": None,
             "redundancy_evidence_reference": None,
+            "storage_strategy_reference": None,
+            "storage_strategy_provenance": "NOT_VERIFIED",
+            "storage_strategy_source_reference": None,
+            "budget": {
+                "policy": "UNRESOLVED",
+                "provenance": "NOT_VERIFIED",
+                "source_reference": None,
+                "applies_to_resource_id": None,
+                "feasibility": "NOT_VERIFIED",
+                "calculation_performed": False,
+            },
             "stop_condition": "Do not train; obtain explicit resource and budget approval, then rerun P0-007.",
             "detail": "A stop/escalation rule exists, but no fallback compute resource is evidenced.",
         },
@@ -847,8 +965,12 @@ def _primary_resource_valid(
         and primary.get("availability") == "AVAILABLE"
         and _material_text(primary.get("resource_id"))
         and _material_text(primary.get("provider_or_owner"))
+        and primary.get("compute_kind") == CUDA_GPU_RESOURCE
         and _material_text(primary.get("resource_class"))
         and _finite_nonnegative(primary.get("vram_bytes"), positive=True)
+        and _finite_nonnegative(primary.get("required_vram_bytes"), positive=True)
+        and primary.get("vram_bytes") >= primary.get("required_vram_bytes")
+        and _material_text(primary.get("workload_config_reference"))
         and _evidenced(
             primary.get("provenance"),
             primary.get("source_reference"),
@@ -863,6 +985,11 @@ def _primary_resource_valid(
             primary.get("vram_provenance"),
             primary.get("vram_source_reference"),
             allowed=CAPACITY_PROVENANCE,
+        )
+        and _evidenced(
+            primary.get("required_vram_provenance"),
+            primary.get("required_vram_source_reference"),
+            allowed=PLANNED_SIZE_PROVENANCE,
         )
         and primary.get("compatibility") == "COMPATIBLE"
         and _evidenced(
@@ -906,10 +1033,16 @@ def _local_training_verified(
         and _primary_resource_valid(evidence, primary)
         and primary.get("resource_id") == "LOCAL_ACCEPTED_P0_005_GPU"
         and primary.get("vram_bytes") == measured_vram * 1024 * 1024
+        and primary.get("required_vram_bytes") == peak_vram
     )
 
 
 def _storage_valid(storage: Mapping[str, Any]) -> bool:
+    dataset_size = storage.get("dataset_size_bytes")
+    checkpoint_size = storage.get("checkpoint_size_bytes")
+    model_cache_size = storage.get("model_cache_size_bytes")
+    temporary_space = storage.get("temporary_space_bytes")
+    required_capacity = storage.get("required_capacity_bytes")
     return bool(
         storage.get("strategy_defined") is True
         and storage.get("readiness") == "STORAGE_READY"
@@ -933,20 +1066,34 @@ def _storage_valid(storage: Mapping[str, Any]) -> bool:
             storage.get("checkpoint_size_source_reference"),
             allowed=PLANNED_SIZE_PROVENANCE,
         )
-        and _finite_nonnegative(storage.get("required_capacity_bytes"), positive=True)
+        and _finite_nonnegative(model_cache_size, positive=True)
+        and _evidenced(
+            storage.get("model_cache_size_provenance"),
+            storage.get("model_cache_size_source_reference"),
+            allowed=PLANNED_SIZE_PROVENANCE,
+        )
+        and _finite_nonnegative(temporary_space, positive=True)
+        and _evidenced(
+            storage.get("temporary_space_provenance"),
+            storage.get("temporary_space_source_reference"),
+            allowed=PLANNED_SIZE_PROVENANCE,
+        )
+        and _finite_nonnegative(required_capacity, positive=True)
         and _evidenced(
             storage.get("required_capacity_provenance"),
             storage.get("required_capacity_source_reference"),
-            allowed=DERIVED_CAPACITY_PROVENANCE,
+            allowed={"DERIVED"},
         )
+        and storage.get("capacity_formula") == STORAGE_FORMULA
+        and required_capacity
+        == dataset_size + checkpoint_size + model_cache_size + temporary_space
         and _finite_nonnegative(storage.get("available_capacity_bytes"), positive=True)
         and _evidenced(
             storage.get("available_capacity_provenance"),
             storage.get("available_capacity_source_reference"),
             allowed=CAPACITY_PROVENANCE,
         )
-        and storage.get("available_capacity_bytes")
-        >= storage.get("required_capacity_bytes")
+        and storage.get("available_capacity_bytes") >= required_capacity
         and _material_text(storage.get("artifact_movement_strategy"))
         and _material_text(storage.get("checkpoint_retention_strategy"))
         and _material_text(storage.get("temporary_space_strategy"))
@@ -1072,12 +1219,31 @@ def _budget_material(
                 allowed=IDENTITY_PROVENANCE,
             )
             and _finite_nonnegative(budget.get("remaining_quota"), positive=True)
+            and _finite_nonnegative(budget.get("required_quota"), positive=True)
             and _material_text(budget.get("quota_unit"))
+            and budget.get("required_quota_unit") == budget.get("quota_unit")
+            and budget.get("remaining_quota") >= budget.get("required_quota")
             and _evidenced(
                 budget.get("quota_provenance"),
                 budget.get("quota_source_reference"),
                 allowed=CAPACITY_PROVENANCE,
             )
+            and _evidenced(
+                budget.get("required_quota_provenance"),
+                budget.get("required_quota_source_reference"),
+                allowed=PLANNED_SIZE_PROVENANCE,
+            )
+            and all(
+                budget.get(field) is None
+                for field in (
+                    "approved_ceiling",
+                    "unit_price",
+                    "estimated_training_hours",
+                    "estimated_compute_cost",
+                )
+            )
+            and budget.get("cost_inputs") == []
+            and budget.get("cost_formula") is None
             and budget.get("calculation_performed") is False
             and budget.get("feasibility") == "WITHIN_POLICY"
         )
@@ -1103,16 +1269,29 @@ def _fallback_valid(
 ) -> bool:
     # P0-007 has no authoritative rule that demonstrates a separate fallback
     # unnecessary.  READY therefore requires a concrete fallback resource.
+    resource_id = fallback.get("resource_id")
+    fallback_budget = _as_mapping(fallback.get("budget"))
+    budget_defined, cost_valid, feasibility_valid = _budget_material(
+        fallback_budget,
+        "REMOTE_TRAINING",
+        False,
+        resource_id,
+    )
     return bool(
         fallback.get("required") is True
         and fallback.get("defined") is True
         and fallback.get("availability") == "AVAILABLE"
         and _material_text(fallback.get("strategy_id"))
         and _material_text(fallback.get("resource_id"))
-        and fallback.get("resource_id") != primary_resource_id
+        and resource_id != primary_resource_id
         and _material_text(fallback.get("provider_or_owner"))
+        and fallback.get("compute_kind") == CUDA_GPU_RESOURCE
         and _material_text(fallback.get("resource_class"))
         and _material_text(fallback.get("resource"))
+        and _finite_nonnegative(fallback.get("vram_bytes"), positive=True)
+        and _finite_nonnegative(fallback.get("required_vram_bytes"), positive=True)
+        and fallback.get("vram_bytes") >= fallback.get("required_vram_bytes")
+        and _material_text(fallback.get("workload_config_reference"))
         and _evidenced(
             fallback.get("provenance"),
             fallback.get("source_reference"),
@@ -1123,12 +1302,31 @@ def _fallback_valid(
             fallback.get("availability_source_reference"),
             allowed=IDENTITY_PROVENANCE,
         )
+        and _evidenced(
+            fallback.get("vram_provenance"),
+            fallback.get("vram_source_reference"),
+            allowed=CAPACITY_PROVENANCE,
+        )
+        and _evidenced(
+            fallback.get("required_vram_provenance"),
+            fallback.get("required_vram_source_reference"),
+            allowed=PLANNED_SIZE_PROVENANCE,
+        )
         and fallback.get("compatibility") == "COMPATIBLE"
         and _evidenced(
             fallback.get("compatibility_provenance"),
             fallback.get("compatibility_source_reference"),
             allowed=COMPATIBILITY_PROVENANCE,
         )
+        and _material_text(fallback.get("storage_strategy_reference"))
+        and _evidenced(
+            fallback.get("storage_strategy_provenance"),
+            fallback.get("storage_strategy_source_reference"),
+            allowed=PLAN_SELECTION_PROVENANCE,
+        )
+        and budget_defined
+        and cost_valid
+        and feasibility_valid
         and _material_text(fallback.get("stop_condition"))
     )
 
@@ -1188,8 +1386,11 @@ def _material_predicates(evidence: Mapping[str, Any]) -> dict[str, bool]:
     generation = _as_mapping(evidence.get("generation"))
     training_activity_consistent = bool(
         generation.get("training_executed") is False
-        and torch_cuda.get("training_executed", False) is False
-        and torch_cuda.get("optimizer_updates_executed", False) is False
+        and generation.get("optimizer_updates_executed") is False
+        and generation.get("hyperparameter_search_executed") is False
+        and torch_cuda.get("training_executed") is False
+        and torch_cuda.get("optimizer_updates_executed") is False
+        and torch_cuda.get("hyperparameter_search_executed") is False
         and scope.get("training_executed") is False
         and scope.get("optimizer_updates_executed") is False
         and scope.get("hyperparameter_search_executed") is False
@@ -1342,6 +1543,8 @@ def build_evidence(
             "provenance": "MEASURED",
             "mode": "PRE_COMMIT_WORKTREE",
             "training_executed": False,
+            "optimizer_updates_executed": False,
+            "hyperparameter_search_executed": False,
             "external_resource_contacted": False,
         },
         "git": _git(repository_root),
@@ -1560,12 +1763,45 @@ def _policy_validation_errors(
             errors.append("prepaid budget must apply to the selected primary resource")
         if not _finite_nonnegative(budget.get("remaining_quota"), positive=True):
             errors.append("prepaid budget remaining quota must be finite and positive")
+        if not _finite_nonnegative(budget.get("required_quota"), positive=True):
+            errors.append("prepaid budget required quota must be finite and positive")
         if not _material_text(budget.get("quota_unit")) or not _evidenced(
             budget.get("quota_provenance"),
             budget.get("quota_source_reference"),
             allowed=CAPACITY_PROVENANCE,
         ):
             errors.append("prepaid budget quota lacks unit/provenance/source")
+        if (
+            budget.get("required_quota_unit") != budget.get("quota_unit")
+            or not _evidenced(
+                budget.get("required_quota_provenance"),
+                budget.get("required_quota_source_reference"),
+                allowed=PLANNED_SIZE_PROVENANCE,
+            )
+        ):
+            errors.append("prepaid required quota lacks matching unit/provenance/source")
+        remaining_quota = budget.get("remaining_quota")
+        required_quota = budget.get("required_quota")
+        if (
+            _finite_nonnegative(remaining_quota, positive=True)
+            and _finite_nonnegative(required_quota, positive=True)
+            and remaining_quota < required_quota
+        ):
+            errors.append("prepaid remaining quota is below evidenced required usage")
+        if (
+            any(
+                budget.get(field) is not None
+                for field in (
+                    "approved_ceiling",
+                    "unit_price",
+                    "estimated_training_hours",
+                    "estimated_compute_cost",
+                )
+            )
+            or budget.get("cost_inputs") != []
+            or budget.get("cost_formula") is not None
+        ):
+            errors.append("prepaid policy contains contradictory numeric cost inputs")
         if budget.get("calculation_performed") is not False:
             errors.append("prepaid policy must not claim a numeric cost calculation")
         if budget.get("feasibility") != "WITHIN_POLICY":
@@ -1653,8 +1889,11 @@ def validate_evidence(
     scope = _as_mapping(evidence.get("scope_safety"))
     if not (
         generation.get("training_executed") is False
-        and torch_cuda.get("training_executed", False) is False
-        and torch_cuda.get("optimizer_updates_executed", False) is False
+        and generation.get("optimizer_updates_executed") is False
+        and generation.get("hyperparameter_search_executed") is False
+        and torch_cuda.get("training_executed") is False
+        and torch_cuda.get("optimizer_updates_executed") is False
+        and torch_cuda.get("hyperparameter_search_executed") is False
         and scope.get("training_executed") is False
         and scope.get("optimizer_updates_executed") is False
         and scope.get("hyperparameter_search_executed") is False

@@ -134,6 +134,11 @@ development/configuration/validation-only and remote-primary-training roles;
 REMOTE and LOCAL use their corresponding explicit role pair. Missing or
 placeholder role/identity text fails closed.
 
+A READY primary must be classified as `NVIDIA_CUDA_GPU`, identify the selected
+workload/configuration, state its evidenced required VRAM and available VRAM,
+and prove `available >= required`. A merely positive VRAM number is not a
+compute-sufficiency result.
+
 The intended division, once explicitly approved, is likely to keep local work
 bounded to development/configuration/validation and execute fine-tuning on a
 separately evidenced resource. That is a planning direction, not a selected
@@ -162,6 +167,16 @@ dataset, checkpoint-retention, and temporary-space inputs before writing large
 artifacts. It must stop before execution if available capacity is below that
 derived requirement.
 
+For READY, the verifier recomputes exactly:
+
+```text
+required_capacity_bytes = dataset_size_bytes + checkpoint_size_bytes
+                        + model_cache_size_bytes + temporary_space_bytes
+```
+
+Each component requires its own source/provenance. A reported aggregate smaller
+than its components, or an aggregate larger than available capacity, fails C11.
+
 ## Budget policy and feasibility
 
 ```text
@@ -186,6 +201,9 @@ For a prepaid policy, a concrete resource reference and positive evidenced
 remaining quota are mandatory. Neither policy can pass through a boolean-only
 availability assertion. Numeric and prepaid policies must identify the same
 primary resource to which the cost/quota evidence applies.
+Prepaid feasibility additionally requires an evidenced required usage in the
+same unit and verifies `remaining_quota >= required_quota`; positive-but-
+insufficient quota cannot be `WITHIN_POLICY`.
 Because this task performs no training, an estimated training duration cannot
 use `MEASURED`; it must remain `DECLARED_INPUT` or `DOCUMENTED`, and the
 computed cost alone uses `DERIVED`.
@@ -209,6 +227,9 @@ unnecessary, so every READY result requires a concrete, compatible, evidenced
 fallback resource.
 The fallback resource identity must differ from the primary resource identity;
 renaming the primary as its own fallback does not establish recovery capacity.
+The fallback must independently satisfy CUDA GPU kind, workload VRAM capacity,
+runtime compatibility, storage-movement, and a policy-specific budget predicate
+applied to the fallback resource.
 
 ## Reproduction strategy
 
@@ -248,6 +269,10 @@ fields use insufficient provenance, or whose aggregate decision is manipulated
 to `TRAINING_RESOURCE_READY`, even when the manipulated payload is rehashed.
 Every PASS check must itself carry sufficient provenance; `NOT_VERIFIED` cannot
 be paired with PASS.
+No-training fields are explicit: missing runtime/generation training,
+optimizer-update, or hyperparameter-search fields fail C18 rather than defaulting
+to false. JSON reads, content hashes, executable discovery, path metadata,
+resource metadata, and subprocess probes all run behind explicit timeouts.
 
 ## Explicitly unverified and deferred
 
