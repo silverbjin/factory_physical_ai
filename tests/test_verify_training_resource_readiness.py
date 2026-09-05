@@ -21,6 +21,7 @@ if SPEC is None or SPEC.loader is None:
     raise RuntimeError(f"cannot import {SCRIPT_PATH}")
 verifier = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(verifier)
+ORIGINAL_PATH_READ_TEXT = Path.read_text
 
 
 def _delayed_disk_usage(_path: Path) -> Any:
@@ -36,6 +37,11 @@ def _delayed_path_is_dir(_path: Path) -> bool:
 def _delayed_path_is_file(_path: Path) -> bool:
     time.sleep(0.5)
     return True
+
+
+def _delayed_path_read_text(path: Path, *args: Any, **kwargs: Any) -> str:
+    time.sleep(0.5)
+    return ORIGINAL_PATH_READ_TEXT(path, *args, **kwargs)
 
 
 class TrainingResourceReadinessTests(unittest.TestCase):
@@ -107,6 +113,8 @@ class TrainingResourceReadinessTests(unittest.TestCase):
             "value": "HYBRID_TRAINING",
             "provenance": "DECLARED_INPUT",
             "source_reference": "fixture://execution-mode",
+            "local_role": "LOCAL_DEVELOPMENT_CONFIGURATION_VALIDATION_ONLY",
+            "training_role": "REMOTE_PRIMARY_RESOURCE_TRAINS",
         }
         plan["primary_resource"] = {
             "identified": True,
@@ -152,6 +160,7 @@ class TrainingResourceReadinessTests(unittest.TestCase):
             "policy": "APPROVED_NUMERIC_BUDGET_CEILING",
             "provenance": "DECLARED_INPUT",
             "source_reference": "fixture://budget-approval",
+            "applies_to_resource_id": "remote-gpu-fixture-01",
             "feasibility": "WITHIN_POLICY",
             "currency": "TEST",
             "resource_unit": "GPU-hour",
@@ -243,6 +252,9 @@ class TrainingResourceReadinessTests(unittest.TestCase):
         self.assertEqual(verifier.validate_evidence(evidence), [])
         self.assertTrue(all(item["mandatory"] for item in evidence["checks"]))
         self.assertTrue(all(item["status"] == "PASS" for item in evidence["checks"]))
+        self.assertTrue(
+            all(item["provenance"] != "NOT_VERIFIED" for item in evidence["checks"])
+        )
         self.assertEqual(
             evidence["resource_plan"]["local_training"]["classification"],
             "TRAINING_NOT_VERIFIED",
@@ -354,6 +366,8 @@ class TrainingResourceReadinessTests(unittest.TestCase):
         plan["budget"] = {
             "policy": "LOCAL_ONLY_ZERO_INCREMENTAL_BUDGET",
             "provenance": "DOCUMENTED",
+            "source_reference": "fixture://local-zero-policy",
+            "applies_to_resource_id": "remote-gpu-fixture-01",
             "feasibility": "WITHIN_POLICY",
             "currency": None,
             "approved_ceiling": 0,
@@ -380,6 +394,8 @@ class TrainingResourceReadinessTests(unittest.TestCase):
                     "value": "LOCAL_TRAINING",
                     "provenance": "DOCUMENTED",
                     "source_reference": "fixture://local-mode",
+                    "local_role": "LOCAL_PRIMARY_RESOURCE_TRAINS",
+                    "training_role": "LOCAL_PRIMARY_RESOURCE_TRAINS",
                 }
                 evidence = self.evidence(plan)
 
@@ -409,6 +425,8 @@ class TrainingResourceReadinessTests(unittest.TestCase):
             "value": "LOCAL_TRAINING",
             "provenance": "DOCUMENTED",
             "source_reference": "fixture://local-mode",
+            "local_role": "LOCAL_PRIMARY_RESOURCE_TRAINS",
+            "training_role": "LOCAL_PRIMARY_RESOURCE_TRAINS",
         }
         plan["primary_resource"].update(
             {
@@ -427,6 +445,7 @@ class TrainingResourceReadinessTests(unittest.TestCase):
                 "policy": "LOCAL_ONLY_ZERO_INCREMENTAL_BUDGET",
                 "provenance": "DOCUMENTED",
                 "source_reference": "fixture://local-zero-policy",
+                "applies_to_resource_id": "LOCAL_ACCEPTED_P0_005_GPU",
                 "feasibility": "WITHIN_POLICY",
                 "estimated_compute_cost": 0,
                 "calculation_performed": False,
@@ -563,6 +582,150 @@ class TrainingResourceReadinessTests(unittest.TestCase):
         errors = verifier.validate_evidence(evidence)
         self.assertTrue(any("checks do not match material facts" in error for error in errors))
         self.assertTrue(any("aggregate decision" in error for error in errors))
+
+    def test_placeholder_like_primary_identity_blocks_rehashed_ready(self) -> None:
+        evidence = self.evidence()
+        primary = evidence["resource_plan"]["primary_resource"]
+        primary["resource_id"] = "unknown resource"
+        primary["resource_class"] = "unresolved resource"
+        self.refresh(evidence)
+
+        self.assertEqual(evidence["training_resource_decision"], verifier.BLOCKED)
+        self.assertEqual(evidence["checks"][8]["status"], "BLOCKED")
+        self.assertTrue(verifier.validate_evidence(evidence))
+
+    def test_hybrid_mode_requires_explicit_role_split(self) -> None:
+        evidence = self.evidence()
+        evidence["resource_plan"]["execution_mode"]["training_role"] = None
+        self.refresh(evidence)
+
+        self.assertEqual(evidence["training_resource_decision"], verifier.BLOCKED)
+        self.assertEqual(evidence["checks"][7]["status"], "BLOCKED")
+
+    def test_prepaid_budget_must_apply_to_primary_resource(self) -> None:
+        evidence = self.evidence()
+        budget = evidence["resource_plan"]["budget"]
+        budget.update(
+            {
+                "policy": "EXISTING_PREPAID_RESOURCE",
+                "provenance": "DOCUMENTED",
+                "source_reference": "fixture://prepaid-policy",
+                "applies_to_resource_id": "different-resource",
+                "feasibility": "WITHIN_POLICY",
+                "prepaid_resource_id": "different-resource",
+                "prepaid_resource_reference": "fixture://different-resource",
+                "prepaid_resource_provenance": "DOCUMENTED",
+                "remaining_quota": 10,
+                "quota_unit": "GPU-hours",
+                "quota_provenance": "DOCUMENTED",
+                "quota_source_reference": "fixture://different-quota",
+                "calculation_performed": False,
+            }
+        )
+        self.refresh(evidence)
+
+        errors = verifier.validate_evidence(evidence)
+        self.assertEqual(evidence["training_resource_decision"], verifier.BLOCKED)
+        self.assertTrue(any("selected primary resource" in error for error in errors))
+
+    def test_fallback_not_required_assertion_without_proof_blocks_ready(self) -> None:
+        evidence = self.evidence()
+        fallback = evidence["resource_plan"]["fallback"]
+        fallback.update(
+            {
+                "required": False,
+                "defined": False,
+                "availability": "NOT_VERIFIED",
+                "resource": None,
+                "resource_id": None,
+                "provider_or_owner": None,
+                "resource_class": None,
+                "provenance": "DOCUMENTED",
+                "source_reference": None,
+                "availability_provenance": "NOT_VERIFIED",
+                "availability_source_reference": None,
+                "compatibility": "NOT_VERIFIED",
+                "compatibility_provenance": "NOT_VERIFIED",
+                "compatibility_source_reference": None,
+                "not_required_rule": verifier.FALLBACK_NOT_REQUIRED_RULE,
+                "not_required_source_reference": "fixture://assertion-only",
+            }
+        )
+        self.refresh(evidence)
+
+        self.assertEqual(evidence["training_resource_decision"], verifier.BLOCKED)
+        self.assertEqual(evidence["checks"][14]["status"], "BLOCKED")
+
+    def test_fallback_must_be_distinct_from_primary_resource(self) -> None:
+        evidence = self.evidence()
+        fallback = evidence["resource_plan"]["fallback"]
+        fallback["resource_id"] = evidence["resource_plan"]["primary_resource"][
+            "resource_id"
+        ]
+        self.refresh(evidence)
+
+        self.assertEqual(evidence["training_resource_decision"], verifier.BLOCKED)
+        self.assertEqual(evidence["checks"][14]["status"], "BLOCKED")
+
+    def test_measured_planning_estimates_cannot_be_upgraded_to_ready(self) -> None:
+        evidence = self.evidence()
+        budget = evidence["resource_plan"]["budget"]
+        budget["estimated_training_hours_provenance"] = "MEASURED"
+        budget["cost_inputs"][1]["provenance"] = "MEASURED"
+        self.refresh(evidence)
+
+        errors = verifier.validate_evidence(evidence)
+        self.assertEqual(evidence["training_resource_decision"], verifier.BLOCKED)
+        self.assertTrue(
+            any("estimated_training_hours lacks" in error for error in errors)
+        )
+
+    def test_additional_placeholder_spellings_block_material_identity(self) -> None:
+        for placeholder in ("N/A", "not applicable", "TBC resource"):
+            with self.subTest(placeholder=placeholder):
+                evidence = self.evidence()
+                evidence["resource_plan"]["primary_resource"]["resource_id"] = (
+                    placeholder
+                )
+                self.refresh(evidence)
+
+                self.assertEqual(
+                    evidence["training_resource_decision"], verifier.BLOCKED
+                )
+
+    def test_contradictory_training_activity_fields_block_rehashed_ready(self) -> None:
+        cases = (
+            ("generation", "training_executed"),
+            ("torch_cuda", "training_executed"),
+            ("torch_cuda", "optimizer_updates_executed"),
+        )
+        for section, field in cases:
+            with self.subTest(section=section, field=field):
+                evidence = self.evidence()
+                target = (
+                    evidence["generation"]
+                    if section == "generation"
+                    else evidence["local_resources"][section]
+                )
+                target[field] = True
+                self.refresh(evidence)
+
+                errors = verifier.validate_evidence(evidence)
+                self.assertEqual(
+                    evidence["training_resource_decision"], verifier.BLOCKED
+                )
+                self.assertEqual(evidence["checks"][17]["status"], "BLOCKED")
+                self.assertTrue(any("training activity fields" in error for error in errors))
+
+    def test_zero_planned_artifact_sizes_block_storage_ready(self) -> None:
+        evidence = self.evidence()
+        storage = evidence["resource_plan"]["storage"]
+        storage["dataset_size_bytes"] = 0
+        storage["checkpoint_size_bytes"] = 0
+        self.refresh(evidence)
+
+        self.assertEqual(evidence["training_resource_decision"], verifier.BLOCKED)
+        self.assertEqual(evidence["checks"][10]["status"], "BLOCKED")
 
     def test_hybrid_not_verified_primary_evidence_blocks_ready(self) -> None:
         evidence = self.evidence()
@@ -706,6 +869,21 @@ class TrainingResourceReadinessTests(unittest.TestCase):
             [],
         )
 
+    def test_rehashed_predecessor_fact_mismatch_is_rejected(self) -> None:
+        evidence = self.evidence()
+        predecessor = evidence["predecessors"]["p0_005"]
+        predecessor["expected_sha256"] = "0" * 64
+        predecessor["actual_sha256"] = "0" * 64
+        predecessor["hash_match"] = True
+        self.refresh(evidence)
+
+        errors = verifier.validate_evidence(
+            evidence,
+            repository_root=REPOSITORY_ROOT,
+            verify_bound_files=True,
+        )
+        self.assertTrue(any("p0_005 predecessor facts" in error for error in errors))
+
     def test_decision_requires_exact_complete_mandatory_check_set(self) -> None:
         checks = [
             {
@@ -768,6 +946,30 @@ class TrainingResourceReadinessTests(unittest.TestCase):
         self.assertLess(elapsed, 0.75)
         self.assertEqual(result["provenance"], "NOT_VERIFIED")
         self.assertTrue(result["timed_out"])
+
+    def test_delayed_meminfo_read_terminates_and_blocks_ram_check(self) -> None:
+        children_before = {child.pid for child in multiprocessing.active_children()}
+        started = time.monotonic()
+        with mock.patch.object(Path, "read_text", _delayed_path_read_text):
+            result = verifier._memory(timeout_seconds=0.03)
+        elapsed = time.monotonic() - started
+
+        self.assertLess(elapsed, 0.75)
+        self.assertEqual(result["provenance"], "NOT_VERIFIED")
+        self.assertTrue(result["timed_out"])
+        local = self.local_resources()
+        local["ram"] = result
+        evidence = verifier.build_evidence(
+            REPOSITORY_ROOT,
+            local,
+            self.valid_hybrid_plan(),
+            generated_at="2026-09-04T00:00:00Z",
+        )
+        self.assertEqual(evidence["training_resource_decision"], verifier.BLOCKED)
+        self.assertEqual(evidence["checks"][4]["status"], "BLOCKED")
+        self.assertEqual(
+            {child.pid for child in multiprocessing.active_children()}, children_before
+        )
 
 
 class TrainingResourceReadinessCliTests(unittest.TestCase):

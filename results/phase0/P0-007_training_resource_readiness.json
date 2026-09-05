@@ -101,7 +101,7 @@
       "detail": "cost inputs have allowed provenance, or no calculation was performed",
       "id": "C13",
       "mandatory": true,
-      "provenance": "DOCUMENTED",
+      "provenance": "DERIVED",
       "status": "PASS"
     },
     {
@@ -162,18 +162,18 @@
     }
   ],
   "content_binding": {
-    "evidence_payload_sha256": "4fd4bf656955d5993c30260d0c8bac5346fa6665e0b7955425ac61b2195a72b8",
+    "evidence_payload_sha256": "07aeec9a4ac444ebcf618f89c9a02a681b980791601c35618544bbc56ac75ad8",
     "predecessor_sha256": {
       "results/phase0/P0-005_vla_runtime.json": "aafe0273a3fa8d28652494ea8f72fc396247fed81c6d5ab71311ff628e646aae",
       "results/phase0/P0-006_robot_io_readiness.json": "486d76218ea326b279f9780320d081e7435a6a781194c9a6c4efa4a4bef31506"
     },
     "provenance": "DERIVED",
     "source_sha256": {
-      "docs/vla/training_compute_readiness_v1.md": "cbbd060140a5ca8ad55bd9772a2c259309b7383ebdda8f1b5cfb93204719a0ba",
-      "plans/vla_training_compute_budget_plan.md": "de6953b2a2d0fa44b32aa043c5ca66e684921fc497dee240eb84bc54d6bea362",
-      "plans/vla_training_resource_risks.md": "05dd6b8821919f1a0d626fd3a073be7b91337012b799fd5b1edce65ab40a6647",
-      "scripts/verify_training_resource_readiness.py": "e9071e1514ae686d7e09b12ee50408553c3a1642956b4a5521fb3130080bd9a3",
-      "tests/test_verify_training_resource_readiness.py": "145022b5568211b1613086f37e10d559de0ded935160c02fc7e9800e486d5e4c"
+      "docs/vla/training_compute_readiness_v1.md": "5c52d06f0f35b0f114a878665ac43972ff9e56dd322edde19a922e90d961a6ea",
+      "plans/vla_training_compute_budget_plan.md": "75c6739175e056bb0c76781c51ada159f086463d0a256ab36a69c89ea3f6208d",
+      "plans/vla_training_resource_risks.md": "cebbe1d1994e991e9037fb28cfd728ce4937875b3f1847c9e1740b9a90a50b57",
+      "scripts/verify_training_resource_readiness.py": "117d635acf2ba1bcca978c34f883f49aa5652d95e415e97af7a2c9b5493d2caf",
+      "tests/test_verify_training_resource_readiness.py": "3410c15b6d991e8546c53ce391209e6488fa4b69cb7a385cdce507cc6256c8dc"
     }
   },
   "deferred_items": [
@@ -203,7 +203,7 @@
       "provenance": "DOCUMENTED"
     }
   ],
-  "generated_at": "2026-09-04T16:05:28.733764Z",
+  "generated_at": "2026-09-05T00:32:33.389273Z",
   "generation": {
     "external_resource_contacted": false,
     "mode": "PRE_COMMIT_WORKTREE",
@@ -212,25 +212,30 @@
   },
   "git": {
     "branch": "task/p0-007-training-resource-readiness",
-    "commit": "b03316a511b622c196c7f5da84d921dda9f3d8d0",
+    "commit": "3d125c1a8b8b9c8522db3811b017d2f7741c89df",
     "provenance": "MEASURED",
     "working_tree_clean": false,
     "working_tree_status": [
       "M docs/task_history/README.md",
       " M docs/task_history/TASK-P0-007/README.md",
-      "?? docs/task_history/TASK-P0-007/02_fix.md",
-      "?? results/phase0/P0-007_training_resource_readiness.json"
+      " M docs/vla/training_compute_readiness_v1.md",
+      " M plans/vla_training_compute_budget_plan.md",
+      " M plans/vla_training_resource_risks.md",
+      " M results/phase0/P0-007_training_resource_readiness.json",
+      " M scripts/verify_training_resource_readiness.py",
+      " M tests/test_verify_training_resource_readiness.py",
+      "?? docs/task_history/TASK-P0-007/03_review.md"
     ]
   },
   "local_resources": {
     "cache_filesystem": {
-      "free_bytes": 978139881472,
+      "free_bytes": 978145112064,
       "path": "/home/jinho/.cache",
       "provenance": "MEASURED",
       "timed_out": false,
       "timeout_seconds": 2.0,
       "total_bytes": 1081101176832,
-      "used_bytes": 47968940032
+      "used_bytes": 47963709440
     },
     "environment_footprint": {
       "bytes": 6198765955,
@@ -296,21 +301,86 @@
       "value": "/home/jinho/.cache/huggingface"
     },
     "ram": {
-      "available_bytes": 14513381376,
+      "available_bytes": 14671912960,
+      "metadata_probe": {
+        "operation": "meminfo",
+        "path": "/proc/meminfo",
+        "status": "PASS",
+        "timed_out": false,
+        "timeout_seconds": 2.0,
+        "values": {
+          "Active": 1095077888,
+          "Active(anon)": 3182592,
+          "Active(file)": 1091895296,
+          "AnonHugePages": 0,
+          "AnonPages": 1311506432,
+          "Balloon": 0,
+          "Bounce": 0,
+          "Buffers": 223997952,
+          "Cached": 4354007040,
+          "CommitLimit": 12602634240,
+          "Committed_AS": 4004511744,
+          "DirectMap1G": 13958643712,
+          "DirectMap2M": 11572084736,
+          "DirectMap4k": 80740352,
+          "Dirty": 2519040,
+          "FileHugePages": 165675008,
+          "FilePmdMapped": 0,
+          "HardwareCorrupted": 0,
+          "HugePages_Free": 0,
+          "HugePages_Rsvd": 0,
+          "HugePages_Surp": 0,
+          "HugePages_Total": 0,
+          "Hugepagesize": 2097152,
+          "Hugetlb": 0,
+          "Inactive": 4794372096,
+          "Inactive(anon)": 1314840576,
+          "Inactive(file)": 3479531520,
+          "KReclaimable": 143417344,
+          "KernelStack": 7389184,
+          "Mapped": 586256384,
+          "MemAvailable": 14671912960,
+          "MemFree": 10211053568,
+          "MemTotal": 16615333888,
+          "Mlocked": 0,
+          "NFS_Unstable": 0,
+          "PageTables": 27070464,
+          "Percpu": 4096000,
+          "SReclaimable": 143417344,
+          "SUnreclaim": 74924032,
+          "SecPageTables": 0,
+          "Shmem": 6586368,
+          "ShmemHugePages": 0,
+          "ShmemPmdMapped": 0,
+          "Slab": 218341376,
+          "SwapCached": 0,
+          "SwapFree": 4294967296,
+          "SwapTotal": 4294967296,
+          "Unaccepted": 0,
+          "Unevictable": 0,
+          "VmallocChunk": 0,
+          "VmallocTotal": 35184372087808,
+          "VmallocUsed": 36073472,
+          "Writeback": 0,
+          "WritebackTmp": 0
+        }
+      },
       "provenance": "MEASURED",
       "source": "/proc/meminfo",
       "swap_free_bytes": 4294967296,
       "swap_total_bytes": 4294967296,
-      "total_bytes": 16615329792
+      "timed_out": false,
+      "timeout_seconds": 2.0,
+      "total_bytes": 16615333888
     },
     "repository_filesystem": {
-      "free_bytes": 978139881472,
+      "free_bytes": 978145112064,
       "path": "/home/jinho/projects/factory_physical_ai_p0_007",
       "provenance": "MEASURED",
       "timed_out": false,
       "timeout_seconds": 2.0,
       "total_bytes": 1081101176832,
-      "used_bytes": 47968940032
+      "used_bytes": 47963709440
     },
     "torch_cuda": {
       "available": true,
@@ -370,6 +440,7 @@
   },
   "resource_plan": {
     "budget": {
+      "applies_to_resource_id": null,
       "approved_ceiling": null,
       "approved_ceiling_provenance": "NOT_VERIFIED",
       "approved_ceiling_source_reference": null,
@@ -402,8 +473,10 @@
       "unit_price_source_reference": null
     },
     "execution_mode": {
+      "local_role": null,
       "provenance": "NOT_VERIFIED",
       "source_reference": null,
+      "training_role": null,
       "value": "UNRESOLVED"
     },
     "fallback": {
@@ -419,6 +492,7 @@
       "not_required_source_reference": null,
       "provenance": "NOT_VERIFIED",
       "provider_or_owner": null,
+      "redundancy_evidence_reference": null,
       "required": true,
       "resource": null,
       "resource_class": null,
@@ -570,5 +644,5 @@
       "status": "BLOCKED"
     }
   ],
-  "verifier_version": "1.1.0"
+  "verifier_version": "1.2.0"
 }

@@ -30,7 +30,7 @@ from typing import Any, Mapping, Sequence
 
 TASK_ID = "TASK-P0-007"
 SCHEMA_VERSION = "1.0"
-VERIFIER_VERSION = "1.1.0"
+VERIFIER_VERSION = "1.2.0"
 READY = "TRAINING_RESOURCE_READY"
 BLOCKED = "TRAINING_RESOURCE_BLOCKED"
 
@@ -110,6 +110,7 @@ PLACEHOLDER_TEXT = {
     "n/a",
     "na",
     "none",
+    "not applicable",
     "not verified",
     "not_verified",
     "null",
@@ -122,6 +123,26 @@ FALLBACK_NOT_REQUIRED_RULE = (
     "PRIMARY_RESOURCE_HAS_DOCUMENTED_REDUNDANCY_AND_POLICY_ACCEPTS_NO_SEPARATE_FALLBACK"
 )
 COST_FORMULA = "unit_price * estimated_training_hours"
+IDENTITY_PROVENANCE = {"MEASURED", "DECLARED_INPUT", "DOCUMENTED"}
+COMPATIBILITY_PROVENANCE = {"MEASURED", "DOCUMENTED"}
+CAPACITY_PROVENANCE = {"MEASURED", "DECLARED_INPUT", "DOCUMENTED"}
+PLAN_SELECTION_PROVENANCE = {"DECLARED_INPUT", "DOCUMENTED"}
+PLANNED_SIZE_PROVENANCE = {"DECLARED_INPUT", "DOCUMENTED"}
+DERIVED_CAPACITY_PROVENANCE = {"DECLARED_INPUT", "DERIVED", "DOCUMENTED"}
+EXECUTION_ROLE_PAIRS = {
+    "LOCAL_TRAINING": (
+        "LOCAL_PRIMARY_RESOURCE_TRAINS",
+        "LOCAL_PRIMARY_RESOURCE_TRAINS",
+    ),
+    "REMOTE_TRAINING": (
+        "LOCAL_NON_TRAINING_SUPPORT_ONLY",
+        "REMOTE_PRIMARY_RESOURCE_TRAINS",
+    ),
+    "HYBRID_TRAINING": (
+        "LOCAL_DEVELOPMENT_CONFIGURATION_VALIDATION_ONLY",
+        "REMOTE_PRIMARY_RESOURCE_TRAINS",
+    ),
+}
 
 
 def _bounded(value: str, limit: int = MAX_DIAGNOSTIC_BYTES) -> str:
@@ -226,17 +247,13 @@ def _bound_source_hashes(repository_root: Path) -> dict[str, str | None]:
     }
 
 
-def _memory() -> dict[str, Any]:
-    values: dict[str, int] = {}
-    try:
-        for line in Path("/proc/meminfo").read_text(encoding="utf-8").splitlines():
-            key, raw = line.split(":", 1)
-            amount = raw.strip().split()
-            if amount and amount[0].isdigit():
-                multiplier = 1024 if len(amount) > 1 and amount[1] == "kB" else 1
-                values[key] = int(amount[0]) * multiplier
-    except (OSError, ValueError):
-        pass
+def _memory(
+    timeout_seconds: float = DEFAULT_METADATA_TIMEOUT_SECONDS,
+) -> dict[str, Any]:
+    result = _bounded_filesystem_metadata(
+        Path("/proc/meminfo"), "meminfo", timeout_seconds
+    )
+    values = result.get("values", {}) if result.get("status") == "PASS" else {}
     return {
         "provenance": "MEASURED" if values else "NOT_VERIFIED",
         "source": "/proc/meminfo",
@@ -244,6 +261,9 @@ def _memory() -> dict[str, Any]:
         "available_bytes": values.get("MemAvailable"),
         "swap_total_bytes": values.get("SwapTotal"),
         "swap_free_bytes": values.get("SwapFree"),
+        "timed_out": result.get("timed_out", False),
+        "timeout_seconds": timeout_seconds,
+        "metadata_probe": result,
     }
 
 
@@ -271,6 +291,17 @@ def _filesystem_metadata_worker(
                 "used_bytes": usage.used,
                 "free_bytes": usage.free,
             }
+        elif operation == "meminfo":
+            values: dict[str, int] = {}
+            for line in path.read_text(encoding="utf-8").splitlines():
+                key, raw = line.split(":", 1)
+                amount = raw.strip().split()
+                if amount and amount[0].isdigit():
+                    multiplier = (
+                        1024 if len(amount) > 1 and amount[1] == "kB" else 1
+                    )
+                    values[key] = int(amount[0]) * multiplier
+            result = {"status": "PASS", "values": values}
         else:
             result = {
                 "status": "NOT_VERIFIED",
@@ -593,6 +624,8 @@ def unresolved_plan(repository_root: Path) -> dict[str, Any]:
             "value": "UNRESOLVED",
             "provenance": "NOT_VERIFIED",
             "source_reference": None,
+            "local_role": None,
+            "training_role": None,
         },
         "primary_resource": {
             "identified": False,
@@ -642,6 +675,7 @@ def unresolved_plan(repository_root: Path) -> dict[str, Any]:
             "policy": "UNRESOLVED",
             "provenance": "NOT_VERIFIED",
             "source_reference": None,
+            "applies_to_resource_id": None,
             "feasibility": "NOT_VERIFIED",
             "currency": None,
             "resource_unit": None,
@@ -688,6 +722,7 @@ def unresolved_plan(repository_root: Path) -> dict[str, Any]:
             "compatibility_source_reference": None,
             "not_required_rule": None,
             "not_required_source_reference": None,
+            "redundancy_evidence_reference": None,
             "stop_condition": "Do not train; obtain explicit resource and budget approval, then rerun P0-007.",
             "detail": "A stop/escalation rule exists, but no fallback compute resource is evidenced.",
         },
@@ -710,20 +745,19 @@ def _check(
     check_id: str,
     area: str,
     passed: bool,
-    provenance: str,
+    pass_provenance: str,
     pass_detail: str,
     fail_detail: str,
     *,
     unresolved_status: str = "BLOCKED",
+    fail_provenance: str = "NOT_VERIFIED",
 ) -> dict[str, Any]:
     return {
         "id": check_id,
         "area": area,
         "mandatory": True,
         "status": "PASS" if passed else unresolved_status,
-        "provenance": provenance if passed else (
-            provenance if provenance in PROVENANCE else "NOT_VERIFIED"
-        ),
+        "provenance": pass_provenance if passed else fail_provenance,
         "detail": pass_detail if passed else fail_detail,
     }
 
@@ -738,8 +772,24 @@ def _material_text(value: Any) -> bool:
     normalized = value.strip().casefold()
     if normalized in PLACEHOLDER_TEXT:
         return False
-    placeholder_markers = ("placeholder", "not_verified", "not verified", "tbd")
-    return not any(marker in normalized for marker in placeholder_markers)
+    if normalized.startswith("<") and normalized.endswith(">"):
+        return False
+    tokens = set(
+        normalized.replace("_", " ").replace("-", " ").replace("/", " ").split()
+    )
+    placeholder_tokens = {
+        "na",
+        "none",
+        "null",
+        "pending",
+        "placeholder",
+        "tbc",
+        "tbd",
+        "todo",
+        "unknown",
+        "unresolved",
+    }
+    return not bool(tokens & placeholder_tokens)
 
 
 def _finite_nonnegative(value: Any, *, positive: bool = False) -> bool:
@@ -770,6 +820,24 @@ def _runtime_preserved(evidence: Mapping[str, Any]) -> bool:
     )
 
 
+def _execution_mode_valid(execution: Mapping[str, Any]) -> bool:
+    mode = execution.get("value")
+    expected_roles = EXECUTION_ROLE_PAIRS.get(mode)
+    return bool(
+        expected_roles is not None
+        and _evidenced(
+            execution.get("provenance"),
+            execution.get("source_reference"),
+            allowed=PLAN_SELECTION_PROVENANCE,
+        )
+        and (
+            execution.get("local_role"),
+            execution.get("training_role"),
+        )
+        == expected_roles
+    )
+
+
 def _primary_resource_valid(
     evidence: Mapping[str, Any],
     primary: Mapping[str, Any],
@@ -781,18 +849,26 @@ def _primary_resource_valid(
         and _material_text(primary.get("provider_or_owner"))
         and _material_text(primary.get("resource_class"))
         and _finite_nonnegative(primary.get("vram_bytes"), positive=True)
-        and _evidenced(primary.get("provenance"), primary.get("source_reference"))
+        and _evidenced(
+            primary.get("provenance"),
+            primary.get("source_reference"),
+            allowed=IDENTITY_PROVENANCE,
+        )
         and _evidenced(
             primary.get("availability_provenance"),
             primary.get("availability_source_reference"),
+            allowed=IDENTITY_PROVENANCE,
         )
         and _evidenced(
-            primary.get("vram_provenance"), primary.get("vram_source_reference")
+            primary.get("vram_provenance"),
+            primary.get("vram_source_reference"),
+            allowed=CAPACITY_PROVENANCE,
         )
         and primary.get("compatibility") == "COMPATIBLE"
         and _evidenced(
             primary.get("compatibility_provenance"),
             primary.get("compatibility_source_reference"),
+            allowed=COMPATIBILITY_PROVENANCE,
         )
         and _runtime_preserved(evidence)
     )
@@ -837,29 +913,37 @@ def _storage_valid(storage: Mapping[str, Any]) -> bool:
     return bool(
         storage.get("strategy_defined") is True
         and storage.get("readiness") == "STORAGE_READY"
-        and _evidenced(storage.get("provenance"), storage.get("source_reference"))
+        and _evidenced(
+            storage.get("provenance"),
+            storage.get("source_reference"),
+            allowed=PLAN_SELECTION_PROVENANCE,
+        )
         and _material_text(storage.get("dataset_path"))
         and _material_text(storage.get("checkpoint_path"))
         and _material_text(storage.get("cache_path_source"))
-        and _finite_nonnegative(storage.get("dataset_size_bytes"))
+        and _finite_nonnegative(storage.get("dataset_size_bytes"), positive=True)
         and _evidenced(
             storage.get("dataset_size_provenance"),
             storage.get("dataset_size_source_reference"),
+            allowed=PLANNED_SIZE_PROVENANCE,
         )
-        and _finite_nonnegative(storage.get("checkpoint_size_bytes"))
+        and _finite_nonnegative(storage.get("checkpoint_size_bytes"), positive=True)
         and _evidenced(
             storage.get("checkpoint_size_provenance"),
             storage.get("checkpoint_size_source_reference"),
+            allowed=PLANNED_SIZE_PROVENANCE,
         )
         and _finite_nonnegative(storage.get("required_capacity_bytes"), positive=True)
         and _evidenced(
             storage.get("required_capacity_provenance"),
             storage.get("required_capacity_source_reference"),
+            allowed=DERIVED_CAPACITY_PROVENANCE,
         )
         and _finite_nonnegative(storage.get("available_capacity_bytes"), positive=True)
         and _evidenced(
             storage.get("available_capacity_provenance"),
             storage.get("available_capacity_source_reference"),
+            allowed=CAPACITY_PROVENANCE,
         )
         and storage.get("available_capacity_bytes")
         >= storage.get("required_capacity_bytes")
@@ -878,7 +962,9 @@ def _decimal(value: Any) -> Decimal | None:
         return None
 
 
-def _numeric_budget_valid(budget: Mapping[str, Any]) -> bool:
+def _numeric_budget_valid(
+    budget: Mapping[str, Any], primary_resource_id: Any
+) -> bool:
     required_fields = (
         "approved_ceiling",
         "unit_price",
@@ -888,10 +974,25 @@ def _numeric_budget_valid(budget: Mapping[str, Any]) -> bool:
     numbers = {field: _decimal(budget.get(field)) for field in required_fields}
     if any(value is None for value in numbers.values()):
         return False
+    if (
+        not _material_text(budget.get("applies_to_resource_id"))
+        or budget.get("applies_to_resource_id") != primary_resource_id
+    ):
+        return False
+    allowed_by_field = {
+        "approved_ceiling": {"DECLARED_INPUT", "DOCUMENTED"},
+        "unit_price": {"DECLARED_INPUT", "DOCUMENTED"},
+        "estimated_training_hours": {
+            "DECLARED_INPUT",
+            "DOCUMENTED",
+        },
+        "estimated_compute_cost": {"DERIVED"},
+    }
     if not all(
         _evidenced(
             budget.get(f"{field}_provenance"),
             budget.get(f"{field}_source_reference"),
+            allowed=allowed_by_field[field],
         )
         for field in required_fields
     ):
@@ -922,7 +1023,11 @@ def _numeric_budget_valid(budget: Mapping[str, Any]) -> bool:
         name = item.get("name")
         if name not in expected_inputs or item.get("value") != expected_inputs[name]:
             return False
-        if not _evidenced(item.get("provenance"), item.get("source_reference")):
+        if not _evidenced(
+            item.get("provenance"),
+            item.get("source_reference"),
+            allowed=allowed_by_field[name],
+        ):
             return False
         actual_inputs[name] = item.get("value")
     if set(actual_inputs) != set(expected_inputs):
@@ -942,26 +1047,36 @@ def _budget_material(
     budget: Mapping[str, Any],
     execution_mode: Any,
     local_verified: bool,
+    primary_resource_id: Any,
 ) -> tuple[bool, bool, bool]:
     policy = budget.get("policy")
     policy_evidenced = _evidenced(
-        budget.get("provenance"), budget.get("source_reference")
+        budget.get("provenance"),
+        budget.get("source_reference"),
+        allowed={"DECLARED_INPUT", "DOCUMENTED"},
     )
     if policy == "APPROVED_NUMERIC_BUDGET_CEILING":
-        valid = policy_evidenced and _numeric_budget_valid(budget)
+        valid = policy_evidenced and _numeric_budget_valid(
+            budget, primary_resource_id
+        )
         return valid, valid, valid and budget.get("feasibility") == "WITHIN_POLICY"
     if policy == "EXISTING_PREPAID_RESOURCE":
         valid = bool(
             policy_evidenced
             and _material_text(budget.get("prepaid_resource_id"))
+            and budget.get("prepaid_resource_id") == primary_resource_id
+            and budget.get("applies_to_resource_id") == primary_resource_id
             and _evidenced(
                 budget.get("prepaid_resource_provenance"),
                 budget.get("prepaid_resource_reference"),
+                allowed=IDENTITY_PROVENANCE,
             )
             and _finite_nonnegative(budget.get("remaining_quota"), positive=True)
             and _material_text(budget.get("quota_unit"))
             and _evidenced(
-                budget.get("quota_provenance"), budget.get("quota_source_reference")
+                budget.get("quota_provenance"),
+                budget.get("quota_source_reference"),
+                allowed=CAPACITY_PROVENANCE,
             )
             and budget.get("calculation_performed") is False
             and budget.get("feasibility") == "WITHIN_POLICY"
@@ -972,6 +1087,7 @@ def _budget_material(
             policy_evidenced
             and execution_mode == "LOCAL_TRAINING"
             and local_verified
+            and budget.get("applies_to_resource_id") == primary_resource_id
             and budget.get("calculation_performed") is False
             and _decimal(budget.get("estimated_compute_cost")) == Decimal("0")
             and budget.get("feasibility") == "WITHIN_POLICY"
@@ -982,34 +1098,36 @@ def _budget_material(
     return False, False, False
 
 
-def _fallback_valid(fallback: Mapping[str, Any]) -> bool:
-    if fallback.get("required") is False:
-        return bool(
-            fallback.get("defined") is False
-            and fallback.get("not_required_rule") == FALLBACK_NOT_REQUIRED_RULE
-            and _evidenced(
-                fallback.get("provenance"),
-                fallback.get("not_required_source_reference"),
-            )
-        )
+def _fallback_valid(
+    fallback: Mapping[str, Any], primary_resource_id: Any
+) -> bool:
+    # P0-007 has no authoritative rule that demonstrates a separate fallback
+    # unnecessary.  READY therefore requires a concrete fallback resource.
     return bool(
         fallback.get("required") is True
         and fallback.get("defined") is True
         and fallback.get("availability") == "AVAILABLE"
         and _material_text(fallback.get("strategy_id"))
         and _material_text(fallback.get("resource_id"))
+        and fallback.get("resource_id") != primary_resource_id
         and _material_text(fallback.get("provider_or_owner"))
         and _material_text(fallback.get("resource_class"))
         and _material_text(fallback.get("resource"))
-        and _evidenced(fallback.get("provenance"), fallback.get("source_reference"))
+        and _evidenced(
+            fallback.get("provenance"),
+            fallback.get("source_reference"),
+            allowed=IDENTITY_PROVENANCE,
+        )
         and _evidenced(
             fallback.get("availability_provenance"),
             fallback.get("availability_source_reference"),
+            allowed=IDENTITY_PROVENANCE,
         )
         and fallback.get("compatibility") == "COMPATIBLE"
         and _evidenced(
             fallback.get("compatibility_provenance"),
             fallback.get("compatibility_source_reference"),
+            allowed=COMPATIBILITY_PROVENANCE,
         )
         and _material_text(fallback.get("stop_condition"))
     )
@@ -1050,10 +1168,7 @@ def _material_predicates(evidence: Mapping[str, Any]) -> dict[str, bool]:
         )
     )
     execution_mode = execution.get("value")
-    execution_valid = bool(
-        execution_mode in EXECUTION_MODES - {"UNRESOLVED"}
-        and _evidenced(execution.get("provenance"), execution.get("source_reference"))
-    )
+    execution_valid = _execution_mode_valid(execution)
     primary_valid = _primary_resource_valid(evidence, primary)
     local_verified = _local_training_verified(evidence, training, primary)
     mode_resource_valid = bool(
@@ -1065,11 +1180,20 @@ def _material_predicates(evidence: Mapping[str, Any]) -> dict[str, bool]:
         )
     )
     budget_defined, cost_provenance_valid, feasibility_valid = _budget_material(
-        budget, execution_mode, local_verified
+        budget, execution_mode, local_verified, primary.get("resource_id")
     )
     training_claim_safe = classification != "TRAINING_VERIFIED" or local_verified
     storage_valid = _storage_valid(storage)
-    fallback_defined = _fallback_valid(fallback)
+    fallback_defined = _fallback_valid(fallback, primary.get("resource_id"))
+    generation = _as_mapping(evidence.get("generation"))
+    training_activity_consistent = bool(
+        generation.get("training_executed") is False
+        and torch_cuda.get("training_executed", False) is False
+        and torch_cuda.get("optimizer_updates_executed", False) is False
+        and scope.get("training_executed") is False
+        and scope.get("optimizer_updates_executed") is False
+        and scope.get("hyperparameter_search_executed") is False
+    )
 
     return {
         "C01": bool(
@@ -1096,7 +1220,7 @@ def _material_predicates(evidence: Mapping[str, Any]) -> dict[str, bool]:
         "C15": fallback_defined,
         "C16": bool(reproduction.get("defined") is True and reproduction.get("provenance") in PROVENANCE - {"NOT_VERIFIED"} and all(reproduction.get(key) == value for key, value in EXPECTED_RUNTIME.items())),
         "C17": training_claim_safe,
-        "C18": no_scope_leakage and scope.get("training_executed") is False,
+        "C18": no_scope_leakage and training_activity_consistent,
         "C19": no_scope_leakage,
         "C20": bool(evidence.get("task_w1_001_authorized") is False and evidence.get("p0_004r_required") is True),
     }
@@ -1126,7 +1250,7 @@ def _checks_from_material(evidence: Mapping[str, Any]) -> list[dict[str, Any]]:
         "C19": ("no procurement, device remediation, dataset, re-gate, or Week 1 work occurred", "downstream or prohibited work was recorded"),
         "C20": ("authorization remains false and P0-004R remains required", "final authorization fields are inconsistent"),
     }
-    provenance = {
+    pass_provenance = {
         "C01": "DOCUMENTED",
         "C02": "MEASURED",
         "C03": "MEASURED",
@@ -1134,22 +1258,39 @@ def _checks_from_material(evidence: Mapping[str, Any]) -> list[dict[str, Any]]:
         "C05": "MEASURED",
         "C06": "MEASURED",
         "C07": "DERIVED",
-        "C08": "NOT_VERIFIED",
-        "C09": "NOT_VERIFIED",
-        "C10": "NOT_VERIFIED",
-        "C11": "DOCUMENTED",
-        "C12": "NOT_VERIFIED",
-        "C13": "DOCUMENTED",
-        "C14": "NOT_VERIFIED",
-        "C15": "NOT_VERIFIED",
+        "C08": "DERIVED",
+        "C09": "DERIVED",
+        "C10": "DERIVED",
+        "C11": "DERIVED",
+        "C12": "DERIVED",
+        "C13": "DERIVED",
+        "C14": "DERIVED",
+        "C15": "DERIVED",
         "C16": "DOCUMENTED",
         "C17": "DOCUMENTED",
         "C18": "DOCUMENTED",
         "C19": "DOCUMENTED",
         "C20": "DOCUMENTED",
     }
+    fail_provenance = {
+        **pass_provenance,
+        "C08": "NOT_VERIFIED",
+        "C09": "NOT_VERIFIED",
+        "C10": "NOT_VERIFIED",
+        "C11": "DOCUMENTED",
+        "C12": "NOT_VERIFIED",
+        "C14": "NOT_VERIFIED",
+        "C15": "NOT_VERIFIED",
+    }
     return [
-        _check(check_id, area, predicates[check_id], provenance[check_id], *details[check_id])
+        _check(
+            check_id,
+            area,
+            predicates[check_id],
+            pass_provenance[check_id],
+            *details[check_id],
+            fail_provenance=fail_provenance[check_id],
+        )
         for check_id, area in EXPECTED_CHECKS
     ]
 
@@ -1290,7 +1431,9 @@ def _provenance_errors(value: Any, path: str = "evidence") -> list[str]:
     return errors
 
 
-def _numeric_budget_errors(budget: Mapping[str, Any]) -> list[str]:
+def _numeric_budget_errors(
+    budget: Mapping[str, Any], primary_resource_id: Any
+) -> list[str]:
     errors: list[str] = []
     fields = (
         "approved_ceiling",
@@ -1305,10 +1448,22 @@ def _numeric_budget_errors(budget: Mapping[str, Any]) -> list[str]:
             + ", ".join(invalid_fields)
         )
         return errors
+    if (
+        not _material_text(budget.get("applies_to_resource_id"))
+        or budget.get("applies_to_resource_id") != primary_resource_id
+    ):
+        errors.append("numeric budget must apply to the selected primary resource")
+    allowed_by_field = {
+        "approved_ceiling": {"DECLARED_INPUT", "DOCUMENTED"},
+        "unit_price": {"DECLARED_INPUT", "DOCUMENTED"},
+        "estimated_training_hours": {"DECLARED_INPUT", "DOCUMENTED"},
+        "estimated_compute_cost": {"DERIVED"},
+    }
     for field in fields:
         if not _evidenced(
             budget.get(f"{field}_provenance"),
             budget.get(f"{field}_source_reference"),
+            allowed=allowed_by_field[field],
         ):
             errors.append(f"numeric budget {field} lacks sufficient provenance/source")
     if budget.get("estimated_compute_cost_provenance") != "DERIVED":
@@ -1343,7 +1498,11 @@ def _numeric_budget_errors(budget: Mapping[str, Any]) -> list[str]:
             seen.add(name)
             if item.get("value") != expected[name]:
                 errors.append(f"numeric budget cost input {name} value mismatch")
-            if not _evidenced(item.get("provenance"), item.get("source_reference")):
+            if not _evidenced(
+                item.get("provenance"),
+                item.get("source_reference"),
+                allowed=allowed_by_field[name],
+            ):
                 errors.append(f"numeric budget cost input {name} lacks provenance/source")
         if seen != set(expected):
             errors.append("numeric budget cost input set mismatch")
@@ -1373,25 +1532,38 @@ def _policy_validation_errors(
     budget: Mapping[str, Any],
     execution_mode: Any,
     local_verified: bool,
+    primary_resource_id: Any,
 ) -> list[str]:
     policy = budget.get("policy")
     if policy == "UNRESOLVED":
         return []
     errors: list[str] = []
-    if not _evidenced(budget.get("provenance"), budget.get("source_reference")):
+    if not _evidenced(
+        budget.get("provenance"),
+        budget.get("source_reference"),
+        allowed={"DECLARED_INPUT", "DOCUMENTED"},
+    ):
         errors.append("budget policy lacks sufficient provenance/source")
     if policy == "APPROVED_NUMERIC_BUDGET_CEILING":
-        errors.extend(_numeric_budget_errors(budget))
+        errors.extend(_numeric_budget_errors(budget, primary_resource_id))
     elif policy == "EXISTING_PREPAID_RESOURCE":
         if not _material_text(budget.get("prepaid_resource_id")) or not _evidenced(
             budget.get("prepaid_resource_provenance"),
             budget.get("prepaid_resource_reference"),
+            allowed=IDENTITY_PROVENANCE,
         ):
             errors.append("prepaid budget lacks concrete resource evidence/reference")
+        if (
+            budget.get("prepaid_resource_id") != primary_resource_id
+            or budget.get("applies_to_resource_id") != primary_resource_id
+        ):
+            errors.append("prepaid budget must apply to the selected primary resource")
         if not _finite_nonnegative(budget.get("remaining_quota"), positive=True):
             errors.append("prepaid budget remaining quota must be finite and positive")
         if not _material_text(budget.get("quota_unit")) or not _evidenced(
-            budget.get("quota_provenance"), budget.get("quota_source_reference")
+            budget.get("quota_provenance"),
+            budget.get("quota_source_reference"),
+            allowed=CAPACITY_PROVENANCE,
         ):
             errors.append("prepaid budget quota lacks unit/provenance/source")
         if budget.get("calculation_performed") is not False:
@@ -1401,6 +1573,8 @@ def _policy_validation_errors(
     elif policy == "LOCAL_ONLY_ZERO_INCREMENTAL_BUDGET":
         if execution_mode != "LOCAL_TRAINING" or not local_verified:
             errors.append("zero incremental local budget requires verified LOCAL_TRAINING")
+        if budget.get("applies_to_resource_id") != primary_resource_id:
+            errors.append("local-only budget must apply to the selected primary resource")
         if budget.get("calculation_performed") is not False:
             errors.append("local-only zero budget must not claim a cost calculation")
         if _decimal(budget.get("estimated_compute_cost")) != Decimal("0"):
@@ -1439,6 +1613,8 @@ def validate_evidence(
             errors.append(f"{expected[0]} has invalid status")
         if item.get("provenance") not in PROVENANCE:
             errors.append(f"{expected[0]} has invalid provenance")
+        if item.get("status") == "PASS" and item.get("provenance") == "NOT_VERIFIED":
+            errors.append(f"{expected[0]} PASS cannot use NOT_VERIFIED provenance")
 
     plan = evidence.get("resource_plan")
     if not isinstance(plan, dict):
@@ -1458,13 +1634,32 @@ def validate_evidence(
     primary = _as_mapping(plan.get("primary_resource"))
     local_verified = _local_training_verified(evidence, training, primary)
     errors.extend(
-        _policy_validation_errors(budget, execution.get("value"), local_verified)
+        _policy_validation_errors(
+            budget,
+            execution.get("value"),
+            local_verified,
+            primary.get("resource_id"),
+        )
     )
     if training.get("classification") == "TRAINING_VERIFIED" and not local_verified:
         errors.append(
             "unsupported local-training claim: TRAINING_VERIFIED lacks authorized "
             "model-specific fit evidence and compatible local resource facts"
         )
+    generation = _as_mapping(evidence.get("generation"))
+    torch_cuda = _as_mapping(
+        _as_mapping(evidence.get("local_resources")).get("torch_cuda")
+    )
+    scope = _as_mapping(evidence.get("scope_safety"))
+    if not (
+        generation.get("training_executed") is False
+        and torch_cuda.get("training_executed", False) is False
+        and torch_cuda.get("optimizer_updates_executed", False) is False
+        and scope.get("training_executed") is False
+        and scope.get("optimizer_updates_executed") is False
+        and scope.get("hyperparameter_search_executed") is False
+    ):
+        errors.append("training activity fields are contradictory or unsafe")
 
     expected_checks = _checks_from_material(evidence)
     if checks != expected_checks:
@@ -1504,6 +1699,18 @@ def validate_evidence(
             }
             if predecessors != expected_predecessors:
                 errors.append("predecessor hashes do not match repository files")
+            predecessor_facts = _as_mapping(evidence.get("predecessors"))
+            for key, expected_hash in (
+                ("p0_005", EXPECTED_P0_005_SHA256),
+                ("p0_006", EXPECTED_P0_006_SHA256),
+            ):
+                facts = _as_mapping(predecessor_facts.get(key))
+                if not (
+                    facts.get("expected_sha256") == expected_hash
+                    and facts.get("actual_sha256") == expected_hash
+                    and facts.get("hash_match") is True
+                ):
+                    errors.append(f"{key} predecessor facts do not match accepted hash")
     return errors
 
 

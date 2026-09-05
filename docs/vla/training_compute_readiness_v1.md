@@ -129,6 +129,11 @@ compatibility evidence, allowed provenance, and source references. Local mode
 additionally requires authorized model-specific evidence, a configuration
 reference, and evidenced peak VRAM within the measured local capacity.
 
+Execution roles are exact mode material: HYBRID requires local
+development/configuration/validation-only and remote-primary-training roles;
+REMOTE and LOCAL use their corresponding explicit role pair. Missing or
+placeholder role/identity text fails closed.
+
 The intended division, once explicitly approved, is likely to keep local work
 bounded to development/configuration/validation and execute fine-tuning on a
 separately evidenced resource. That is a planning direction, not a selected
@@ -179,7 +184,11 @@ estimated_compute_cost = unit_price * estimated_training_hours
 
 For a prepaid policy, a concrete resource reference and positive evidenced
 remaining quota are mandatory. Neither policy can pass through a boolean-only
-availability assertion.
+availability assertion. Numeric and prepaid policies must identify the same
+primary resource to which the cost/quota evidence applies.
+Because this task performs no training, an estimated training duration cannot
+use `MEASURED`; it must remain `DECLARED_INPUT` or `DOCUMENTED`, and the
+computed cost alone uses `DERIVED`.
 
 ## Fallback strategy
 
@@ -195,6 +204,11 @@ the associated provenance, and rerun P0-007 before downstream authorization.
 ```
 
 This stop/escalation policy does not count as an available fallback GPU.
+No TASK-defined redundancy rule currently proves a separate fallback
+unnecessary, so every READY result requires a concrete, compatible, evidenced
+fallback resource.
+The fallback resource identity must differ from the primary resource identity;
+renaming the primary as its own fallback does not establish recovery capacity.
 
 ## Reproduction strategy
 
@@ -232,6 +246,8 @@ resource, storage, budget, cost, and fallback fields. It rejects any artifact
 whose blocker list differs, whose mandatory flag is demoted, whose material
 fields use insufficient provenance, or whose aggregate decision is manipulated
 to `TRAINING_RESOURCE_READY`, even when the manipulated payload is rehashed.
+Every PASS check must itself carry sufficient provenance; `NOT_VERIFIED` cannot
+be paired with PASS.
 
 ## Explicitly unverified and deferred
 

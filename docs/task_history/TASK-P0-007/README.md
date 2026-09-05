@@ -14,6 +14,8 @@
 |---:|---|---|---|---|
 | 01 | Implementation | COMPLETE / `TRAINING_RESOURCE_BLOCKED` | bounded verifier와 tamper tests를 구현하고 unresolved compute/budget/fallback을 mandatory blocker로 보존했다. | `01_implementation.md` |
 | 02 | Fix | READY FOR INDEPENDENT RE-REVIEW / `TRAINING_RESOURCE_BLOCKED` | mode-specific material validation, cost recomputation, rehashed-tamper resistance, bounded filesystem metadata를 보강했다. | `02_fix.md` |
+| 03 | Review | REJECT / `TRAINING_RESOURCE_BLOCKED` | rehashed false-READY bypass, no-training cross-check 누락, unbounded RAM metadata, fix-history conflict를 확인했다. | `03_review.md` |
+| 04 | Fix | READY FOR INDEPENDENT RE-REVIEW / `TRAINING_RESOURCE_BLOCKED` | material/provenance 관계, training flag cross-check, bounded RAM probe를 강화하고 02 기록을 새 audit entry로 supersede했다. | `04_fix.md` |
 
 ## 3. 주요 설계 / 문제 해결 포인트
 
@@ -28,21 +30,22 @@
 
 ## 4. 검증 결과
 
-- Focused tests: 38 PASS, 0 FAIL.
-- Coordinated/rehashed tamper group: 5 PASS, 0 FAIL.
-- Cost arithmetic group: 6 PASS, 0 FAIL.
-- Delayed filesystem metadata group: 3 PASS, 0 FAIL.
-- Full regression: 114 PASS, 0 FAIL.
+- Focused tests: 49 PASS, 0 FAIL.
+- Coordinated/rehashed tamper group: 11 PASS, 0 FAIL.
+- Cost arithmetic/provenance group: 7 PASS, 0 FAIL.
+- Delayed filesystem/resource metadata group: 4 PASS, 0 FAIL.
+- Full regression: 125 PASS, 0 FAIL.
 - Canonical/safe reruns: expected exit `2`, stable `TRAINING_RESOURCE_BLOCKED`.
 - JSON/schema/invariant/source/predecessor hash validation: PASS.
-- Evidence: `../../../results/phase0/P0-007_training_resource_readiness.json`, SHA-256 `4f12c66666e916d6b91974320d2050a30ee15752cdaa5e21fe7d714035dcaaf9`.
-- Independent review: REJECTED once; corrective implementation is ready for independent re-review.
+- Evidence: `../../../results/phase0/P0-007_training_resource_readiness.json`, SHA-256 `eda1a2549d038f5ccc3604bec00632def122f9676ad8636b1a0bbeff8a1d41b8`.
+- Evidence payload SHA-256: `07aeec9a4ac444ebcf618f89c9a02a681b980791601c35618544bbc56ac75ad8`.
+- Independent review: 03 review `REJECT`; 04 corrective implementation is ready for independent re-review.
 
 ## 5. 현재 상태
 
 ```text
-Implementation: FIXED / READY FOR INDEPENDENT RE-REVIEW
-Review: RE-REVIEW PENDING
+Implementation: READY FOR INDEPENDENT RE-REVIEW
+Review: RE-REVIEW PENDING (latest completed review: REJECT)
 Local training classification: TRAINING_NOT_VERIFIED
 Training execution mode: UNRESOLVED
 Primary compute path: UNRESOLVED
@@ -63,3 +66,11 @@ mandatory check와 provenance를 material evidence에서 재구성하고, check
 demotion·READY manipulation·blocker mismatch를 거부한다. 실제 외부 resource,
 budget, fallback이 없는 현재 상태를 `TRAINING_RESOURCE_BLOCKED`로 남겨
 비용과 authorization boundary를 보존했다.
+
+03 independent re-review에서는 canonical BLOCKED 판단 자체는 정확하다고
+확인했지만, placeholder/prepaid/fallback/no-training material을 조작한 rehashed
+artifact가 READY로 승인되는 우회와 unbounded RAM metadata 경로를 발견했다.
+04 fix는 resource identity 간 관계와 field-specific provenance를 domain boundary에서
+검증하고, 모든 training flag를 교차 검증하며, RAM metadata도 bounded worker로
+이동했다. 과거 02 audit record는 수정하지 않고 04의 단일 hash 기록으로
+supersede하여 audit trail을 보존했다.

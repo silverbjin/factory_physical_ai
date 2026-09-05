@@ -111,7 +111,12 @@ exactly at the approved ceiling is `WITHIN_POLICY`; a result above it is
 identifier/reference plus positive remaining quota, unit, provenance, and
 source. `LOCAL_ONLY_ZERO_INCREMENTAL_BUDGET` is valid only for an independently
 verified `LOCAL_TRAINING` path. A policy name or availability boolean alone is
-never sufficient.
+never sufficient. Numeric or prepaid evidence must name the selected primary
+resource through `applies_to_resource_id`; an entitlement or price for a
+different resource cannot establish primary-path feasibility.
+P0-007 cannot produce a measured training-duration input because it executes no
+training. Such an estimate must be `DECLARED_INPUT` or `DOCUMENTED`; only the
+formula result is `DERIVED`.
 
 ## Fallback and stop conditions
 
@@ -134,10 +139,11 @@ On any stop condition, the owner must obtain explicit approval/evidence and
 rerun the readiness verifier. The plan may never switch provider, resource, or
 budget silently.
 
-A required fallback must identify its strategy, resource, provider/owner,
+A fallback must identify its strategy, resource, provider/owner,
 resource class, availability, runtime compatibility, provenance, and sources.
-An absent fallback is allowed only under the verifier's explicit documented
-redundancy rule; an empty resource paired with `availability=AVAILABLE` fails.
+This TASK defines no independently demonstrable redundancy exemption, so an
+empty fallback or a `fallback.required=false` assertion fails READY.
+The fallback resource ID must also be distinct from the primary resource ID.
 
 ## Approval dependencies and future ownership
 
