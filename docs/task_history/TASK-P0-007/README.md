@@ -18,6 +18,7 @@
 | 04 | Fix | READY FOR INDEPENDENT RE-REVIEW / `TRAINING_RESOURCE_BLOCKED` | material/provenance 관계, training flag cross-check, bounded RAM probe를 강화하고 02 기록을 새 audit entry로 supersede했다. | `04_fix.md` |
 | 05 | Review | REJECT / `TRAINING_RESOURCE_BLOCKED` | compute/storage/prepaid/fallback 관계의 false-READY, missing no-training field, 남은 unbounded filesystem 경로를 확인했다. | `05_review.md` |
 | 06 | Fix | READY FOR INDEPENDENT RE-REVIEW / `TRAINING_RESOURCE_BLOCKED` | workload VRAM/storage/prepaid/fallback 관계를 재계산하고 missing no-training 및 remaining unbounded I/O를 fail closed 처리했다. | `06_fix.md` |
+| 07 | Review | ACCEPT / `TRAINING_RESOURCE_BLOCKED` | B04/B05/M03 교정을 독립 재구성하고 모든 Acceptance Gate 통과를 확인했다. | `07_review.md` |
 
 ## 3. 주요 설계 / 문제 해결 포인트
 
@@ -41,13 +42,13 @@
 - JSON/schema/invariant/source/predecessor hash validation: PASS.
 - Evidence: `../../../results/phase0/P0-007_training_resource_readiness.json`, SHA-256 `9f53dcc0de59c6e32f24ef45a9e91fc6a62641d553b93d4b864cc8520fe6a215`.
 - Evidence payload SHA-256: `128d0b72373c6605e4157bdbefc8746f1e952506d8dea6d9509d2c4909164325`.
-- Independent review: 05 re-review `REJECT`; 06 corrective implementation is ready for independent re-review.
+- Independent review: 07 re-review `ACCEPT`; implementation/evidence accepted with truthful resource outcome `TRAINING_RESOURCE_BLOCKED`.
 
 ## 5. 현재 상태
 
 ```text
-Implementation: READY FOR INDEPENDENT RE-REVIEW
-Review: RE-REVIEW PENDING (latest completed review: REJECT)
+Implementation: COMPLETE
+Review: ACCEPT TASK-P0-007
 Local training classification: TRAINING_NOT_VERIFIED
 Training execution mode: UNRESOLVED
 Primary compute path: UNRESOLVED
@@ -87,3 +88,10 @@ filesystem read/discovery 경로도 남아 있어 추가 교정이 필요하다.
 storage 합계 및 prepaid quota sufficiency를 독립 재계산했다. Missing no-training
 fields는 더 이상 false로 승격되지 않으며 JSON/hash/executable discovery도
 timeout boundary 안에서 실패를 보수적으로 전파한다.
+
+07 independent re-review는 56개 focused test와 132개 full regression을 통과하고,
+coordinated/rehashed READY, storage 축소, insufficient prepaid quota, null fallback,
+`100 × 100 = 1` 비용 조작, missing no-training field를 독립 재구성해 모두
+차단됨을 확인했다. 구현과 evidence는 수용됐지만 실제 compute/storage/budget/
+fallback 사실은 바뀌지 않았으므로 resource outcome은 `TRAINING_RESOURCE_BLOCKED`로
+유지되고 Week 1은 승인되지 않는다.
