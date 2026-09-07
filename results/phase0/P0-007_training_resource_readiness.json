@@ -1,0 +1,695 @@
+{
+  "checks": [
+    {
+      "area": "Accepted VLA runtime preserved",
+      "detail": "accepted predecessor hashes and context are intact",
+      "id": "C01",
+      "mandatory": true,
+      "provenance": "DOCUMENTED",
+      "status": "PASS"
+    },
+    {
+      "area": "Local GPU identity measured",
+      "detail": "GPU identity was measured",
+      "id": "C02",
+      "mandatory": true,
+      "provenance": "MEASURED",
+      "status": "PASS"
+    },
+    {
+      "area": "Local VRAM measured",
+      "detail": "GPU VRAM was measured",
+      "id": "C03",
+      "mandatory": true,
+      "provenance": "MEASURED",
+      "status": "PASS"
+    },
+    {
+      "area": "CUDA execution remains available",
+      "detail": "PyTorch reports CUDA available in the accepted environment",
+      "id": "C04",
+      "mandatory": true,
+      "provenance": "MEASURED",
+      "status": "PASS"
+    },
+    {
+      "area": "Host RAM characterized",
+      "detail": "host RAM was measured",
+      "id": "C05",
+      "mandatory": true,
+      "provenance": "MEASURED",
+      "status": "PASS"
+    },
+    {
+      "area": "Storage capacity characterized",
+      "detail": "repository filesystem capacity was measured",
+      "id": "C06",
+      "mandatory": true,
+      "provenance": "MEASURED",
+      "status": "PASS"
+    },
+    {
+      "area": "Local training role explicitly classified",
+      "detail": "local training role has an allowed classification",
+      "id": "C07",
+      "mandatory": true,
+      "provenance": "DERIVED",
+      "status": "PASS"
+    },
+    {
+      "area": "Training execution mode selected",
+      "detail": "training execution mode remains UNRESOLVED or invalid",
+      "id": "C08",
+      "mandatory": true,
+      "provenance": "NOT_VERIFIED",
+      "status": "BLOCKED"
+    },
+    {
+      "area": "Primary training resource identified",
+      "detail": "no available primary training resource is evidenced",
+      "id": "C09",
+      "mandatory": true,
+      "provenance": "NOT_VERIFIED",
+      "status": "BLOCKED"
+    },
+    {
+      "area": "Software/runtime compatibility documented",
+      "detail": "primary-path runtime compatibility is not verified",
+      "id": "C10",
+      "mandatory": true,
+      "provenance": "NOT_VERIFIED",
+      "status": "BLOCKED"
+    },
+    {
+      "area": "Model/dataset/checkpoint storage strategy defined",
+      "detail": "storage strategy is missing or has invalid provenance",
+      "id": "C11",
+      "mandatory": true,
+      "provenance": "DOCUMENTED",
+      "status": "BLOCKED"
+    },
+    {
+      "area": "Budget policy defined",
+      "detail": "budget policy remains UNRESOLVED or malformed",
+      "id": "C12",
+      "mandatory": true,
+      "provenance": "NOT_VERIFIED",
+      "status": "BLOCKED"
+    },
+    {
+      "area": "Cost inputs provenance validated when applicable",
+      "detail": "cost inputs have allowed provenance, or no calculation was performed",
+      "id": "C13",
+      "mandatory": true,
+      "provenance": "DERIVED",
+      "status": "PASS"
+    },
+    {
+      "area": "Primary-path budget feasibility classified",
+      "detail": "primary-path budget feasibility is not verified or outside policy",
+      "id": "C14",
+      "mandatory": true,
+      "provenance": "NOT_VERIFIED",
+      "status": "BLOCKED"
+    },
+    {
+      "area": "Fallback compute strategy defined",
+      "detail": "no available fallback compute resource is evidenced",
+      "id": "C15",
+      "mandatory": true,
+      "provenance": "NOT_VERIFIED",
+      "status": "BLOCKED"
+    },
+    {
+      "area": "Reproduction strategy documented",
+      "detail": "accepted runtime reconstruction strategy is documented",
+      "id": "C16",
+      "mandatory": true,
+      "provenance": "DOCUMENTED",
+      "status": "PASS"
+    },
+    {
+      "area": "Unsupported training-fit claims rejected",
+      "detail": "local training remains TRAINING_NOT_VERIFIED/UNSUITABLE without unsupported fit claims",
+      "id": "C17",
+      "mandatory": true,
+      "provenance": "DOCUMENTED",
+      "status": "PASS"
+    },
+    {
+      "area": "No actual fine-tuning/training executed",
+      "detail": "no training or optimizer update was executed",
+      "id": "C18",
+      "mandatory": true,
+      "provenance": "DOCUMENTED",
+      "status": "PASS"
+    },
+    {
+      "area": "No downstream task leakage",
+      "detail": "no procurement, device remediation, dataset, re-gate, or Week 1 work occurred",
+      "id": "C19",
+      "mandatory": true,
+      "provenance": "DOCUMENTED",
+      "status": "PASS"
+    },
+    {
+      "area": "Final readiness decision and authorization consistent",
+      "detail": "authorization remains false and P0-004R remains required",
+      "id": "C20",
+      "mandatory": true,
+      "provenance": "DOCUMENTED",
+      "status": "PASS"
+    }
+  ],
+  "content_binding": {
+    "evidence_payload_sha256": "128d0b72373c6605e4157bdbefc8746f1e952506d8dea6d9509d2c4909164325",
+    "predecessor_sha256": {
+      "results/phase0/P0-005_vla_runtime.json": "aafe0273a3fa8d28652494ea8f72fc396247fed81c6d5ab71311ff628e646aae",
+      "results/phase0/P0-006_robot_io_readiness.json": "486d76218ea326b279f9780320d081e7435a6a781194c9a6c4efa4a4bef31506"
+    },
+    "provenance": "DERIVED",
+    "source_sha256": {
+      "docs/vla/training_compute_readiness_v1.md": "4424992c8f9dbcd8e5160a2dc9ae8f986298cdec10804b7ec453ee8b9e436ed0",
+      "plans/vla_training_compute_budget_plan.md": "5fc4dc241d1352e643f6e648e9fc00b5c2b883d16c5b9cb29add0953ba5b04e0",
+      "plans/vla_training_resource_risks.md": "7815699075d1942ec376818783a561f9331cbfef0628cee1f5cd613f66fdccc2",
+      "scripts/verify_training_resource_readiness.py": "4fcac8ed148a5b0bd5b5957d24e2d0bdc3affc609a56cc00693b09c89c1544a9",
+      "tests/test_verify_training_resource_readiness.py": "b2f2c2eead2c6ea80da5bdefaccf28ee1db04a68aca3706eff54a96febb998e4"
+    }
+  },
+  "deferred_items": [
+    {
+      "item": "model-specific local training fit",
+      "owner": "later explicitly authorized VLA training task",
+      "provenance": "NOT_VERIFIED"
+    },
+    {
+      "item": "Dataset V1 size and storage consumption",
+      "owner": "TASK-W1-003 after authorization",
+      "provenance": "NOT_VERIFIED"
+    },
+    {
+      "item": "external compute selection/access/quota",
+      "owner": "project/compute owner",
+      "provenance": "NOT_VERIFIED"
+    },
+    {
+      "item": "numeric budget ceiling or prepaid resource",
+      "owner": "project owner",
+      "provenance": "NOT_VERIFIED"
+    },
+    {
+      "item": "physical device blockers",
+      "owner": "TASK-P0-006R",
+      "provenance": "DOCUMENTED"
+    }
+  ],
+  "generated_at": "2026-09-05T07:52:13.583344Z",
+  "generation": {
+    "external_resource_contacted": false,
+    "hyperparameter_search_executed": false,
+    "mode": "PRE_COMMIT_WORKTREE",
+    "optimizer_updates_executed": false,
+    "provenance": "MEASURED",
+    "training_executed": false
+  },
+  "git": {
+    "branch": "task/p0-007-training-resource-readiness",
+    "commit": "fb41269a3438dd344a87ab591a8c679bf4b1842b",
+    "provenance": "MEASURED",
+    "working_tree_clean": false,
+    "working_tree_status": [
+      "M docs/task_history/README.md",
+      " M docs/task_history/TASK-P0-007/README.md",
+      " M docs/vla/training_compute_readiness_v1.md",
+      " M plans/vla_training_compute_budget_plan.md",
+      " M plans/vla_training_resource_risks.md",
+      " M results/phase0/P0-007_training_resource_readiness.json",
+      " M scripts/verify_training_resource_readiness.py",
+      " M tests/test_verify_training_resource_readiness.py",
+      "?? docs/task_history/TASK-P0-007/05_review.md"
+    ]
+  },
+  "local_resources": {
+    "cache_filesystem": {
+      "free_bytes": 978139340800,
+      "path": "/home/jinho/.cache",
+      "provenance": "MEASURED",
+      "timed_out": false,
+      "timeout_seconds": 2.0,
+      "total_bytes": 1081101176832,
+      "used_bytes": 47969480704
+    },
+    "environment_footprint": {
+      "bytes": 6198765955,
+      "detail": "package footprint only; excludes future models, datasets, and checkpoints",
+      "metadata_probe": {
+        "exists": true,
+        "is_directory": true,
+        "is_file": false,
+        "operation": "path_kind",
+        "path": "/home/jinho/projects/factory_physical_ai_p0_005/.venv-vla",
+        "status": "PASS",
+        "timed_out": false,
+        "timeout_seconds": 2.0
+      },
+      "path": "/home/jinho/projects/factory_physical_ai_p0_005/.venv-vla",
+      "provenance": "MEASURED",
+      "query": {
+        "available": true,
+        "output": "6198765955\t/home/jinho/projects/factory_physical_ai_p0_005/.venv-vla",
+        "returncode": 0,
+        "timed_out": false
+      }
+    },
+    "environment_path": {
+      "provenance": "DOCUMENTED",
+      "value": "/home/jinho/projects/factory_physical_ai_p0_005/.venv-vla"
+    },
+    "gpu": {
+      "available": true,
+      "compute_capability": "7.5",
+      "detail": "GPU identity and capacity only; not model-training-fit evidence",
+      "discovery_probe": {
+        "operation": "which",
+        "path": "nvidia-smi",
+        "resolved": "/usr/lib/wsl/lib/nvidia-smi",
+        "status": "PASS",
+        "timed_out": false,
+        "timeout_seconds": 2.0
+      },
+      "memory_free_mib": 5955,
+      "memory_total_mib": 6144,
+      "name": "NVIDIA GeForce RTX 2060 with Max-Q Design",
+      "provenance": "MEASURED",
+      "query": {
+        "available": true,
+        "output": "NVIDIA GeForce RTX 2060 with Max-Q Design, 6144, 5955, 7.5",
+        "returncode": 0,
+        "timed_out": false
+      }
+    },
+    "host": {
+      "logical_cpu_count": 8,
+      "machine": "x86_64",
+      "platform": "Linux-6.18.33.2-microsoft-standard-WSL2-x86_64-with-glibc2.39",
+      "provenance": "MEASURED"
+    },
+    "huggingface_cache_path": {
+      "created_by_task": false,
+      "exists": false,
+      "metadata_probe": {
+        "exists": false,
+        "is_directory": false,
+        "is_file": false,
+        "operation": "path_kind",
+        "path": "/home/jinho/.cache/huggingface",
+        "status": "PASS",
+        "timed_out": false,
+        "timeout_seconds": 2.0
+      },
+      "provenance": "DOCUMENTED",
+      "value": "/home/jinho/.cache/huggingface"
+    },
+    "ram": {
+      "available_bytes": 14702682112,
+      "metadata_probe": {
+        "operation": "meminfo",
+        "path": "/proc/meminfo",
+        "status": "PASS",
+        "timed_out": false,
+        "timeout_seconds": 2.0,
+        "values": {
+          "Active": 867381248,
+          "Active(anon)": 2879488,
+          "Active(file)": 864501760,
+          "AnonHugePages": 0,
+          "AnonPages": 1259921408,
+          "Balloon": 0,
+          "Bounce": 0,
+          "Buffers": 50663424,
+          "Cached": 2415382528,
+          "CommitLimit": 12602634240,
+          "Committed_AS": 4205309952,
+          "DirectMap1G": 13958643712,
+          "DirectMap2M": 11572084736,
+          "DirectMap4k": 80740352,
+          "Dirty": 1490944,
+          "FileHugePages": 29360128,
+          "FilePmdMapped": 0,
+          "HardwareCorrupted": 0,
+          "HugePages_Free": 0,
+          "HugePages_Rsvd": 0,
+          "HugePages_Surp": 0,
+          "HugePages_Total": 0,
+          "Hugepagesize": 2097152,
+          "Hugetlb": 0,
+          "Inactive": 2858606592,
+          "Inactive(anon)": 1263677440,
+          "Inactive(file)": 1594929152,
+          "KReclaimable": 129544192,
+          "KernelStack": 7634944,
+          "Mapped": 598925312,
+          "MemAvailable": 14702682112,
+          "MemFree": 12367691776,
+          "MemTotal": 16615333888,
+          "Mlocked": 0,
+          "NFS_Unstable": 0,
+          "PageTables": 31313920,
+          "Percpu": 4096000,
+          "SReclaimable": 129544192,
+          "SUnreclaim": 77086720,
+          "SecPageTables": 0,
+          "Shmem": 6623232,
+          "ShmemHugePages": 0,
+          "ShmemPmdMapped": 0,
+          "Slab": 206630912,
+          "SwapCached": 0,
+          "SwapFree": 4294967296,
+          "SwapTotal": 4294967296,
+          "Unaccepted": 0,
+          "Unevictable": 0,
+          "VmallocChunk": 0,
+          "VmallocTotal": 35184372087808,
+          "VmallocUsed": 36462592,
+          "Writeback": 0,
+          "WritebackTmp": 0
+        }
+      },
+      "provenance": "MEASURED",
+      "source": "/proc/meminfo",
+      "swap_free_bytes": 4294967296,
+      "swap_total_bytes": 4294967296,
+      "timed_out": false,
+      "timeout_seconds": 2.0,
+      "total_bytes": 16615333888
+    },
+    "repository_filesystem": {
+      "free_bytes": 978139340800,
+      "path": "/home/jinho/projects/factory_physical_ai_p0_007",
+      "provenance": "MEASURED",
+      "timed_out": false,
+      "timeout_seconds": 2.0,
+      "total_bytes": 1081101176832,
+      "used_bytes": 47969480704
+    },
+    "torch_cuda": {
+      "available": true,
+      "cuda_available": true,
+      "cuda_runtime": "13.0",
+      "detail": "metadata/runtime visibility only; no model or training workload",
+      "device_count": 1,
+      "device_name": "NVIDIA GeForce RTX 2060 with Max-Q Design",
+      "hyperparameter_search_executed": false,
+      "metadata_probe": {
+        "exists": true,
+        "is_directory": false,
+        "is_file": true,
+        "operation": "path_kind",
+        "path": "/home/jinho/projects/factory_physical_ai_p0_005/.venv-vla/bin/python",
+        "status": "PASS",
+        "timed_out": false,
+        "timeout_seconds": 2.0
+      },
+      "model_loaded": false,
+      "optimizer_updates_executed": false,
+      "provenance": "MEASURED",
+      "python": "3.12.3",
+      "query": {
+        "available": true,
+        "output": "{\"python\": \"3.12.3\", \"torch\": \"2.10.0+cu130\", \"torchvision\": \"0.25.0+cu130\", \"cuda_runtime\": \"13.0\", \"cuda_available\": true, \"device_count\": 1, \"device_name\": \"NVIDIA GeForce RTX 2060 with Max-Q Design\", \"total_memory_bytes\": 6442123264}",
+        "returncode": 0,
+        "timed_out": false
+      },
+      "tensor_allocation_probe_executed": false,
+      "torch": "2.10.0+cu130",
+      "torchvision": "0.25.0+cu130",
+      "total_memory_bytes": 6442123264,
+      "training_executed": false
+    }
+  },
+  "p0_004r_required": true,
+  "predecessors": {
+    "p0_005": {
+      "acceptance_provenance": "DOCUMENTED",
+      "accepted": true,
+      "actual_sha256": "aafe0273a3fa8d28652494ea8f72fc396247fed81c6d5ab71311ff628e646aae",
+      "evidence_path": "results/phase0/P0-005_vla_runtime.json",
+      "expected_sha256": "aafe0273a3fa8d28652494ea8f72fc396247fed81c6d5ab71311ff628e646aae",
+      "hash_match": true,
+      "task": "TASK-P0-005"
+    },
+    "p0_006": {
+      "acceptance_provenance": "DOCUMENTED",
+      "acceptance_source": "tasks/TASK-P0-007.md authoritative prerequisite contract",
+      "accepted": true,
+      "actual_sha256": "486d76218ea326b279f9780320d081e7435a6a781194c9a6c4efa4a4bef31506",
+      "evidence_path": "results/phase0/P0-006_robot_io_readiness.json",
+      "expected_sha256": "486d76218ea326b279f9780320d081e7435a6a781194c9a6c4efa4a4bef31506",
+      "hash_match": true,
+      "physical_outcome": "DEVICE_IO_BLOCKED",
+      "task": "TASK-P0-006"
+    }
+  },
+  "resource_plan": {
+    "budget": {
+      "applies_to_resource_id": null,
+      "approved_ceiling": null,
+      "approved_ceiling_provenance": "NOT_VERIFIED",
+      "approved_ceiling_source_reference": null,
+      "calculation_performed": false,
+      "cost_formula": null,
+      "cost_inputs": [],
+      "currency": null,
+      "detail": "No approved numeric ceiling, prepaid resource, or verified local-only training path exists.",
+      "estimated_compute_cost": null,
+      "estimated_compute_cost_provenance": "NOT_VERIFIED",
+      "estimated_compute_cost_source_reference": null,
+      "estimated_training_hours": null,
+      "estimated_training_hours_provenance": "NOT_VERIFIED",
+      "estimated_training_hours_source_reference": null,
+      "estimation_date": null,
+      "feasibility": "NOT_VERIFIED",
+      "policy": "UNRESOLVED",
+      "prepaid_resource_id": null,
+      "prepaid_resource_provenance": "NOT_VERIFIED",
+      "prepaid_resource_reference": null,
+      "provenance": "NOT_VERIFIED",
+      "quota_provenance": "NOT_VERIFIED",
+      "quota_source_reference": null,
+      "quota_unit": null,
+      "remaining_quota": null,
+      "required_quota": null,
+      "required_quota_provenance": "NOT_VERIFIED",
+      "required_quota_source_reference": null,
+      "required_quota_unit": null,
+      "resource_unit": null,
+      "source_reference": null,
+      "unit_price": null,
+      "unit_price_provenance": "NOT_VERIFIED",
+      "unit_price_source_reference": null
+    },
+    "execution_mode": {
+      "local_role": null,
+      "provenance": "NOT_VERIFIED",
+      "source_reference": null,
+      "training_role": null,
+      "value": "UNRESOLVED"
+    },
+    "fallback": {
+      "availability": "NOT_VERIFIED",
+      "availability_provenance": "NOT_VERIFIED",
+      "availability_source_reference": null,
+      "budget": {
+        "applies_to_resource_id": null,
+        "calculation_performed": false,
+        "feasibility": "NOT_VERIFIED",
+        "policy": "UNRESOLVED",
+        "provenance": "NOT_VERIFIED",
+        "source_reference": null
+      },
+      "compatibility": "NOT_VERIFIED",
+      "compatibility_provenance": "NOT_VERIFIED",
+      "compatibility_source_reference": null,
+      "compute_kind": null,
+      "defined": false,
+      "detail": "A stop/escalation rule exists, but no fallback compute resource is evidenced.",
+      "not_required_rule": null,
+      "not_required_source_reference": null,
+      "provenance": "NOT_VERIFIED",
+      "provider_or_owner": null,
+      "redundancy_evidence_reference": null,
+      "required": true,
+      "required_vram_bytes": null,
+      "required_vram_provenance": "NOT_VERIFIED",
+      "required_vram_source_reference": null,
+      "resource": null,
+      "resource_class": null,
+      "resource_id": null,
+      "source_reference": null,
+      "stop_condition": "Do not train; obtain explicit resource and budget approval, then rerun P0-007.",
+      "storage_strategy_provenance": "NOT_VERIFIED",
+      "storage_strategy_reference": null,
+      "storage_strategy_source_reference": null,
+      "strategy_id": null,
+      "vram_bytes": null,
+      "vram_provenance": "NOT_VERIFIED",
+      "vram_source_reference": null,
+      "workload_config_reference": null
+    },
+    "local_training": {
+      "classification": "TRAINING_NOT_VERIFIED",
+      "model_specific_evidence": {
+        "authorized_by_task": false,
+        "available": false,
+        "configuration_reference": null,
+        "detail": "No authorized model-specific training-fit evidence exists.",
+        "peak_vram_bytes": null,
+        "provenance": "NOT_VERIFIED",
+        "source_reference": null
+      },
+      "provenance": "DERIVED",
+      "role": "development, configuration, metadata checks, and artifact inspection only",
+      "source_reference": "accepted TASK-P0-005 evidence plus P0-007 non-training measurement"
+    },
+    "primary_resource": {
+      "availability": "NOT_VERIFIED",
+      "availability_provenance": "NOT_VERIFIED",
+      "availability_source_reference": null,
+      "compatibility": "NOT_VERIFIED",
+      "compatibility_provenance": "NOT_VERIFIED",
+      "compatibility_source_reference": null,
+      "compute_kind": null,
+      "detail": "Local training fit is unverified and no external compute is approved or evidenced.",
+      "identified": false,
+      "provenance": "NOT_VERIFIED",
+      "provider_or_owner": null,
+      "required_vram_bytes": null,
+      "required_vram_provenance": "NOT_VERIFIED",
+      "required_vram_source_reference": null,
+      "resource_class": null,
+      "resource_id": null,
+      "source_reference": null,
+      "vram_bytes": null,
+      "vram_provenance": "NOT_VERIFIED",
+      "vram_source_reference": null,
+      "workload_config_reference": null
+    },
+    "reproduction": {
+      "artifact_strategy": "record dataset/model/config/commit linkage in the later authorized task",
+      "defined": true,
+      "dependency_strategy": "retain accepted P0-005 direct pins and compare the recorded package snapshot",
+      "environment_isolation": "uv project-local virtual environment",
+      "lerobot": "0.4.4",
+      "provenance": "DOCUMENTED",
+      "python": "3.12.3",
+      "source_revision": "training task must record Git commit and configuration",
+      "torch": "2.10.0+cu130",
+      "torchvision": "0.25.0+cu130"
+    },
+    "storage": {
+      "artifact_movement_strategy": null,
+      "available_capacity_bytes": null,
+      "available_capacity_provenance": "NOT_VERIFIED",
+      "available_capacity_source_reference": null,
+      "cache_path_source": "local_resources.huggingface_cache_path",
+      "capacity_formula": "dataset_size_bytes + checkpoint_size_bytes + model_cache_size_bytes + temporary_space_bytes",
+      "checkpoint_path": "/home/jinho/projects/factory_physical_ai_p0_007/results/vla/checkpoints",
+      "checkpoint_retention_strategy": null,
+      "checkpoint_size_bytes": null,
+      "checkpoint_size_provenance": "NOT_VERIFIED",
+      "checkpoint_size_source_reference": null,
+      "dataset_path": "/home/jinho/projects/factory_physical_ai_p0_007/data/vla",
+      "dataset_size_bytes": null,
+      "dataset_size_provenance": "NOT_VERIFIED",
+      "dataset_size_source_reference": null,
+      "detail": "Paths are planned, but Dataset V1 and size-dependent capacity are not verified.",
+      "model_cache_size_bytes": null,
+      "model_cache_size_provenance": "NOT_VERIFIED",
+      "model_cache_size_source_reference": null,
+      "paths_created_by_task": false,
+      "provenance": "DOCUMENTED",
+      "readiness": "STORAGE_NOT_VERIFIED",
+      "required_capacity_bytes": null,
+      "required_capacity_provenance": "NOT_VERIFIED",
+      "required_capacity_source_reference": null,
+      "source_reference": "plans/vla_training_compute_budget_plan.md#storage-plan",
+      "strategy_defined": true,
+      "temporary_space_bytes": null,
+      "temporary_space_provenance": "NOT_VERIFIED",
+      "temporary_space_source_reference": null,
+      "temporary_space_strategy": null
+    }
+  },
+  "runtime_baseline": {
+    "lerobot": "0.4.4",
+    "provenance": "DOCUMENTED",
+    "python": "3.12.3",
+    "source": "accepted TASK-P0-005 evidence",
+    "torch": "2.10.0+cu130",
+    "torchvision": "0.25.0+cu130",
+    "upgrade_performed": false
+  },
+  "schema_version": "1.0",
+  "scope_safety": {
+    "billing_or_credentials_created": false,
+    "dataset_v1_implemented": false,
+    "hyperparameter_search_executed": false,
+    "optimizer_updates_executed": false,
+    "p0_004r_started": false,
+    "p0_006r_started": false,
+    "paid_compute_provisioned": false,
+    "physical_teleoperation_executed": false,
+    "provenance": "DOCUMENTED",
+    "robot_camera_remediation_executed": false,
+    "training_executed": false,
+    "week1_task_started": false
+  },
+  "task": "TASK-P0-007",
+  "task_w1_001_authorized": false,
+  "training_resource_decision": "TRAINING_RESOURCE_BLOCKED",
+  "unresolved_blockers": [
+    {
+      "area": "Training execution mode selected",
+      "check_id": "C08",
+      "detail": "training execution mode remains UNRESOLVED or invalid",
+      "status": "BLOCKED"
+    },
+    {
+      "area": "Primary training resource identified",
+      "check_id": "C09",
+      "detail": "no available primary training resource is evidenced",
+      "status": "BLOCKED"
+    },
+    {
+      "area": "Software/runtime compatibility documented",
+      "check_id": "C10",
+      "detail": "primary-path runtime compatibility is not verified",
+      "status": "BLOCKED"
+    },
+    {
+      "area": "Model/dataset/checkpoint storage strategy defined",
+      "check_id": "C11",
+      "detail": "storage strategy is missing or has invalid provenance",
+      "status": "BLOCKED"
+    },
+    {
+      "area": "Budget policy defined",
+      "check_id": "C12",
+      "detail": "budget policy remains UNRESOLVED or malformed",
+      "status": "BLOCKED"
+    },
+    {
+      "area": "Primary-path budget feasibility classified",
+      "check_id": "C14",
+      "detail": "primary-path budget feasibility is not verified or outside policy",
+      "status": "BLOCKED"
+    },
+    {
+      "area": "Fallback compute strategy defined",
+      "check_id": "C15",
+      "detail": "no available fallback compute resource is evidenced",
+      "status": "BLOCKED"
+    }
+  ],
+  "verifier_version": "1.3.0"
+}
