@@ -1,0 +1,565 @@
+{
+  "schema_version": "1.0",
+  "task": "TASK-P0-004R",
+  "generated_at": "2026-09-09T14:33:04Z",
+  "original_gate": {
+    "task": "TASK-P0-004",
+    "decision": "NO_GO",
+    "evidence_path": "results/phase0/P0-004_vla_readiness.json",
+    "evidence_sha256": "547aec527cca28e1088505ca34bbd59fd7ab6e6bbe56313e038abcbd1c821490"
+  },
+  "evidence_inputs": {
+    "P0-004": {
+      "path": "results/phase0/P0-004_vla_readiness.json",
+      "sha256": "547aec527cca28e1088505ca34bbd59fd7ab6e6bbe56313e038abcbd1c821490",
+      "task": "TASK-P0-004",
+      "decision_field": "status",
+      "decision": "NO_GO",
+      "accepted": true
+    },
+    "P0-005": {
+      "path": "results/phase0/P0-005_vla_runtime.json",
+      "sha256": "aafe0273a3fa8d28652494ea8f72fc396247fed81c6d5ab71311ff628e646aae",
+      "task": "TASK-P0-005",
+      "decision_field": "runtime_decision",
+      "decision": "RUNTIME_READY",
+      "accepted": true
+    },
+    "P0-006": {
+      "path": "results/phase0/P0-006_robot_io_readiness.json",
+      "sha256": "486d76218ea326b279f9780320d081e7435a6a781194c9a6c4efa4a4bef31506",
+      "task": "TASK-P0-006",
+      "decision_field": "device_io_decision",
+      "decision": "DEVICE_IO_BLOCKED",
+      "accepted": true
+    },
+    "P0-007": {
+      "path": "results/phase0/P0-007_training_resource_readiness.json",
+      "sha256": "9f53dcc0de59c6e32f24ef45a9e91fc6a62641d553b93d4b864cc8520fe6a215",
+      "task": "TASK-P0-007",
+      "decision_field": "training_resource_decision",
+      "decision": "TRAINING_RESOURCE_BLOCKED",
+      "accepted": true
+    }
+  },
+  "evidence_integrity": {
+    "status": "PASS",
+    "all_inputs_exist": true,
+    "all_inputs_parse": true,
+    "task_identifiers_match": true,
+    "decision_fields_match": true,
+    "predecessor_hash_bindings_match": true,
+    "verified_bindings": {
+      "P0-005": "aafe0273a3fa8d28652494ea8f72fc396247fed81c6d5ab71311ff628e646aae",
+      "P0-006": "486d76218ea326b279f9780320d081e7435a6a781194c9a6c4efa4a4bef31506"
+    },
+    "original_evidence_modified": false,
+    "provenance": "MEASURED"
+  },
+  "corrective_tasks": {
+    "TASK-P0-005": {
+      "evidence_path": "results/phase0/P0-005_vla_runtime.json",
+      "evidence_sha256": "aafe0273a3fa8d28652494ea8f72fc396247fed81c6d5ab71311ff628e646aae",
+      "decision_field": "runtime_decision",
+      "decision": "RUNTIME_READY",
+      "accepted_for_regate": true
+    },
+    "TASK-P0-006": {
+      "evidence_path": "results/phase0/P0-006_robot_io_readiness.json",
+      "evidence_sha256": "486d76218ea326b279f9780320d081e7435a6a781194c9a6c4efa4a4bef31506",
+      "decision_field": "device_io_decision",
+      "decision": "DEVICE_IO_BLOCKED",
+      "accepted_for_regate": true
+    },
+    "TASK-P0-007": {
+      "evidence_path": "results/phase0/P0-007_training_resource_readiness.json",
+      "evidence_sha256": "9f53dcc0de59c6e32f24ef45a9e91fc6a62641d553b93d4b864cc8520fe6a215",
+      "decision_field": "training_resource_decision",
+      "decision": "TRAINING_RESOURCE_BLOCKED",
+      "accepted_for_regate": true
+    }
+  },
+  "checks": [
+    {
+      "id": "C1",
+      "area": "Python",
+      "original_status": "PASS",
+      "corrective_task": "TASK-P0-005",
+      "corrective_evidence": "python_decision; environment",
+      "regate_status": "PASS",
+      "blocking_for": [],
+      "provenance": "MEASURED",
+      "detail": "Python 3.12.3 is evidenced in an isolated project-local environment."
+    },
+    {
+      "id": "C2",
+      "area": "GPU / CUDA",
+      "original_status": "FAIL",
+      "corrective_task": "TASK-P0-005",
+      "corrective_evidence": "torch; cuda_tensor_test",
+      "regate_status": "PASS",
+      "blocking_for": [],
+      "provenance": "MEASURED",
+      "detail": "PyTorch CUDA availability and an actual synchronized tensor operation with a numerical assertion are evidenced."
+    },
+    {
+      "id": "C3",
+      "area": "LeRobot",
+      "original_status": "FAIL",
+      "corrective_task": "TASK-P0-005",
+      "corrective_evidence": "lerobot_version_decision; lerobot",
+      "regate_status": "PASS",
+      "blocking_for": [],
+      "provenance": "MEASURED",
+      "detail": "The selected/pinned LeRobot 0.4.4 runtime, required imports, and dependency check passed."
+    },
+    {
+      "id": "C4",
+      "area": "SmolVLA",
+      "original_status": "FAIL",
+      "corrective_task": "TASK-P0-005",
+      "corrective_evidence": "smolvla",
+      "regate_status": "PASS",
+      "blocking_for": [],
+      "provenance": "MEASURED",
+      "detail": "SmolVLA module/config discovery and non-training config instantiation passed at runtime-prerequisite scope only."
+    },
+    {
+      "id": "C5",
+      "area": "Robot I/O",
+      "original_status": "DEFERRED",
+      "corrective_task": "TASK-P0-006",
+      "corrective_evidence": "checks C01-C08; unresolved_blockers C01-C08",
+      "regate_status": "FAIL",
+      "blocking_for": [
+        "TASK-W1-001",
+        "TASK-W1-002",
+        "Dataset V1",
+        "Physical motion"
+      ],
+      "provenance": "NOT_VERIFIED",
+      "detail": "Mandatory hardware selection, discovery, identity/access, state, command, and gripper prerequisites remain BLOCKED or NOT_VERIFIED."
+    },
+    {
+      "id": "C6",
+      "area": "Camera",
+      "original_status": "DEFERRED",
+      "corrective_task": "TASK-P0-006",
+      "corrective_evidence": "checks C09-C12; unresolved_blockers C09-C12",
+      "regate_status": "FAIL",
+      "blocking_for": [
+        "TASK-W1-001",
+        "Dataset V1"
+      ],
+      "provenance": "NOT_VERIFIED",
+      "detail": "Camera selection, discovery, bounded acquisition, and configuration remain BLOCKED or NOT_VERIFIED."
+    },
+    {
+      "id": "C7",
+      "area": "Teleoperation / Safety",
+      "original_status": "DEFERRED",
+      "corrective_task": "TASK-P0-006",
+      "corrective_evidence": "checks C13-C15; teleoperation_prerequisites",
+      "regate_status": "FAIL",
+      "blocking_for": [
+        "TASK-W1-001",
+        "TASK-W1-002",
+        "Dataset V1",
+        "Physical motion"
+      ],
+      "provenance": "DERIVED",
+      "detail": "Workspace/motion constraints, manual abort/E-stop, and supervised teleoperation prerequisites remain BLOCKED."
+    },
+    {
+      "id": "C8",
+      "area": "Dataset Pipeline",
+      "original_status": "PASS",
+      "corrective_task": "TASK-P0-004 with later-evidence consistency check",
+      "corrective_evidence": "P0-004 dataset_pipeline; P0-006 safety; P0-007 scope_safety",
+      "regate_status": "PASS",
+      "blocking_for": [],
+      "provenance": "INFERRED",
+      "detail": "Design readiness is carried forward without authorizing or claiming collection of Dataset V1."
+    },
+    {
+      "id": "C9",
+      "area": "Service Boundary",
+      "original_status": "PASS",
+      "corrective_task": "TASK-P0-004 with later-evidence consistency check",
+      "corrective_evidence": "P0-004 service_boundary; no contradictory later evidence",
+      "regate_status": "PASS",
+      "blocking_for": [],
+      "provenance": "INFERRED",
+      "detail": "Architecture readiness is carried forward; no Skill Server implementation is claimed or required."
+    },
+    {
+      "id": "C10",
+      "area": "Training Resource / Budget",
+      "original_status": "FAIL",
+      "corrective_task": "TASK-P0-007",
+      "corrective_evidence": "checks C08-C15; resource_plan; unresolved_blockers",
+      "regate_status": "FAIL",
+      "blocking_for": [
+        "SmolVLA fine-tuning"
+      ],
+      "provenance": "NOT_VERIFIED",
+      "detail": "Training mode, primary resource and compatibility, storage readiness, budget policy/feasibility, and fallback compute remain BLOCKED."
+    }
+  ],
+  "resolved_blockers": [
+    {
+      "original_check": "C2",
+      "area": "GPU / CUDA",
+      "resolved_by": "TASK-P0-005",
+      "detail": "PyTorch CUDA and actual tensor execution passed.",
+      "provenance": "MEASURED"
+    },
+    {
+      "original_check": "C3",
+      "area": "LeRobot",
+      "resolved_by": "TASK-P0-005",
+      "detail": "Pinned LeRobot runtime and required imports passed.",
+      "provenance": "MEASURED"
+    },
+    {
+      "original_check": "C4",
+      "area": "SmolVLA runtime prerequisite",
+      "resolved_by": "TASK-P0-005",
+      "detail": "Module/config discovery and config instantiation passed; model loading, inference, and training are not included.",
+      "provenance": "MEASURED"
+    }
+  ],
+  "remaining_blockers": [
+    {
+      "source_task": "TASK-P0-006",
+      "source_check": "C01",
+      "area": "Target hardware selected",
+      "status": "BLOCKED",
+      "blocking_for": ["TASK-W1-001", "TASK-W1-002", "Dataset V1", "Physical motion"],
+      "detail": "Target selection is unresolved."
+    },
+    {
+      "source_task": "TASK-P0-006",
+      "source_check": "C02",
+      "area": "Robot/controller physically discoverable",
+      "status": "NOT_VERIFIED",
+      "blocking_for": ["TASK-W1-001", "TASK-W1-002", "Dataset V1", "Physical motion"],
+      "detail": "The target robot/controller is not selected."
+    },
+    {
+      "source_task": "TASK-P0-006",
+      "source_check": "C03",
+      "area": "Stable device identity available",
+      "status": "NOT_VERIFIED",
+      "blocking_for": ["TASK-W1-001", "TASK-W1-002", "Dataset V1", "Physical motion"],
+      "detail": "Stable identity cannot be evaluated before target selection."
+    },
+    {
+      "source_task": "TASK-P0-006",
+      "source_check": "C04",
+      "area": "Required host permission/access available",
+      "status": "NOT_VERIFIED",
+      "blocking_for": ["TASK-W1-001", "TASK-W1-002", "Dataset V1", "Physical motion"],
+      "detail": "Device access cannot be evaluated before target selection."
+    },
+    {
+      "source_task": "TASK-P0-006",
+      "source_check": "C05",
+      "area": "Robot state-feedback path identified",
+      "status": "BLOCKED",
+      "blocking_for": ["TASK-W1-001", "TASK-W1-002", "Dataset V1"],
+      "detail": "A credible state-feedback interface is not identified."
+    },
+    {
+      "source_task": "TASK-P0-006",
+      "source_check": "C06",
+      "area": "Robot state observable without motion",
+      "status": "NOT_VERIFIED",
+      "blocking_for": ["TASK-W1-001", "TASK-W1-002", "Dataset V1"],
+      "detail": "No explicitly safe state observation was declared."
+    },
+    {
+      "source_task": "TASK-P0-006",
+      "source_check": "C07",
+      "area": "Future actuator command path identified",
+      "status": "BLOCKED",
+      "blocking_for": ["TASK-W1-001", "TASK-W1-002", "Physical motion"],
+      "detail": "The future command path is not identified."
+    },
+    {
+      "source_task": "TASK-P0-006",
+      "source_check": "C08",
+      "area": "Future gripper path identified or not applicable",
+      "status": "BLOCKED",
+      "blocking_for": ["TASK-W1-001", "TASK-W1-002", "Physical motion"],
+      "detail": "Gripper applicability/path is unresolved."
+    },
+    {
+      "source_task": "TASK-P0-006",
+      "source_check": "C09",
+      "area": "Camera selected",
+      "status": "BLOCKED",
+      "blocking_for": ["TASK-W1-001", "Dataset V1"],
+      "detail": "Camera selection is unresolved."
+    },
+    {
+      "source_task": "TASK-P0-006",
+      "source_check": "C10",
+      "area": "Camera physically discoverable",
+      "status": "NOT_VERIFIED",
+      "blocking_for": ["TASK-W1-001", "Dataset V1"],
+      "detail": "The camera is not selected."
+    },
+    {
+      "source_task": "TASK-P0-006",
+      "source_check": "C11",
+      "area": "Bounded camera frame acquisition succeeds",
+      "status": "NOT_VERIFIED",
+      "blocking_for": ["TASK-W1-001", "Dataset V1"],
+      "detail": "A selected camera is not safely available for bounded acquisition."
+    },
+    {
+      "source_task": "TASK-P0-006",
+      "source_check": "C12",
+      "area": "Camera configuration recorded",
+      "status": "NOT_VERIFIED",
+      "blocking_for": ["TASK-W1-001", "Dataset V1"],
+      "detail": "Camera configuration/acquisition evidence is incomplete."
+    },
+    {
+      "source_task": "TASK-P0-006",
+      "source_check": "C13",
+      "area": "Workspace/motion constraints documented",
+      "status": "BLOCKED",
+      "blocking_for": ["TASK-W1-001", "TASK-W1-002", "Dataset V1", "Physical motion"],
+      "detail": "Workspace/safety constraints are incomplete."
+    },
+    {
+      "source_task": "TASK-P0-006",
+      "source_check": "C14",
+      "area": "Manual abort/E-stop path documented",
+      "status": "BLOCKED",
+      "blocking_for": ["TASK-W1-001", "TASK-W1-002", "Dataset V1", "Physical motion"],
+      "detail": "The manual abort/E-stop strategy is unavailable or not verified."
+    },
+    {
+      "source_task": "TASK-P0-006",
+      "source_check": "C15",
+      "area": "Supervised teleoperation prerequisites classified",
+      "status": "BLOCKED",
+      "blocking_for": ["TASK-W1-001", "TASK-W1-002", "Dataset V1", "Physical motion"],
+      "detail": "One or more mandatory prerequisites are blocked."
+    },
+    {
+      "source_task": "TASK-P0-007",
+      "source_check": "C08",
+      "area": "Training execution mode selected",
+      "status": "BLOCKED",
+      "blocking_for": ["SmolVLA fine-tuning"],
+      "detail": "Training execution mode remains unresolved."
+    },
+    {
+      "source_task": "TASK-P0-007",
+      "source_check": "C09",
+      "area": "Primary training resource identified",
+      "status": "BLOCKED",
+      "blocking_for": ["SmolVLA fine-tuning"],
+      "detail": "No available primary training resource is evidenced."
+    },
+    {
+      "source_task": "TASK-P0-007",
+      "source_check": "C10",
+      "area": "Software/runtime compatibility documented",
+      "status": "BLOCKED",
+      "blocking_for": ["SmolVLA fine-tuning"],
+      "detail": "Primary-path runtime compatibility is not verified."
+    },
+    {
+      "source_task": "TASK-P0-007",
+      "source_check": "C11",
+      "area": "Model/dataset/checkpoint storage readiness",
+      "status": "BLOCKED",
+      "blocking_for": ["SmolVLA fine-tuning"],
+      "detail": "Storage paths are planned, but size-dependent capacity and retention/movement strategy are not verified."
+    },
+    {
+      "source_task": "TASK-P0-007",
+      "source_check": "C12",
+      "area": "Budget policy defined",
+      "status": "BLOCKED",
+      "blocking_for": ["SmolVLA fine-tuning"],
+      "detail": "Budget policy remains unresolved."
+    },
+    {
+      "source_task": "TASK-P0-007",
+      "source_check": "C14",
+      "area": "Primary-path budget feasibility classified",
+      "status": "BLOCKED",
+      "blocking_for": ["SmolVLA fine-tuning"],
+      "detail": "Primary-path budget feasibility is not verified."
+    },
+    {
+      "source_task": "TASK-P0-007",
+      "source_check": "C15",
+      "area": "Fallback compute strategy defined",
+      "status": "BLOCKED",
+      "blocking_for": ["SmolVLA fine-tuning"],
+      "detail": "No available fallback compute resource is evidenced."
+    },
+    {
+      "source_task": "TASK-P0-006 and TASK-P0-007",
+      "source_check": "DERIVED-DATASET-V1",
+      "area": "Dataset V1 available and validated",
+      "status": "NOT_VERIFIED",
+      "blocking_for": ["SmolVLA fine-tuning"],
+      "detail": "Dataset work was not started and Dataset V1 is not available for fine-tuning authorization."
+    }
+  ],
+  "deferred_checks": [
+    {
+      "item": "Model weight loading and local inference",
+      "status": "DEFERRED",
+      "protected_stage": "Later explicitly authorized model-validation stage",
+      "provenance": "NOT_VERIFIED",
+      "detail": "P0-005 established code/config readiness only."
+    },
+    {
+      "item": "Model-specific local training fit, including 6 GB VRAM fit",
+      "status": "DEFERRED",
+      "protected_stage": "SmolVLA fine-tuning",
+      "provenance": "NOT_VERIFIED",
+      "detail": "No model-specific training workload was authorized or executed."
+    },
+    {
+      "item": "Physical teleoperation implementation",
+      "status": "DEFERRED",
+      "protected_stage": "TASK-W1-002",
+      "provenance": "DOCUMENTED",
+      "detail": "Implementation belongs to the later task; current safety prerequisites fail."
+    },
+    {
+      "item": "Dataset V1 collection and measured storage consumption",
+      "status": "DEFERRED",
+      "protected_stage": "Dataset V1 / TASK-W1-003",
+      "provenance": "NOT_VERIFIED",
+      "detail": "Collection requires authorized robot, camera, state, teleoperation, and abort paths."
+    },
+    {
+      "item": "Fine-tuning execution",
+      "status": "DEFERRED",
+      "protected_stage": "Later explicitly authorized fine-tuning task",
+      "provenance": "DOCUMENTED",
+      "detail": "Dataset and training-resource prerequisites currently fail."
+    }
+  ],
+  "stage_readiness": {
+    "runtime": {
+      "status": "READY",
+      "supporting_checks": ["C1", "C2", "C3", "C4"],
+      "detail": "The minimum isolated runtime, CUDA, LeRobot, and SmolVLA code/config prerequisites pass."
+    },
+    "device_io": {
+      "status": "BLOCKED",
+      "supporting_checks": ["C5", "C6", "C7"],
+      "detail": "Mandatory P0-006 device, camera, and safety prerequisites remain unresolved."
+    },
+    "task_w1_001": {
+      "status": "BLOCKED",
+      "supporting_checks": ["C5", "C6", "C7"],
+      "detail": "Mandatory Phase-0 hardware-I/O prerequisites for W1-001 fail."
+    },
+    "teleoperation": {
+      "status": "BLOCKED",
+      "supporting_checks": ["C5", "C7"],
+      "detail": "Device-I/O, workspace, abort/E-stop, and supervised teleoperation prerequisites fail."
+    },
+    "dataset": {
+      "status": "BLOCKED",
+      "supporting_checks": ["C5", "C6", "C7"],
+      "detail": "Design readiness passes, but safe collection prerequisites and Dataset V1 availability do not."
+    },
+    "training": {
+      "status": "BLOCKED",
+      "supporting_checks": ["C10", "DERIVED-DATASET-V1"],
+      "detail": "Dataset V1 is unavailable and training-resource prerequisites remain blocked."
+    },
+    "physical_motion": {
+      "status": "BLOCKED",
+      "supporting_checks": ["C5", "C7"],
+      "detail": "Hardware identity/access and motion-safety boundaries are not verified."
+    }
+  },
+  "authorization": {
+    "task_w1_001": false,
+    "task_w1_002": false,
+    "dataset_v1": false,
+    "smolvla_fine_tuning": false,
+    "physical_motion": false
+  },
+  "authorization_basis": {
+    "task_w1_001": {
+      "supporting_checks": ["C5", "C6", "C7"],
+      "reason": "Mandatory W1-001 device, camera, and safety prerequisites fail."
+    },
+    "task_w1_002": {
+      "supporting_checks": ["C5", "C7"],
+      "reason": "Required device-I/O, workspace, abort/E-stop, and teleoperation prerequisites fail."
+    },
+    "dataset_v1": {
+      "supporting_checks": ["C5", "C6", "C7"],
+      "reason": "Authorized teleoperation, robot state, camera acquisition, and safety boundaries are absent."
+    },
+    "smolvla_fine_tuning": {
+      "supporting_checks": ["C10", "DERIVED-DATASET-V1"],
+      "reason": "Dataset V1 is unavailable and training-resource prerequisites fail."
+    },
+    "physical_motion": {
+      "supporting_checks": ["C5", "C7"],
+      "reason": "Hardware identity/access and required motion-safety boundaries are not verified."
+    }
+  },
+  "final_gate": "NO_GO",
+  "final_gate_basis": {
+    "task_w1_001_hard_blocker_present": true,
+    "conditional_go_allowed": false,
+    "reason": "P0-006 mandatory device, camera, and safety prerequisites for TASK-W1-001 remain BLOCKED or NOT_VERIFIED."
+  },
+  "scope_safety": {
+    "runtime_or_package_install_performed": false,
+    "driver_or_cuda_modified": false,
+    "robot_or_camera_adapter_implemented": false,
+    "device_permissions_modified": false,
+    "physical_motion_executed": false,
+    "teleoperation_implemented_or_executed": false,
+    "dataset_v1_collected": false,
+    "model_downloaded_or_loaded": false,
+    "inference_or_benchmark_executed": false,
+    "training_or_optimizer_update_executed": false,
+    "paid_compute_provisioned": false,
+    "week1_task_started": false,
+    "remediation_task_created": false,
+    "unrelated_application_source_modified": false,
+    "provenance": "DOCUMENTED"
+  },
+  "content_binding": {
+    "provenance": "DERIVED",
+    "input_sha256": {
+      "results/phase0/P0-004_vla_readiness.json": "547aec527cca28e1088505ca34bbd59fd7ab6e6bbe56313e038abcbd1c821490",
+      "results/phase0/P0-005_vla_runtime.json": "aafe0273a3fa8d28652494ea8f72fc396247fed81c6d5ab71311ff628e646aae",
+      "results/phase0/P0-006_robot_io_readiness.json": "486d76218ea326b279f9780320d081e7435a6a781194c9a6c4efa4a4bef31506",
+      "results/phase0/P0-007_training_resource_readiness.json": "9f53dcc0de59c6e32f24ef45a9e91fc6a62641d553b93d4b864cc8520fe6a215"
+    },
+    "report_path": "docs/vla/vla_readiness_regate_v1.md",
+    "report_sha256": "b5bd153cdce7f751771c586ae05e8e847e4377bf25c711bf9ddaccdbff18161e"
+  },
+  "git": {
+    "branch": "task/p0-004r-vla-readiness-regate",
+    "head_at_generation": "ca3e7317a2801b531c00368e6e9ae495f39ef1cf",
+    "master_at_precondition": "d8f4ce4ba8d28885fa36deec9802862926d3c990",
+    "merge_base_with_master": "d8f4ce4ba8d28885fa36deec9802862926d3c990",
+    "based_on_current_local_master": true,
+    "working_tree_clean": false,
+    "commit_performed": false,
+    "provenance": "MEASURED"
+  }
+}
