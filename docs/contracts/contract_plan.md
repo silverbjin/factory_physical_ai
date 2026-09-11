@@ -2,6 +2,19 @@
 
 > Status: planning contract for subsequent implementation. Schema version `v1` is planned; this document does not define executable APIs yet.
 
+## Simulation Lane v1 executable-contract delegation
+
+This document remains the project-wide planning contract. It delegates only the protocol-neutral, simulation-only boundary defined by:
+
+```text
+docs/contracts/simulation_execution_contract_v1.md
+docs/contracts/schemas/simulation_execution_contract_v1.schema.json
+```
+
+Those files are the executable semantic and structural contract for Simulation Lane v1. This delegation does not make any physical/native robot, camera, Nav2, MoveIt, `ros2_control`, VLA inference/training, Dataset V1, deployment, or Week-task interface executable or authorized.
+
+No other section of this plan becomes an executable API through this delegation.
+
 ## Cross-cutting envelope
 
 Every request, event, and result crossing a component boundary must include the following unless explicitly marked inapplicable:

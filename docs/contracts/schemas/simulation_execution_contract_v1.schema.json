@@ -1,0 +1,623 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://factory-physical-ai.local/contracts/simulation_execution_contract_v1.schema.json",
+  "title": "Simulation Lane v1 Executable Contract",
+  "description": "Closed protocol-neutral schemas for Simulation Lane v1. This schema grants no physical authorization.",
+  "oneOf": [
+    {"$ref": "#/$defs/MissionExecuteRequest"},
+    {"$ref": "#/$defs/MissionExecuteResult"},
+    {"$ref": "#/$defs/NavigationExecuteRequest"},
+    {"$ref": "#/$defs/NavigationExecuteResult"},
+    {"$ref": "#/$defs/VLAExecuteRequest"},
+    {"$ref": "#/$defs/VLAExecuteResult"},
+    {"$ref": "#/$defs/ActionStatusGetRequest"},
+    {"$ref": "#/$defs/ActionStatusGetResult"},
+    {"$ref": "#/$defs/VerificationRequest"},
+    {"$ref": "#/$defs/VerificationResult"},
+    {"$ref": "#/$defs/SimulationObservationRef"},
+    {"$ref": "#/$defs/SimulationFixtureManifest"},
+    {"$ref": "#/$defs/MissionTransition"},
+    {"$ref": "#/$defs/ActionTransition"},
+    {"$ref": "#/$defs/ReconciliationRecord"},
+    {"$ref": "#/$defs/RetryAuthorization"}
+  ],
+  "x-contract-semantics": {
+    "supported_schema_versions": ["1.0"],
+    "timeout_ms_min": 1,
+    "timeout_ms_max": 60000,
+    "mission_transitions": [
+      ["created", "ready"],
+      ["created", "escalated"],
+      ["ready", "executing"],
+      ["ready", "escalated"],
+      ["executing", "completed"],
+      ["executing", "reconciling"],
+      ["executing", "failed"],
+      ["executing", "escalated"],
+      ["reconciling", "completed"],
+      ["reconciling", "recovering"],
+      ["reconciling", "failed"],
+      ["reconciling", "escalated"],
+      ["recovering", "executing"],
+      ["recovering", "failed"],
+      ["recovering", "escalated"]
+    ],
+    "mission_terminal_states": ["completed", "failed", "escalated"],
+    "action_transitions": [
+      ["requested", "running"],
+      ["requested", "failed"],
+      ["requested", "unknown"],
+      ["running", "succeeded"],
+      ["running", "failed"],
+      ["running", "unknown"],
+      ["unknown", "reconciling"],
+      ["reconciling", "reconciled"]
+    ],
+    "prohibited_action_transition": ["unknown", "succeeded"],
+    "verification_profile": "sim-exact-match-v1",
+    "fixture_set_id": "SIM_FIXTURE_SET_V1",
+    "dataset_v1_equivalent": false,
+    "physical_authorization": false
+  },
+  "$defs": {
+    "SchemaVersion": {"type": "string", "const": "1.0"},
+    "Uuid": {"type": "string", "format": "uuid"},
+    "Timestamp": {
+      "type": "string",
+      "format": "date-time",
+      "pattern": "^[0-9]{4}-(0[1-9]|1[0-2])-([0-2][0-9]|3[01])T([01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9](\\.[0-9]+)?Z$"
+    },
+    "NonBlankString": {"type": "string", "minLength": 1, "pattern": ".*\\S.*"},
+    "Sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "TimeoutMs": {"type": "integer", "minimum": 1, "maximum": 60000},
+    "Operation": {
+      "type": "string",
+      "enum": ["mission.execute", "navigation.execute", "vla.execute", "action_status.get", "verification.verify"]
+    },
+    "LogicalResult": {"type": "string", "enum": ["success", "failure", "pending", "requires_human"]},
+    "ActionStatus": {
+      "type": "string",
+      "enum": ["requested", "running", "succeeded", "failed", "unknown", "reconciling", "reconciled"]
+    },
+    "ObservedActionStatus": {"type": "string", "enum": ["running", "succeeded", "failed", "unknown"]},
+    "MissionStatus": {
+      "type": "string",
+      "enum": ["created", "ready", "executing", "reconciling", "recovering", "completed", "failed", "escalated"]
+    },
+    "ErrorCategory": {
+      "type": "string",
+      "enum": [
+        "VALIDATION",
+        "AUTHORIZATION",
+        "SAFETY_POLICY",
+        "DEPENDENCY_TIMEOUT",
+        "DEPENDENCY_MALFORMED",
+        "RESOURCE_UNAVAILABLE",
+        "EXECUTION_FAILED",
+        "VERIFICATION_MISMATCH",
+        "MODEL_TIMEOUT",
+        "MODEL_FAILURE",
+        "CANCELLED",
+        "INTERNAL"
+      ]
+    },
+    "ContractError": {
+      "type": "object",
+      "required": ["code", "message", "category", "retryable"],
+      "properties": {
+        "code": {"$ref": "#/$defs/NonBlankString"},
+        "message": {"$ref": "#/$defs/NonBlankString"},
+        "category": {"$ref": "#/$defs/ErrorCategory"},
+        "retryable": {"type": "boolean"},
+        "detail": {"type": "object", "additionalProperties": {"type": ["string", "number", "integer", "boolean", "null"]}}
+      },
+      "additionalProperties": false
+    },
+    "EvidenceRef": {
+      "type": "object",
+      "required": ["uri", "sha256"],
+      "properties": {
+        "uri": {"type": "string", "format": "uri"},
+        "sha256": {"$ref": "#/$defs/Sha256"}
+      },
+      "additionalProperties": false
+    },
+    "EvidenceRefs": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/EvidenceRef"},
+      "minItems": 1,
+      "uniqueItems": true
+    },
+    "CommonRequestEnvelope": {
+      "type": "object",
+      "required": ["operation", "message_type", "schema_version", "mission_id", "request_id", "trace_id", "timestamp", "deadline_at", "timeout_ms", "component_version"],
+      "properties": {
+        "operation": {"$ref": "#/$defs/Operation"},
+        "message_type": {"const": "request"},
+        "schema_version": {"$ref": "#/$defs/SchemaVersion"},
+        "mission_id": {"$ref": "#/$defs/Uuid"},
+        "request_id": {"$ref": "#/$defs/Uuid"},
+        "trace_id": {"$ref": "#/$defs/Uuid"},
+        "timestamp": {"$ref": "#/$defs/Timestamp"},
+        "deadline_at": {"$ref": "#/$defs/Timestamp"},
+        "timeout_ms": {"$ref": "#/$defs/TimeoutMs"},
+        "component_version": {"$ref": "#/$defs/NonBlankString"}
+      },
+      "additionalProperties": false
+    },
+    "CommonResultEnvelope": {
+      "type": "object",
+      "required": ["operation", "message_type", "schema_version", "mission_id", "request_id", "trace_id", "timestamp", "component_version", "source_kind", "status", "result"],
+      "properties": {
+        "operation": {"$ref": "#/$defs/Operation"},
+        "message_type": {"const": "result"},
+        "schema_version": {"$ref": "#/$defs/SchemaVersion"},
+        "mission_id": {"$ref": "#/$defs/Uuid"},
+        "request_id": {"$ref": "#/$defs/Uuid"},
+        "trace_id": {"$ref": "#/$defs/Uuid"},
+        "timestamp": {"$ref": "#/$defs/Timestamp"},
+        "component_version": {"$ref": "#/$defs/NonBlankString"},
+        "source_kind": {"const": "mock"},
+        "status": {"$ref": "#/$defs/NonBlankString"},
+        "result": {"$ref": "#/$defs/LogicalResult"},
+        "error": {"$ref": "#/$defs/ContractError"},
+        "evidence_refs": {"$ref": "#/$defs/EvidenceRefs"}
+      },
+      "allOf": [
+        {"if": {"properties": {"result": {"const": "success"}}, "required": ["result"]}, "then": {"not": {"required": ["error"]}}},
+        {"if": {"properties": {"result": {"enum": ["failure", "pending", "requires_human"]}}, "required": ["result"]}, "then": {"required": ["error"]}}
+      ],
+      "additionalProperties": false
+    },
+    "ApprovalContext": {
+      "type": "object",
+      "required": ["simulation_only", "approved", "authorized_by"],
+      "properties": {
+        "simulation_only": {"const": true},
+        "approved": {"const": true},
+        "authorized_by": {"$ref": "#/$defs/NonBlankString"}
+      },
+      "additionalProperties": false
+    },
+    "MissionGoal": {
+      "type": "object",
+      "required": ["mission_type", "priority", "line_id", "part_id", "quantity", "source_id", "destination_id", "approval_context"],
+      "properties": {
+        "mission_type": {"const": "line_side_supply"},
+        "priority": {"type": "integer", "minimum": 0, "maximum": 100},
+        "line_id": {"$ref": "#/$defs/NonBlankString"},
+        "part_id": {"$ref": "#/$defs/NonBlankString"},
+        "quantity": {"type": "integer", "minimum": 1},
+        "source_id": {"$ref": "#/$defs/NonBlankString"},
+        "destination_id": {"$ref": "#/$defs/NonBlankString"},
+        "approval_context": {"$ref": "#/$defs/ApprovalContext"}
+      },
+      "additionalProperties": false
+    },
+    "MissionExecuteRequest": {
+      "type": "object",
+      "required": ["operation", "message_type", "schema_version", "mission_id", "request_id", "trace_id", "idempotency_key", "timestamp", "deadline_at", "timeout_ms", "component_version", "goal"],
+      "properties": {
+        "operation": {"const": "mission.execute"},
+        "message_type": {"const": "request"},
+        "schema_version": {"$ref": "#/$defs/SchemaVersion"},
+        "mission_id": {"$ref": "#/$defs/Uuid"},
+        "request_id": {"$ref": "#/$defs/Uuid"},
+        "trace_id": {"$ref": "#/$defs/Uuid"},
+        "idempotency_key": {"$ref": "#/$defs/NonBlankString"},
+        "timestamp": {"$ref": "#/$defs/Timestamp"},
+        "deadline_at": {"$ref": "#/$defs/Timestamp"},
+        "timeout_ms": {"$ref": "#/$defs/TimeoutMs"},
+        "component_version": {"$ref": "#/$defs/NonBlankString"},
+        "goal": {"$ref": "#/$defs/MissionGoal"}
+      },
+      "additionalProperties": false
+    },
+    "HitlRequest": {
+      "type": "object",
+      "required": ["reason", "required_action"],
+      "properties": {
+        "reason": {"$ref": "#/$defs/NonBlankString"},
+        "required_action": {"$ref": "#/$defs/NonBlankString"}
+      },
+      "additionalProperties": false
+    },
+    "MissionExecuteResult": {
+      "type": "object",
+      "required": ["operation", "message_type", "schema_version", "mission_id", "request_id", "trace_id", "timestamp", "component_version", "source_kind", "status", "result", "checkpoint_revision", "outcome"],
+      "properties": {
+        "operation": {"const": "mission.execute"},
+        "message_type": {"const": "result"},
+        "schema_version": {"$ref": "#/$defs/SchemaVersion"},
+        "mission_id": {"$ref": "#/$defs/Uuid"},
+        "request_id": {"$ref": "#/$defs/Uuid"},
+        "trace_id": {"$ref": "#/$defs/Uuid"},
+        "timestamp": {"$ref": "#/$defs/Timestamp"},
+        "component_version": {"$ref": "#/$defs/NonBlankString"},
+        "source_kind": {"const": "mock"},
+        "status": {"$ref": "#/$defs/MissionStatus"},
+        "result": {"$ref": "#/$defs/LogicalResult"},
+        "checkpoint_revision": {"type": "integer", "minimum": 0},
+        "outcome": {"type": "string", "enum": ["completed", "failed", "requires_human", "in_progress"]},
+        "hitl_request": {"$ref": "#/$defs/HitlRequest"},
+        "error": {"$ref": "#/$defs/ContractError"},
+        "evidence_refs": {"$ref": "#/$defs/EvidenceRefs"}
+      },
+      "oneOf": [
+        {"properties": {"result": {"const": "success"}, "status": {"const": "completed"}, "outcome": {"const": "completed"}}, "not": {"anyOf": [{"required": ["error"]}, {"required": ["hitl_request"]}]}},
+        {"properties": {"result": {"const": "failure"}, "status": {"const": "failed"}, "outcome": {"const": "failed"}}, "required": ["error"], "not": {"required": ["hitl_request"]}},
+        {"properties": {"result": {"const": "requires_human"}, "status": {"const": "escalated"}, "outcome": {"const": "requires_human"}, "error": {"allOf": [{"$ref": "#/$defs/ContractError"}, {"properties": {"retryable": {"const": false}}, "required": ["retryable"]}]}}, "required": ["error", "hitl_request"]},
+        {"properties": {"result": {"const": "pending"}, "status": {"enum": ["created", "ready", "executing", "reconciling", "recovering"]}, "outcome": {"const": "in_progress"}}, "required": ["error"], "not": {"required": ["hitl_request"]}}
+      ],
+      "additionalProperties": false
+    },
+    "NavigationExecuteRequest": {
+      "type": "object",
+      "required": ["operation", "message_type", "schema_version", "mission_id", "request_id", "trace_id", "idempotency_key", "action_id", "timestamp", "deadline_at", "timeout_ms", "component_version", "attempt", "retry_budget_remaining", "robot_id", "destination_id", "speed_profile_id"],
+      "properties": {
+        "operation": {"const": "navigation.execute"},
+        "message_type": {"const": "request"},
+        "schema_version": {"$ref": "#/$defs/SchemaVersion"},
+        "mission_id": {"$ref": "#/$defs/Uuid"},
+        "request_id": {"$ref": "#/$defs/Uuid"},
+        "trace_id": {"$ref": "#/$defs/Uuid"},
+        "idempotency_key": {"$ref": "#/$defs/NonBlankString"},
+        "action_id": {"$ref": "#/$defs/Uuid"},
+        "timestamp": {"$ref": "#/$defs/Timestamp"},
+        "deadline_at": {"$ref": "#/$defs/Timestamp"},
+        "timeout_ms": {"$ref": "#/$defs/TimeoutMs"},
+        "component_version": {"$ref": "#/$defs/NonBlankString"},
+        "attempt": {"type": "integer", "minimum": 1},
+        "retry_budget_remaining": {"type": "integer", "minimum": 0},
+        "robot_id": {"$ref": "#/$defs/NonBlankString"},
+        "destination_id": {"$ref": "#/$defs/NonBlankString"},
+        "speed_profile_id": {"$ref": "#/$defs/NonBlankString"}
+      },
+      "additionalProperties": false
+    },
+    "Arrival": {
+      "type": "object",
+      "required": ["destination_id", "verified"],
+      "properties": {
+        "destination_id": {"$ref": "#/$defs/NonBlankString"},
+        "verified": {"const": true}
+      },
+      "additionalProperties": false
+    },
+    "NavigationExecuteResult": {
+      "type": "object",
+      "required": ["operation", "message_type", "schema_version", "mission_id", "request_id", "trace_id", "action_id", "timestamp", "component_version", "source_kind", "status", "result"],
+      "properties": {
+        "operation": {"const": "navigation.execute"},
+        "message_type": {"const": "result"},
+        "schema_version": {"$ref": "#/$defs/SchemaVersion"},
+        "mission_id": {"$ref": "#/$defs/Uuid"},
+        "request_id": {"$ref": "#/$defs/Uuid"},
+        "trace_id": {"$ref": "#/$defs/Uuid"},
+        "action_id": {"$ref": "#/$defs/Uuid"},
+        "timestamp": {"$ref": "#/$defs/Timestamp"},
+        "component_version": {"$ref": "#/$defs/NonBlankString"},
+        "source_kind": {"const": "mock"},
+        "status": {"$ref": "#/$defs/ActionStatus"},
+        "result": {"$ref": "#/$defs/LogicalResult"},
+        "arrival": {"$ref": "#/$defs/Arrival"},
+        "error": {"$ref": "#/$defs/ContractError"},
+        "evidence_refs": {"$ref": "#/$defs/EvidenceRefs"}
+      },
+      "oneOf": [
+        {"properties": {"result": {"const": "success"}, "status": {"const": "succeeded"}}, "required": ["arrival"], "not": {"required": ["error"]}},
+        {"properties": {"result": {"const": "failure"}, "status": {"const": "failed"}}, "required": ["error"]},
+        {"properties": {"result": {"const": "pending"}, "status": {"enum": ["running", "unknown"]}}, "required": ["error"]},
+        {"properties": {"result": {"const": "requires_human"}, "status": {"const": "failed"}, "error": {"allOf": [{"$ref": "#/$defs/ContractError"}, {"properties": {"retryable": {"const": false}}, "required": ["retryable"]}]}}, "required": ["error"]}
+      ],
+      "allOf": [
+        {"if": {"properties": {"error": {"properties": {"category": {"const": "DEPENDENCY_TIMEOUT"}}, "required": ["category"]}}, "required": ["error"]}, "then": {"properties": {"result": {"const": "pending"}, "status": {"const": "unknown"}}}}
+      ],
+      "additionalProperties": false
+    },
+    "SimulationObservationRef": {
+      "type": "object",
+      "required": ["fixture_set_id", "fixture_id", "fixture_version", "content_sha256", "timestamp", "source_kind"],
+      "properties": {
+        "fixture_set_id": {"const": "SIM_FIXTURE_SET_V1"},
+        "fixture_id": {"$ref": "#/$defs/NonBlankString"},
+        "fixture_version": {"$ref": "#/$defs/NonBlankString"},
+        "content_sha256": {"$ref": "#/$defs/Sha256"},
+        "timestamp": {"$ref": "#/$defs/Timestamp"},
+        "source_kind": {"const": "mock"}
+      },
+      "additionalProperties": false
+    },
+    "VLAExecuteRequest": {
+      "type": "object",
+      "required": ["operation", "message_type", "schema_version", "mission_id", "request_id", "trace_id", "idempotency_key", "action_id", "timestamp", "deadline_at", "timeout_ms", "component_version", "attempt", "retry_budget_remaining", "robot_id", "task_id", "policy_version", "observation_refs", "workspace_profile_id"],
+      "properties": {
+        "operation": {"const": "vla.execute"},
+        "message_type": {"const": "request"},
+        "schema_version": {"$ref": "#/$defs/SchemaVersion"},
+        "mission_id": {"$ref": "#/$defs/Uuid"},
+        "request_id": {"$ref": "#/$defs/Uuid"},
+        "trace_id": {"$ref": "#/$defs/Uuid"},
+        "idempotency_key": {"$ref": "#/$defs/NonBlankString"},
+        "action_id": {"$ref": "#/$defs/Uuid"},
+        "timestamp": {"$ref": "#/$defs/Timestamp"},
+        "deadline_at": {"$ref": "#/$defs/Timestamp"},
+        "timeout_ms": {"$ref": "#/$defs/TimeoutMs"},
+        "component_version": {"$ref": "#/$defs/NonBlankString"},
+        "attempt": {"type": "integer", "minimum": 1},
+        "retry_budget_remaining": {"type": "integer", "minimum": 0},
+        "robot_id": {"$ref": "#/$defs/NonBlankString"},
+        "task_id": {"$ref": "#/$defs/NonBlankString"},
+        "policy_version": {"$ref": "#/$defs/NonBlankString"},
+        "observation_refs": {"type": "array", "items": {"$ref": "#/$defs/SimulationObservationRef"}, "minItems": 1, "uniqueItems": true},
+        "workspace_profile_id": {"$ref": "#/$defs/NonBlankString"}
+      },
+      "additionalProperties": false
+    },
+    "VLAExecuteResult": {
+      "type": "object",
+      "required": ["operation", "message_type", "schema_version", "mission_id", "request_id", "trace_id", "action_id", "timestamp", "component_version", "source_kind", "status", "result", "skill_outcome", "latency_ms"],
+      "properties": {
+        "operation": {"const": "vla.execute"},
+        "message_type": {"const": "result"},
+        "schema_version": {"$ref": "#/$defs/SchemaVersion"},
+        "mission_id": {"$ref": "#/$defs/Uuid"},
+        "request_id": {"$ref": "#/$defs/Uuid"},
+        "trace_id": {"$ref": "#/$defs/Uuid"},
+        "action_id": {"$ref": "#/$defs/Uuid"},
+        "timestamp": {"$ref": "#/$defs/Timestamp"},
+        "component_version": {"$ref": "#/$defs/NonBlankString"},
+        "source_kind": {"const": "mock"},
+        "status": {"$ref": "#/$defs/ActionStatus"},
+        "result": {"$ref": "#/$defs/LogicalResult"},
+        "skill_outcome": {"type": "string", "enum": ["succeeded", "failed", "uncertain"]},
+        "verifier_input_refs": {"$ref": "#/$defs/EvidenceRefs"},
+        "latency_ms": {"type": "integer", "minimum": 0, "maximum": 60000},
+        "error": {"$ref": "#/$defs/ContractError"},
+        "evidence_refs": {"$ref": "#/$defs/EvidenceRefs"}
+      },
+      "oneOf": [
+        {"properties": {"result": {"const": "success"}, "status": {"const": "succeeded"}, "skill_outcome": {"const": "succeeded"}}, "required": ["verifier_input_refs"], "not": {"required": ["error"]}},
+        {"properties": {"result": {"const": "failure"}, "status": {"const": "failed"}, "skill_outcome": {"const": "failed"}}, "required": ["error"]},
+        {"properties": {"result": {"const": "pending"}, "status": {"enum": ["running", "unknown"]}, "skill_outcome": {"const": "uncertain"}}, "required": ["error"]},
+        {"properties": {"result": {"const": "requires_human"}, "status": {"const": "failed"}, "skill_outcome": {"const": "uncertain"}, "error": {"allOf": [{"$ref": "#/$defs/ContractError"}, {"properties": {"retryable": {"const": false}}, "required": ["retryable"]}]}}, "required": ["error"]}
+      ],
+      "allOf": [
+        {"if": {"properties": {"error": {"properties": {"category": {"const": "DEPENDENCY_TIMEOUT"}}, "required": ["category"]}}, "required": ["error"]}, "then": {"properties": {"result": {"const": "pending"}, "status": {"const": "unknown"}, "skill_outcome": {"const": "uncertain"}}}}
+      ],
+      "additionalProperties": false
+    },
+    "ActionStatusGetRequest": {
+      "type": "object",
+      "required": ["operation", "message_type", "schema_version", "mission_id", "request_id", "trace_id", "action_id", "timestamp", "deadline_at", "timeout_ms", "component_version"],
+      "properties": {
+        "operation": {"const": "action_status.get"},
+        "message_type": {"const": "request"},
+        "schema_version": {"$ref": "#/$defs/SchemaVersion"},
+        "mission_id": {"$ref": "#/$defs/Uuid"},
+        "request_id": {"$ref": "#/$defs/Uuid"},
+        "trace_id": {"$ref": "#/$defs/Uuid"},
+        "action_id": {"$ref": "#/$defs/Uuid"},
+        "timestamp": {"$ref": "#/$defs/Timestamp"},
+        "deadline_at": {"$ref": "#/$defs/Timestamp"},
+        "timeout_ms": {"$ref": "#/$defs/TimeoutMs"},
+        "component_version": {"$ref": "#/$defs/NonBlankString"}
+      },
+      "additionalProperties": false
+    },
+    "ActionStatusGetResult": {
+      "type": "object",
+      "required": ["operation", "message_type", "schema_version", "mission_id", "request_id", "trace_id", "action_id", "timestamp", "component_version", "source_kind", "status", "result"],
+      "properties": {
+        "operation": {"const": "action_status.get"},
+        "message_type": {"const": "result"},
+        "schema_version": {"$ref": "#/$defs/SchemaVersion"},
+        "mission_id": {"$ref": "#/$defs/Uuid"},
+        "request_id": {"$ref": "#/$defs/Uuid"},
+        "trace_id": {"$ref": "#/$defs/Uuid"},
+        "action_id": {"$ref": "#/$defs/Uuid"},
+        "timestamp": {"$ref": "#/$defs/Timestamp"},
+        "component_version": {"$ref": "#/$defs/NonBlankString"},
+        "source_kind": {"const": "mock"},
+        "status": {"type": "string", "enum": ["succeeded", "failed"]},
+        "result": {"type": "string", "enum": ["success", "failure"]},
+        "observed_at": {"$ref": "#/$defs/Timestamp"},
+        "observed_status": {"$ref": "#/$defs/ObservedActionStatus"},
+        "evidence_refs": {"$ref": "#/$defs/EvidenceRefs"},
+        "error": {"$ref": "#/$defs/ContractError"}
+      },
+      "oneOf": [
+        {"properties": {"result": {"const": "success"}, "status": {"const": "succeeded"}}, "required": ["observed_at", "observed_status", "evidence_refs"], "not": {"required": ["error"]}},
+        {"properties": {"result": {"const": "failure"}, "status": {"const": "failed"}}, "required": ["error"], "not": {"anyOf": [{"required": ["observed_at"]}, {"required": ["observed_status"]}, {"required": ["evidence_refs"]}]}}
+      ],
+      "additionalProperties": false
+    },
+    "ExpectedState": {
+      "type": "object",
+      "required": ["part_id", "location_id"],
+      "properties": {
+        "part_id": {"$ref": "#/$defs/NonBlankString"},
+        "location_id": {"$ref": "#/$defs/NonBlankString"}
+      },
+      "additionalProperties": false
+    },
+    "VerificationRequest": {
+      "type": "object",
+      "required": ["operation", "message_type", "schema_version", "mission_id", "request_id", "trace_id", "action_id", "timestamp", "deadline_at", "timeout_ms", "component_version", "verifier_id", "expected_state", "observation_refs", "verification_profile_version"],
+      "properties": {
+        "operation": {"const": "verification.verify"},
+        "message_type": {"const": "request"},
+        "schema_version": {"$ref": "#/$defs/SchemaVersion"},
+        "mission_id": {"$ref": "#/$defs/Uuid"},
+        "request_id": {"$ref": "#/$defs/Uuid"},
+        "trace_id": {"$ref": "#/$defs/Uuid"},
+        "action_id": {"$ref": "#/$defs/Uuid"},
+        "timestamp": {"$ref": "#/$defs/Timestamp"},
+        "deadline_at": {"$ref": "#/$defs/Timestamp"},
+        "timeout_ms": {"$ref": "#/$defs/TimeoutMs"},
+        "component_version": {"$ref": "#/$defs/NonBlankString"},
+        "verifier_id": {"$ref": "#/$defs/NonBlankString"},
+        "expected_state": {"$ref": "#/$defs/ExpectedState"},
+        "observation_refs": {"type": "array", "items": {"$ref": "#/$defs/SimulationObservationRef"}, "minItems": 1, "uniqueItems": true},
+        "verification_profile_version": {"const": "sim-exact-match-v1"}
+      },
+      "additionalProperties": false
+    },
+    "VerificationResult": {
+      "type": "object",
+      "required": ["operation", "message_type", "schema_version", "mission_id", "request_id", "trace_id", "action_id", "timestamp", "component_version", "source_kind", "status", "result", "verification_profile_version"],
+      "properties": {
+        "operation": {"const": "verification.verify"},
+        "message_type": {"const": "result"},
+        "schema_version": {"$ref": "#/$defs/SchemaVersion"},
+        "mission_id": {"$ref": "#/$defs/Uuid"},
+        "request_id": {"$ref": "#/$defs/Uuid"},
+        "trace_id": {"$ref": "#/$defs/Uuid"},
+        "action_id": {"$ref": "#/$defs/Uuid"},
+        "timestamp": {"$ref": "#/$defs/Timestamp"},
+        "component_version": {"$ref": "#/$defs/NonBlankString"},
+        "source_kind": {"const": "mock"},
+        "status": {"type": "string", "enum": ["succeeded", "failed"]},
+        "result": {"type": "string", "enum": ["success", "failure"]},
+        "verification_profile_version": {"const": "sim-exact-match-v1"},
+        "verdict": {"type": "string", "enum": ["pass", "fail", "uncertain"]},
+        "confidence": {"type": "number", "minimum": 0, "maximum": 1},
+        "mismatch_code": {"$ref": "#/$defs/NonBlankString"},
+        "evidence_refs": {"$ref": "#/$defs/EvidenceRefs"},
+        "error": {"$ref": "#/$defs/ContractError"}
+      },
+      "oneOf": [
+        {"properties": {"result": {"const": "success"}, "status": {"const": "succeeded"}}, "required": ["verdict", "confidence", "evidence_refs"], "not": {"required": ["error"]}},
+        {"properties": {"result": {"const": "failure"}, "status": {"const": "failed"}}, "required": ["error"], "not": {"anyOf": [{"required": ["verdict"]}, {"required": ["confidence"]}, {"required": ["mismatch_code"]}]}}
+      ],
+      "allOf": [
+        {"if": {"properties": {"verdict": {"enum": ["fail", "uncertain"]}}, "required": ["verdict"]}, "then": {"required": ["mismatch_code"]}},
+        {"if": {"properties": {"verdict": {"const": "pass"}}, "required": ["verdict"]}, "then": {"not": {"required": ["mismatch_code"]}}}
+      ],
+      "additionalProperties": false
+    },
+    "ObservationPayload": {
+      "type": "object",
+      "required": ["quality"],
+      "properties": {
+        "quality": {"type": "string", "enum": ["valid", "insufficient", "ambiguous"]},
+        "part_id": {"$ref": "#/$defs/NonBlankString"},
+        "location_id": {"$ref": "#/$defs/NonBlankString"}
+      },
+      "allOf": [
+        {"if": {"properties": {"quality": {"const": "valid"}}, "required": ["quality"]}, "then": {"required": ["part_id", "location_id"]}},
+        {"if": {"properties": {"quality": {"enum": ["insufficient", "ambiguous"]}}, "required": ["quality"]}, "then": {"not": {"anyOf": [{"required": ["part_id"]}, {"required": ["location_id"]}]}}}
+      ],
+      "additionalProperties": false
+    },
+    "SimulationFixtureEntry": {
+      "type": "object",
+      "required": ["fixture_id", "fixture_version", "content_sha256", "timestamp", "source_kind", "observation"],
+      "properties": {
+        "fixture_id": {"$ref": "#/$defs/NonBlankString"},
+        "fixture_version": {"$ref": "#/$defs/NonBlankString"},
+        "content_sha256": {"$ref": "#/$defs/Sha256"},
+        "timestamp": {"$ref": "#/$defs/Timestamp"},
+        "source_kind": {"const": "mock"},
+        "observation": {"$ref": "#/$defs/ObservationPayload"}
+      },
+      "additionalProperties": false
+    },
+    "SimulationFixtureManifest": {
+      "type": "object",
+      "required": ["schema_version", "fixture_set_id", "fixture_set_version", "source_kind", "fixtures"],
+      "properties": {
+        "schema_version": {"$ref": "#/$defs/SchemaVersion"},
+        "fixture_set_id": {"const": "SIM_FIXTURE_SET_V1"},
+        "fixture_set_version": {"$ref": "#/$defs/NonBlankString"},
+        "source_kind": {"const": "mock"},
+        "fixtures": {"type": "array", "items": {"$ref": "#/$defs/SimulationFixtureEntry"}, "minItems": 1}
+      },
+      "additionalProperties": false
+    },
+    "MissionTransition": {
+      "type": "object",
+      "required": ["record_type", "from_status", "to_status"],
+      "properties": {
+        "record_type": {"const": "mission_transition"},
+        "from_status": {"$ref": "#/$defs/MissionStatus"},
+        "to_status": {"$ref": "#/$defs/MissionStatus"}
+      },
+      "oneOf": [
+        {"properties": {"from_status": {"const": "created"}, "to_status": {"enum": ["ready", "escalated"]}}},
+        {"properties": {"from_status": {"const": "ready"}, "to_status": {"enum": ["executing", "escalated"]}}},
+        {"properties": {"from_status": {"const": "executing"}, "to_status": {"enum": ["completed", "reconciling", "failed", "escalated"]}}},
+        {"properties": {"from_status": {"const": "reconciling"}, "to_status": {"enum": ["completed", "recovering", "failed", "escalated"]}}},
+        {"properties": {"from_status": {"const": "recovering"}, "to_status": {"enum": ["executing", "failed", "escalated"]}}}
+      ],
+      "additionalProperties": false
+    },
+    "ActionTransition": {
+      "type": "object",
+      "required": ["record_type", "from_status", "to_status"],
+      "properties": {
+        "record_type": {"const": "action_transition"},
+        "from_status": {"$ref": "#/$defs/ActionStatus"},
+        "to_status": {"$ref": "#/$defs/ActionStatus"},
+        "resolved_status": {"type": "string", "enum": ["succeeded", "failed", "unknown"]},
+        "reconciliation_evidence": {"$ref": "#/$defs/EvidenceRef"}
+      },
+      "oneOf": [
+        {"properties": {"from_status": {"const": "requested"}, "to_status": {"enum": ["running", "failed", "unknown"]}}, "not": {"anyOf": [{"required": ["resolved_status"]}, {"required": ["reconciliation_evidence"]}]}},
+        {"properties": {"from_status": {"const": "running"}, "to_status": {"enum": ["succeeded", "failed", "unknown"]}}, "not": {"anyOf": [{"required": ["resolved_status"]}, {"required": ["reconciliation_evidence"]}]}},
+        {"properties": {"from_status": {"const": "unknown"}, "to_status": {"const": "reconciling"}}, "not": {"anyOf": [{"required": ["resolved_status"]}, {"required": ["reconciliation_evidence"]}]}},
+        {"properties": {"from_status": {"const": "reconciling"}, "to_status": {"const": "reconciled"}}, "required": ["resolved_status", "reconciliation_evidence"]}
+      ],
+      "additionalProperties": false
+    },
+    "ReconciliationRecord": {
+      "type": "object",
+      "required": ["record_type", "schema_version", "mission_id", "action_id", "status_request_id", "status_result_request_id", "from_status", "phase", "status", "resolved_status", "observed_at", "component_version", "evidence_refs"],
+      "properties": {
+        "record_type": {"const": "reconciliation_record"},
+        "schema_version": {"$ref": "#/$defs/SchemaVersion"},
+        "mission_id": {"$ref": "#/$defs/Uuid"},
+        "action_id": {"$ref": "#/$defs/Uuid"},
+        "status_request_id": {"$ref": "#/$defs/Uuid"},
+        "status_result_request_id": {"$ref": "#/$defs/Uuid"},
+        "from_status": {"const": "unknown"},
+        "phase": {"const": "reconciling"},
+        "status": {"const": "reconciled"},
+        "resolved_status": {"type": "string", "enum": ["succeeded", "failed", "unknown"]},
+        "observed_at": {"$ref": "#/$defs/Timestamp"},
+        "component_version": {"$ref": "#/$defs/NonBlankString"},
+        "evidence_refs": {"$ref": "#/$defs/EvidenceRefs"},
+        "error": {"$ref": "#/$defs/ContractError"}
+      },
+      "allOf": [
+        {"if": {"properties": {"resolved_status": {"enum": ["failed", "unknown"]}}, "required": ["resolved_status"]}, "then": {"required": ["error"]}},
+        {"if": {"properties": {"resolved_status": {"const": "succeeded"}}, "required": ["resolved_status"]}, "then": {"not": {"required": ["error"]}}}
+      ],
+      "additionalProperties": false
+    },
+    "RetryAuthorization": {
+      "type": "object",
+      "required": ["record_type", "mission_id", "action_id", "idempotency_key", "previous_request_id", "new_request_id", "previous_attempt", "next_attempt", "retry_budget_remaining", "reconciliation_completed", "resolved_status", "error"],
+      "properties": {
+        "record_type": {"const": "retry_authorization"},
+        "mission_id": {"$ref": "#/$defs/Uuid"},
+        "action_id": {"$ref": "#/$defs/Uuid"},
+        "idempotency_key": {"$ref": "#/$defs/NonBlankString"},
+        "previous_request_id": {"$ref": "#/$defs/Uuid"},
+        "new_request_id": {"$ref": "#/$defs/Uuid"},
+        "previous_attempt": {"type": "integer", "minimum": 1},
+        "next_attempt": {"type": "integer", "minimum": 2},
+        "retry_budget_remaining": {"type": "integer", "minimum": 1},
+        "reconciliation_completed": {"const": true},
+        "resolved_status": {"const": "failed"},
+        "error": {
+          "allOf": [
+            {"$ref": "#/$defs/ContractError"},
+            {"properties": {"retryable": {"const": true}}, "required": ["retryable"]}
+          ]
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

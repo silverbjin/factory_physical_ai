@@ -65,6 +65,9 @@ docs/architecture/adr/ADR-Simulation-Lane-v1.md
 context/simulation_task_mapping_v1.md
 docs/architecture/system_architecture_v1.md
 docs/contracts/contract_plan.md
+docs/contracts/simulation_execution_contract_v1.md
+docs/contracts/schemas/simulation_execution_contract_v1.schema.json
+results/reviews/SIM-C01_acceptance.json
 docs/hardware/hardware_target_selection_status_v1.md
 docs/architecture/adr/ADR-001-manipulator.md
 docs/architecture/adr/ADR-002-amr.md
@@ -73,7 +76,7 @@ docs/architecture/adr/ADR-010-deployment-topology.md
 results/phase0/P0-004R_vla_readiness.json
 ```
 
-These files form the bounded authoritative context for this task.
+These files form the bounded authoritative context for this task. The delegated Simulation Lane contract and schema are authoritative only after `TASK-SIM-C01` has been independently accepted with valid immutable bindings.
 
 Additional files may be inspected only as supporting implementation context and shall not override the Required Context.
 
@@ -100,7 +103,8 @@ Before implementation:
 4. Existing Week-task authorization remains governed by P0-004R.
 5. No physical execution authorization is granted by this task.
 6. No lower-level public port is assumed to exist unless already authoritative.
-7. The current contract plan may be planning-only; this task must preserve that fact truthfully.
+7. The project-wide contract plan remains planning-only; any accepted Simulation Lane executable-contract delegation must be evaluated only within its explicitly scoped authority.
+8. A revised-contract re-evaluation requires a valid `SIM-C01_acceptance.json` with `review_decision = ACCEPT`, `task_specific_decision = SIM_CONTRACT_GAPS_RESOLVED`, and bindings to the current contract, schema, C01 evidence, reviewed commit, and frozen-authority checks. Missing or stale acceptance keeps this task blocked.
 
 ---
 
@@ -138,6 +142,7 @@ Authority order is:
 Frozen architecture / ADRs
 → frozen Simulation Lane mapping
 → authoritative contract plan
+→ accepted Simulation Lane executable contract and schema, when validly delegated
 → accepted P0 authorization evidence
 → implementation conventions
 ```
@@ -411,6 +416,18 @@ contract_plan:
   path
   sha256
 
+simulation_execution_contract:
+  path
+  sha256
+
+simulation_execution_schema:
+  path
+  sha256
+
+sim_c01_acceptance:
+  path
+  sha256
+
 p0_004r_authorization:
   path
   sha256
@@ -491,6 +508,8 @@ SIM_CONTRACT_PROFILE_READY
 ```
 
 only when the authoritative sources provide sufficient semantics for `TASK-SIM-002` to implement the bounded deterministic smoke runtime without inventing a new incompatible public contract.
+
+When a Simulation Lane executable-contract delegation exists, validate its semantic contract and structural schema directly. Do not infer executable readiness from implementation code, task completion, or self-reported acceptance. Missing, invalid, stale, or unaccepted contract/schema bindings require `SIM_CONTRACT_PROFILE_BLOCKED`.
 
 Return:
 
@@ -652,7 +671,7 @@ At minimum:
 
 1. validate all Required Context paths;
 2. hash authoritative sources;
-3. validate machine-readable evidence schema;
+3. validate the delegated executable-contract schema and machine-readable evidence schema;
 4. verify profile/evidence consistency;
 5. verify no W-task authorization modification;
 6. verify no physical authorization;
