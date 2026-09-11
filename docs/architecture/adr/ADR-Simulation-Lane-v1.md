@@ -1,6 +1,6 @@
 # ADR — Simulation Lane v1
 
-> Status: PROPOSED_FOR_FREEZE
+> Status: FROZEN
 > Decision Type: Architecture / Delivery / Authorization Boundary
 > Scope: Simulation-only pre-integration lane
 > Version: v1

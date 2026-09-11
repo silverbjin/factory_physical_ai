@@ -1,6 +1,6 @@
 # Simulation Task Mapping v1
 
-> Status: PROPOSED_FOR_FREEZE
+> Status: FROZEN
 > Governing ADR: `ADR-Simulation-Lane-v1.md`
 > Purpose: Define the new simulation-only task dependency graph without modifying the existing Week 1–6 task graph.
 

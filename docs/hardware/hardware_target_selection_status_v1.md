@@ -1,5 +1,3 @@
-# File: docs/hardware/hardware_target_selection_status_v1.md
-
 # Hardware Target Selection Status v1
 
 > Status: INFORMATIONAL / NOT FROZEN
@@ -44,7 +42,7 @@ Example:
 myCobot 280 Pi
 
 Owned:
-YES
+provenance
 
 Candidate:
 YES
