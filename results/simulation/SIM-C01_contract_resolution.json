@@ -2,13 +2,15 @@
   "task_id": "TASK-SIM-C01",
   "implementation_complete": true,
   "decision": "SIM_CONTRACT_GAPS_RESOLVED",
-  "generation_timestamp": "2026-09-11T15:59:50Z",
-  "generation_git_head": "360c42ef2c61374788dfa0fdc36088305c309960",
+  "generation_timestamp": "2026-09-12T00:46:13Z",
+  "generation_git_head": "fea1bdfb7b8c0e0f3f69c5b62d328e95b37a5561",
   "worktree_state": {
     "pre_implementation": "DIRTY",
     "preexisting_changes": [
       "tasks/TASK-SIM-C01.md"
     ],
+    "pre_fix": "CLEAN",
+    "pre_fix_head": "fea1bdfb7b8c0e0f3f69c5b62d328e95b37a5561",
     "at_generation": "DIRTY",
     "staged_changes": false,
     "commit_performed": false,
@@ -26,6 +28,21 @@
     "head": "360c42ef2c61374788dfa0fdc36088305c309960",
     "bindings_match": true,
     "material_authoritative_change_detected": false
+  },
+  "fix_revision": {
+    "reviewed_implementation_commit": "7ca63be136e272b3c73031d3fb5fd24760cc62e6",
+    "review_record": {
+      "path": "docs/task_history/TASK-SIM-C01/02_review.md",
+      "sha256": "0d4248d2a39299c819b80f2408c1017a59f637d6858a877ee41a2e3b4d05f6cd"
+    },
+    "previous_evidence_sha256": "23044f27063dfd3910b098e3fd313eb88e24ab061d986366750676f09ff0561f",
+    "finding_status": {
+      "TASK-SIM-C01-REV-B01": "FIXED",
+      "TASK-SIM-C01-REV-H01": "FIXED",
+      "TASK-SIM-C01-REV-H02": "FIXED",
+      "TASK-SIM-C01-REV-M01": "FIXED"
+    },
+    "git_history_status": "NO HISTORY ACTION REQUIRED"
   },
   "input_bindings": [
     {
@@ -85,11 +102,15 @@
   ],
   "contract": {
     "path": "docs/contracts/simulation_execution_contract_v1.md",
-    "sha256": "aaa8b8b1a53e460104a5339f10622ec4cb336f3bb0e598991bbd0c1387cde880"
+    "sha256": "0451e9abae4cee911d9468d11e68b8bbb0e3aff1a1a2d9cf104ed64264d28caa"
   },
   "schema": {
     "path": "docs/contracts/schemas/simulation_execution_contract_v1.schema.json",
-    "sha256": "25686143b74b0315aa2a0910673c66b74a53d07222ab4898d91676a53b36e975"
+    "sha256": "112b1e2e0d1fefb03d7b353e8ed4d875b025fe342380d5ba1cbf050bcc7d944a"
+  },
+  "contract_tests": {
+    "path": "tests/test_simulation_execution_contract.py",
+    "sha256": "52b9e445207dd189a5dd76c2c31638b8ae90ef7c61493cc6c238313c0d945534"
   },
   "contract_plan": {
     "path": "docs/contracts/contract_plan.md",
@@ -291,13 +312,13 @@
   "adr_modified": false,
   "focused_tests": {
     "command": "PYTHONDONTWRITEBYTECODE=1 python3 -m pytest tests/test_simulation_execution_contract.py -q -p no:cacheprovider",
-    "passed": 22,
+    "passed": 26,
     "failed": 0,
     "status": "PASS"
   },
   "regression_tests": {
     "command": "PYTHONDONTWRITEBYTECODE=1 python3 -m pytest -q -p no:cacheprovider",
-    "passed": 154,
+    "passed": 158,
     "failed": 0,
     "status": "PASS"
   },
@@ -324,11 +345,11 @@
     {"id": "C20", "status": "PASS", "detail": "action_status.get executable semantics are defined."},
     {"id": "C21", "status": "PASS", "detail": "The synthetic fixture contract is defined and distinct from Dataset V1."},
     {"id": "C22", "status": "PASS", "detail": "Finite mission and action lifecycle transition tables are machine-tested."},
-    {"id": "C23", "status": "PASS", "detail": "Timeout produces pending/unknown and is machine-tested."},
+    {"id": "C23", "status": "PASS", "detail": "DEPENDENCY_TIMEOUT and MODEL_TIMEOUT both require pending/unknown and are machine-tested for Navigation and VLA."},
     {"id": "C24", "status": "PASS", "detail": "Direct unknown-to-succeeded is prohibited and tested."},
     {"id": "C25", "status": "PASS", "detail": "Reconciliation requires matching immutable action-status evidence."},
     {"id": "C26", "status": "PASS", "detail": "Retry requires reconciled retryable failure and remaining budget."},
-    {"id": "C27", "status": "PASS", "detail": "Unsupported versions, operations, enums, and public fields fail closed."},
+    {"id": "C27", "status": "PASS", "detail": "Unsupported versions, operations, enums, public fields, and calendar-invalid RFC 3339 timestamps fail closed."},
     {"id": "C28", "status": "PASS", "detail": "The sim-exact-match-v1 deterministic verification profile is executable and tested."},
     {"id": "C29", "status": "PASS", "detail": "No direct actuator public contract was introduced."},
     {"id": "C30", "status": "PASS", "detail": "No physical dependency or authorization was introduced."},
@@ -337,8 +358,8 @@
     {"id": "C33", "status": "PASS", "detail": "No Week-task authorization was modified."},
     {"id": "C34", "status": "PASS", "detail": "No candidate hardware target was frozen."},
     {"id": "C35", "status": "PASS", "detail": "All focused positive vectors pass."},
-    {"id": "C36", "status": "PASS", "detail": "All focused negative and semantic vectors pass."},
-    {"id": "C37", "status": "PASS", "detail": "All 154 repository regression tests pass."},
+    {"id": "C36", "status": "PASS", "detail": "All focused negative and semantic vectors pass, including timeout categories, destination correlation, and fixture tamper/duplicate cases."},
+    {"id": "C37", "status": "PASS", "detail": "All 158 repository regression tests pass."},
     {"id": "C38", "status": "PASS", "detail": "git diff --check passes."},
     {"id": "C39", "status": "PASS", "detail": "Evidence, schema, source, and payload hash validation passes."},
     {"id": "C40", "status": "PASS", "detail": "All mandatory predicates support SIM_CONTRACT_GAPS_RESOLVED."}
@@ -357,5 +378,5 @@
     "independent_acceptance": "PENDING"
   },
   "payload_hash_algorithm": "sha256(canonical JSON with sorted keys and compact separators, excluding payload_sha256)",
-  "payload_sha256": "4b6565ab289ce7d56f0fa4418ba931a609a001f2cba75c52f2ee0f3dfdac9115"
+  "payload_sha256": "e25fc1d9d3e4c8c1e3089dfcb116129b560a27e29e287b49436d8d93ae259acd"
 }

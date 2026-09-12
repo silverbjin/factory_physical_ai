@@ -44,7 +44,7 @@ The key words MUST, MUST NOT, REQUIRED, SHALL, and SHALL NOT are normative.
 - The only supported `schema_version` is `1.0`.
 - `timeout_ms` is bounded to the inclusive range `1..60000` for Simulation Lane v1.
 - `deadline_at` MUST be later than `timestamp`; contract tests enforce this relationship.
-- UUID and timestamp formats require JSON Schema format checking.
+- UUID and timestamp formats require JSON Schema format checking. Timestamp validation MUST perform RFC 3339 UTC calendar validation; matching the lexical pattern alone is insufficient.
 - All Simulation Lane results and fixtures use `source_kind = mock`.
 - `error.retryable` is canonical. A duplicate top-level `retryable` field is forbidden.
 
@@ -110,6 +110,8 @@ MODEL_FAILURE
 CANCELLED
 INTERNAL
 ```
+
+`DEPENDENCY_TIMEOUT` and `MODEL_TIMEOUT` are both timeout categories. For Navigation and VLA action results, either category MUST use `result = pending`, `status = unknown`, and reconciliation. A known terminal model failure uses `MODEL_FAILURE`, not `MODEL_TIMEOUT`.
 
 A `success` result MUST NOT carry `error`. Structural validity does not itself authorize a mission transition; Sections 5–10 govern semantics.
 
@@ -353,7 +355,7 @@ timestamp
 source_kind = mock
 ```
 
-`SimulationFixtureManifest` contains versioned `SimulationFixtureEntry` objects. Each entry binds identity/version/hash fields to deterministic observation content. `content_sha256` is the SHA-256 of the canonical observation object using sorted keys and compact separators.
+`SimulationFixtureManifest` contains versioned `SimulationFixtureEntry` objects. Each `(fixture_id, fixture_version)` pair MUST occur exactly once. Each entry binds identity/version/hash fields to deterministic observation content. `content_sha256` is the SHA-256 of the canonical observation object using sorted keys and compact separators, and a consumer MUST recompute and compare it before using the observation.
 
 Observation quality is exactly `valid`, `insufficient`, or `ambiguous`. A valid observation requires `part_id` and `location_id`. Insufficient or ambiguous observations may omit them and always produce `uncertain`.
 

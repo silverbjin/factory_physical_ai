@@ -311,7 +311,7 @@
         {"properties": {"result": {"const": "requires_human"}, "status": {"const": "failed"}, "error": {"allOf": [{"$ref": "#/$defs/ContractError"}, {"properties": {"retryable": {"const": false}}, "required": ["retryable"]}]}}, "required": ["error"]}
       ],
       "allOf": [
-        {"if": {"properties": {"error": {"properties": {"category": {"const": "DEPENDENCY_TIMEOUT"}}, "required": ["category"]}}, "required": ["error"]}, "then": {"properties": {"result": {"const": "pending"}, "status": {"const": "unknown"}}}}
+        {"if": {"properties": {"error": {"properties": {"category": {"enum": ["DEPENDENCY_TIMEOUT", "MODEL_TIMEOUT"]}}, "required": ["category"]}}, "required": ["error"]}, "then": {"properties": {"result": {"const": "pending"}, "status": {"const": "unknown"}}}}
       ],
       "additionalProperties": false
     },
@@ -383,7 +383,7 @@
         {"properties": {"result": {"const": "requires_human"}, "status": {"const": "failed"}, "skill_outcome": {"const": "uncertain"}, "error": {"allOf": [{"$ref": "#/$defs/ContractError"}, {"properties": {"retryable": {"const": false}}, "required": ["retryable"]}]}}, "required": ["error"]}
       ],
       "allOf": [
-        {"if": {"properties": {"error": {"properties": {"category": {"const": "DEPENDENCY_TIMEOUT"}}, "required": ["category"]}}, "required": ["error"]}, "then": {"properties": {"result": {"const": "pending"}, "status": {"const": "unknown"}, "skill_outcome": {"const": "uncertain"}}}}
+        {"if": {"properties": {"error": {"properties": {"category": {"enum": ["DEPENDENCY_TIMEOUT", "MODEL_TIMEOUT"]}}, "required": ["category"]}}, "required": ["error"]}, "then": {"properties": {"result": {"const": "pending"}, "status": {"const": "unknown"}, "skill_outcome": {"const": "uncertain"}}}}
       ],
       "additionalProperties": false
     },
@@ -531,7 +531,7 @@
         "fixture_set_id": {"const": "SIM_FIXTURE_SET_V1"},
         "fixture_set_version": {"$ref": "#/$defs/NonBlankString"},
         "source_kind": {"const": "mock"},
-        "fixtures": {"type": "array", "items": {"$ref": "#/$defs/SimulationFixtureEntry"}, "minItems": 1}
+        "fixtures": {"type": "array", "items": {"$ref": "#/$defs/SimulationFixtureEntry"}, "minItems": 1, "uniqueItems": true}
       },
       "additionalProperties": false
     },

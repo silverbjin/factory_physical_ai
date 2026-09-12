@@ -13,7 +13,20 @@ from jsonschema import Draft202012Validator, FormatChecker
 ROOT = Path(__file__).resolve().parents[1]
 SCHEMA_PATH = ROOT / "docs/contracts/schemas/simulation_execution_contract_v1.schema.json"
 SCHEMA = json.loads(SCHEMA_PATH.read_text())
-VALIDATOR = Draft202012Validator(SCHEMA, format_checker=FormatChecker())
+FORMAT_CHECKER = FormatChecker()
+
+
+@FORMAT_CHECKER.checks("date-time", raises=(TypeError, ValueError))
+def _is_calendar_valid_utc_timestamp(value: object) -> bool:
+    if not isinstance(value, str):
+        return True
+    if not value.endswith("Z"):
+        return False
+    parsed = datetime.fromisoformat(f"{value[:-1]}+00:00")
+    return parsed.utcoffset() is not None and parsed.utcoffset().total_seconds() == 0
+
+
+VALIDATOR = Draft202012Validator(SCHEMA, format_checker=FORMAT_CHECKER)
 
 MISSION_ID = "0d47cf1c-31c9-4f80-a8ac-6bd1a8726194"
 ACTION_ID = "35ae5d55-ca49-4962-ba84-2d0093e46f7f"
@@ -269,6 +282,10 @@ def _assert_correlated(request: dict[str, object], result: dict[str, object], *,
             raise ContractSemanticError(f"{field} mismatch")
     if action_bound and request["action_id"] != result["action_id"]:
         raise ContractSemanticError("action_id mismatch")
+    if request["operation"] == "navigation.execute" and result.get("result") == "success":
+        arrival = result.get("arrival")
+        if not isinstance(arrival, dict) or arrival.get("destination_id") != request.get("destination_id"):
+            raise ContractSemanticError("navigation destination_id mismatch")
 
 
 def _assert_deadline_after_timestamp(request: dict[str, object]) -> None:
@@ -350,9 +367,19 @@ def _assert_retry_semantics(
         raise ContractSemanticError("retry budget must decrement")
 
 
-def _deterministic_verdict(
-    request: dict[str, object], manifest: dict[str, object]
-) -> str:
+def _assert_manifest_integrity(manifest: dict[str, object]) -> None:
+    seen: set[tuple[object, object]] = set()
+    for fixture in manifest["fixtures"]:  # type: ignore[index]
+        identity = (fixture["fixture_id"], fixture["fixture_version"])
+        if identity in seen:
+            raise ContractSemanticError("fixture identity is not unique")
+        seen.add(identity)
+        if _canonical_sha256(fixture["observation"]) != fixture["content_sha256"]:
+            raise ContractSemanticError("fixture content hash mismatch")
+
+
+def _deterministic_verdict(request: dict[str, object], manifest: dict[str, object]) -> str:
+    _assert_manifest_integrity(manifest)
     reference = request["observation_refs"][0]  # type: ignore[index]
     fixtures = manifest["fixtures"]  # type: ignore[index]
     matches = [
@@ -460,6 +487,21 @@ class SimulationExecutionContractTests(unittest.TestCase):
         bad_error.update({"action_id": ACTION_ID, "status": "failed", "result": "failure", "error": _error(category="UNKNOWN")})
         self.assertInvalid(bad_error)
 
+    def test_timestamp_calendar_validation_fails_closed(self) -> None:
+        invalid_timestamps = (
+            "2026-02-29T00:00:00Z",
+            "2026-02-31T00:00:00Z",
+            "2026-09-31T00:00:00Z",
+        )
+        for timestamp in invalid_timestamps:
+            request = _mission_request()
+            request["timestamp"] = timestamp
+            with self.subTest(timestamp=timestamp):
+                self.assertInvalid(request)
+        valid_leap_day = _mission_request()
+        valid_leap_day["timestamp"] = "2028-02-29T00:00:00Z"
+        self.assertValid(valid_leap_day)
+
     def test_malformed_sha_and_physical_or_dataset_fixture_alias_fail(self) -> None:
         malformed = _observation_ref()
         malformed["content_sha256"] = "not-sha256"
@@ -559,6 +601,35 @@ class SimulationExecutionContractTests(unittest.TestCase):
             with self.subTest(status=status, result=result):
                 self.assertInvalid(invalid)
 
+    def test_all_timeout_categories_require_unknown_for_navigation_and_vla(self) -> None:
+        for category in ("DEPENDENCY_TIMEOUT", "MODEL_TIMEOUT"):
+            navigation = _navigation_result()
+            navigation.pop("arrival")
+            navigation.update(
+                {"status": "unknown", "result": "pending", "error": _error(category=category)}
+            )
+            self.assertValid(navigation)
+            invalid_navigation = copy.deepcopy(navigation)
+            invalid_navigation.update({"status": "failed", "result": "failure"})
+            with self.subTest(operation="navigation.execute", category=category):
+                self.assertInvalid(invalid_navigation)
+
+            vla = _vla_result()
+            vla.pop("verifier_input_refs")
+            vla.update(
+                {
+                    "status": "unknown",
+                    "result": "pending",
+                    "skill_outcome": "uncertain",
+                    "error": _error(category=category),
+                }
+            )
+            self.assertValid(vla)
+            invalid_vla = copy.deepcopy(vla)
+            invalid_vla.update({"status": "failed", "result": "failure", "skill_outcome": "failed"})
+            with self.subTest(operation="vla.execute", category=category):
+                self.assertInvalid(invalid_vla)
+
     def test_request_result_identity_mismatch_fails_semantic_validation(self) -> None:
         request = _navigation_request()
         result = _navigation_result()
@@ -568,6 +639,14 @@ class SimulationExecutionContractTests(unittest.TestCase):
             mismatched[field] = replacement
             with self.subTest(field=field), self.assertRaises(ContractSemanticError):
                 _assert_correlated(request, mismatched, action_bound=True)
+
+    def test_navigation_success_must_match_requested_destination(self) -> None:
+        request = _navigation_request()
+        result = _navigation_result()
+        result["arrival"]["destination_id"] = "different-destination"  # type: ignore[index]
+        self.assertValid(result)
+        with self.assertRaisesRegex(ContractSemanticError, "navigation destination_id mismatch"):
+            _assert_correlated(request, result, action_bound=True)
 
     def test_action_transition_table_accepts_only_legal_transitions(self) -> None:
         legal = SCHEMA["x-contract-semantics"]["action_transitions"]
@@ -719,6 +798,26 @@ class SimulationExecutionContractTests(unittest.TestCase):
         uncertain_manifest = _manifest(ambiguous)
         self.assertEqual(_deterministic_verdict(uncertain_request, uncertain_manifest), "uncertain")
         self.assertNotEqual(_deterministic_verdict(uncertain_request, uncertain_manifest), "pass")
+
+    def test_fixture_manifest_identity_and_content_hash_fail_closed(self) -> None:
+        identical_duplicate = _manifest()
+        identical_duplicate["fixtures"].append(copy.deepcopy(identical_duplicate["fixtures"][0]))  # type: ignore[union-attr,index]
+        self.assertInvalid(identical_duplicate)
+
+        duplicate_identity = _manifest()
+        duplicate = copy.deepcopy(duplicate_identity["fixtures"][0])  # type: ignore[index]
+        duplicate["observation"]["part_id"] = "different-part"
+        duplicate["content_sha256"] = _canonical_sha256(duplicate["observation"])
+        duplicate_identity["fixtures"].append(duplicate)  # type: ignore[union-attr]
+        self.assertValid(duplicate_identity)
+        with self.assertRaisesRegex(ContractSemanticError, "fixture identity is not unique"):
+            _assert_manifest_integrity(duplicate_identity)
+
+        stale_hash = _manifest()
+        stale_hash["fixtures"][0]["observation"]["part_id"] = "tampered"  # type: ignore[index]
+        self.assertValid(stale_hash)
+        with self.assertRaisesRegex(ContractSemanticError, "fixture content hash mismatch"):
+            _assert_manifest_integrity(stale_hash)
 
     def test_deadline_must_be_after_timestamp(self) -> None:
         request = _mission_request()
