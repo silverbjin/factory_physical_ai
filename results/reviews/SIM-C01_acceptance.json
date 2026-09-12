@@ -1,0 +1,40 @@
+{
+  "schema_version": "1.0",
+  "record_type": "post_review_acceptance",
+  "task_id": "TASK-SIM-C01",
+  "review_decision": "ACCEPT",
+  "task_specific_decision": "SIM_CONTRACT_GAPS_RESOLVED",
+  "reviewed_commit": "0079940cee35362111d8cfd67dd0c14e135c27af",
+  "evidence_path": "results/simulation/SIM-C01_contract_resolution.json",
+  "evidence_sha256": "4685588a2b3978b0a063328e94e8f0469f06af612fb50dae8aabf32dd3d349e5",
+  "accepted_payload_sha256": "e25fc1d9d3e4c8c1e3089dfcb116129b560a27e29e287b49436d8d93ae259acd",
+  "contract_path": "docs/contracts/simulation_execution_contract_v1.md",
+  "contract_sha256": "0451e9abae4cee911d9468d11e68b8bbb0e3aff1a1a2d9cf104ed64264d28caa",
+  "schema_path": "docs/contracts/schemas/simulation_execution_contract_v1.schema.json",
+  "schema_sha256": "112b1e2e0d1fefb03d7b353e8ed4d875b025fe342380d5ba1cbf050bcc7d944a",
+  "contract_plan_path": "docs/contracts/contract_plan.md",
+  "contract_plan_sha256": "4fd3a4916fa118fdbb8792681a8450157cefc0473f495e8523842e3b09b59cde",
+  "task_sim_001_spec_path": "tasks/TASK-SIM-001.md",
+  "task_sim_001_spec_sha256": "3219714d5beef58f4bed4fac95de09157c6bb6b1a59431ef020810b9d0cc5b50",
+  "review_record_path": "docs/task_history/TASK-SIM-C01/04_review.md",
+  "review_record_sha256": "7e7040ca9098a5a554c52e9e05bfabfd200fce005d1263cac5d4ea9921c5d6e6",
+  "recorded_at": "2026-09-12T01:09:03Z",
+  "recording_commit": "0079940cee35362111d8cfd67dd0c14e135c27af",
+  "binding_validation": {
+    "reviewed_commit_exists": true,
+    "current_head_matches_reviewed_commit": true,
+    "evidence_hash_matches_accepted_hash": true,
+    "payload_hash_matches_accepted_hash": true,
+    "authoritative_contract_sources_unchanged_since_review": true,
+    "review_record_decision_matches": true,
+    "status": "PASS"
+  },
+  "downstream_authorization": {
+    "task_sim_001_re_evaluation_authorized": true,
+    "task_sim_002_authorized": false,
+    "physical_authorization": false,
+    "dataset_v1_authorization": false,
+    "training_authorization": false,
+    "week_task_authorization_modified": false
+  }
+}
