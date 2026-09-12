@@ -14,6 +14,7 @@
 | 01 | Implementation | COMPLETE / REVIEW PENDING | 여섯 gap의 executable contract/schema를 정의하고 `SIM_CONTRACT_GAPS_RESOLVED` 산출 | `01_implementation.md` |
 | 02 | Review | REJECT | timeout invariant 우회 1건, timestamp/arrival 검증 결함 2건, fixture regression 공백 1건 발견 | `02_review.md` |
 | 03 | Fix | READY FOR INDEPENDENT RE-REVIEW | timeout/calendar/destination/fixture findings를 수정하고 evidence 재결속 | `03_fix.md` |
+| 04 | Review | ACCEPT | 네 findings 해소, 전체 acceptance gate 및 evidence integrity 확인 | `04_review.md` |
 
 ## 3. 주요 설계 / 문제 해결 포인트
 
@@ -36,7 +37,7 @@
 - Evidence: `../../../results/simulation/SIM-C01_contract_resolution.json`
 - Evidence SHA-256: `4685588a2b3978b0a063328e94e8f0469f06af612fb50dae8aabf32dd3d349e5`
 - Payload SHA-256: `e25fc1d9d3e4c8c1e3089dfcb116129b560a27e29e287b49436d8d93ae259acd`
-- Latest independent review: `REJECT`; fix is ready for re-review
+- Latest independent review: `ACCEPT`
 - Reviewer negative probes: initial review에서 네 case 재현, fix 후 모두 rejected
 
 ## 5. 현재 상태
@@ -44,8 +45,8 @@
 ```text
 TASK-SIM-C01 implementation: complete
 Task-specific decision: SIM_CONTRACT_GAPS_RESOLVED
-Fix: READY FOR INDEPENDENT RE-REVIEW
-Independent re-review: pending
+Independent review: ACCEPT
+Post-review acceptance recording: pending
 TASK-SIM-001 re-evaluation authorized: false
 TASK-SIM-002 authorized: false
 ```
@@ -54,4 +55,4 @@ Historical `TASK-SIM-001 = SIM_CONTRACT_PROFILE_BLOCKED / ACCEPT`와 `P0-004R = 
 
 ## 6. 포트폴리오 요약
 
-Simulation Lane executable contract와 schema는 frozen topology와 authorization boundary를 보존했지만, 독립 Review는 nominal test pass만으로 드러나지 않은 state-safety 결함을 확인했다. Fix는 `MODEL_TIMEOUT`을 timeout-to-`unknown`/reconciliation invariant에 포함하고, 실제 timestamp calendar validation과 navigation destination correlation을 추가했다. Fixture hash/identity guard도 manifest-level semantic validator와 tamper/duplicate regression으로 강화했다. 모든 focused/full regression과 evidence validation은 통과했지만 독립 acceptance는 아직 없으므로 re-review 전까지 downstream authorization은 계속 false다.
+Simulation Lane executable contract와 schema는 frozen topology와 authorization boundary를 보존했지만, 최초 독립 Review는 nominal test pass만으로 드러나지 않은 state-safety 결함을 확인했다. Fix는 `MODEL_TIMEOUT`을 timeout-to-`unknown`/reconciliation invariant에 포함하고, 실제 timestamp calendar validation과 navigation destination correlation을 추가했다. Fixture hash/identity guard도 manifest-level semantic validator와 tamper/duplicate regression으로 강화했다. Re-review에서 모든 acceptance gate가 PASS하여 `ACCEPT TASK-SIM-C01`로 판정됐지만, 별도 post-review acceptance record 전까지 downstream authorization은 계속 false다.
