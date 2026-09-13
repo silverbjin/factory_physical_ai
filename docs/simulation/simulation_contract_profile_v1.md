@@ -1,23 +1,27 @@
 # Simulation Contract Profile v1
 
 > Task: `TASK-SIM-001`
+> Profile revision: post-`TASK-SIM-C01` re-evaluation
 > Implementation status: `COMPLETE`
-> Task-specific decision: `SIM_CONTRACT_PROFILE_BLOCKED`
+> Task-specific decision: `SIM_CONTRACT_PROFILE_READY`
 > Independent acceptance: `PENDING`
 > Downstream authorization: `TASK-SIM-002 authorized = false`
 
 ## 1. Purpose and authority
 
-This profile records the existing project-facing boundaries that a future deterministic simulation fixture would have to emulate. It is a contract-readiness assessment, not an executable contract, simulator implementation, or authorization grant.
+This profile re-evaluates the project-facing Simulation Lane boundaries after the independently accepted resolution of `TASK-SIM-C01`. It defines the minimum executable behavior that a future bounded deterministic smoke runtime may implement. It does not implement that runtime or grant downstream, physical, Dataset V1, training, or Week-task authorization.
 
-The assessment follows the required authority order: frozen architecture and ADRs, the frozen Simulation Lane mapping, the current planning contract, and accepted P0 authorization evidence. Implementation code and desired future implementation shapes were not used to create contract semantics.
+The project-wide `contract_plan.md` remains planning-only. Its explicit delegation makes only `simulation_execution_contract_v1.md` and its companion schema executable authority for Simulation Lane v1. `SIM-C01_acceptance.json` independently binds that delegation to the accepted C01 evidence, reviewed commit, contract, schema, contract plan, task specification, and review record.
 
-| Authoritative source | SHA-256 |
+| Required authoritative source | SHA-256 |
 |---|---|
 | `docs/architecture/adr/ADR-Simulation-Lane-v1.md` | `1509577842464f48055f402f5a3f717efecaba77847ff4c70534d14086fb46e0` |
 | `context/simulation_task_mapping_v1.md` | `c0cf1671d97f4cec768de1a2836b8ecdd89c7ceace947bab108ab549c11396b2` |
 | `docs/architecture/system_architecture_v1.md` | `50e57f517cf613b5b8e26e31ec74965d03c729526b94f39d9423fa0a15371e3d` |
-| `docs/contracts/contract_plan.md` | `aa7f9fe1477d650b3648c18d5df1fb3b0dabc6d06df6eff33e28dcdcc05e87d0` |
+| `docs/contracts/contract_plan.md` | `4fd3a4916fa118fdbb8792681a8450157cefc0473f495e8523842e3b09b59cde` |
+| `docs/contracts/simulation_execution_contract_v1.md` | `0451e9abae4cee911d9468d11e68b8bbb0e3aff1a1a2d9cf104ed64264d28caa` |
+| `docs/contracts/schemas/simulation_execution_contract_v1.schema.json` | `112b1e2e0d1fefb03d7b353e8ed4d875b025fe342380d5ba1cbf050bcc7d944a` |
+| `results/reviews/SIM-C01_acceptance.json` | `1aee7a19f24cf52da3a2c0b232872420aafe7f1e644ed5fb1a493a025c5ee2d5` |
 | `docs/hardware/hardware_target_selection_status_v1.md` | `fda8a33fe38fe1796f5d984d9b7a6c81dc4babe22e618f861375073043ad1109` |
 | `docs/architecture/adr/ADR-001-manipulator.md` | `93c41a83e018adaecf5c482fba70ad32548bd940e98d5a391f459b2662873537` |
 | `docs/architecture/adr/ADR-002-amr.md` | `4d56a32ac5e45fc9af169b3c591c518841067bc8f9544c496b2dabdbbe2727cf` |
@@ -25,9 +29,9 @@ The assessment follows the required authority order: frozen architecture and ADR
 | `docs/architecture/adr/ADR-010-deployment-topology.md` | `018ec1b9e9e525bc70367ace55581ec04d6343c2571c1805169227c937eb0825` |
 | `results/phase0/P0-004R_vla_readiness.json` | `f705896b9b6a48b08dde7401dfd3ca848d9fc46ac2711bd90fdd04d8b29f873d` |
 
-## 2. Preserved topology
+## 2. Preserved topology and ownership
 
-The only profiled execution topology is:
+The executable Simulation Lane profile preserves exactly this topology:
 
 ```text
 Deterministic Mission Executor
@@ -37,123 +41,170 @@ Deterministic Mission Executor
         +-- Verification boundary
 ```
 
-Future simulation fixtures belong behind the three skill/verification boundaries. This profile does not introduce `ManipulatorPort`, `NavigationPort`, `ObservationPort`, or any other mission-layer actuator port.
+The logical operations are exactly:
+
+```text
+mission.execute
+navigation.execute
+vla.execute
+action_status.get
+verification.verify
+```
+
+These identifiers are protocol-neutral. They do not define Python methods, ROS endpoints, HTTP routes, gRPC methods, Nav2 commands, MoveIt commands, or hardware interfaces. A runtime binding belongs to a separately authorized implementation task.
+
+Ownership remains unchanged:
+
+- the Agent proposes approved semantic capabilities and never issues raw ROS/Nav2 or actuator commands;
+- the Deterministic Mission Executor owns validation, authorization, mission state, business recovery, retry, reconciliation, persistence, and audit;
+- Nav2 owns later local navigation planning, controller behavior, configured local recovery, and lifecycle;
+- VLA owns only an approved bounded semantic skill and does not own raw actuators;
+- MoveIt owns manipulation planning and safety boundaries;
+- `ros2_control` owns controller and hardware interfaces;
+- Verification reports evidence and verdict but does not commit mission completion.
+
+No `ManipulatorPort`, `NavigationPort`, `ObservationPort`, or other mission-to-actuator public port is introduced.
 
 ## 3. Boundary classification
 
-All four boundaries are `PLANNING_CONTRACT_ONLY`. The architecture defines responsibilities and conceptual behavior, but `docs/contracts/contract_plan.md` explicitly states that it does not define executable APIs yet.
+All four required boundaries are `EXECUTABLE_CONTRACT_AVAILABLE` for Simulation Lane v1 only.
 
 ### 3.1 Deterministic Mission Executor
 
-- Classification: `PLANNING_CONTRACT_ONLY`
-- Ownership: contract validation, authorization and safety gates, deterministic state transitions, timeout and bounded retry policy, idempotency, persistence, metrics, and audit.
-- Invocation concept: a validated mission and approved typed skill proposal are checked before dispatch.
-- State/action concept: side effects use stable `idempotency_key` and `action_id`; timeout or restart leaves an action `unknown` until reconciliation.
-- Completion concept: a typed terminal result and verification precede committed physical-action success.
-- Failure concept: deterministic policy may retry within budget, request approved recovery, escalate, or create HITL.
-- Missing executable contract: no authoritative callable mission interface, concrete request/result schema, transition schema, or reconciliation operation signature is defined.
+- Classification: `EXECUTABLE_CONTRACT_AVAILABLE`
+- Operation: `mission.execute`
+- Request: closed `MissionExecuteRequest` with the common request envelope, `idempotency_key`, and an approved simulation-only structured line-side-supply goal.
+- Result: closed `MissionExecuteResult` with canonical mission status, logical result, checkpoint revision, outcome, and conditionally required error/HITL data.
+- Lifecycle: `created`, `ready`, `executing`, `reconciling`, `recovering`, `completed`, `failed`, and `escalated`, with only the transitions enumerated by the contract.
+- Completion: requires all required actions to be authoritatively successful and verification verdict `pass`; verification does not mutate mission state directly.
+- Failure/recovery: deterministic policy selects bounded retry, recovery, failure, or escalation. No Agent-selected physical outcome is accepted.
 
 ### 3.2 Navigation Skill
 
-- Classification: `PLANNING_CONTRACT_ONLY`
-- Request concept: robot identity, allowlisted named destination or route, speed profile, stable `action_id`, and finite timeout/deadline.
-- Result concept: execution state, arrival verification, diagnostic error, and retryability.
-- Failure/timeout concept: a timeout must not be interpreted as success or failure; the same action must be reconciled before retry or resume.
-- Ownership: the skill boundary accepts controlled navigation intent; a later Nav2 adapter owns local planning, controller behavior, recovery, and lifecycle.
-- Prohibition: no Agent-provided raw pose, path, trajectory, ROS shell, or controller command.
-- Missing executable contract: no authoritative request/result type, callable surface, terminal-state vocabulary, or action-status query is defined.
+- Classification: `EXECUTABLE_CONTRACT_AVAILABLE`
+- Operation: `navigation.execute`
+- Request: closed `NavigationExecuteRequest` with stable action/idempotency identity, bounded attempt and retry budget, robot identity, allowlisted `destination_id`, and `speed_profile_id`.
+- Result: closed `NavigationExecuteResult`; success requires `status=succeeded` and verified arrival at the requested destination.
+- Failure/timeout: known failure is typed; `DEPENDENCY_TIMEOUT` or `MODEL_TIMEOUT` requires `result=pending`, `status=unknown`, and reconciliation.
+- Ownership: no raw pose, path, trajectory, planner/controller parameter, ROS/Nav2 command, or lifecycle command is public contract input.
 
 ### 3.3 VLA Skill
 
-- Classification: `PLANNING_CONTRACT_ONLY`
-- Request concept: robot identity, task identity, policy/model version, synthetic observation references, approved workspace profile, and finite timeout.
-- Result concept: bounded pick/place outcome, verifier input references, policy latency, and failure taxonomy.
-- Failure/uncertainty concept: malformed, unavailable, timeout, model, execution, and uncertain outcomes must remain typed and must not be converted into asserted success.
-- Authorization boundary: the executor owns mission authorization and retry policy; the VLA skill may operate only within the approved semantic skill/workspace boundary.
-- Prohibition: no joint, motor, gripper, trajectory, ROS, MoveIt, or `ros2_control` command contract is introduced.
-- Missing executable contract: no authoritative request/result type, invocation interface, bounded action representation, or executable uncertainty/reconciliation surface is defined.
+- Classification: `EXECUTABLE_CONTRACT_AVAILABLE`
+- Operation: `vla.execute`
+- Request: closed `VLAExecuteRequest` for an approved bounded semantic task, policy version, immutable simulation observation references, and approved workspace profile.
+- Result: closed `VLAExecuteResult` with action state, logical result, `skill_outcome`, verifier references, and latency.
+- Failure/uncertainty: known failure is typed; pending/timeout remains `unknown` and `uncertain` until reconciliation.
+- Ownership: joint, motor, gripper, trajectory, raw action chunk, MoveIt, `ros2_control`, and hardware-controller fields are forbidden.
 
 ### 3.4 Verification
 
-- Classification: `PLANNING_CONTRACT_ONLY`
-- Request concept: verifier identity/version, expected part/place, synthetic observation references, and timestamp.
-- Result concept: `pass`, `fail`, or `uncertain`, with confidence and mismatch taxonomy.
-- Completion/recovery concept: deterministic acceptance thresholds govern completion; mismatch or uncertainty leads to recovery or escalation rather than an invented success.
-- Ownership: verification reports observed evidence and confidence but does not declare mission completion by itself.
-- Missing executable contract: no authoritative callable verifier interface, concrete result schema, acceptance threshold, or reconciliation binding is defined.
+- Classification: `EXECUTABLE_CONTRACT_AVAILABLE`
+- Operation: `verification.verify`
+- Request: closed `VerificationRequest` with action identity, verifier identity, exact expected `part_id`/`location_id`, immutable observation references, and `sim-exact-match-v1`.
+- Result: closed `VerificationResult` separating invocation `result` from business `verdict=pass|fail|uncertain`.
+- Determinism: valid exact match produces `pass`; valid mismatch produces `fail`; insufficient or ambiguous observation produces `uncertain`.
+- Completion: `uncertain != pass`; confidence is metadata and cannot override the rule; verification alone cannot commit mission completion.
 
-## 4. Non-executable deterministic fixture requirements
+## 4. Common executable semantics
 
-The following are constraint-level behaviors supported by the authoritative planning sources. They are not executable API definitions and may not be treated as sufficient input for `TASK-SIM-002`.
+Every operation uses closed, versioned envelopes. Required request identity and timing fields include `schema_version`, `mission_id`, `request_id`, `trace_id`, `timestamp`, `deadline_at`, `timeout_ms`, and `component_version`. Side-effecting operations additionally use stable `idempotency_key`; action-bound dispatch uses stable `action_id`, `attempt`, and `retry_budget_remaining`.
 
-| Boundary | Deterministic success | Deterministic failure | Timeout / ambiguous outcome | Reconciliation relationship |
-|---|---|---|---|---|
-| Mission Executor | Validate a known mission and record an auditable terminal transition after typed skill results and verification. | Reject invalid or unauthorized input; apply bounded deterministic recovery or HITL policy to typed failure. | Preserve `unknown`; do not infer an external action outcome. | Reconcile the same stable `action_id` before retry, resume, or escalation. |
-| Navigation Skill | For a known allowlisted destination, return a structured arrival result. | Return a typed diagnostic failure with retryability; never fabricate arrival. | Return an ambiguous/timeout outcome without classifying physical success. | Expose enough status for the executor to reconcile the same `action_id`; the executable operation remains undefined. |
-| VLA Skill | For known synthetic observation references and an approved semantic task/workspace, return a bounded structured outcome with verifier references. | Return a typed policy/model/execution failure; never emit direct actuator commands. | Return timeout or uncertain outcome without asserting task completion. | Route outcome evidence to verification and preserve ambiguity for executor policy; the executable operation remains undefined. |
-| Verification | For known synthetic evidence, deterministically produce a threshold-backed verification result. | Produce mismatch or fail with typed reason. | Produce `uncertain` when evidence cannot support pass/fail. | Send mismatch/uncertainty to deterministic recovery or escalation; verification alone cannot commit mission completion. |
+Every result includes correlation identity, `source_kind=mock`, `status`, and `result`. Non-success results require a typed `error` whose canonical retryability field is `error.retryable`. No required field, enum, state, authorization, retry value, or unknown public field may be defaulted or coerced.
 
-The common planning envelope calls for version, mission/request correlation, stable idempotency/action identifiers for side effects, timestamps/deadlines, result/error/retryability, component version, and optional evidence references. Concrete serialization, field types, allowed values, defaults, and compatibility tests remain undefined; this profile does not supply them.
-
-## 5. Contract gaps and fail-closed result
-
-The following unresolved gaps prevent an executable smoke path without inventing a public contract:
-
-1. `GAP-SIM-001`: no executable Mission Executor invocation, state-transition, completion, or failure contract exists.
-2. `GAP-SIM-002`: no executable Navigation Skill request/result or action-status reconciliation interface exists.
-3. `GAP-SIM-003`: no executable VLA Skill request/result, uncertainty, or bounded action interface exists.
-4. `GAP-SIM-004`: no executable Verification request/result schema or deterministic acceptance-threshold contract exists.
-5. `GAP-SIM-005`: timeout and reconciliation rules are conceptual, but callable status lookup, concrete lifecycle values, and compatibility behavior are not executable contracts.
-6. `GAP-SIM-006`: synthetic observation references are authorized conceptually, but their executable fixture shape and validation rules are undefined.
-
-Because these are required smoke-path semantics, the fail-closed task-specific decision is:
+Timeout is an ambiguous outcome, not success or failure. The action lifecycle permits:
 
 ```text
-SIM_CONTRACT_PROFILE_BLOCKED
+requested -> running|failed|unknown
+running -> succeeded|failed|unknown
+unknown -> reconciling
+reconciling -> reconciled(resolved_status=succeeded|failed|unknown)
 ```
 
-Resolving these gaps requires a separately reviewed and versioned contract-change task. This profile must not be reinterpreted as that contract.
+Direct `unknown -> succeeded` is forbidden. A success discovered after timeout is usable only after `action_status.get` returns matching immutable evidence and a durable reconciliation record resolves the same `mission_id`, `action_id`, and lookup `request_id` to `succeeded`.
 
-## 6. Physical, hardware, dataset, and training boundaries
+Retry is permitted only after reconciliation resolves `failed`, `error.retryable=true`, budget remains, mission/action/idempotency identity is stable, `request_id` is new, and `attempt` increments exactly once. Unknown or unreconciled actions cannot be retried.
 
-- Real robot access, real camera access, physical motion, gripper motion, physical teleoperation, physical E-stop execution, and physical state feedback are excluded.
-- myCobot 280 Pi, myAGV JN 2023, Intel RealSense D455, and Jetson Orin Nano remain candidates only. No target is selected or frozen here.
-- `SIM_FIXTURE_SET_V1 != Dataset V1`. Simulation fixtures are synthetic deterministic contract-test inputs, not collected demonstrations or the Week deliverable.
-- SmolVLA fine-tuning, optimizer execution, model training, training compute, paid compute provisioning, and Dataset V1 are not required or authorized.
-- The accepted historical `P0-004R` result remains `NO_GO`; its Week, Dataset V1, fine-tuning, and physical-motion authorization values remain false.
+## 5. Deterministic fixture profile for TASK-SIM-002
 
-## 7. Checks
+The accepted executable contract supports the following minimum bounded cases. This section describes required behavior; it does not provide fixtures or runtime code.
+
+| Boundary | Deterministic success | Deterministic failure | Timeout / ambiguity | Reconciliation / verification |
+|---|---|---|---|---|
+| Mission Executor | Known authorized simulation mission reaches `completed` only after action success and verification `pass`. | Invalid/unauthorized or terminal execution result remains typed and fail-closed. | Non-terminal `pending` preserves the reason no trustworthy result exists. | Unknown action drives `reconciling`; only authoritative resolution permits completion/recovery/failure/escalation. |
+| Navigation Skill | Known allowlisted destination returns `succeeded` with matching verified arrival. | Known diagnostic failure returns `failed` plus typed error. | Timeout returns `pending/unknown`; it never fabricates arrival. | Same-action status lookup and reconciliation precede retry or success processing. |
+| VLA Skill | Known semantic task plus valid synthetic observation returns bounded `succeeded` outcome and verifier refs. | Known policy/model/execution failure returns typed failure without actuator commands. | Timeout returns `pending/unknown` and `skill_outcome=uncertain`. | Same-action status lookup/reconciliation preserves ambiguity until evidence resolves it. |
+| Verification | Valid exact fixture match returns `pass`. | Valid predicate mismatch returns `fail`; operational failure remains distinct. | Insufficient/ambiguous observation returns `uncertain`. | Only `pass` may support mission completion; identical normalized inputs and fixture hashes yield the same verdict. |
+
+`SimulationFixtureManifest` and `SimulationObservationRef` bind `SIM_FIXTURE_SET_V1`, fixture identity/version, canonical observation content SHA-256, timestamp, and `source_kind=mock`. Fixture identity/version pairs must be unique, and consumers must recompute the content hash before use.
+
+## 6. Gap disposition
+
+The prior accepted profile recorded these six gaps. Their wording and identity remain preserved; the independently accepted C01 contract now supplies the executable resolution.
+
+| Gap | Historical exact finding | Current authoritative resolution |
+|---|---|---|
+| `GAP-SIM-001` | no executable Mission Executor invocation, state-transition, completion, or failure contract exists. | Contract Section 5 plus Mission request/result and transition schemas. |
+| `GAP-SIM-002` | no executable Navigation Skill request/result or action-status reconciliation interface exists. | Contract Sections 6 and 8 plus Navigation and status lookup schemas. |
+| `GAP-SIM-003` | no executable VLA Skill request/result, uncertainty, or bounded action interface exists. | Contract Sections 7 and 8 plus VLA and status lookup schemas. |
+| `GAP-SIM-004` | no executable Verification request/result schema or deterministic acceptance-threshold contract exists. | Contract Section 10 plus Verification schemas and `sim-exact-match-v1`. |
+| `GAP-SIM-005` | timeout and reconciliation rules are conceptual, but callable status lookup, concrete lifecycle values, and compatibility behavior are not executable contracts. | Contract Sections 4, 8, and 9 plus lifecycle, reconciliation, and retry schemas. |
+| `GAP-SIM-006` | synthetic observation references are authorized conceptually, but their executable fixture shape and validation rules are undefined. | Contract Section 11 plus observation-reference and fixture-manifest schemas. |
+
+Current unresolved contract gaps: none.
+
+## 7. Physical, hardware, dataset, training, and Week boundaries
+
+- Real robot/camera access, physical motion, gripper motion, physical teleoperation, physical E-stop execution, and physical state feedback remain excluded and unauthorized.
+- myCobot 280 Pi, myAGV JN 2023, Intel RealSense D455, and Jetson Orin Nano remain candidates only; this profile freezes none of them.
+- `SIM_FIXTURE_SET_V1 != Dataset V1`. Simulation fixtures are synthetic deterministic contract-test inputs, not demonstrations, collected data, or the existing Dataset V1 deliverable.
+- SmolVLA fine-tuning, optimizer execution, model training, training compute, and paid compute remain neither required nor authorized.
+- No `TASK-W*` identity or authorization is modified.
+- The accepted historical `P0-004R` result remains `NO_GO`; `TASK-W1-001`, `TASK-W1-002`, Dataset V1, fine-tuning, and physical motion authorization remain false.
+
+## 8. Checks
 
 | Check | Result | Basis |
 |---|---|---|
-| C01 Governing Simulation ADR frozen | `PASS` | `ADR-Simulation-Lane-v1.md` is `FROZEN`. |
-| C02 Simulation task mapping frozen | `PASS` | `simulation_task_mapping_v1.md` is `FROZEN`. |
-| C03 Required Context resolved | `PASS` | All ten required paths exist and are SHA-256 bound above. |
-| C04 Existing architecture located | `PASS` | `system_architecture_v1.md` defines the executor/skill/verification topology. |
-| C05 Mission execution boundary identified | `PASS` | Ownership and conceptual lifecycle are recorded in Section 3.1. |
-| C06 Navigation Skill boundary classified | `PASS` | Classified `PLANNING_CONTRACT_ONLY` in Section 3.2. |
-| C07 VLA Skill boundary classified | `PASS` | Classified `PLANNING_CONTRACT_ONLY` in Section 3.3. |
-| C08 Verification boundary classified | `PASS` | Classified `PLANNING_CONTRACT_ONLY` in Section 3.4. |
-| C09 Executable/planning status truthful | `PASS` | No executable API is claimed; the aggregate status is blocked. |
-| C10 Direct actuator ownership absent | `PASS` | No lower-level mission port or command contract was introduced. |
-| C11 Deterministic fixture semantics defined where supported | `PASS` | Only source-supported constraint-level behavior is recorded in Section 4. |
-| C12 Failure path defined where supported | `PASS` | Typed failure and fail-closed behavior are recorded without inventing schemas. |
-| C13 Timeout behavior defined where supported | `PASS` | Timeout preserves an ambiguous `unknown` outcome. |
-| C14 Reconciliation relationship defined where applicable | `PASS` | Same-`action_id` reconciliation before retry/resume/escalation is preserved. |
-| C15 Physical dependency absent | `PASS` | All physical/device dependencies are excluded. |
-| C16 Dataset V1 not aliased | `PASS` | `SIM_FIXTURE_SET_V1` is explicitly distinct from Dataset V1. |
-| C17 Training not required | `PASS` | No model training or training resource is required. |
-| C18 Week authorization unchanged | `PASS` | P0-004R authorization remains unchanged and false where recorded. |
-| C19 No existing contract silently rewritten | `PASS` | This profile remains non-executable and records gaps instead of filling them. |
-| C20 Evidence/profile/source bindings internally consistent | `PASS` | The companion evidence binds this profile and all required sources. |
+| C01 Governing Simulation ADR frozen | `PASS` | Governing ADR is `FROZEN`. |
+| C02 Simulation task mapping frozen | `PASS` | Mapping is `FROZEN` and orders SIM-001 before SIM-002 before SIM-GATE. |
+| C03 Required Context resolved | `PASS` | All thirteen exact Required Context paths exist and are SHA-256 bound. |
+| C04 Existing architecture located | `PASS` | Frozen executor/skill/verification topology is unchanged. |
+| C05 Mission execution boundary identified | `PASS` | `mission.execute` and its closed schemas/lifecycle are authoritative. |
+| C06 Navigation Skill boundary classified | `PASS` | Simulation-only executable contract and ownership boundary verified. |
+| C07 VLA Skill boundary classified | `PASS` | Bounded semantic contract and actuator prohibitions verified. |
+| C08 Verification boundary classified | `PASS` | Exact-match deterministic contract and schemas verified. |
+| C09 Executable/planning status truthful | `PASS` | Project plan stays planning-only; only accepted delegated Simulation Lane contract is executable. |
+| C10 Direct actuator ownership absent | `PASS` | Closed schemas and normative contract reject lower-level commands/ports. |
+| C11 Deterministic fixture semantics defined where supported | `PASS` | Section 5 profiles only contract-supported bounded behavior. |
+| C12 Failure path defined where supported | `PASS` | Typed errors and result/status consistency are defined. |
+| C13 Timeout behavior defined where supported | `PASS` | Both timeout categories require `pending/unknown` and reconciliation. |
+| C14 Reconciliation relationship defined where applicable | `PASS` | Status lookup, immutable evidence, legal transitions, and retry guards are defined. |
+| C15 Physical dependency absent | `PASS` | Contract, schema, and profile require mock/synthetic inputs only. |
+| C16 Dataset V1 not aliased | `PASS` | Fixture set identifier and explicit inequality are preserved. |
+| C17 Training not required | `PASS` | No training or fine-tuning is part of the profile. |
+| C18 Week authorization unchanged | `PASS` | P0-004R `NO_GO` and false authorization values are preserved. |
+| C19 No existing contract silently rewritten | `PASS` | The accepted versioned delegation is used without expanding its scope. |
+| C20 Evidence/profile/source bindings internally consistent | `PASS` | Companion evidence binds this profile and every Required Context source. |
 
-## 8. State separation
+## 9. Historical preservation and state separation
+
+The prior canonical revision remains recoverable in Git and immutable task history:
+
+```text
+Historical profile SHA-256: 43da41ade5cf53230afc46b3092b733611f0c5989f4e8769286c67aa4a171d7a
+Historical evidence SHA-256: 98ae08b1ba664f7be42551a84b112608409362be5615c78a57f256a935a86559
+Historical task-specific decision: SIM_CONTRACT_PROFILE_BLOCKED
+Historical independent review: ACCEPT
+```
+
+That `ACCEPT + BLOCKED` remains a trustworthy historical finding and never authorized `TASK-SIM-002`. Regenerating the canonical profile/evidence invalidates any prior acceptance binding to those old hashes. This re-evaluation requires a new independent review and separate post-review acceptance record.
 
 ```text
 TASK-SIM-001 implementation: complete
-Task-specific decision: SIM_CONTRACT_PROFILE_BLOCKED
+Task-specific decision: SIM_CONTRACT_PROFILE_READY
 Independent acceptance: pending
 TASK-SIM-002 authorized: false
 ```
 
-Implementation completion means the bounded assessment and evidence exist. It does not mean the contract is ready, independently accepted, or available for downstream execution. Even a future independent `ACCEPT` of this blocked result would only establish that the blocked assessment is trustworthy.
+`READY` means only that the accepted authoritative contract is sufficiently precise for a future bounded smoke implementation. It is not implementation completion, independent acceptance, downstream authorization, `SIM_GO`, or any physical/training/dataset/Week authorization.
