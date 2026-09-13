@@ -1,9 +1,9 @@
 {
   "task_id": "TASK-SIM-001",
   "implementation_complete": true,
-  "decision": "SIM_CONTRACT_PROFILE_BLOCKED",
-  "generation_timestamp": "2026-09-11T13:32:44Z",
-  "generation_git_head": "c8b98923ccbeb45f72ada6403eb404f0dcc50cb0",
+  "decision": "SIM_CONTRACT_PROFILE_READY",
+  "generation_timestamp": "2026-09-13T10:52:45Z",
+  "generation_git_head": "716f8d89d298155975b750ce538e506354026cc0",
   "worktree_state": {
     "pre_implementation": "CLEAN",
     "at_generation": "DIRTY",
@@ -28,7 +28,27 @@
   },
   "contract_plan": {
     "path": "docs/contracts/contract_plan.md",
-    "sha256": "aa7f9fe1477d650b3648c18d5df1fb3b0dabc6d06df6eff33e28dcdcc05e87d0"
+    "sha256": "4fd3a4916fa118fdbb8792681a8450157cefc0473f495e8523842e3b09b59cde",
+    "project_wide_status": "PLANNING_CONTRACT_ONLY",
+    "simulation_lane_delegation": true
+  },
+  "simulation_execution_contract": {
+    "path": "docs/contracts/simulation_execution_contract_v1.md",
+    "sha256": "0451e9abae4cee911d9468d11e68b8bbb0e3aff1a1a2d9cf104ed64264d28caa",
+    "status": "EXECUTABLE_FOR_SIMULATION_LANE_V1"
+  },
+  "simulation_execution_schema": {
+    "path": "docs/contracts/schemas/simulation_execution_contract_v1.schema.json",
+    "sha256": "112b1e2e0d1fefb03d7b353e8ed4d875b025fe342380d5ba1cbf050bcc7d944a",
+    "draft": "https://json-schema.org/draft/2020-12/schema"
+  },
+  "sim_c01_acceptance": {
+    "path": "results/reviews/SIM-C01_acceptance.json",
+    "sha256": "1aee7a19f24cf52da3a2c0b232872420aafe7f1e644ed5fb1a493a025c5ee2d5",
+    "review_decision": "ACCEPT",
+    "task_specific_decision": "SIM_CONTRACT_GAPS_RESOLVED",
+    "reviewed_commit": "0079940cee35362111d8cfd67dd0c14e135c27af",
+    "binding_status": "PASS"
   },
   "p0_004r_authorization": {
     "path": "results/phase0/P0-004R_vla_readiness.json",
@@ -36,19 +56,27 @@
   },
   "profile": {
     "path": "docs/simulation/simulation_contract_profile_v1.md",
-    "sha256": "43da41ade5cf53230afc46b3092b733611f0c5989f4e8769286c67aa4a171d7a"
+    "sha256": "24e9dbdbccb34e4799a43a7a3bbef5f5ebbb84d211aa9506cdae567c238645e1"
   },
   "boundary_classification": {
-    "mission_executor": "PLANNING_CONTRACT_ONLY",
-    "navigation_skill": "PLANNING_CONTRACT_ONLY",
-    "vla_skill": "PLANNING_CONTRACT_ONLY",
-    "verification": "PLANNING_CONTRACT_ONLY"
+    "mission_executor": "EXECUTABLE_CONTRACT_AVAILABLE",
+    "navigation_skill": "EXECUTABLE_CONTRACT_AVAILABLE",
+    "vla_skill": "EXECUTABLE_CONTRACT_AVAILABLE",
+    "verification": "EXECUTABLE_CONTRACT_AVAILABLE"
   },
   "executable_contract_status": {
-    "status": "NOT_AVAILABLE",
-    "contract_plan_status": "PLANNING_CONTRACT_ONLY",
-    "task_sim_002_contract_ready": false,
-    "reason": "The authoritative contract plan explicitly does not define executable APIs, and required request/result, lifecycle, timeout, and reconciliation surfaces remain non-executable."
+    "status": "AVAILABLE",
+    "scope": "SIMULATION_LANE_V1_ONLY",
+    "logical_operations": [
+      "mission.execute",
+      "navigation.execute",
+      "vla.execute",
+      "action_status.get",
+      "verification.verify"
+    ],
+    "task_sim_002_contract_ready": true,
+    "task_sim_002_authorized": false,
+    "reason": "The independently accepted C01 contract and closed schema define the bounded Simulation Lane request/result, lifecycle, timeout, reconciliation, retry, fixture, and verification semantics without changing frozen topology. Independent acceptance of this regenerated SIM-001 result is still pending."
   },
   "direct_actuator_contract_introduced": false,
   "physical_dependency_required": false,
@@ -58,192 +86,109 @@
   "fixture_profile": {
     "identifier": "SIM_FIXTURE_SET_V1",
     "dataset_v1_equivalent": false,
-    "status": "NON_EXECUTABLE_CONSTRAINT_PROFILE",
+    "status": "EXECUTABLE_CONTRACT_PROFILE_ONLY",
     "cases": [
       "deterministic_success",
       "deterministic_failure",
       "deterministic_timeout_or_unknown",
-      "reconciliation_or_blocked_completion",
-      "verification_pass_fail_or_uncertain"
+      "authoritative_status_reconciliation",
+      "deterministic_verification_pass_fail_or_uncertain"
     ],
     "implementation_provided": false
   },
-  "unresolved_contract_gaps": [
+  "lifecycle_semantics": {
+    "timeout_status": "unknown",
+    "timeout_result": "pending",
+    "status_lookup_operation": "action_status.get",
+    "direct_unknown_to_succeeded_allowed": false,
+    "authoritative_reconciliation_required": true,
+    "retry_requires_reconciled_failed_status": true,
+    "retry_is_bounded": true
+  },
+  "resolved_contract_gaps": [
     {
       "id": "GAP-SIM-001",
-      "boundary": "mission_executor",
-      "detail": "No executable invocation, state-transition, completion, failure, or reconciliation contract exists."
+      "historical_finding": "no executable Mission Executor invocation, state-transition, completion, or failure contract exists.",
+      "resolution": "Contract Section 5 plus Mission request/result and transition schemas."
     },
     {
       "id": "GAP-SIM-002",
-      "boundary": "navigation_skill",
-      "detail": "No executable request/result type, terminal-state vocabulary, callable surface, or action-status reconciliation interface exists."
+      "historical_finding": "no executable Navigation Skill request/result or action-status reconciliation interface exists.",
+      "resolution": "Contract Sections 6 and 8 plus Navigation and status lookup schemas."
     },
     {
       "id": "GAP-SIM-003",
-      "boundary": "vla_skill",
-      "detail": "No executable request/result type, invocation interface, bounded action representation, or uncertainty/reconciliation surface exists."
+      "historical_finding": "no executable VLA Skill request/result, uncertainty, or bounded action interface exists.",
+      "resolution": "Contract Sections 7 and 8 plus VLA and status lookup schemas."
     },
     {
       "id": "GAP-SIM-004",
-      "boundary": "verification",
-      "detail": "No executable request/result schema, callable verifier interface, deterministic threshold, or reconciliation binding exists."
+      "historical_finding": "no executable Verification request/result schema or deterministic acceptance-threshold contract exists.",
+      "resolution": "Contract Section 10 plus Verification schemas and sim-exact-match-v1."
     },
     {
       "id": "GAP-SIM-005",
-      "boundary": "cross_cutting",
-      "detail": "Timeout and reconciliation are conceptual; callable status lookup, concrete lifecycle values, and compatibility behavior are undefined."
+      "historical_finding": "timeout and reconciliation rules are conceptual, but callable status lookup, concrete lifecycle values, and compatibility behavior are not executable contracts.",
+      "resolution": "Contract Sections 4, 8, and 9 plus lifecycle, reconciliation, and retry schemas."
     },
     {
       "id": "GAP-SIM-006",
-      "boundary": "observation_fixture",
-      "detail": "Synthetic observation references are authorized conceptually, but their executable fixture shape and validation rules are undefined."
+      "historical_finding": "synthetic observation references are authorized conceptually, but their executable fixture shape and validation rules are undefined.",
+      "resolution": "Contract Section 11 plus observation-reference and fixture-manifest schemas."
     }
   ],
+  "unresolved_contract_gaps": [],
   "checks": [
-    {
-      "id": "C01",
-      "status": "PASS",
-      "detail": "The governing Simulation Lane ADR is FROZEN."
-    },
-    {
-      "id": "C02",
-      "status": "PASS",
-      "detail": "The Simulation task mapping is FROZEN."
-    },
-    {
-      "id": "C03",
-      "status": "PASS",
-      "detail": "All ten Required Context paths exist and are content-bound."
-    },
-    {
-      "id": "C04",
-      "status": "PASS",
-      "detail": "The existing executor, skill, and verification topology was located."
-    },
-    {
-      "id": "C05",
-      "status": "PASS",
-      "detail": "Mission execution ownership and conceptual lifecycle were identified."
-    },
-    {
-      "id": "C06",
-      "status": "PASS",
-      "detail": "Navigation Skill is classified PLANNING_CONTRACT_ONLY."
-    },
-    {
-      "id": "C07",
-      "status": "PASS",
-      "detail": "VLA Skill is classified PLANNING_CONTRACT_ONLY."
-    },
-    {
-      "id": "C08",
-      "status": "PASS",
-      "detail": "Verification is classified PLANNING_CONTRACT_ONLY."
-    },
-    {
-      "id": "C09",
-      "status": "PASS",
-      "detail": "The planning-only status is reported without claiming an executable API."
-    },
-    {
-      "id": "C10",
-      "status": "PASS",
-      "detail": "No direct actuator ownership or lower-level public port was introduced."
-    },
-    {
-      "id": "C11",
-      "status": "PASS",
-      "detail": "Constraint-level deterministic fixture behavior is defined only where supported."
-    },
-    {
-      "id": "C12",
-      "status": "PASS",
-      "detail": "Source-supported failure behavior is profiled without inventing schemas."
-    },
-    {
-      "id": "C13",
-      "status": "PASS",
-      "detail": "A timeout preserves an unknown outcome and does not imply success or failure."
-    },
-    {
-      "id": "C14",
-      "status": "PASS",
-      "detail": "Same-action_id reconciliation before retry, resume, or escalation is preserved."
-    },
-    {
-      "id": "C15",
-      "status": "PASS",
-      "detail": "No physical or device dependency is required."
-    },
-    {
-      "id": "C16",
-      "status": "PASS",
-      "detail": "SIM_FIXTURE_SET_V1 is explicitly not Dataset V1."
-    },
-    {
-      "id": "C17",
-      "status": "PASS",
-      "detail": "No training or fine-tuning is required or authorized."
-    },
-    {
-      "id": "C18",
-      "status": "PASS",
-      "detail": "Existing Week-task authorization remains unchanged."
-    },
-    {
-      "id": "C19",
-      "status": "PASS",
-      "detail": "Contract gaps are recorded fail-closed instead of silently rewritten."
-    },
-    {
-      "id": "C20",
-      "status": "PASS",
-      "detail": "Evidence, profile, and Required Context bindings are internally consistent."
-    }
+    {"id": "C01", "status": "PASS", "detail": "The governing Simulation Lane ADR is FROZEN."},
+    {"id": "C02", "status": "PASS", "detail": "The Simulation task mapping is FROZEN and preserves SIM-001 -> SIM-002 -> SIM-GATE."},
+    {"id": "C03", "status": "PASS", "detail": "All thirteen exact Required Context paths exist and are content-bound."},
+    {"id": "C04", "status": "PASS", "detail": "The existing executor, skill, and verification topology is unchanged."},
+    {"id": "C05", "status": "PASS", "detail": "mission.execute and its closed lifecycle schemas define the Mission Executor boundary."},
+    {"id": "C06", "status": "PASS", "detail": "Navigation Skill has a simulation-only executable semantic and structural contract."},
+    {"id": "C07", "status": "PASS", "detail": "VLA Skill has a bounded simulation-only contract that rejects actuator ownership."},
+    {"id": "C08", "status": "PASS", "detail": "Verification has an executable exact-match deterministic contract."},
+    {"id": "C09", "status": "PASS", "detail": "The project plan remains planning-only while its accepted Simulation Lane delegation is reported as executable."},
+    {"id": "C10", "status": "PASS", "detail": "No direct actuator ownership or lower-level public port was introduced."},
+    {"id": "C11", "status": "PASS", "detail": "The bounded deterministic fixture behavior is defined only from the accepted contract."},
+    {"id": "C12", "status": "PASS", "detail": "Typed failure behavior and result/status consistency are defined."},
+    {"id": "C13", "status": "PASS", "detail": "Both timeout categories preserve pending/unknown and require reconciliation."},
+    {"id": "C14", "status": "PASS", "detail": "Status lookup, immutable evidence, reconciliation, and bounded retry relationships are defined."},
+    {"id": "C15", "status": "PASS", "detail": "No physical or device dependency is required or authorized."},
+    {"id": "C16", "status": "PASS", "detail": "SIM_FIXTURE_SET_V1 is explicitly not Dataset V1."},
+    {"id": "C17", "status": "PASS", "detail": "No training or fine-tuning is required or authorized."},
+    {"id": "C18", "status": "PASS", "detail": "P0-004R and existing Week-task authorization remain unchanged."},
+    {"id": "C19", "status": "PASS", "detail": "The accepted versioned Simulation Lane delegation is used without silently rewriting another contract."},
+    {"id": "C20", "status": "PASS", "detail": "Evidence, profile, and all Required Context bindings are internally consistent."}
   ],
   "source_bindings": [
-    {
-      "path": "docs/architecture/adr/ADR-Simulation-Lane-v1.md",
-      "sha256": "1509577842464f48055f402f5a3f717efecaba77847ff4c70534d14086fb46e0"
-    },
-    {
-      "path": "context/simulation_task_mapping_v1.md",
-      "sha256": "c0cf1671d97f4cec768de1a2836b8ecdd89c7ceace947bab108ab549c11396b2"
-    },
-    {
-      "path": "docs/architecture/system_architecture_v1.md",
-      "sha256": "50e57f517cf613b5b8e26e31ec74965d03c729526b94f39d9423fa0a15371e3d"
-    },
-    {
-      "path": "docs/contracts/contract_plan.md",
-      "sha256": "aa7f9fe1477d650b3648c18d5df1fb3b0dabc6d06df6eff33e28dcdcc05e87d0"
-    },
-    {
-      "path": "docs/hardware/hardware_target_selection_status_v1.md",
-      "sha256": "fda8a33fe38fe1796f5d984d9b7a6c81dc4babe22e618f861375073043ad1109"
-    },
-    {
-      "path": "docs/architecture/adr/ADR-001-manipulator.md",
-      "sha256": "93c41a83e018adaecf5c482fba70ad32548bd940e98d5a391f459b2662873537"
-    },
-    {
-      "path": "docs/architecture/adr/ADR-002-amr.md",
-      "sha256": "4d56a32ac5e45fc9af169b3c591c518841067bc8f9544c496b2dabdbbe2727cf"
-    },
-    {
-      "path": "docs/architecture/adr/ADR-005-camera-observation.md",
-      "sha256": "2cb2e00d5271e6a2ba5b3401f16bfe4da7f44b9876451b98287ce48bbeb5d882"
-    },
-    {
-      "path": "docs/architecture/adr/ADR-010-deployment-topology.md",
-      "sha256": "018ec1b9e9e525bc70367ace55581ec04d6343c2571c1805169227c937eb0825"
-    },
-    {
-      "path": "results/phase0/P0-004R_vla_readiness.json",
-      "sha256": "f705896b9b6a48b08dde7401dfd3ca848d9fc46ac2711bd90fdd04d8b29f873d"
-    }
+    {"path": "docs/architecture/adr/ADR-Simulation-Lane-v1.md", "sha256": "1509577842464f48055f402f5a3f717efecaba77847ff4c70534d14086fb46e0"},
+    {"path": "context/simulation_task_mapping_v1.md", "sha256": "c0cf1671d97f4cec768de1a2836b8ecdd89c7ceace947bab108ab549c11396b2"},
+    {"path": "docs/architecture/system_architecture_v1.md", "sha256": "50e57f517cf613b5b8e26e31ec74965d03c729526b94f39d9423fa0a15371e3d"},
+    {"path": "docs/contracts/contract_plan.md", "sha256": "4fd3a4916fa118fdbb8792681a8450157cefc0473f495e8523842e3b09b59cde"},
+    {"path": "docs/contracts/simulation_execution_contract_v1.md", "sha256": "0451e9abae4cee911d9468d11e68b8bbb0e3aff1a1a2d9cf104ed64264d28caa"},
+    {"path": "docs/contracts/schemas/simulation_execution_contract_v1.schema.json", "sha256": "112b1e2e0d1fefb03d7b353e8ed4d875b025fe342380d5ba1cbf050bcc7d944a"},
+    {"path": "results/reviews/SIM-C01_acceptance.json", "sha256": "1aee7a19f24cf52da3a2c0b232872420aafe7f1e644ed5fb1a493a025c5ee2d5"},
+    {"path": "docs/hardware/hardware_target_selection_status_v1.md", "sha256": "fda8a33fe38fe1796f5d984d9b7a6c81dc4babe22e618f861375073043ad1109"},
+    {"path": "docs/architecture/adr/ADR-001-manipulator.md", "sha256": "93c41a83e018adaecf5c482fba70ad32548bd940e98d5a391f459b2662873537"},
+    {"path": "docs/architecture/adr/ADR-002-amr.md", "sha256": "4d56a32ac5e45fc9af169b3c591c518841067bc8f9544c496b2dabdbbe2727cf"},
+    {"path": "docs/architecture/adr/ADR-005-camera-observation.md", "sha256": "2cb2e00d5271e6a2ba5b3401f16bfe4da7f44b9876451b98287ce48bbeb5d882"},
+    {"path": "docs/architecture/adr/ADR-010-deployment-topology.md", "sha256": "018ec1b9e9e525bc70367ace55581ec04d6343c2571c1805169227c937eb0825"},
+    {"path": "results/phase0/P0-004R_vla_readiness.json", "sha256": "f705896b9b6a48b08dde7401dfd3ca848d9fc46ac2711bd90fdd04d8b29f873d"}
   ],
+  "historical_prior_revision": {
+    "task_specific_decision": "SIM_CONTRACT_PROFILE_BLOCKED",
+    "independent_review_decision": "ACCEPT",
+    "profile_sha256": "43da41ade5cf53230afc46b3092b733611f0c5989f4e8769286c67aa4a171d7a",
+    "evidence_sha256": "98ae08b1ba664f7be42551a84b112608409362be5615c78a57f256a935a86559",
+    "task_sim_002_authorized": false,
+    "preservation": "IMMUTABLE_HISTORY_AND_GIT"
+  },
+  "independent_acceptance": {
+    "status": "PENDING",
+    "prior_binding_applies_to_current_revision": false,
+    "new_review_required": true,
+    "new_post_review_acceptance_record_required": true
+  },
   "final_authorization_snapshot": {
     "p0_004r_final_gate": "NO_GO",
     "task_w1_001_authorized": false,
@@ -255,9 +200,11 @@
     "physical_teleoperation_authorized_by_task_sim_001": false,
     "physical_dataset_collection_authorized_by_task_sim_001": false,
     "physical_camera_dependency_required": false,
+    "hardware_target_frozen_by_task_sim_001": false,
     "task_sim_002_authorized": false,
+    "sim_go": false,
     "independent_acceptance": "PENDING"
   },
   "payload_hash_algorithm": "sha256(canonical JSON with sorted keys and compact separators, excluding payload_sha256)",
-  "payload_sha256": "f6ff8fc19f5c6dd77284081bd630e44dbdbce87649fb98f7bdaaae4ddc68e8dd"
+  "payload_sha256": "2d00ad019c33a53e4b3bf83cc0217666ca5efb89196a386645ff36c4c6a58b4e"
 }

@@ -1,0 +1,196 @@
+{
+  "task_id": "TASK-SIM-002",
+  "implementation_complete": true,
+  "decision": "SIM_SMOKE_READY",
+  "generation_timestamp": "2026-09-13T11:34:17Z",
+  "generation_git_head": "087703e437ec3608445a709cbfa435f5823b571c",
+  "worktree_state": {
+    "pre_implementation": "CLEAN",
+    "at_generation": "DIRTY",
+    "staged_changes": false,
+    "commit_performed": false,
+    "task_generated_paths": [
+      "src/simulation_runtime/__init__.py",
+      "src/simulation_runtime/smoke.py",
+      "scripts/run_simulation_smoke.py",
+      "tests/test_simulation_smoke.py",
+      "docs/simulation/simulation_smoke_runtime_v1.md",
+      "results/simulation/SIM-002_smoke_runtime.json"
+    ]
+  },
+  "sim_001_binding": {
+    "evidence_path": "results/simulation/SIM-001_contract_profile.json",
+    "evidence_sha256": "c7ea4be8b6e34bc5eff3ef15c728ac76cb34d280d5def3a73fdabb52c6ad642d",
+    "evidence_payload_sha256": "2d00ad019c33a53e4b3bf83cc0217666ca5efb89196a386645ff36c4c6a58b4e",
+    "profile_path": "docs/simulation/simulation_contract_profile_v1.md",
+    "profile_sha256": "24e9dbdbccb34e4799a43a7a3bbef5f5ebbb84d211aa9506cdae567c238645e1",
+    "acceptance_path": "results/reviews/SIM-001_acceptance.json",
+    "acceptance_sha256": "bf1fe8df30a73339fcdd90a5bbc3d0cf5963a0a02d538102e732054e175f5e53",
+    "reviewed_commit": "97bef9208b26c9fef577e97c26f76a125f220ed9",
+    "review_decision": "ACCEPT",
+    "task_specific_decision": "SIM_CONTRACT_PROFILE_READY",
+    "task_sim_002_authorized": true,
+    "binding_status": "PASS"
+  },
+  "smoke_entry_point": "scripts/run_simulation_smoke.py",
+  "smoke_entry_point_sha256": "8a23aac92fd41fcc9b64d029df9e64fb2584d196cdbc848d81004fdde31dfce8",
+  "implementation_module": {
+    "path": "src/simulation_runtime/smoke.py",
+    "sha256": "db682046baa092c36d9f1eca3bc720135a2f4ff9d969cbef90a659b567bea41a"
+  },
+  "focused_test": {
+    "path": "tests/test_simulation_smoke.py",
+    "sha256": "c9128b6e4f670d60c61bfca5b09344cd8c697dc80742196265dcd987ec6ddb93",
+    "command": "PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=src python3 -m pytest tests/test_simulation_smoke.py -q -p no:cacheprovider",
+    "passed": 11,
+    "failed": 0,
+    "status": "PASS"
+  },
+  "regression_test": {
+    "command": "PYTHONDONTWRITEBYTECODE=1 python3 -m pytest -q -p no:cacheprovider",
+    "passed": 169,
+    "failed": 0,
+    "status": "PASS"
+  },
+  "smoke_report": {
+    "path": "docs/simulation/simulation_smoke_runtime_v1.md",
+    "sha256": "c4b4d91849883d8f4197d1be0128dc18c81ef2da9bc17197431262e0c738a0f6"
+  },
+  "scenario_results": [
+    {
+      "scenario_id": "S01",
+      "name": "deterministic_success",
+      "status": "PASS",
+      "operations": [
+        "mission.execute",
+        "navigation.execute",
+        "vla.execute",
+        "verification.verify"
+      ],
+      "final_mission_status": "completed",
+      "verification_verdict": "pass",
+      "contract_messages_validated": 8,
+      "execution_bound_ms": 1000
+    },
+    {
+      "scenario_id": "S02",
+      "name": "deterministic_failure",
+      "status": "PASS",
+      "operation": "navigation.execute",
+      "observed_status": "failed",
+      "observed_result": "failure",
+      "error_category": "EXECUTION_FAILED",
+      "execution_bound_ms": 1000
+    },
+    {
+      "scenario_id": "S03",
+      "name": "bounded_timeout",
+      "status": "PASS",
+      "operation": "vla.execute",
+      "observed_status": "unknown",
+      "observed_result": "pending",
+      "error_category": "MODEL_TIMEOUT",
+      "virtual_no_result_at_bound": true,
+      "execution_bound_ms": 1000
+    },
+    {
+      "scenario_id": "S04",
+      "name": "unknown_then_authoritative_reconciliation",
+      "status": "PASS",
+      "operation": "action_status.get",
+      "initial_status": "unknown",
+      "state_sequence": [
+        "unknown",
+        "reconciling",
+        "reconciled"
+      ],
+      "resolved_status": "succeeded",
+      "direct_unknown_to_succeeded": false,
+      "authoritative_evidence_required": true,
+      "execution_bound_ms": 1000
+    }
+  ],
+  "boundedness": {
+    "all_scenarios_bounded": true,
+    "maximum_execution_bound_ms": 1000,
+    "virtual_timeout_used": true,
+    "sleep_used": false,
+    "unbounded_waits": false,
+    "retries_performed": 0,
+    "test_process_timeout_seconds": 5,
+    "status": "PASS"
+  },
+  "determinism": {
+    "repeated_runs_compared": 2,
+    "semantically_equal": true,
+    "canonical_output_sha256": "7a7aff1014a03c02f76cbdd1909ce52e717e096c6128c121ec3dd1bc8518479a",
+    "randomness_used": false,
+    "wall_clock_business_decisions": false,
+    "hidden_mutable_global_state": false,
+    "status": "PASS"
+  },
+  "physical_dependency": false,
+  "physical_motion_executed": false,
+  "physical_camera_dependency": false,
+  "physical_teleop_dependency": false,
+  "training_dependency": false,
+  "dataset_v1_created": false,
+  "week_authorization_modified": false,
+  "process_cleanup": {
+    "child_processes_started": 0,
+    "background_workers_started": 0,
+    "temporary_files_created": 0,
+    "cleanup_complete": true,
+    "status": "PASS"
+  },
+  "checks": [
+    {"id": "C01", "status": "PASS", "detail": "SIM-001 consumer eligibility and immutable acceptance bindings were independently reconstructed before implementation."},
+    {"id": "C02", "status": "PASS", "detail": "scripts/run_simulation_smoke.py exists and executes the bounded suite."},
+    {"id": "C03", "status": "PASS", "detail": "S01 returns contract-valid navigation/VLA success, verification pass, and completed mission."},
+    {"id": "C04", "status": "PASS", "detail": "S02 returns explicit typed failure and never success."},
+    {"id": "C05", "status": "PASS", "detail": "S03 models a deterministic no-result at a finite 1000 ms virtual bound as pending/unknown."},
+    {"id": "C06", "status": "PASS", "detail": "S04 requires matching status evidence and unknown -> reconciling -> reconciled; direct unknown -> succeeded is rejected."},
+    {"id": "C07", "status": "PASS", "detail": "Repeated normalized runs are equal with the same canonical output SHA-256."},
+    {"id": "C08", "status": "PASS", "detail": "Runtime has no physical robot or controller dependency."},
+    {"id": "C09", "status": "PASS", "detail": "Runtime uses synthetic source_kind=mock fixtures and no physical camera dependency."},
+    {"id": "C10", "status": "PASS", "detail": "No physical motion was executed or authorized."},
+    {"id": "C11", "status": "PASS", "detail": "No physical teleoperation dependency exists."},
+    {"id": "C12", "status": "PASS", "detail": "No model training, fine-tuning, optimizer, GPU, or remote compute dependency exists."},
+    {"id": "C13", "status": "PASS", "detail": "Only SIM_FIXTURE_SET_V1 contract fixtures are used; Dataset V1 was not created."},
+    {"id": "C14", "status": "PASS", "detail": "P0-004R and all Week-task authorization remain unchanged."},
+    {"id": "C15", "status": "PASS", "detail": "Only accepted logical operations and closed schema messages are used; no lower-level public port was introduced."},
+    {"id": "C16", "status": "PASS", "detail": "No worker, child process, temporary file, or other runtime resource remains after execution."},
+    {"id": "C17", "status": "PASS", "detail": "Focused smoke suite passed 11 tests."},
+    {"id": "C18", "status": "PASS", "detail": "Full regression passed 169 tests."},
+    {"id": "C19", "status": "PASS", "detail": "Evidence, implementation, report, predecessor, and Required Context hashes are internally consistent."},
+    {"id": "C20", "status": "PASS", "detail": "All mandatory checks pass, consistent with SIM_SMOKE_READY."}
+  ],
+  "source_bindings": [
+    {"path": "docs/architecture/adr/ADR-Simulation-Lane-v1.md", "sha256": "1509577842464f48055f402f5a3f717efecaba77847ff4c70534d14086fb46e0"},
+    {"path": "context/simulation_task_mapping_v1.md", "sha256": "c0cf1671d97f4cec768de1a2836b8ecdd89c7ceace947bab108ab549c11396b2"},
+    {"path": "docs/architecture/system_architecture_v1.md", "sha256": "50e57f517cf613b5b8e26e31ec74965d03c729526b94f39d9423fa0a15371e3d"},
+    {"path": "docs/contracts/contract_plan.md", "sha256": "4fd3a4916fa118fdbb8792681a8450157cefc0473f495e8523842e3b09b59cde"},
+    {"path": "results/phase0/P0-004R_vla_readiness.json", "sha256": "f705896b9b6a48b08dde7401dfd3ca848d9fc46ac2711bd90fdd04d8b29f873d"},
+    {"path": "docs/simulation/simulation_contract_profile_v1.md", "sha256": "24e9dbdbccb34e4799a43a7a3bbef5f5ebbb84d211aa9506cdae567c238645e1"},
+    {"path": "results/simulation/SIM-001_contract_profile.json", "sha256": "c7ea4be8b6e34bc5eff3ef15c728ac76cb34d280d5def3a73fdabb52c6ad642d"},
+    {"path": "results/reviews/SIM-001_acceptance.json", "sha256": "bf1fe8df30a73339fcdd90a5bbc3d0cf5963a0a02d538102e732054e175f5e53"}
+  ],
+  "authorization_snapshot": {
+    "sim_001_accepted": true,
+    "task_sim_002_implementation_authorized": true,
+    "task_sim_gate_readiness_eligible": false,
+    "sim_go": false,
+    "p0_004r_final_gate": "NO_GO",
+    "task_w1_001_authorized": false,
+    "task_w1_002_authorized": false,
+    "dataset_v1_authorized": false,
+    "smolvla_fine_tuning_authorized": false,
+    "physical_motion_authorized": false,
+    "physical_camera_execution_authorized": false,
+    "physical_teleoperation_authorized": false,
+    "hardware_target_frozen": false,
+    "independent_acceptance": "PENDING"
+  },
+  "payload_hash_algorithm": "sha256(canonical JSON with sorted keys and compact separators, excluding payload_sha256)",
+  "payload_sha256": "9736283612137e4cc27b86a55b06d32c2d5a4a160e56c3bde828bfa1fe26b22c"
+}
