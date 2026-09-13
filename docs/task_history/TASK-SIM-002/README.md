@@ -13,6 +13,7 @@
 | 순서 | 유형 | 결과 | 핵심 내용 | 상세 기록 |
 |---:|---|---|---|---|
 | 01 | Implementation | COMPLETE / REVIEW PENDING | 네 bounded deterministic scenario와 evidence 구현 | `01_implementation.md` |
+| 02 | Review | ACCEPT | 계약, lifecycle, isolation, evidence 및 전체 regression 검증 | `02_review.md` |
 
 ## 3. 주요 설계 / 문제 해결 포인트
 
@@ -30,16 +31,18 @@
 - Deterministic canonical output SHA-256: `7a7aff1014a03c02f76cbdd1909ce52e717e096c6128c121ec3dd1bc8518479a`
 - Evidence: `../../../results/simulation/SIM-002_smoke_runtime.json`
 - Evidence SHA-256: `0529b8a093426316f41abf0ba2ad0cdfd3400720fe1fdba2129b131f6f4cb9ce`
-- Independent review: `PENDING`
+- Independent review: `ACCEPT`
 
 ## 5. 최종 상태
 
-`TASK-SIM-002 implementation complete; independent review pending`
+`ACCEPT TASK-SIM-002`
 
 Task-specific decision: `SIM_SMOKE_READY`
 
 `TASK-SIM-GATE readiness eligibility = false`
 
+별도 post-review acceptance binding은 아직 `PENDING`이다.
+
 ## 6. 포트폴리오 요약
 
-Accepted Simulation Lane contract가 physical hardware 없이 실행 가능함을 네 deterministic scenario로 증명했다. Runtime은 closed schema와 cross-message correlation을 직접 검사하며 timeout을 `pending/unknown`으로 보존한다. Ambiguous outcome은 matching status lookup과 immutable reconciliation evidence 없이는 success로 처리되지 않는다. 실제 sleep, network, child process, physical device, Dataset V1, training을 사용하지 않아 반복 실행이 canonical byte-equivalent하다. Independent acceptance 전까지 gate eligibility는 false로 유지된다.
+Accepted Simulation Lane contract가 physical hardware 없이 실행 가능함을 네 deterministic scenario로 증명했다. Runtime은 closed schema와 cross-message correlation을 직접 검사하며 timeout을 `pending/unknown`으로 보존한다. Ambiguous outcome은 matching status lookup과 immutable reconciliation evidence 없이는 success로 처리되지 않는다. 독립 검토에서 focused `11 passed`, full regression `169 passed`, source/evidence hash와 isolation 경계를 재검증해 `ACCEPT`했다. 별도 post-review acceptance binding 전까지 gate eligibility는 false로 유지된다.
