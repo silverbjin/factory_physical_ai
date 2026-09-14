@@ -40,8 +40,12 @@ This gate reconstructs Simulation Lane readiness from canonical SIM-001/SIM-002 
 
 - Independent review: `ACCEPT`
 - Task-specific decision: `SIM_SMOKE_READY`
-- Reviewed commit: `6abd9fc1158cd9fd0a02d2a496557fd74a16390b`
-- Canonical evidence, report, entry point, runtime, and test hashes match both their acceptance bindings and exact `reviewed_commit` Git blobs: `PASS`
+- Canonical review anchor: Git path-introduction commit `8f915f2899ea238003ba5321a44c8f1bfae5662c`
+- Anchored review-record blob SHA-256: `c54655d061c674077e8af539433549d71ddb0551fc7a1109503b2513fb6e7864`
+- Independently reviewed commit: `6abd9fc1158cd9fd0a02d2a496557fd74a16390b`, parsed from that historical Git blob
+- Acceptance introduction commit: `6503618c83a51714a4ad948f58917832e8bbc4e2`, a strict descendant of the review anchor
+- Acceptance `reviewed_commit` exactly matches the independent review target: `PASS`
+- Each expected canonical path for evidence, report, entry point, runtime, and test is exact; its current SHA-256 and the Git blob SHA-256 at the independent review commit both equal the accepted SHA-256: `PASS`
 - Payload and source bindings: `PASS`
 - Binding to current accepted SIM-001 revision: `PASS`
 
@@ -65,7 +69,11 @@ All mandatory `C01`–`C20` predicates pass. The verifier reconstructs them from
 
 Material checks include frozen ADR/mapping hashes, both independent acceptance records, READY decisions, immutable evidence/report/profile bindings, the SIM-002-to-SIM-001 relationship, semantic smoke boundedness, physical/camera isolation, P0 Week booleans, Dataset/training separation, preserved executor/skill/verification boundaries, absence of a direct actuator contract, historical P0 preservation, and final decision reconstruction.
 
-Acceptance-bound implementation artifacts are checked against three independent values: the acceptance SHA-256, the current canonical file, and the exact blob stored at the independently reviewed commit. Runtime operation identifiers extracted from the Python AST must equal the frozen logical-operation allowlist; an added lower-level or direct-actuator operation therefore fails C18 even if an acceptance hash is rewritten.
+The acceptance record supplies no provenance root. The verifier fixes the canonical review path, independently locates its single Git path-introduction commit, reads and hashes that historical blob, and derives the reviewed implementation commit from it. It requires strict `reviewed implementation -> review anchor -> acceptance introduction` ancestry, exact equality between the anchored blob and current canonical review record, and equality between anchored values and acceptance binding fields. It then checks every reviewed SIM-002 artifact against its fixed canonical path, current canonical SHA-256, accepted SHA-256, and Git blob SHA-256 at the independently derived implementation commit.
+
+The accepted SIM-002 runtime has no operation dispatcher or handler registry. Its existing bounded public execution surface is the exported `validate_contract_message` request validator, which loads the canonical closed executable-contract JSON Schema into `Draft202012Validator`. The Gate proves that wiring, requires the schema operation enum and every operation-specific request/result binding to equal exactly `mission.execute`, `navigation.execute`, `vla.execute`, `action_status.get`, and `verification.verify`, and closes the package exports/public runtime callables so no alternate public dispatcher bypasses the validator.
+
+Operation authorization therefore does not depend on discovering arbitrary Python assignment forms. `actuator.execute`, `joint.execute`, arbitrary unknown values, and dynamically supplied unknown values are rejected by the schema-derived public operation surface. Source-token checks remain supplemental defense in depth only.
 
 ## 6. Negative / Tampering Validation
 
@@ -80,8 +88,16 @@ Focused tests cover all required fail-closed cases:
 - Dataset V1 aliasing;
 - physical-motion authorization changed to true;
 - a direct actuator contract marker;
-- an unreviewed `actuator.execute` runtime operation accompanied by a rewritten acceptance hash;
-- an unknown logical operation outside the frozen operation allowlist;
+- an unreviewed operation-looking source marker accompanied by a rewritten acceptance hash, rejected by provenance without treating unused syntax as an authorization input;
+- the exact combined attack: a separately committed concatenated direct-actuator operation plus rewritten acceptance commit/hash while the independent review record remains bound to the original commit;
+- the B04 coordinated rewrite of current review record, acceptance reviewed commit/runtime SHA/review-record SHA, and a separately committed runtime while the historical review anchor remains intact;
+- current review-record drift, acceptance review-record SHA rewrite, and canonical review-path substitution;
+- missing or ambiguous review anchors, non-ancestor reviewed commits, and acceptance history that does not follow the review anchor;
+- canonical-path substitution and reviewed-Git-blob mismatch for each of the five reviewed SIM-002 artifacts;
+- `actuator.execute`, `joint.execute`, arbitrary unknown, and dynamically supplied unknown public requests;
+- a sixth operation or a missing frozen operation in the schema-backed runtime operation surface;
+- an alternate top-level schema branch that would accept a direct-actuator operation while leaving the frozen enum untouched;
+- an alternate public runtime dispatcher;
 - malformed P0 authorization strings, integers, and null values, which remain conservative JSON booleans in output;
 - forged `SIM_GO` with a valid recomputed payload hash.
 
@@ -92,8 +108,8 @@ Every tampered case produces `SIM_NO_GO` and keeps effective simulation-lane aut
 | Validation | Result |
 |---|---|
 | Canonical C01–C20 reconstruction | `20 PASS`, no blockers |
-| Focused gate tests | `19 passed` |
-| Full regression | `188 passed` |
+| Focused gate tests | `34 passed` |
+| Full regression | `203 passed` |
 | Static Python compile | `PASS` |
 | Required predecessor/source hashes | `PASS` |
 | `git diff --check` | `PASS` |

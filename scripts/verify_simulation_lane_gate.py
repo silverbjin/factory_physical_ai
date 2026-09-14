@@ -79,6 +79,49 @@ EXPECTED_SIM_002_SOURCE_PATHS = {
     "results/simulation/SIM-001_contract_profile.json",
     "results/reviews/SIM-001_acceptance.json",
 }
+SIM_002_REVIEW_RECORD_PATH = "docs/task_history/TASK-SIM-002/02_review.md"
+SIM_002_ACCEPTANCE_PATH = "results/reviews/SIM-002_acceptance.json"
+EXPECTED_SIM_002_REVIEWED_ARTIFACTS = (
+    ("evidence_path", "evidence_sha256", "results/simulation/SIM-002_smoke_runtime.json"),
+    ("smoke_report_path", "smoke_report_sha256", "docs/simulation/simulation_smoke_runtime_v1.md"),
+    ("smoke_entry_point_path", "smoke_entry_point_sha256", "scripts/run_simulation_smoke.py"),
+    ("runtime_module_path", "runtime_module_sha256", "src/simulation_runtime/smoke.py"),
+    ("focused_test_path", "focused_test_sha256", "tests/test_simulation_smoke.py"),
+)
+EXECUTION_SCHEMA_PATH = "docs/contracts/schemas/simulation_execution_contract_v1.schema.json"
+SIM_002_RUNTIME_INIT_PATH = "src/simulation_runtime/__init__.py"
+EXPECTED_RUNTIME_EXPORTS = {
+    "ContractViolation",
+    "canonical_sha256",
+    "run_smoke_suite",
+    "validate_contract_message",
+}
+EXPECTED_RUNTIME_PUBLIC_FUNCTIONS = {
+    "canonical_sha256",
+    "run_smoke_suite",
+    "validate_contract_message",
+}
+EXPECTED_OPERATION_DEFINITIONS = {
+    "MissionExecuteRequest": "mission.execute",
+    "MissionExecuteResult": "mission.execute",
+    "NavigationExecuteRequest": "navigation.execute",
+    "NavigationExecuteResult": "navigation.execute",
+    "VLAExecuteRequest": "vla.execute",
+    "VLAExecuteResult": "vla.execute",
+    "ActionStatusGetRequest": "action_status.get",
+    "ActionStatusGetResult": "action_status.get",
+    "VerificationRequest": "verification.verify",
+    "VerificationResult": "verification.verify",
+}
+EXPECTED_NON_OPERATION_DEFINITIONS = {
+    "SimulationObservationRef",
+    "SimulationFixtureManifest",
+    "MissionTransition",
+    "ActionTransition",
+    "ReconciliationRecord",
+    "RetryAuthorization",
+}
+EXPECTED_COMMON_OPERATION_ENVELOPES = {"CommonRequestEnvelope", "CommonResultEnvelope"}
 
 
 def canonical_payload_sha256(document: Mapping[str, Any]) -> str:
@@ -180,8 +223,8 @@ def _commit_exists(git_root: Path, commit: object) -> bool:
     return completed.returncode == 0
 
 
-def _git_blob_sha256(git_root: Path, commit: object, relative: object) -> str | None:
-    """Return the exact reviewed Git blob hash, rejecting ambiguous paths."""
+def _git_blob(git_root: Path, commit: object, relative: object) -> bytes | None:
+    """Read an exact Git blob while rejecting ambiguous commits and paths."""
 
     if not isinstance(commit, str) or len(commit) != 40 or not isinstance(relative, str):
         return None
@@ -200,7 +243,56 @@ def _git_blob_sha256(git_root: Path, commit: object, relative: object) -> str | 
         return None
     if completed.returncode != 0:
         return None
-    return hashlib.sha256(completed.stdout).hexdigest()
+    return completed.stdout
+
+
+def _git_blob_sha256(git_root: Path, commit: object, relative: object) -> str | None:
+    blob = _git_blob(git_root, commit, relative)
+    return hashlib.sha256(blob).hexdigest() if blob is not None else None
+
+
+def _git_path_introduction_commits(git_root: Path, relative: str) -> list[str] | None:
+    """Locate every Git commit that independently added a canonical path."""
+
+    try:
+        completed = subprocess.run(
+            ["git", "log", "--all", "--format=%H", "--diff-filter=A", "--", relative],
+            cwd=git_root,
+            check=False,
+            capture_output=True,
+            text=True,
+            timeout=5,
+        )
+    except (OSError, subprocess.TimeoutExpired):
+        return None
+    if completed.returncode != 0:
+        return None
+    commits = [line.strip() for line in completed.stdout.splitlines() if line.strip()]
+    if any(not re.fullmatch(r"[0-9a-f]{40}", commit) for commit in commits):
+        return None
+    return list(dict.fromkeys(commits))
+
+
+def _git_is_strict_ancestor(git_root: Path, ancestor: object, descendant: object) -> bool:
+    if (
+        not isinstance(ancestor, str)
+        or not isinstance(descendant, str)
+        or ancestor == descendant
+        or not re.fullmatch(r"[0-9a-f]{40}", ancestor)
+        or not re.fullmatch(r"[0-9a-f]{40}", descendant)
+    ):
+        return False
+    try:
+        completed = subprocess.run(
+            ["git", "merge-base", "--is-ancestor", ancestor, descendant],
+            cwd=git_root,
+            check=False,
+            capture_output=True,
+            timeout=5,
+        )
+    except (OSError, subprocess.TimeoutExpired):
+        return False
+    return completed.returncode == 0
 
 
 def _reviewed_file_binding_matches(
@@ -220,22 +312,186 @@ def _reviewed_file_binding_matches(
     return _git_blob_sha256(git_root, reviewed_commit, relative) == expected
 
 
-def _runtime_operations_are_allowlisted(runtime_text: str) -> bool:
-    """Reject operation-like identifiers outside the frozen logical operations."""
+def _schema_operation_surface(schema: Mapping[str, Any] | None) -> set[str] | None:
+    """Return the closed executable operation set proven by the accepted schema."""
+
+    definitions = _dig(schema, "$defs")
+    enum = _dig(definitions, "Operation", "enum")
+    if (
+        not isinstance(definitions, Mapping)
+        or not isinstance(enum, list)
+        or any(not isinstance(item, str) for item in enum)
+        or len(enum) != len(set(enum))
+        or set(enum) != EXPECTED_OPERATIONS
+    ):
+        return None
+    for definition, operation in EXPECTED_OPERATION_DEFINITIONS.items():
+        if _dig(definitions, definition, "properties", "operation", "const") != operation:
+            return None
+    top_level_refs = _dig(schema, "oneOf")
+    if not isinstance(top_level_refs, list):
+        return None
+    if any(not isinstance(item, Mapping) or set(item) != {"$ref"} for item in top_level_refs):
+        return None
+    refs = {item["$ref"] for item in top_level_refs if isinstance(item.get("$ref"), str)}
+    expected_refs = {
+        f"#/$defs/{name}"
+        for name in set(EXPECTED_OPERATION_DEFINITIONS) | EXPECTED_NON_OPERATION_DEFINITIONS
+    }
+    if len(refs) != len(top_level_refs) or refs != expected_refs:
+        return None
+    operation_bearing_definitions = {
+        name
+        for name, definition in definitions.items()
+        if isinstance(definition, Mapping)
+        and isinstance(_dig(definition, "properties", "operation"), Mapping)
+    }
+    if operation_bearing_definitions != (
+        set(EXPECTED_OPERATION_DEFINITIONS) | EXPECTED_COMMON_OPERATION_ENVELOPES
+    ):
+        return None
+    for envelope in EXPECTED_COMMON_OPERATION_ENVELOPES:
+        if _dig(definitions, envelope, "properties", "operation", "$ref") != "#/$defs/Operation":
+            return None
+    for name, definition in definitions.items():
+        if not isinstance(definition, Mapping):
+            continue
+        required = definition.get("required", [])
+        if isinstance(required, list) and "operation" in required and name not in operation_bearing_definitions:
+            return None
+    return set(enum)
+
+
+def _request_operation_is_allowed(
+    schema: Mapping[str, Any] | None,
+    request: object,
+) -> bool:
+    """Evaluate an invocation against the schema-derived runtime operation surface."""
+
+    surface = _schema_operation_surface(schema)
+    return (
+        surface == EXPECTED_OPERATIONS
+        and isinstance(request, Mapping)
+        and isinstance(request.get("operation"), str)
+        and request["operation"] in surface
+    )
+
+
+def _expression_matches(expression: ast.AST | None, source: str) -> bool:
+    if expression is None:
+        return False
+    expected = ast.parse(source, mode="eval").body
+    return ast.dump(expression, include_attributes=False) == ast.dump(expected, include_attributes=False)
+
+
+def _runtime_uses_schema_validator(runtime_text: str) -> bool:
+    """Prove the reviewed runtime's sole public request validator uses the closed schema."""
 
     try:
         tree = ast.parse(runtime_text)
     except (SyntaxError, ValueError):
         return False
-    operation_pattern = re.compile(r"^[a-z][a-z0-9_]*(?:\.[a-z][a-z0-9_]*)+$")
-    operations = {
-        node.value
-        for node in ast.walk(tree)
-        if isinstance(node, ast.Constant)
-        and isinstance(node.value, str)
-        and operation_pattern.fullmatch(node.value)
+    top_level_assignments: dict[str, ast.AST] = {}
+    functions: dict[str, ast.FunctionDef | ast.AsyncFunctionDef] = {}
+    imported_validator = False
+    for node in tree.body:
+        if isinstance(node, ast.ImportFrom) and node.module == "jsonschema":
+            imported_validator = any(alias.name == "Draft202012Validator" for alias in node.names)
+        elif isinstance(node, ast.Assign) and len(node.targets) == 1 and isinstance(node.targets[0], ast.Name):
+            top_level_assignments[node.targets[0].id] = node.value
+        elif isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+            functions[node.name] = node
+
+    schema_path_ok = _expression_matches(
+        top_level_assignments.get("SCHEMA_PATH"),
+        'ROOT / "docs/contracts/schemas/simulation_execution_contract_v1.schema.json"',
+    )
+    schema_load = top_level_assignments.get("SCHEMA")
+    schema_load_ok = (
+        isinstance(schema_load, ast.Call)
+        and isinstance(schema_load.func, ast.Attribute)
+        and isinstance(schema_load.func.value, ast.Name)
+        and schema_load.func.value.id == "json"
+        and schema_load.func.attr == "loads"
+        and len(schema_load.args) == 1
+        and _expression_matches(schema_load.args[0], 'SCHEMA_PATH.read_text(encoding="utf-8")')
+    )
+    validator = top_level_assignments.get("VALIDATOR")
+    validator_ok = (
+        isinstance(validator, ast.Call)
+        and isinstance(validator.func, ast.Name)
+        and validator.func.id == "Draft202012Validator"
+        and bool(validator.args)
+        and isinstance(validator.args[0], ast.Name)
+        and validator.args[0].id == "SCHEMA"
+    )
+    validate_function = functions.get("validate_contract_message")
+    if validate_function is None:
+        return False
+    validator_calls = [
+        node
+        for node in ast.walk(validate_function)
+        if isinstance(node, ast.Call)
+        and isinstance(node.func, ast.Attribute)
+        and isinstance(node.func.value, ast.Name)
+        and node.func.value.id == "VALIDATOR"
+        and node.func.attr == "iter_errors"
+        and len(node.args) == 1
+        and isinstance(node.args[0], ast.Name)
+        and node.args[0].id == "message"
+    ]
+    contract_raises = [
+        node
+        for node in ast.walk(validate_function)
+        if isinstance(node, ast.Raise)
+        and isinstance(node.exc, ast.Call)
+        and isinstance(node.exc.func, ast.Name)
+        and node.exc.func.id == "ContractViolation"
+    ]
+    return all((imported_validator, schema_path_ok, schema_load_ok, validator_ok, validator_calls, contract_raises))
+
+
+def _runtime_public_surface_is_closed(runtime_text: str, init_text: str) -> bool:
+    """Reject any alternate public runtime callable outside the reviewed surface."""
+
+    try:
+        runtime_tree = ast.parse(runtime_text)
+        init_tree = ast.parse(init_text)
+    except (SyntaxError, ValueError):
+        return False
+    public_functions = {
+        node.name
+        for node in runtime_tree.body
+        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)) and not node.name.startswith("_")
     }
-    return bool(operations) and operations == EXPECTED_OPERATIONS
+    public_classes = {
+        node.name
+        for node in runtime_tree.body
+        if isinstance(node, ast.ClassDef) and not node.name.startswith("_")
+    }
+    imported_exports: set[str] | None = None
+    declared_exports: set[str] | None = None
+    for node in init_tree.body:
+        if isinstance(node, ast.ImportFrom) and node.level == 1 and node.module == "smoke":
+            imported_exports = {alias.asname or alias.name for alias in node.names}
+        elif (
+            isinstance(node, ast.Assign)
+            and len(node.targets) == 1
+            and isinstance(node.targets[0], ast.Name)
+            and node.targets[0].id == "__all__"
+            and isinstance(node.value, (ast.Tuple, ast.List, ast.Set))
+        ):
+            values = [item.value for item in node.value.elts if isinstance(item, ast.Constant)]
+            if len(values) == len(node.value.elts) and all(isinstance(item, str) for item in values):
+                declared_exports = set(values)
+    return all(
+        (
+            public_functions == EXPECTED_RUNTIME_PUBLIC_FUNCTIONS,
+            public_classes == {"ContractViolation"},
+            imported_exports == EXPECTED_RUNTIME_EXPORTS,
+            declared_exports == EXPECTED_RUNTIME_EXPORTS,
+        )
+    )
 
 
 def _conservative_bool(value: object) -> bool:
@@ -249,7 +505,11 @@ def _review_record_matches(
     acceptance: Mapping[str, Any] | None,
     *,
     task_decision: str,
+    expected_path: str | None = None,
+    bind_reviewed_commit: bool = False,
 ) -> bool:
+    if expected_path is not None and _dig(acceptance, "review_record_path") != expected_path:
+        return False
     if not _file_binding_matches(root, acceptance, "review_record_path", "review_record_sha256"):
         return False
     relative = _dig(acceptance, "review_record_path")
@@ -257,10 +517,107 @@ def _review_record_matches(
         text = (root / relative).read_text(encoding="utf-8")
     except (OSError, UnicodeError, TypeError):
         return False
-    return (
+    semantic_match = (
         "Recommendation: `ACCEPT`" in text
         and task_decision in text
     )
+    if not semantic_match or not bind_reviewed_commit:
+        return semantic_match
+    matches = re.findall(
+        r"^- 검토 대상 commit: `([0-9a-f]{40})`\s*$",
+        text,
+        flags=re.MULTILINE,
+    )
+    return len(matches) == 1 and matches[0] == _dig(acceptance, "reviewed_commit")
+
+
+def _sim_002_review_anchor(git_root: Path) -> dict[str, str] | None:
+    """Derive the SIM-002 review root exclusively from immutable Git history."""
+
+    review_introductions = _git_path_introduction_commits(git_root, SIM_002_REVIEW_RECORD_PATH)
+    acceptance_introductions = _git_path_introduction_commits(git_root, SIM_002_ACCEPTANCE_PATH)
+    if (
+        review_introductions is None
+        or acceptance_introductions is None
+        or len(review_introductions) != 1
+        or len(acceptance_introductions) != 1
+    ):
+        return None
+    anchor_commit = review_introductions[0]
+    acceptance_commit = acceptance_introductions[0]
+    review_blob = _git_blob(git_root, anchor_commit, SIM_002_REVIEW_RECORD_PATH)
+    if review_blob is None:
+        return None
+    try:
+        text = review_blob.decode("utf-8")
+    except UnicodeError:
+        return None
+    if "Recommendation: `ACCEPT`" not in text or "SIM_SMOKE_READY" not in text:
+        return None
+    matches = re.findall(
+        r"^- 검토 대상 commit: `([0-9a-f]{40})`\s*$",
+        text,
+        flags=re.MULTILINE,
+    )
+    if len(matches) != 1:
+        return None
+    reviewed_commit = matches[0]
+    if not _git_is_strict_ancestor(git_root, reviewed_commit, anchor_commit):
+        return None
+    if not _git_is_strict_ancestor(git_root, anchor_commit, acceptance_commit):
+        return None
+    return {
+        "anchor_commit": anchor_commit,
+        "anchor_sha256": hashlib.sha256(review_blob).hexdigest(),
+        "acceptance_commit": acceptance_commit,
+        "reviewed_commit": reviewed_commit,
+    }
+
+
+def _sim_002_review_binding_matches(
+    root: Path,
+    acceptance: Mapping[str, Any] | None,
+    anchor: Mapping[str, str] | None,
+) -> bool:
+    """Bind current review/acceptance files to the independently derived anchor."""
+
+    if not isinstance(acceptance, Mapping) or not isinstance(anchor, Mapping):
+        return False
+    if acceptance.get("review_record_path") != SIM_002_REVIEW_RECORD_PATH:
+        return False
+    current_review = root / SIM_002_REVIEW_RECORD_PATH
+    if not current_review.is_file() or _sha256(current_review) != anchor.get("anchor_sha256"):
+        return False
+    return (
+        acceptance.get("review_record_sha256") == anchor.get("anchor_sha256")
+        and acceptance.get("reviewed_commit") == anchor.get("reviewed_commit")
+    )
+
+
+def _sim_002_reviewed_artifacts_match(
+    root: Path,
+    git_root: Path,
+    acceptance: Mapping[str, Any] | None,
+    reviewed_commit: str | None,
+) -> bool:
+    """Bind each canonical SIM-002 artifact to the independent review commit."""
+
+    if not isinstance(acceptance, Mapping):
+        return False
+    if reviewed_commit is None:
+        return False
+    for path_key, sha_key, canonical_path in EXPECTED_SIM_002_REVIEWED_ARTIFACTS:
+        if acceptance.get(path_key) != canonical_path:
+            return False
+        accepted_sha = acceptance.get(sha_key)
+        if not isinstance(accepted_sha, str) or not re.fullmatch(r"[0-9a-f]{64}", accepted_sha):
+            return False
+        canonical_artifact = root / canonical_path
+        if not canonical_artifact.is_file() or _sha256(canonical_artifact) != accepted_sha:
+            return False
+        if _git_blob_sha256(git_root, reviewed_commit, canonical_path) != accepted_sha:
+            return False
+    return True
 
 
 def _required_context_bindings(root: Path) -> list[dict[str, Any]]:
@@ -355,12 +712,15 @@ def evaluate_simulation_lane_gate(
     sim_002_report_path = root / REQUIRED_CONTEXT_PATHS[9]
     sim_002_evidence_path = root / REQUIRED_CONTEXT_PATHS[10]
     sim_002_acceptance_path = root / REQUIRED_CONTEXT_PATHS[11]
+    execution_schema_path = root / EXECUTION_SCHEMA_PATH
+    runtime_init_path = root / SIM_002_RUNTIME_INIT_PATH
 
     sim_001 = _load_json(sim_001_evidence_path)
     sim_001_acceptance = _load_json(sim_001_acceptance_path)
     sim_002 = _load_json(sim_002_evidence_path)
     sim_002_acceptance = _load_json(sim_002_acceptance_path)
     p0 = _load_json(p0_path)
+    execution_schema = _load_json(execution_schema_path)
 
     adr_text = adr_path.read_text(encoding="utf-8") if adr_path.is_file() else ""
     mapping_text = mapping_path.read_text(encoding="utf-8") if mapping_path.is_file() else ""
@@ -414,11 +774,15 @@ def evaluate_simulation_lane_gate(
         )
     )
 
+    sim_002_anchor = _sim_002_review_anchor(git_root)
+    sim_002_reviewed_commit = _dig(sim_002_anchor, "reviewed_commit")
     sim_002_identity = (
         _dig(sim_002_acceptance, "task_id") == "TASK-SIM-002"
         and _dig(sim_002_acceptance, "review_decision") == "ACCEPT"
-        and _review_record_matches(root, sim_002_acceptance, task_decision="SIM_SMOKE_READY")
-        and _commit_exists(git_root, _dig(sim_002_acceptance, "reviewed_commit"))
+        and _sim_002_review_binding_matches(
+            root, sim_002_acceptance, sim_002_anchor
+        )
+        and _commit_exists(git_root, sim_002_reviewed_commit)
     )
     sim_002_ready = (
         _dig(sim_002_acceptance, "task_specific_decision") == "SIM_SMOKE_READY"
@@ -427,20 +791,8 @@ def evaluate_simulation_lane_gate(
     )
     sim_002_immutable = all(
         (
-            _reviewed_file_binding_matches(
-                root, git_root, sim_002_acceptance, "evidence_path", "evidence_sha256"
-            ),
-            _reviewed_file_binding_matches(
-                root, git_root, sim_002_acceptance, "smoke_report_path", "smoke_report_sha256"
-            ),
-            _reviewed_file_binding_matches(
-                root, git_root, sim_002_acceptance, "smoke_entry_point_path", "smoke_entry_point_sha256"
-            ),
-            _reviewed_file_binding_matches(
-                root, git_root, sim_002_acceptance, "runtime_module_path", "runtime_module_sha256"
-            ),
-            _reviewed_file_binding_matches(
-                root, git_root, sim_002_acceptance, "focused_test_path", "focused_test_sha256"
+            _sim_002_reviewed_artifacts_match(
+                root, git_root, sim_002_acceptance, sim_002_reviewed_commit
             ),
             _payload_matches(sim_002),
             _dig(sim_002_acceptance, "evidence_payload_sha256") == _dig(sim_002, "payload_sha256"),
@@ -542,11 +894,37 @@ def evaluate_simulation_lane_gate(
         and isinstance(operations, list)
         and set(operations) == EXPECTED_OPERATIONS
     )
-    runtime_relative = _dig(sim_002_acceptance, "runtime_module_path")
+    runtime_relative = "src/simulation_runtime/smoke.py"
     try:
         runtime_text = (root / runtime_relative).read_text(encoding="utf-8")
     except (OSError, UnicodeError, TypeError):
         runtime_text = ""
+    try:
+        runtime_init_text = runtime_init_path.read_text(encoding="utf-8")
+    except (OSError, UnicodeError):
+        runtime_init_text = ""
+    runtime_init_sha = _sha256(runtime_init_path)
+    reviewed_runtime_init_sha = _git_blob_sha256(
+        git_root, sim_002_reviewed_commit, SIM_002_RUNTIME_INIT_PATH
+    )
+    schema_operation_surface = _schema_operation_surface(execution_schema)
+    runtime_operation_surface = all(
+        (
+            schema_operation_surface == EXPECTED_OPERATIONS,
+            _runtime_uses_schema_validator(runtime_text),
+            _runtime_public_surface_is_closed(runtime_text, runtime_init_text),
+            isinstance(runtime_init_sha, str),
+            runtime_init_sha == reviewed_runtime_init_sha,
+            all(
+                _request_operation_is_allowed(execution_schema, {"operation": operation})
+                for operation in EXPECTED_OPERATIONS
+            ),
+            not any(
+                _request_operation_is_allowed(execution_schema, {"operation": operation})
+                for operation in ("actuator.execute", "joint.execute", "unknown.execute")
+            ),
+        )
+    )
     prohibited_runtime_tokens = {
         "ManipulatorPort",
         "NavigationPort",
@@ -562,7 +940,7 @@ def evaluate_simulation_lane_gate(
         _dig(sim_001, "direct_actuator_contract_introduced") is False
         and contract_boundary
         and bool(runtime_text)
-        and _runtime_operations_are_allowlisted(runtime_text)
+        and runtime_operation_surface
         and not any(token in runtime_text for token in prohibited_runtime_tokens)
     )
     hardware_not_frozen = (
@@ -780,7 +1158,12 @@ def evaluate_simulation_lane_gate(
             "acceptance_sha256": sim_002_acceptance_sha,
             "review_decision": _dig(sim_002_acceptance, "review_decision"),
             "task_specific_decision": _dig(sim_002_acceptance, "task_specific_decision"),
-            "reviewed_commit": _dig(sim_002_acceptance, "reviewed_commit"),
+            "reviewed_commit": sim_002_reviewed_commit,
+            "review_anchor_commit": _dig(sim_002_anchor, "anchor_commit"),
+            "review_anchor_sha256": _dig(sim_002_anchor, "anchor_sha256"),
+            "acceptance_introduction_commit": _dig(
+                sim_002_anchor, "acceptance_commit"
+            ),
             "bound_sim_001_acceptance_sha256": _dig(sim_002, "sim_001_binding", "acceptance_sha256"),
         },
         "p0_004r": {
