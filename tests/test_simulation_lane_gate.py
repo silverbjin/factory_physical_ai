@@ -227,6 +227,69 @@ class SimulationLaneGateTests(unittest.TestCase):
 
         self.assert_no_go(mutate, "C18")
 
+    def test_rehashed_unreviewed_runtime_with_direct_actuator_operation_fails_closed(self) -> None:
+        runtime_relative = "src/simulation_runtime/smoke.py"
+        runtime_path = self.root / runtime_relative
+        runtime_path.write_text(
+            runtime_path.read_text(encoding="utf-8")
+            + '\nDIRECT_ACTUATOR_OPERATION = "actuator.execute"\n',
+            encoding="utf-8",
+        )
+        acceptance = _read_json(self.root, "results/reviews/SIM-002_acceptance.json")
+        acceptance["runtime_module_sha256"] = _sha(self.root, runtime_relative)
+        _write_json(self.root, "results/reviews/SIM-002_acceptance.json", acceptance)
+
+        result = self.evaluate()
+
+        self.assertEqual(result["gate_result"], "SIM_NO_GO")
+        self.assertEqual(result["material_predicates"]["C08"]["status"], "FAIL")
+        self.assertEqual(result["material_predicates"]["C18"]["status"], "FAIL")
+        self.assertFalse(result["simulation_lane_authorization_effective"])
+
+    def test_unknown_logical_operation_is_not_allowlisted(self) -> None:
+        runtime = (self.root / "src/simulation_runtime/smoke.py").read_text(encoding="utf-8")
+        self.assertTrue(gate._runtime_operations_are_allowlisted(runtime))
+        self.assertFalse(
+            gate._runtime_operations_are_allowlisted(
+                runtime + '\nUNREVIEWED_OPERATION = "controller.dispatch"\n'
+            )
+        )
+
+    def test_malformed_p0_authorizations_emit_only_conservative_booleans(self) -> None:
+        malformed_values = ("false", 0, None)
+        source_keys = (
+            "task_w1_001",
+            "task_w1_002",
+            "dataset_v1",
+            "smolvla_fine_tuning",
+            "physical_motion",
+        )
+        snapshot_keys = (
+            "task_w1_001_authorized",
+            "task_w1_002_authorized",
+            "dataset_v1_authorized",
+            "fine_tuning_authorized",
+            "physical_motion_authorized",
+        )
+        original = _read_json(self.root, "results/phase0/P0-004R_vla_readiness.json")
+
+        for malformed in malformed_values:
+            for source_key in source_keys:
+                with self.subTest(source_key=source_key, malformed=malformed):
+                    value = json.loads(json.dumps(original))
+                    value["authorization"][source_key] = malformed
+                    _write_json(self.root, "results/phase0/P0-004R_vla_readiness.json", value)
+                    result = self.evaluate()
+                    self.assertEqual(result["gate_result"], "SIM_NO_GO")
+                    self.assertEqual(result["material_predicates"]["C19"]["status"], "FAIL")
+                    self.assertTrue(
+                        all(
+                            isinstance(result["authorization_snapshot"][key], bool)
+                            for key in snapshot_keys
+                        )
+                    )
+                    self.assertFalse(result["authorization_snapshot"][snapshot_keys[source_keys.index(source_key)]])
+
     def test_forged_sim_go_with_valid_payload_does_not_override_failure(self) -> None:
         def mutate() -> None:
             forged = {

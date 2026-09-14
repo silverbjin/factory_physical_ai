@@ -9,8 +9,10 @@ Dataset V1, training, or hardware-selection authority.
 from __future__ import annotations
 
 import argparse
+import ast
 import hashlib
 import json
+import re
 import subprocess
 from copy import deepcopy
 from datetime import datetime, timezone
@@ -178,6 +180,70 @@ def _commit_exists(git_root: Path, commit: object) -> bool:
     return completed.returncode == 0
 
 
+def _git_blob_sha256(git_root: Path, commit: object, relative: object) -> str | None:
+    """Return the exact reviewed Git blob hash, rejecting ambiguous paths."""
+
+    if not isinstance(commit, str) or len(commit) != 40 or not isinstance(relative, str):
+        return None
+    path = Path(relative)
+    if path.is_absolute() or not path.parts or any(part in {"", ".", ".."} for part in path.parts):
+        return None
+    try:
+        completed = subprocess.run(
+            ["git", "show", f"{commit}:{relative}"],
+            cwd=git_root,
+            check=False,
+            capture_output=True,
+            timeout=5,
+        )
+    except (OSError, subprocess.TimeoutExpired):
+        return None
+    if completed.returncode != 0:
+        return None
+    return hashlib.sha256(completed.stdout).hexdigest()
+
+
+def _reviewed_file_binding_matches(
+    root: Path,
+    git_root: Path,
+    record: Mapping[str, Any] | None,
+    path_key: str,
+    sha_key: str,
+) -> bool:
+    """Bind an accepted current file to the exact independently reviewed blob."""
+
+    if not _file_binding_matches(root, record, path_key, sha_key):
+        return False
+    relative = _dig(record, path_key)
+    expected = _dig(record, sha_key)
+    reviewed_commit = _dig(record, "reviewed_commit")
+    return _git_blob_sha256(git_root, reviewed_commit, relative) == expected
+
+
+def _runtime_operations_are_allowlisted(runtime_text: str) -> bool:
+    """Reject operation-like identifiers outside the frozen logical operations."""
+
+    try:
+        tree = ast.parse(runtime_text)
+    except (SyntaxError, ValueError):
+        return False
+    operation_pattern = re.compile(r"^[a-z][a-z0-9_]*(?:\.[a-z][a-z0-9_]*)+$")
+    operations = {
+        node.value
+        for node in ast.walk(tree)
+        if isinstance(node, ast.Constant)
+        and isinstance(node.value, str)
+        and operation_pattern.fullmatch(node.value)
+    }
+    return bool(operations) and operations == EXPECTED_OPERATIONS
+
+
+def _conservative_bool(value: object) -> bool:
+    """Preserve authoritative booleans and fail closed for every other type."""
+
+    return value if isinstance(value, bool) else False
+
+
 def _review_record_matches(
     root: Path,
     acceptance: Mapping[str, Any] | None,
@@ -321,8 +387,12 @@ def evaluate_simulation_lane_gate(
     )
     sim_001_immutable = all(
         (
-            _file_binding_matches(root, sim_001_acceptance, "profile_path", "profile_sha256"),
-            _file_binding_matches(root, sim_001_acceptance, "evidence_path", "evidence_sha256"),
+            _reviewed_file_binding_matches(
+                root, git_root, sim_001_acceptance, "profile_path", "profile_sha256"
+            ),
+            _reviewed_file_binding_matches(
+                root, git_root, sim_001_acceptance, "evidence_path", "evidence_sha256"
+            ),
             _payload_matches(sim_001),
             _dig(sim_001_acceptance, "accepted_payload_sha256") == _dig(sim_001, "payload_sha256"),
             _source_bindings_match(root, sim_001, EXPECTED_SIM_001_SOURCE_PATHS),
@@ -357,11 +427,21 @@ def evaluate_simulation_lane_gate(
     )
     sim_002_immutable = all(
         (
-            _file_binding_matches(root, sim_002_acceptance, "evidence_path", "evidence_sha256"),
-            _file_binding_matches(root, sim_002_acceptance, "smoke_report_path", "smoke_report_sha256"),
-            _file_binding_matches(root, sim_002_acceptance, "smoke_entry_point_path", "smoke_entry_point_sha256"),
-            _file_binding_matches(root, sim_002_acceptance, "runtime_module_path", "runtime_module_sha256"),
-            _file_binding_matches(root, sim_002_acceptance, "focused_test_path", "focused_test_sha256"),
+            _reviewed_file_binding_matches(
+                root, git_root, sim_002_acceptance, "evidence_path", "evidence_sha256"
+            ),
+            _reviewed_file_binding_matches(
+                root, git_root, sim_002_acceptance, "smoke_report_path", "smoke_report_sha256"
+            ),
+            _reviewed_file_binding_matches(
+                root, git_root, sim_002_acceptance, "smoke_entry_point_path", "smoke_entry_point_sha256"
+            ),
+            _reviewed_file_binding_matches(
+                root, git_root, sim_002_acceptance, "runtime_module_path", "runtime_module_sha256"
+            ),
+            _reviewed_file_binding_matches(
+                root, git_root, sim_002_acceptance, "focused_test_path", "focused_test_sha256"
+            ),
             _payload_matches(sim_002),
             _dig(sim_002_acceptance, "evidence_payload_sha256") == _dig(sim_002, "payload_sha256"),
             _source_bindings_match(root, sim_002, EXPECTED_SIM_002_SOURCE_PATHS),
@@ -482,6 +562,7 @@ def evaluate_simulation_lane_gate(
         _dig(sim_001, "direct_actuator_contract_introduced") is False
         and contract_boundary
         and bool(runtime_text)
+        and _runtime_operations_are_allowlisted(runtime_text)
         and not any(token in runtime_text for token in prohibited_runtime_tokens)
     )
     hardware_not_frozen = (
@@ -651,11 +732,15 @@ def evaluate_simulation_lane_gate(
 
     authorization_snapshot = {
         "simulation_lane_authorized": False,
-        "task_w1_001_authorized": _dig(p0_authorization, "task_w1_001", default=False),
-        "task_w1_002_authorized": _dig(p0_authorization, "task_w1_002", default=False),
-        "dataset_v1_authorized": _dig(p0_authorization, "dataset_v1", default=False),
-        "fine_tuning_authorized": _dig(p0_authorization, "smolvla_fine_tuning", default=False),
-        "physical_motion_authorized": _dig(p0_authorization, "physical_motion", default=False),
+        "task_w1_001_authorized": _conservative_bool(_dig(p0_authorization, "task_w1_001")),
+        "task_w1_002_authorized": _conservative_bool(_dig(p0_authorization, "task_w1_002")),
+        "dataset_v1_authorized": _conservative_bool(_dig(p0_authorization, "dataset_v1")),
+        "fine_tuning_authorized": _conservative_bool(
+            _dig(p0_authorization, "smolvla_fine_tuning")
+        ),
+        "physical_motion_authorized": _conservative_bool(
+            _dig(p0_authorization, "physical_motion")
+        ),
         "physical_gripper_authorized": False,
         "physical_teleop_authorized": False,
         "physical_dataset_collection_authorized": False,

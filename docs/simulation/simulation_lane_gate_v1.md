@@ -34,14 +34,15 @@ This gate reconstructs Simulation Lane readiness from canonical SIM-001/SIM-002 
 - Independent review: `ACCEPT`
 - Task-specific decision: `SIM_CONTRACT_PROFILE_READY`
 - Reviewed commit: `97bef9208b26c9fef577e97c26f76a125f220ed9`
-- Canonical evidence, profile, payload, source, executable contract/schema, and C01 acceptance bindings: `PASS`
+- Canonical evidence/profile hashes and their exact `reviewed_commit` Git blobs, payload, source, executable contract/schema, and C01 acceptance bindings: `PASS`
 
 ### SIM-002
 
 - Independent review: `ACCEPT`
 - Task-specific decision: `SIM_SMOKE_READY`
 - Reviewed commit: `6abd9fc1158cd9fd0a02d2a496557fd74a16390b`
-- Canonical evidence, report, payload, entry point, runtime, test, and source bindings: `PASS`
+- Canonical evidence, report, entry point, runtime, and test hashes match both their acceptance bindings and exact `reviewed_commit` Git blobs: `PASS`
+- Payload and source bindings: `PASS`
 - Binding to current accepted SIM-001 revision: `PASS`
 
 ## 4. P0-004R Authorization Snapshot
@@ -64,6 +65,8 @@ All mandatory `C01`–`C20` predicates pass. The verifier reconstructs them from
 
 Material checks include frozen ADR/mapping hashes, both independent acceptance records, READY decisions, immutable evidence/report/profile bindings, the SIM-002-to-SIM-001 relationship, semantic smoke boundedness, physical/camera isolation, P0 Week booleans, Dataset/training separation, preserved executor/skill/verification boundaries, absence of a direct actuator contract, historical P0 preservation, and final decision reconstruction.
 
+Acceptance-bound implementation artifacts are checked against three independent values: the acceptance SHA-256, the current canonical file, and the exact blob stored at the independently reviewed commit. Runtime operation identifiers extracted from the Python AST must equal the frozen logical-operation allowlist; an added lower-level or direct-actuator operation therefore fails C18 even if an acceptance hash is rewritten.
+
 ## 6. Negative / Tampering Validation
 
 Focused tests cover all required fail-closed cases:
@@ -77,6 +80,9 @@ Focused tests cover all required fail-closed cases:
 - Dataset V1 aliasing;
 - physical-motion authorization changed to true;
 - a direct actuator contract marker;
+- an unreviewed `actuator.execute` runtime operation accompanied by a rewritten acceptance hash;
+- an unknown logical operation outside the frozen operation allowlist;
+- malformed P0 authorization strings, integers, and null values, which remain conservative JSON booleans in output;
 - forged `SIM_GO` with a valid recomputed payload hash.
 
 Every tampered case produces `SIM_NO_GO` and keeps effective simulation-lane authorization false.
@@ -86,8 +92,8 @@ Every tampered case produces `SIM_NO_GO` and keeps effective simulation-lane aut
 | Validation | Result |
 |---|---|
 | Canonical C01–C20 reconstruction | `20 PASS`, no blockers |
-| Focused gate tests | `16 passed` |
-| Full regression | `185 passed` |
+| Focused gate tests | `19 passed` |
+| Full regression | `188 passed` |
 | Static Python compile | `PASS` |
 | Required predecessor/source hashes | `PASS` |
 | `git diff --check` | `PASS` |
