@@ -1,581 +1,523 @@
-# TASK 작업 이력 기록 정책
+# TASK History Recording Policy v2
 
-## 목적
+## Purpose
 
-이 문서는 Codex가 수행하는 각 TASK의 다음 작업을 `docs/`에 누적 기록하기 위한 공통 정책이다.
+Persist a compact, chronological audit trail for each TASK.
 
-- Implementation
-- Read-only Review
-- Fix
-- Re-review
+Supported workflow events:
 
-목적은 단순 로그 보관이 아니라 다음을 가능하게 하는 것이다.
+```text
+Implementation
+Read-only Review
+Fix
+Re-review
+```
 
-1. TASK별 구현 의도와 변경 범위 추적
-2. 독립 검토에서 발견된 문제와 수정 과정 추적
-3. 테스트 / Exit Criteria / Evidence 추적
-4. 포트폴리오 및 기술 면접에서 문제 해결 과정을 설명할 수 있는 기록 확보
-5. 최종 코드만으로 보이지 않는 설계 판단과 품질 게이트 기록
+History is an **event log**, not a duplicate of TASK specifications, Evidence, or full workflow reports.
+
+Record only information newly established by the current workflow.
 
 ---
 
-## 1. 저장 위치
+## 1. Core Rules
 
-모든 TASK 작업 이력은 다음 위치에 저장한다.
+1. Store TASK history under:
 
 ```text
 docs/task_history/<TASK_ID>/
 ```
 
-예:
+2. History is append-only.
 
-```text
-docs/task_history/TASK-MVP-002/
-```
+3. Never overwrite, rename, delete, or renumber an existing event record.
 
-TASK별 디렉터리의 권장 구조:
-
-```text
-docs/task_history/TASK-MVP-002/
-├── README.md
-├── 01_implementation.md
-├── 02_review.md
-├── 03_fix.md
-└── 04_review.md
-```
-
-추가 수정/재검토가 발생하면 계속 순번을 증가시킨다.
-
-```text
-05_fix.md
-06_review.md
-...
-```
-
-기존 기록 파일은 덮어쓰지 않는다.
-
----
-
-## 2. 실행 순번 결정
-
-각 Implementation / Review / Fix 실행 시:
-
-1. `docs/task_history/<TASK_ID>/`가 없으면 생성한다.
-2. 기존 `NN_*.md` 파일을 조회한다.
-3. 가장 큰 `NN`에 1을 더하여 다음 실행 순번 `SEQ`를 결정한다.
-4. 두 자리 숫자를 사용한다.
-
-예:
-
-```text
-01_implementation.md
-02_review.md
-03_fix.md
-04_review.md
-```
-
-기존 기록을 수정하거나 번호를 재사용하지 않는다.
-
----
-
-## 3. 파일 종류
-
-### Implementation
+4. Use:
 
 ```text
 <SEQ>_implementation.md
-```
-
-예:
-
-```text
-01_implementation.md
-```
-
-### Read-only Review / Re-review
-
-```text
 <SEQ>_review.md
-```
-
-예:
-
-```text
-02_review.md
-04_review.md
-```
-
-### Fix
-
-```text
 <SEQ>_fix.md
 ```
 
-예:
+5. Re-review uses the same `review` type.
+
+6. Use Korean for concise explanatory prose.
+
+7. Preserve exact technical identifiers, including:
 
 ```text
-03_fix.md
+TASK IDs
+Finding IDs
+paths
+symbols
+commands
+test names
+contract/schema fields
+state names
+hashes
+commit IDs
+PASS / FAIL
+ACCEPT / REJECT
+BLOCKER / HIGH / MEDIUM / LOW
 ```
 
-Review와 Re-review를 별도 파일명으로 구분하지 않는다.
-시간 순서 자체가 재검토 여부를 보여준다.
+8. TASK History is not technical Evidence unless a frozen contract explicitly defines otherwise.
+
+9. Do not duplicate large TASK, Evidence, Review, or test contents.
+
+10. Record the workflow only after its technical result has been determined.
 
 ---
 
-## 4. 언어 정책
+## 2. Sequence Resolution
 
-포트폴리오 가독성을 위해 설명 문장은 기본적으로 **한글**로 작성한다.
+Determine the next `SEQ` using filenames only.
 
-다음 항목은 원문 또는 영문 식별자를 유지한다.
-
-- TASK ID
-- 클래스 / 함수 / 변수 / enum 이름
-- 파일 경로
-- Git commit hash
-- CLI 명령어
-- 에러 메시지
-- 테스트 이름
-- contract / schema field
-- ADR ID
-- 상태 토큰
-- `PASS`, `FAIL`, `ACCEPT`, `REJECT`
-- `BLOCKER`, `HIGH`, `MEDIUM`, `LOW`
-
-예:
+Inspect:
 
 ```text
-`MissionRecord.retry_limit`가 caller-controlled 상태여서
-"one bounded retry" invariant를 우회할 수 있었다.
+docs/task_history/<TASK_ID>/
 ```
 
-기술 용어를 억지로 한글화하지 않는다.
+for files matching:
+
+```text
+NN_*.md
+```
+
+Set:
+
+```text
+SEQ = highest existing NN + 1
+```
+
+Use two digits.
+
+If no event file exists:
+
+```text
+SEQ = 01
+```
+
+Do not read prior event-file contents solely to determine `SEQ`.
+
+If an apparent sequence collision or malformed history is detected, stop normal recording and report the history integrity issue.
 
 ---
 
-## 5. README.md 역할
+## 3. Source-of-Truth Boundary
 
-각 TASK 디렉터리의 `README.md`는 상세 로그가 아니라 **TASK 전체 작업 흐름 요약**이다.
+Do not restate information already authoritatively stored elsewhere unless necessary to explain the current event.
 
-권장 구조:
+Use these sources:
 
-```markdown
-# TASK-MVP-002 작업 이력
+```text
+TASK specification
+→ objective, scope, non-goals, requirements, Exit Criteria
 
-## 1. TASK 개요
+Evidence
+→ test results, hashes, structured validation facts
 
-- TASK:
-- 목표:
-- 구현 범위:
-- 주요 비범위:
-- 관련 Context / Plan / Contract:
+Review result
+→ findings, severity, Acceptance Gates, recommendation
 
-## 2. 작업 흐름
-
-| 순서 | 유형 | 결과 | 핵심 내용 | 상세 기록 |
-|---:|---|---|---|---|
-| 01 | Implementation | COMPLETE | 최초 상태 모델 구현 | `01_implementation.md` |
-| 02 | Review | REJECT | invariant 우회 2건 발견 | `02_review.md` |
-| 03 | Fix | READY FOR RE-REVIEW | retry/constructor invariant 수정 | `03_fix.md` |
-| 04 | Review | ACCEPT | 전체 Acceptance Gate 통과 | `04_review.md` |
-
-## 3. 주요 설계 / 문제 해결 포인트
-
-- ...
-- ...
-
-## 4. 검증 결과
-
-- Focused tests:
-- Full regression:
-- Evidence:
-- Final review:
-
-## 5. 최종 상태
-
-`ACCEPT TASK-MVP-002`
-
-## 6. 포트폴리오 요약
-
-TASK에서 해결한 문제를 3~6문장으로 기술한다.
-무엇을 만들었는지뿐 아니라,
-어떤 결함이 Review에서 발견되었고
-어떻게 invariant / contract / test를 강화했는지를 포함한다.
+Fix result
+→ finding status, root cause, correction, regression proof
 ```
 
-### README 갱신 규칙
-
-각 workflow 종료 시 `README.md`의 작업 흐름에 현재 실행을 추가한다.
-
-기존 작업 이력을 삭제하거나 재작성하지 않는다.
-
-최종 `ACCEPT` Review가 발생하면:
-
-- `최종 상태` 갱신
-- `검증 결과` 갱신
-- `포트폴리오 요약` 갱신
-
-중간 단계에서는 확인되지 않은 최종 성공을 미리 작성하지 않는다.
+History should reference these results rather than reproducing them in full.
 
 ---
 
-## 6. Implementation 기록 형식
+## 4. Event Recording
 
-`<SEQ>_implementation.md`:
+Create exactly one event file for the completed workflow.
+
+---
+
+### 4.1 Implementation Event
+
+Create:
+
+```text
+docs/task_history/<TASK_ID>/<SEQ>_implementation.md
+```
+
+Record only:
 
 ```markdown
 # Implementation — <TASK_ID>
 
-## 1. 작업 정보
+- Result: COMPLETE | INCOMPLETE
+- Evidence: <path | NOT REQUIRED>
+- Changed areas: <concise paths/modules>
+- Key implementation delta: <1–5 concise bullets>
+- Validation: <concise PASS/FAIL summary>
+- Deviation from TASK: <NONE or concise description>
+- Next: Independent Read-only Review | BLOCKED
+```
 
-- TASK:
-- 작업 유형: Implementation
-- 실행 순번:
-- 일자:
-- 시작 시 Repository 상태:
-- 선행 조건:
+Do not copy:
 
-## 2. 작업 목적
+- full TASK Scope;
+- full Non-goals;
+- full Exit Criteria;
+- complete test logs;
+- Evidence contents.
 
-TASK가 해결하려는 문제와 구현 목표를 한글로 요약한다.
+Implementation completion must not be recorded as independent acceptance.
 
-## 3. 구현 범위
+---
 
-### 구현한 내용
+### 4.2 Review Event
 
-- ...
+Create:
 
-### 명시적으로 구현하지 않은 내용
+```text
+docs/task_history/<TASK_ID>/<SEQ>_review.md
+```
 
-- ...
+#### ACCEPT
 
-## 4. 변경 파일
+Use compact form:
 
-| 파일 | 변경 목적 |
-|---|---|
-| `...` | ... |
+```markdown
+# Review — <TASK_ID>
 
-## 5. 주요 구현 내용
+- Recommendation: ACCEPT
+- Requirements: <passed>/<total> PASS
+- Acceptance Gates: ALL PASS
+- Focused validation: PASS
+- Regression: PASS | NOT REQUIRED
+- Evidence: PASS | NOT APPLICABLE
+- Findings: BLOCKER <n>, HIGH <n>, MEDIUM <n>, LOW <n>
+- Conditional Sources loaded: <n>
+```
 
-핵심 클래스, 상태 모델, API, 알고리즘, contract 준수 사항을 설명한다.
+Do not reproduce the complete Traceability table when all requirements passed unless repository policy explicitly requires it.
 
-## 6. 주요 설계 판단
+#### REJECT
 
-왜 이 구조를 선택했는지 기록한다.
+Record the blocking review delta:
 
-## 7. 테스트 및 검증
+```markdown
+# Review — <TASK_ID>
 
-| 검증 | 명령 | 결과 |
-|---|---|---|
-| Focused test | `...` | PASS |
-| Regression | `...` | PASS |
-| Syntax/static | `...` | PASS |
-| `git diff --check` | `...` | PASS |
+- Recommendation: REJECT
+- Failed Gates: <list>
+- Validation: <concise status>
+- Evidence: <concise status>
 
-## 8. Exit Criteria
+## Blocking Findings
 
-- ... — PASS/FAIL
+### <Finding ID> — <Severity>
 
-## 9. Evidence
+- Requirement / Contract:
+- File / Symbol:
+- Issue:
+- Why it blocks acceptance:
+- Recommended remediation:
+```
 
-- 경로:
-- Hash:
-- 상태:
+Include only findings that materially affect acceptance or meaningful deferred risk.
 
-## 10. 구현 결과
+Do not duplicate unrelated review prose.
 
-`<TASK_ID> is complete.`
+---
 
-또는
+### 4.3 Fix Event
 
-`<TASK_ID> is NOT complete.`
+Create:
 
-## 11. 다음 단계
+```text
+docs/task_history/<TASK_ID>/<SEQ>_fix.md
+```
 
-독립 Read-only Review 여부 등 다음 작업만 기록한다.
+Use Finding IDs as references to the prior Review.
+
+Record:
+
+```markdown
+# Fix — <TASK_ID>
+
+- Result: READY FOR INDEPENDENT RE-REVIEW | NOT READY FOR INDEPENDENT RE-REVIEW
+- Based on Review: <SEQ/path>
+
+## Finding Results
+
+| Finding | Severity | Status | Correction | Regression |
+|---|---|---|---|---|
+| <ID> | HIGH | FIXED | <concise delta> | PASS |
+
+- Evidence: <PASS/path | NOT APPLICABLE>
+- Regression: <PASS | NOT REQUIRED | FAIL>
+- Git history: NO HISTORY ACTION REQUIRED | HISTORY ACTION REQUIRED
+- Conditional Sources loaded: <n>
+- Next: Independent Read-only Review | BLOCKED
+```
+
+Do not restate the original Finding in full.
+
+Use:
+
+```text
+FIXED
+NOT REPRODUCIBLE
+BLOCKED
+```
+
+for each relevant Finding.
+
+---
+
+## 5. TASK README
+
+Maintain:
+
+```text
+docs/task_history/<TASK_ID>/README.md
+```
+
+as a compact event index.
+
+Recommended form:
+
+```markdown
+# <TASK_ID> History
+
+Current status: <STATE>
+
+| Seq | Type | Result | Record |
+|---:|---|---|---|
+| 01 | Implementation | COMPLETE | `01_implementation.md` |
+| 02 | Review | REJECT | `02_review.md` |
+| 03 | Fix | READY FOR RE-REVIEW | `03_fix.md` |
+| 04 | Review | ACCEPT | `04_review.md` |
+```
+
+For each workflow:
+
+1. read only the current TASK README;
+2. append one event row;
+3. update `Current status`;
+4. do not reread prior detailed history files unless an inconsistency requires investigation.
+
+Use these TASK-level states:
+
+```text
+IMPLEMENTED / REVIEW PENDING
+REJECTED / FIX REQUIRED
+FIXED / RE-REVIEW PENDING
+ACCEPTED
+INCOMPLETE
+```
+
+Mapping:
+
+```text
+Implementation COMPLETE
+→ IMPLEMENTED / REVIEW PENDING
+
+Review REJECT
+→ REJECTED / FIX REQUIRED
+
+Fix READY FOR INDEPENDENT RE-REVIEW
+→ FIXED / RE-REVIEW PENDING
+
+Review ACCEPT
+→ ACCEPTED
+
+failed/incomplete workflow
+→ INCOMPLETE when no more specific valid state applies
 ```
 
 ---
 
-## 7. Review 기록 형식
+## 6. Final ACCEPT Enrichment
 
-`<SEQ>_review.md`:
-
-```markdown
-# Read-only Review — <TASK_ID>
-
-## 1. 검토 정보
-
-- TASK:
-- 작업 유형: Independent Read-only Review
-- 실행 순번:
-- 검토 대상:
-- 검토 시점 Git 상태:
-
-## 2. 검토 결론
-
-- Recommendation: ACCEPT / REJECT
-- BLOCKER:
-- HIGH:
-- MEDIUM:
-- LOW:
-
-## 3. Requirement Traceability
-
-| Requirement | Implementation | Test | Evidence | Status |
-|---|---|---|---|---|
-
-## 4. 주요 Findings
-
-### BLOCKER
-
-...
-
-### HIGH
-
-...
-
-### MEDIUM
-
-...
-
-### LOW
-
-...
-
-## 5. Acceptance Gates
+Only when an independent Review returns:
 
 ```text
-Scope compliance: PASS/FAIL
-Requirement compliance: PASS/FAIL
-Contract compliance: PASS/FAIL
-State / invariant safety: PASS/FAIL/NOT APPLICABLE
-Test adequacy: PASS/FAIL
-Regression safety: PASS/FAIL
-Evidence integrity: PASS/FAIL/NOT APPLICABLE
+ACCEPT <TASK_ID>
 ```
 
-## 6. 검토에서 확인한 핵심 위험
+may the TASK README be enriched with:
 
-포트폴리오 관점에서 중요한 문제를 한글로 2~5개 요약한다.
+```markdown
+## Final Summary
 
-## 7. 최종 Recommendation
+- Final validation: <concise summary>
+- Evidence: <path>
+- Final review: <review record>
 
-`ACCEPT <TASK_ID>`
+## Portfolio Summary
 
-또는
-
-`REJECT <TASK_ID>`
+<3–5 sentences describing:
+the engineering problem,
+the most important implementation decision,
+any meaningful Review/Fix lesson,
+and the final quality gate achieved.>
 ```
 
-### Review의 Read-only 의미
+Do not generate or repeatedly rewrite a Portfolio Summary before final ACCEPT.
 
-Read-only Review는 다음 영역에 대해 엄격히 read-only다.
+---
 
-- `src/`
-- `tests/`
-- `results/`
-- contracts / schemas / ADR
-- architecture / plan / task specification
-- Git index / history
+## 7. Global TASK Index
 
-단, 감사 기록을 남기기 위한 다음 문서 쓰기만 예외적으로 허용한다.
+The optional global index is:
+
+```text
+docs/task_history/README.md
+```
+
+Do not update it after every workflow by default.
+
+Update it only when:
+
+```text
+- a TASK reaches ACCEPTED; or
+- the user/repository explicitly requires an intermediate global status update.
+```
+
+When updating it:
+
+1. read the existing index only;
+2. update or add only the row for `TASK_ID`;
+3. do not scan every TASK history directory;
+4. preserve all unrelated rows.
+
+Recommended form:
+
+```markdown
+# TASK History
+
+| TASK | Status | Last Event | Final Result |
+|---|---|---|---|
+| TASK-MVP-001 | ACCEPTED | Review | ACCEPT |
+| TASK-MVP-002 | FIXED / RE-REVIEW PENDING | Fix | - |
+```
+
+For an ACCEPT Review, updating this file is an allowed audit-log write.
+
+---
+
+## 8. Review Audit-write Boundary
+
+Read-only Review remains read-only for implementation and source-of-truth surfaces.
+
+After the Review recommendation is fixed, History recording may modify only:
 
 ```text
 docs/task_history/<TASK_ID>/<SEQ>_review.md
 docs/task_history/<TASK_ID>/README.md
 ```
 
-이를 **audit-log write exception**으로 정의한다.
-
-Review는 이 두 파일 외의 repository 파일을 생성/수정/삭제하면 안 된다.
-
----
-
-## 8. Fix 기록 형식
-
-`<SEQ>_fix.md`:
-
-```markdown
-# Fix — <TASK_ID>
-
-## 1. 수정 정보
-
-- TASK:
-- 작업 유형: Review Finding Fix
-- 실행 순번:
-- 기준 Review:
-- 수정 대상 Severity:
-
-## 2. 수정 대상 Findings
-
-| Finding ID | Severity | 문제 | 처리 결과 |
-|---|---|---|---|
-| ... | BLOCKER | ... | FIXED |
-
-## 3. 원인 분석
-
-단순 증상이 아니라 왜 문제가 발생했는지 기술한다.
-
-## 4. 수정 내용
-
-| 파일 | 수정 내용 | 연결 Finding |
-|---|---|---|
-
-## 5. 추가/강화한 테스트
-
-Review에서 발견된 우회 경로나 실패 경로를
-어떤 regression test로 고정했는지 기술한다.
-
-## 6. 테스트 결과
-
-| 검증 | 결과 |
-|---|---|
-| Focused tests | PASS |
-| Full regression | PASS |
-| `git diff --check` | PASS |
-
-## 7. Evidence 갱신
-
-- Evidence:
-- Hash:
-- 변경된 claim:
-
-## 8. 남은 Findings
-
-없으면:
-
-`없음`
-
-LOW 또는 defer한 MEDIUM이 있다면 명시한다.
-
-## 9. History Action
-
-`No history action required.`
-
-또는
-
-`HISTORY ACTION REQUIRED`
-
-## 10. 수정 결과
-
-`<TASK_ID> fixes are ready for independent re-review.`
-
-또는
-
-`<TASK_ID> fixes are NOT ready for independent re-review.`
-```
-
----
-
-## 9. 글로벌 TASK History Index
-
-다수 TASK가 누적되면 다음 파일을 유지하는 것을 권장한다.
+and, only when Section 7 requires it:
 
 ```text
 docs/task_history/README.md
 ```
 
-예:
-
-```markdown
-# TASK 작업 이력
-
-| TASK | 상태 | Implementation | Review | Fix | 최종 결과 |
-|---|---|---:|---:|---:|---|
-| TASK-MVP-001 | ACCEPTED | 1 | 1 | 0 | ACCEPT |
-| TASK-MVP-002 | ACCEPTED | 1 | 2 | 1 | ACCEPT |
-| TASK-MVP-003 | IN PROGRESS | 1 | 1 | 0 | REJECT |
-```
-
-각 workflow 종료 시 해당 TASK 행을 최신 상태로 갱신한다.
-
-상세 정보는 반드시 TASK별 `README.md`에 둔다.
+No source, test, Evidence, TASK specification, contract, schema, architecture, Git index, or Git history may be modified by the Review history step.
 
 ---
 
-## 10. Evidence와 docs의 역할 분리
+## 9. History Verification
 
-`results/`와 `docs/task_history/`는 목적이 다르다.
+Use minimal verification.
 
-```text
-results/
-→ 기계 검증 가능한 Evidence
-→ hash, test result, exit criteria, structured JSON
+Confirm:
 
-docs/task_history/
-→ 사람이 읽는 작업 이력
-→ 설계 의도, 문제 발견, 수정 과정, 검토 결과
-```
+1. the expected event file exists;
+2. the correct `TASK_ID` and workflow result are recorded;
+3. `SEQ` does not overwrite an existing event;
+4. the TASK README contains the new event row;
+5. the TASK-level state matches the workflow result.
 
-같은 정보를 과도하게 복제하지 않는다.
+When final ACCEPT updates the global index, also verify the `TASK_ID` row.
 
-TASK History 문서에서는 Evidence 파일을 상대 경로로 참조한다.
+Do not reread every prior event file solely for verification.
 
-예:
-
-```text
-Evidence: `../../../results/mvp/MVP-002.json`
-```
+If an inconsistency is detected, investigate only the affected history files.
 
 ---
 
-## 11. Portfolio 작성 원칙
+## 10. History Failure Policy
 
-TASK 기록은 단순 작업 일지가 아니라 다음 질문에 답할 수 있어야 한다.
+If mandatory History recording fails:
 
-1. 어떤 문제를 해결했는가?
-2. 어떤 contract / architecture 제약이 있었는가?
-3. 어떤 방식으로 구현했는가?
-4. 어떤 테스트로 검증했는가?
-5. Review에서 무엇이 잘못되었다고 발견했는가?
-6. 왜 기존 테스트가 그 문제를 잡지 못했는가?
-7. 어떻게 invariant / boundary / evidence를 강화했는가?
-8. 최종적으로 어떤 품질 Gate를 통과했는가?
+- do not alter implementation, tests, Evidence, or source-of-truth documents to hide the failure;
+- do not fabricate a successful write;
+- preserve the already-determined technical result;
+- report the History failure separately.
 
-특히 실패한 Review를 삭제하지 않는다.
+Example:
 
 ```text
-Implementation → REJECT → Fix → ACCEPT
+Technical result: READY FOR INDEPENDENT RE-REVIEW
+History recording: FAIL
+Workflow completion: INCOMPLETE
 ```
 
-흐름은 포트폴리오에서 중요한 문제 해결 증거다.
+History failure must not rewrite or soften an already-determined Review recommendation.
 
 ---
 
-## 12. Commit 권장 방식
+## 11. Efficiency Rules
 
-Task 작업 이력 문서도 Git으로 추적한다.
-
-권장 예:
-
-### Implementation
+Default recording path:
 
 ```text
-feat(mvp): implement mission state model
+technical workflow result
+→ determine SEQ from filenames
+→ create one compact event record
+→ update TASK README
+→ verify current event
 ```
 
-Implementation 코드 / 테스트 / Evidence / implementation history를 함께 포함할 수 있다.
-
-### Review
+For final ACCEPT only:
 
 ```text
-docs(review): record TASK-MVP-002 review
+→ add final/portfolio summary
+→ update global TASK index
 ```
 
-Review는 source를 수정하지 않고 review report / history summary만 기록한다.
-
-### Fix
+Do not default to:
 
 ```text
-fix(mvp): enforce mission runtime invariants
+read all previous history events
 ```
 
-Fix 코드 / regression tests / Evidence / fix history를 함께 포함한다.
-
-### Accepted re-review
+Do not default to:
 
 ```text
-docs(review): record TASK-MVP-002 acceptance
+rewrite the TASK README as a full summary
 ```
 
-History rewrite는 별도 명시적 사용자 승인 없이 수행하지 않는다.
+Do not default to:
+
+```text
+update the global TASK index after every event
+```
+
+Do not duplicate:
+
+```text
+TASK specification
+Evidence
+full test output
+full Review report
+```
+
+Prefer:
+
+```text
+reference + event-specific delta
+```
+
+over:
+
+```text
+full snapshot duplication
+```

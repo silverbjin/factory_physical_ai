@@ -1,806 +1,749 @@
-# Common Read-only Review Prompt
+# Common Read-only Review Prompt v2
 
 ## Purpose
 
-This file defines the reusable independent **READ-ONLY REVIEW** procedure for implementation tasks in this repository.
-
-The task to review is supplied by the user's current Codex message.
+Perform an independent review of exactly one implementation TASK identified by the user's current Codex message.
 
 Typical invocation:
 
 ```text
-TASK-MVP-002
+TASK-MVP-003
 ```
 
-or:
+Extract exactly one task identifier and treat it as `TASK_ID`.
+
+If exactly one valid TASK cannot be resolved, stop and report:
 
 ```text
-TASK-W2-001
+TASK_ID unresolved.
 ```
 
-When this review procedure is invoked, treat the exact task identifier from the current user message as `TASK_ID`.
+The review must determine whether `TASK_ID` is safe to accept before subsequent work proceeds.
 
 ---
 
-## 1. Target Task Resolution
+## 1. Core Review Rules
 
-1. Extract exactly one task identifier from the current user message.
-2. Set that identifier as `TASK_ID`.
-3. Do not ask the user to repeat information that can be located in the repository.
-4. Locate the specification, backlog entry, plan, context, contracts, ADRs, tests, and evidence relevant to `TASK_ID`.
-5. Infer the next task only when needed to detect scope leakage. Never implement it.
+For `TASK_ID`:
 
-If no valid task identifier can be determined, stop and report that the review target is unresolved.
+1. act as an independent reviewer, not the implementer;
+2. judge implementation against the TASK specification and frozen sources;
+3. review only the target TASK;
+4. do not modify implementation, tests, Evidence, contracts, schemas, TASK specifications, architecture, plans, or Git state;
+5. do not proactively fix findings;
+6. preserve all pre-existing user changes;
+7. verify requirements through implementation, tests, and Evidence;
+8. do not treat passing tests alone as proof of correctness;
+9. do not treat implementation as the source of its own requirements;
+10. write TASK history only after the technical review decision is fixed;
+11. TASK history is an audit record, not implementation Evidence;
+12. do not stage or commit changes.
 
----
-
-## 2. Reviewer Role
-
-Act as an **independent read-only reviewer**, not as the implementer.
-
-Your responsibility is to determine whether `TASK_ID` can safely be accepted before the next task begins.
-
-Judge the implementation against frozen requirements and contracts.
-
-Do not reinterpret requirements merely to match the implementation.
+The only allowed repository write is the post-decision TASK-history recording defined in Section 9.
 
 ---
 
-## 3. Strict Read-only Rules
+## 2. Context Loading Policy
 
-This is a **READ-ONLY REVIEW**.
+Use the minimum sufficient review context.
 
-You MUST NOT:
-
-- modify repository files;
-- create implementation files;
-- create or update tests;
-- create or update evidence;
-- update documentation, except for the explicit TASK history audit-log write exception defined below;
-- run formatters or linters in auto-fix mode;
-- install dependencies unless the repository explicitly defines a non-mutating review procedure;
-- stage files;
-- commit changes;
-- reset, checkout, restore, clean, stash, or otherwise alter Git state;
-- implement `TASK_ID`;
-- implement any later task;
-- proactively fix findings.
-
-You MAY:
-
-- inspect files;
-- inspect Git state and diffs;
-- inspect frozen context, plans, backlog, contracts, schemas, and ADRs;
-- run tests;
-- run syntax/static checks that do not modify tracked or untracked repository contents;
-- calculate hashes;
-- inspect evidence;
-- run read-only Git commands;
-- report recommended remediation without applying it.
-
-If a command may mutate the repository, do not run it.
-
-Preserve all pre-existing user changes.
-
-### 3.1 TASK History Audit-log Write Exception
-
-The review itself remains strictly read-only for all implementation and source-of-truth surfaces.
-
-Only **after the review decision and final `ACCEPT` / `REJECT` recommendation have been determined**, you MAY write the review audit record defined by:
+Normal review path:
 
 ```text
-prompts/codex/task_history_recording.md
+TASK specification
+→ Required Sources
+→ Change Set
+→ changed/relevant implementation
+→ changed/relevant tests
+→ required validation
+→ declared Evidence
+→ review decision
 ```
 
-Before starting the review, read `prompts/codex/task_history_recording.md` in full.
+Do not perform repository-wide discovery by default.
 
-The audit-log write exception permits creating or updating only:
+---
+
+### 2.1 Initial sources
+
+Locate and read:
+
+- applicable `AGENTS.md`;
+- exact `TASK_ID` specification.
+
+From the TASK specification, read every source under:
 
 ```text
-docs/task_history/<TASK_ID>/<SEQ>_review.md
-docs/task_history/<TASK_ID>/README.md
-docs/task_history/README.md
+## Authoritative Sources
+### Required
 ```
 
-No other repository mutation is permitted.
+Do not automatically read:
 
-The following remain strictly read-only even when recording review history:
-
-- source code;
-- tests;
-- evidence under `results/` or equivalent evidence directories;
-- contracts;
-- schemas;
-- ADRs;
-- architecture documents;
-- plans;
-- task specifications;
-- Git index;
-- Git history;
-- unrelated documentation.
-
-The review history must be written **after** the independent review conclusion is complete.
-
-Do not use the newly written review history as evidence or as a source of truth for the same review.
-
-The review-history write is an audit-log side effect only and must never change the review conclusion.
+- parent Context;
+- Plan;
+- Backlog;
+- unrelated Architecture;
+- unrelated ADRs;
+- previous TASK specifications;
+- next TASK specifications;
+- previous Evidence;
+- Conditional Sources.
 
 ---
 
-## 4. Scope Boundary
+### 2.2 Conditional Sources
 
-Review only `TASK_ID`.
-
-Verify that:
-
-1. every required behavior for `TASK_ID` is implemented;
-2. no required behavior is missing;
-3. implementation does not exceed task scope without a necessary architectural reason;
-4. functionality assigned to later tasks was not prematurely implemented;
-5. unrelated repository files were not modified;
-6. frozen architectural boundaries remain intact.
-
-Small structural preparation for later work is acceptable only when it is required to implement `TASK_ID` cleanly and does not introduce later-task behavior.
-
----
-
-## 5. Sources of Truth
-
-Before judging code, locate and inspect all applicable sources of truth.
-
-Search the repository rather than assuming fixed filenames.
-
-Inspect when present:
-
-- project implementation context;
-- MVP / phase / week context;
-- MVP / phase / week plan;
-- task backlog;
-- the exact `TASK_ID` definition;
-- acceptance criteria;
-- exit criteria;
-- frozen contracts;
-- schemas;
-- ADRs / architecture decisions;
-- public interface definitions;
-- previous-task evidence that constrains this task;
-- repository-level development and testing rules;
-- applicable `AGENTS.md` instructions.
-
-Also read:
+Sources under:
 
 ```text
-prompts/codex/task_history_recording.md
+## Authoritative Sources
+### Conditional
 ```
 
-This file defines only how the completed review is persisted for portfolio/audit purposes.
+must not be read during the normal review path.
 
-It is **not** a source of truth for implementation correctness, task requirements, contract interpretation, or acceptance decisions.
+Load a Conditional Source only after a concrete anomaly activates a relevant trigger.
 
-When requirements conflict, use this priority unless the repository explicitly defines another hierarchy:
-
-1. Explicit frozen contract or architecture decision
-2. Explicit `TASK_ID` acceptance / exit criteria
-3. Current phase / MVP / week plan
-4. Current phase / MVP / week context
-5. General repository conventions
-6. Implementation
-
-Do not treat implementation as a source of truth for its own requirements.
-
-Report unresolved specification conflicts.
+Do not load all Conditional Sources merely because one anomaly exists.
 
 ---
 
-## 6. Repository State Review
+### 2.3 Review anomaly triggers
 
-Use read-only Git inspection.
+Use the following trigger categories when applicable:
 
-At minimum, when valid for the repository, inspect:
+```text
+CHANGESET_UNCLEAR
+UNEXPECTED_REPOSITORY_CHANGE
+SCOPE_LEAKAGE
+REQUIREMENT_AMBIGUITY
+SOURCE_CONFLICT
+CONTRACT_CONFLICT
+TRACEABILITY_GAP
+TEST_COVERAGE_GAP
+VALIDATION_FAILURE
+REGRESSION_FAILURE
+EVIDENCE_MISSING
+EVIDENCE_MISMATCH
+PRIOR_COMPATIBILITY_UNCLEAR
+NEXT_TASK_BOUNDARY_UNCLEAR
+```
+
+When a trigger occurs:
+
+1. identify the exact trigger;
+2. load only matching Conditional Sources;
+3. investigate only the affected requirement/file/test/evidence area;
+4. stop expanding context once the issue is resolved.
+
+If the declared Conditional Sources are insufficient, escalate narrowly:
+
+```text
+matching Conditional Sources
+→ directly related repository search
+→ directly related parent Context / Plan
+→ directly relevant Architecture / ADR / Contract
+→ broader repository search
+```
+
+Broader repository search is a last resort.
+
+---
+
+## 3. Review Target and Change Set
+
+Before detailed code review, establish what implementation is being reviewed.
+
+### 3.1 Change inventory
+
+Start with non-mutating Git inspection:
 
 ```bash
 git status --short
+git diff --name-status
 git diff --stat
-git diff
-git diff --check
 ```
 
 If staged changes exist, also inspect:
 
 ```bash
+git diff --cached --name-status
 git diff --cached --stat
-git diff --cached
 ```
 
-Determine:
+Do not read the complete repository diff by default.
 
-- all changed files;
-- tracked versus untracked changes;
-- whether each change belongs to `TASK_ID`;
-- whether unrelated user changes were preserved;
-- whether generated artifacts were mixed into source changes unexpectedly;
-- whether later-task files were modified.
+Identify:
 
-Do not alter repository state to make the review easier.
+- TASK-related implementation files;
+- TASK-related test files;
+- Evidence files;
+- pre-existing unrelated changes;
+- unexpected changed files.
 
-When evaluating repository cleanliness and scope, distinguish pre-existing TASK history files from implementation changes.
-
-Files under:
-
-```text
-docs/task_history/
-```
-
-that were created by prior workflow runs are audit records and must not be mistaken for implementation scope expansion.
-
-However, unexpected or manually altered TASK history files may still be reported when they create provenance or audit-integrity concerns.
+TASK-history files from prior workflow runs are audit records and are not implementation scope by themselves.
 
 ---
 
-## 7. Requirement Traceability
+### 3.2 Detailed diff policy
 
-Build a requirement traceability map before issuing the final recommendation.
+Inspect detailed diffs only for files relevant to `TASK_ID`.
 
-For every explicit `TASK_ID` requirement, identify:
+Prefer:
 
-- source requirement;
-- implementation file and symbol;
-- test that verifies it;
-- evidence entry when evidence is required;
-- PASS / FAIL status.
-
-Use this chain:
-
-```text
-Requirement
-    ↓
-Implementation
-    ↓
-Test
-    ↓
-Evidence
+```bash
+git diff -- <path>
 ```
 
-A requirement with no implementation, no meaningful verification, or false evidence is not complete.
+or the equivalent review range for the known implementation commit.
 
-TASK history documents under `docs/task_history/` are not substitutes for implementation evidence and must not be used to satisfy this traceability chain.
+Do not run full:
+
+```bash
+git diff
+```
+
+unless required to resolve:
+
+```text
+CHANGESET_UNCLEAR
+UNEXPECTED_REPOSITORY_CHANGE
+SCOPE_LEAKAGE
+```
 
 ---
 
-## 8. Implementation Review
+### 3.3 Committed implementation
+
+If the TASK specification, Evidence, or repository state clearly identifies an implementation commit or base range, review that change range.
+
+If the reviewed implementation cannot be reliably identified from the TASK, Evidence, working tree, or a narrow Git-history inspection:
+
+```text
+activate CHANGESET_UNCLEAR
+```
+
+Do not guess the implementation range.
+
+---
+
+## 4. Review Procedure
 
 Review correctness before style.
 
-### 8.1 Contract compliance
-
-Verify all relevant frozen:
-
-- field names;
-- field sets;
-- required / optional fields;
-- data types;
-- enums;
-- state names;
-- API signatures;
-- public imports;
-- message schemas;
-- return semantics;
-- error semantics;
-- idempotency rules;
-- retry rules;
-- persistence boundaries;
-- ownership boundaries.
-
-Passing tests do not excuse a frozen contract violation.
-
-### 8.2 Fail-closed behavior
-
-Look for invalid or ambiguous paths that could be silently accepted.
-
-Check for:
-
-- permissive defaults;
-- silent fallbacks;
-- swallowed exceptions;
-- implicit success;
-- invalid enum or state acceptance;
-- missing validation;
-- caller-controlled safety invariants;
-- bypassable guards;
-- unbounded retries;
-- partially initialized objects;
-- ambiguous `None`, empty, or default behavior.
-
-Safety-sensitive and stateful behavior should fail closed unless the specification explicitly requires otherwise.
-
-### 8.3 State / lifecycle invariants
-
-When applicable, verify:
-
-- state set is finite where required;
-- transitions are explicit;
-- illegal transitions are rejected;
-- terminal states remain terminal where required;
-- unknown or ambiguous outcomes cannot silently become success;
-- retry counts are actually bounded;
-- reconciliation is distinct from success;
-- recovery behavior is explicit;
-- escalation / HITL is reachable where required;
-- alternate APIs cannot bypass invariants.
-
-### 8.4 Determinism
-
-When deterministic behavior is required, check for:
-
-- random behavior;
-- wall-clock dependence;
-- hidden global state;
-- unordered iteration affecting output;
-- environment-dependent branching;
-- shared mutation between calls.
-
-Equivalent inputs and equivalent state should produce equivalent decisions where required.
-
-### 8.5 Immutability and mutation
-
-When immutable models or state are required, inspect:
-
-- mutable default arguments;
-- exposed mutable collections;
-- aliasing;
-- in-place mutation;
-- shared object references;
-- dataclass / model configuration;
-- copied versus shared structures.
-
-### 8.6 Boundary ownership
-
-Verify that `TASK_ID` does not take ownership of components explicitly assigned to other tasks.
-
-Examples include:
-
-- ROS execution;
-- real robot execution;
-- VLA inference;
-- agent orchestration;
-- persistence;
-- databases;
-- Docker;
-- observability;
-- Grafana;
-- networking;
-- multi-agent execution;
-- external APIs.
-
-Treat premature implementation as a scope finding unless explicitly required.
+Use the TASK specification as the review checklist.
 
 ---
 
-## 9. Test Review
-
-Do not judge test adequacy from pass counts alone.
-
-Inspect the tests themselves.
-
-Verify meaningful coverage of:
-
-### Happy paths
-
-Required valid behavior succeeds.
-
-### Negative paths
-
-Invalid inputs, illegal transitions, rejected contracts, or prohibited behavior fail correctly.
-
-### Boundaries
-
-Test applicable limits such as:
-
-- minimum / maximum;
-- empty / null;
-- unknown;
-- duplicates;
-- retry exhaustion;
-- terminal states;
-- malformed values.
-
-### Invariants
-
-Important architecture, safety, state, and contract properties have explicit regression tests.
-
-### Failure paths
-
-When relevant, inspect tests for:
-
-- timeout;
-- unknown result;
-- partial failure;
-- retry exhaustion;
-- reconciliation;
-- recovery;
-- escalation;
-- malformed input;
-- duplicate request;
-- unexpected state.
-
-### Regression
-
-Identify and run the repository-defined focused test suite for `TASK_ID`.
-
-Also run the full regression suite when feasible.
-
-Use repository-defined commands when available.
-
-Otherwise use suitable non-mutating commands such as:
-
-```bash
-python3 -m pytest <focused-tests> -vv
-python3 -m pytest -vv
-python3 -m compileall -q src tests
-```
-
-Prevent generated cache files from contaminating repository state when necessary.
-
-If a test cannot be run, state why. Do not claim PASS.
-
----
-
-## 10. Evidence Review
-
-Locate the evidence artifact for `TASK_ID` when the task requires one.
-
-Do not assume the exact path; search expected result/evidence directories and task documents.
+### 4.1 Scope review
 
 Verify:
 
-- correct task identity;
-- correct status;
-- actual changed-file list;
-- actual test commands;
-- actual test results;
-- actual acceptance / exit criteria;
-- source hashes when present;
-- timestamps or provenance when required;
-- reproducibility sufficient for later audit.
+- every required Scope item is implemented;
+- no required behavior is missing;
+- declared Non-goals were not implemented;
+- unrelated files were not modified without justification;
+- frozen ownership boundaries remain intact.
 
-Recompute hashes independently when practical.
+Do not inspect the next TASK by default.
 
-Do not trust `"PASS"` merely because it is present in JSON or another generated artifact.
+If changed behavior cannot be classified using Scope and Non-goals:
 
-Evidence must describe the repository that was actually reviewed.
+```text
+activate NEXT_TASK_BOUNDARY_UNCLEAR
+```
 
-TASK history documents are human-readable audit records and are not implementation evidence unless the task specification explicitly defines otherwise.
+Only then inspect directly relevant future-plan information.
 
 ---
 
-## 11. Previous-task Compatibility
+### 4.2 Requirement traceability
 
-Inspect prior frozen outputs that constrain `TASK_ID`.
+For every explicit TASK requirement (`R1`, `R2`, ...), establish:
 
-Verify that the current implementation does not break:
+```text
+Requirement
+→ Implementation
+→ Test
+→ Evidence, when required
+```
 
-- earlier contracts;
-- schemas;
-- public imports;
-- APIs;
-- naming explicitly frozen by prior work;
-- architecture boundaries;
-- prior evidence assumptions;
-- existing regression behavior.
+Record for each requirement:
 
-A later task must not silently redefine an earlier frozen contract.
+- implementation file/symbol;
+- meaningful test;
+- Evidence entry if applicable;
+- PASS / FAIL.
 
----
+A requirement is not complete if its implementation or meaningful verification is missing.
 
-## 12. Next-task Leakage
+If the chain cannot be established:
 
-Determine the task that follows `TASK_ID` only when needed for scope analysis.
+```text
+activate TRACEABILITY_GAP
+```
 
-Identify functionality currently present that belongs to later work.
-
-Classify each case as:
-
-- harmless preparation;
-- necessary architectural prerequisite;
-- unnecessary premature implementation;
-- scope violation.
-
-Do not implement or modify the next task.
+TASK-history documents must never satisfy this chain.
 
 ---
 
-## 13. Code Quality Review
+### 4.3 Frozen reference review
 
-Report code-quality issues only when they materially affect:
+Verify every TASK-relevant Frozen Reference against the changed implementation.
+
+Check only contract properties applicable to this TASK, such as:
+
+- public fields or schema;
+- API/signature;
+- state/lifecycle semantics;
+- error semantics;
+- retry/idempotency behavior;
+- ownership boundary;
+- Evidence schema.
+
+Do not run generic contract checklists unrelated to the TASK.
+
+If Frozen Sources conflict or interpretation is materially unclear:
+
+```text
+activate CONTRACT_CONFLICT
+```
+
+Passing tests do not override a frozen contract violation.
+
+---
+
+### 4.4 Invariant and failure review
+
+Review state, safety, determinism, mutation, retry, reconciliation, or failure semantics only when required by:
+
+- TASK Requirements;
+- Frozen References;
+- loaded authoritative sources.
+
+Do not apply unrelated generic safety checklists.
+
+Where such behavior is required, verify that invalid or ambiguous paths cannot silently violate the declared invariant.
+
+---
+
+### 4.5 Test adequacy
+
+Inspect the tests that directly verify TASK Requirements.
+
+Always inspect:
+
+- tests added or changed for `TASK_ID`;
+- existing tests directly referenced by the TASK;
+- tests used as requirement proof.
+
+Verify meaningful coverage of the required:
+
+- valid behavior;
+- rejected/invalid behavior;
+- relevant boundaries;
+- invariants;
+- failure behavior.
+
+Do not inspect the entire regression suite source by default.
+
+If meaningful requirement coverage is missing:
+
+```text
+activate TEST_COVERAGE_GAP
+```
+
+---
+
+### 4.6 Code quality
+
+Report code-quality findings only when they materially affect:
 
 - correctness;
 - maintainability;
 - testability;
 - architecture;
-- future task integration.
+- future TASK integration.
 
-Check for:
-
-- unclear public API;
-- duplicated domain rules;
-- hidden coupling;
-- overly large functions/classes;
-- ambiguous names;
-- dead or unreachable code;
-- duplicated constants;
-- inconsistent exception semantics;
-- insufficient type clarity;
-- circular dependency risk;
-- fragile imports.
-
-Do not block acceptance for cosmetic preferences alone.
+Do not block acceptance for cosmetic style preferences alone.
 
 ---
 
-## 14. Severity Classification
+## 5. Validation
 
-Classify every finding as exactly one of:
+Run only non-mutating validation required by the TASK.
 
-### BLOCKER
+Follow the TASK's declared validation policy.
 
-The task cannot safely be accepted.
+---
 
-Examples:
+### 5.1 Focused validation
 
-- core requirement missing;
-- frozen contract violation that invalidates the task;
-- critical invariant bypassable;
-- tests or evidence fundamentally unreliable;
-- repository/scope corruption affecting subsequent tasks.
+Run the declared focused validation.
 
-### HIGH
+Prefer concise successful output.
 
-Normally must be fixed before starting the next task.
+General rule:
 
-Examples:
+```text
+PASS → concise output
+FAIL → targeted verbose output
+```
 
-- incorrect failure semantics;
-- important untested invariant;
-- significant scope violation;
-- retry/reconciliation/state safety defect;
-- materially false evidence.
+If focused validation fails:
 
-### MEDIUM
+```text
+activate VALIDATION_FAILURE
+```
 
-Should be corrected, but may be explicitly deferred when it does not make progression unsafe.
+Inspect detailed output only for failing tests/checks.
 
-Examples:
+Do not claim PASS for commands that were not run.
 
-- meaningful edge case gap;
-- maintainability risk;
-- incomplete defensive validation;
-- non-critical test gap.
+---
 
-### LOW
+### 5.2 Regression
 
-Minor issue that does not block acceptance by itself.
+Follow the TASK regression declaration exactly:
 
-Examples:
+```text
+REQUIRED
+NOT REQUIRED
+CONDITIONAL
+```
 
-- small naming inconsistency;
-- low-risk documentation gap;
-- minor test readability issue.
+If `REQUIRED`, run it.
+
+If `NOT REQUIRED`, do not run it merely because a full suite exists.
+
+If `CONDITIONAL`, evaluate only the TASK-declared condition.
+
+If required regression fails:
+
+```text
+activate REGRESSION_FAILURE
+```
+
+Investigate the failing area only.
+
+---
+
+### 5.3 Repository mutation safety
+
+Do not run validation commands known to rewrite source files or tracked repository content.
+
+Avoid auto-fix modes.
+
+When a normally used validation command would create repository artifacts and the repository does not provide a safe non-mutating mode, report the limitation rather than altering repository state.
+
+---
+
+## 6. Evidence Review
+
+If the TASK declares:
+
+```text
+Evidence required: YES
+```
+
+inspect the exact declared Evidence path.
+
+Do not search evidence directories by default.
+
+Verify only Evidence properties required by the TASK or frozen Evidence schema, including as applicable:
+
+- TASK identity;
+- changed-file claim;
+- validation commands/results;
+- Exit Criteria;
+- required hashes/provenance;
+- status.
+
+Compare Evidence against independently observed repository and validation results.
+
+Do not trust a stored `PASS` without verification.
+
+Recompute hashes only when:
+
+- the Evidence contract requires them;
+- an Exit Criterion requires them; or
+- an Evidence mismatch makes verification necessary.
+
+If the declared Evidence does not exist:
+
+```text
+activate EVIDENCE_MISSING
+```
+
+If Evidence disagrees with reviewed reality:
+
+```text
+activate EVIDENCE_MISMATCH
+```
+
+TASK-history documents are not implementation Evidence unless a frozen specification explicitly says otherwise.
+
+---
+
+## 7. Findings and Acceptance
+
+### 7.1 Severity
+
+Classify each finding as exactly one:
+
+```text
+BLOCKER
+HIGH
+MEDIUM
+LOW
+```
+
+Use these meanings:
+
+```text
+BLOCKER
+The TASK cannot safely be accepted.
+
+HIGH
+Normally must be resolved before subsequent TASK work.
+
+MEDIUM
+May be deferred only when progression remains safe.
+
+LOW
+Non-blocking minor issue.
+```
 
 Do not inflate severity.
 
 ---
 
-## 15. Required Review Output
+### 7.2 Acceptance Gates
 
-Return the review in this structure.
-
-# Read-only Review — `TASK_ID`
-
-## 1. Review Summary
-
-- Task:
-- Review mode: READ-ONLY
-- Files changed:
-- Focused tests:
-- Regression tests:
-- Evidence:
-- Overall recommendation:
-
-## 2. Requirement Traceability
-
-| Requirement | Implementation | Test | Evidence | Status |
-|---|---|---|---|---|
-| ... | ... | ... | ... | PASS/FAIL |
-
-Use the actual requirements of `TASK_ID`.
-
-## 3. Findings
-
-Report findings in severity order.
-
-### BLOCKER
-
-For each finding:
-
-- **ID:** `<TASK_ID>-REV-B01`
-- **File / Symbol:**
-- **Issue:**
-- **Why it matters:**
-- **Requirement / Contract affected:**
-- **Evidence:**
-- **Recommended remediation:**
-
-If none:
-
-`No BLOCKER findings.`
-
-### HIGH
-
-Use the same format.
-
-If none:
-
-`No HIGH findings.`
-
-### MEDIUM
-
-Use the same format.
-
-If none:
-
-`No MEDIUM findings.`
-
-### LOW
-
-Use the same format.
-
-If none:
-
-`No LOW findings.`
-
-## 4. Scope Review
-
-Report:
-
-- required scope implemented: PASS/FAIL
-- unrelated changes: PASS/FAIL
-- next-task leakage: PASS/FAIL
-- frozen boundaries preserved: PASS/FAIL
-
-Explain every failure.
-
-## 5. Contract Review
-
-Report:
-
-- contract compliance: PASS/FAIL
-- prior-task compatibility: PASS/FAIL
-- public interface compatibility: PASS/FAIL
-
-List frozen sources checked.
-
-## 6. Test Adequacy
-
-Report:
-
-- happy paths: PASS/FAIL
-- invalid paths: PASS/FAIL
-- boundary cases: PASS/FAIL
-- invariant coverage: PASS/FAIL
-- focused suite: PASS/FAIL/NOT RUN
-- full regression: PASS/FAIL/NOT RUN
-
-List important missing scenarios.
-
-## 7. Evidence Integrity
-
-Report:
-
-- evidence exists: PASS/FAIL/NOT APPLICABLE
-- task identity correct: PASS/FAIL/NOT APPLICABLE
-- changed-file list correct: PASS/FAIL/NOT APPLICABLE
-- test claims verified: PASS/FAIL/NOT APPLICABLE
-- exit criteria verified: PASS/FAIL/NOT APPLICABLE
-- hashes verified: PASS/FAIL/NOT APPLICABLE
-
-## 8. Acceptance Gates
-
-Report exactly:
+Determine:
 
 ```text
 Scope compliance: PASS/FAIL
 Requirement compliance: PASS/FAIL
 Contract compliance: PASS/FAIL
-State / invariant safety: PASS/FAIL/NOT APPLICABLE
+Invariant safety: PASS/FAIL/NOT APPLICABLE
 Test adequacy: PASS/FAIL
-Regression safety: PASS/FAIL
+Regression safety: PASS/FAIL/NOT APPLICABLE
 Evidence integrity: PASS/FAIL/NOT APPLICABLE
 ```
 
-## 9. Final Recommendation
-
-Return exactly one:
+Recommendation policy:
 
 ```text
+Any BLOCKER → REJECT
+Any unresolved HIGH → normally REJECT
+MEDIUM → explicitly determine whether safe to defer
+LOW → non-blocking by itself
+```
+
+The technical recommendation must be fixed before TASK history is written.
+
+---
+
+## 8. Review Output
+
+Use a compact success path and detailed failure path.
+
+---
+
+### 8.1 ACCEPT output
+
+If no blocking finding exists, return:
+
+```text
+# Read-only Review — <TASK_ID>
+
+Recommendation: ACCEPT
+
+Traceability:
+- Requirements: <passed>/<total> PASS
+
+Validation:
+- focused: PASS
+- regression: PASS | NOT REQUIRED
+- Evidence: PASS | NOT APPLICABLE
+
+Acceptance Gates:
+- Scope: PASS
+- Requirements: PASS
+- Contract: PASS
+- Invariants: PASS | NOT APPLICABLE
+- Tests: PASS
+- Regression: PASS | NOT APPLICABLE
+- Evidence: PASS | NOT APPLICABLE
+
+Findings:
+- BLOCKER: 0
+- HIGH: 0
+- MEDIUM: <count>
+- LOW: <count>
+
+Conditional Sources loaded:
+- <count>
+
 ACCEPT <TASK_ID>
 ```
 
-or:
+If MEDIUM or LOW findings exist, list them briefly with file/symbol and remediation.
+
+Do not reproduce TASK, Evidence, tests, or authoritative sources unnecessarily.
+
+---
+
+### 8.2 REJECT output
+
+If rejection is required, return:
 
 ```text
+# Read-only Review — <TASK_ID>
+
+Recommendation: REJECT
+
+## Traceability
+
+| Requirement | Implementation | Test | Evidence | Status |
+|---|---|---|---|---|
+| ... | ... | ... | ... | PASS/FAIL |
+
+## Blocking Findings
+
+### <SEVERITY> — <FINDING_ID>
+
+- File / Symbol:
+- Requirement / Contract:
+- Issue:
+- Evidence:
+- Why it matters:
+- Recommended remediation:
+
+## Validation
+
+- focused:
+- regression:
+- Evidence:
+
+## Acceptance Gates
+
+- Scope:
+- Requirements:
+- Contract:
+- Invariants:
+- Tests:
+- Regression:
+- Evidence:
+
+## Context Expansion
+
+- Trigger(s):
+- Conditional Sources loaded:
+
 REJECT <TASK_ID>
 ```
 
-Policy:
+Include only findings relevant to the rejection or meaningful deferred risk.
 
-- Any BLOCKER → REJECT
-- Any unresolved HIGH → normally REJECT
-- MEDIUM → explicitly state whether safe to defer
-- LOW → does not block acceptance by itself
+---
 
-Then briefly state the reason.
+## 9. TASK History
 
-### 15.1 Persist Review History
-
-Only after the complete review output above has been determined, persist the review result according to:
+Only after `ACCEPT` or `REJECT` has been technically determined, read:
 
 ```text
 prompts/codex/task_history_recording.md
 ```
 
-Determine the next sequential history number `SEQ` from:
+Follow it as the authoritative audit-recording policy.
+
+The review decision must not change because of TASK-history recording.
+
+Only the TASK-history files permitted by that policy may be written.
+
+Do not modify:
+
+- implementation;
+- tests;
+- Evidence;
+- contracts;
+- schemas;
+- TASK specification;
+- architecture;
+- plans;
+- Git index;
+- Git history;
+- unrelated documentation.
+
+If history recording fails, preserve the review recommendation and report separately:
 
 ```text
-docs/task_history/<TASK_ID>/
+Review recommendation: ACCEPT|REJECT
+Workflow history recording: FAIL
 ```
-
-Then create:
-
-```text
-docs/task_history/<TASK_ID>/<SEQ>_review.md
-```
-
-and update:
-
-```text
-docs/task_history/<TASK_ID>/README.md
-docs/task_history/README.md
-```
-
-Recording requirements:
-
-- use Korean for portfolio-readable explanations when English is not required;
-- preserve exact English technical identifiers, paths, commands, error messages, contract/schema fields, state names, severity names, and `PASS` / `FAIL` / `ACCEPT` / `REJECT`;
-- record the actual review result, including rejected reviews;
-- never delete or overwrite an earlier review/fix/implementation history entry;
-- preserve chronological sequence;
-- include Requirement Traceability, Findings, Acceptance Gates, and Final Recommendation;
-- include a concise Korean explanation of the most important engineering risks or lessons learned;
-- do not convert a `REJECT` into a softer status for portfolio presentation;
-- do not modify implementation, tests, evidence, or source-of-truth documents while recording history.
-
-If history recording itself fails, do not change the already-determined technical recommendation.
-
-Report the history-write failure separately.
 
 ---
 
-## 16. Final Constraints
+## 10. Efficiency Rules
 
-Remember:
+Default:
 
-- read only for implementation and source-of-truth surfaces;
-- no fixes;
-- no repository mutations except the explicit TASK history audit-log write exception;
-- no next-task implementation;
-- no staging or commits;
-- passing tests alone are not proof of correctness;
-- generated evidence must be independently verified;
-- implementation must be judged against frozen specification;
-- use concrete file, symbol, contract, and requirement references;
-- report unavailable information instead of guessing;
-- read and follow `prompts/codex/task_history_recording.md`;
-- determine the review conclusion before writing TASK history;
-- TASK history is an audit record, not a source of truth or implementation evidence.
+```text
+read TASK
+→ read Required Sources
+→ establish Change Set
+→ inspect relevant code/tests
+→ run required validation
+→ verify declared Evidence
+→ build traceability
+→ decide
+→ record History
+→ compact report
+```
 
-Begin the independent READ-ONLY review of the task identifier supplied in the current user message.
+On anomaly:
+
+```text
+detect anomaly
+→ activate exact trigger
+→ read matching Conditional Source only
+→ investigate affected area only
+→ return to review path
+```
+
+Do not default to:
+
+```text
+read every potentially relevant project document
+```
+
+Do not default to:
+
+```text
+full repository diff
+```
+
+Do not default to:
+
+```text
+full regression
+```
+
+Do not default to:
+
+```text
+verbose successful test output
+```
+
+Prefer:
+
+```text
+minimum sufficient independent evidence
+```
+
+while preserving independent review quality.
+
+Begin the independent READ-ONLY review of the TASK identifier supplied in the current user message.
