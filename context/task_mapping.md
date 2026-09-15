@@ -168,11 +168,19 @@ All five tasks are merged. They complete their bounded assessment/remediation sc
 
 ## 9. Independent Simulation Lane Mapping
 
-The frozen Simulation Lane mapping is maintained separately in:
+The accepted frozen gate baseline is maintained in:
 
 ```text
 context/simulation_task_mapping_v1.md
 ```
+
+Post-gate planning is maintained separately in:
+
+```text
+context/simulation_task_mapping_v2.md
+```
+
+Do not edit v1 in place: SIM-GATE evidence binds its exact SHA-256. v2 is a `DRAFT / PROPOSED` overlay and does not change the accepted gate.
 
 Verified operational sequence on `origin/master`:
 
@@ -185,7 +193,29 @@ ADR-Simulation-Lane-v1
   -> simulation_lane_authorized = true
 ```
 
-Future `TASK-SIM-003+` items are proposed placeholders, not approved work orders. The Simulation Lane is independent of the workbook Week graph and cannot authorize W1, Dataset V1, training, hardware freeze, or physical motion.
+Proposed post-gate backlog:
+
+| Task | Proposed responsibility | Dependency | Status |
+|---|---|---|---|
+| `TASK-SIM-003` | freeze `SIM_BASELINE_V1` | accepted `SIM_GO` | `PROPOSED` |
+| `TASK-SIM-004` | Navigation Skill deterministic backend | accepted SIM-003 baseline | `PROPOSED` |
+| `TASK-SIM-005` | VLA Skill deterministic backend | accepted SIM-003 baseline | `PROPOSED` |
+| `TASK-SIM-006` | Verification deterministic backend | accepted SIM-003 baseline | `PROPOSED` |
+| `TASK-SIM-007` | Mission Executor/Simulation Skill integration | accepted SIM-004 through SIM-006 | `PROPOSED` |
+| `TASK-SIM-008` | canonical normal Simulation E2E | accepted SIM-007 | `PROPOSED` |
+| `TASK-SIM-009` | failure/recovery scenario suite | accepted SIM-008 | `PROPOSED` |
+| `TASK-SIM-010` | observability/evidence/replay/regression | accepted SIM-009 | `PROPOSED` |
+| `TASK-SIM-E2E` | Simulation Qualification Gate | accepted SIM-003 through SIM-010 | `PROPOSED` |
+
+These are backlog definitions, not approved work orders. Only SIM-003 is currently eligible to proceed to Task-specification authoring. The Simulation Lane is independent of the workbook Week graph and cannot authorize W1, Dataset V1, training, hardware freeze, or physical motion.
+
+Proposed post-Simulation hardware transition:
+
+| Task | Proposed responsibility | Dependency | Status |
+|---|---|---|---|
+| `TASK-HW-SELECT-001` | evaluate manipulator, AMR, camera, and edge-compute candidates | accepted `SIM_E2E_QUALIFIED` | `PROPOSED` |
+
+The intended follow-up is candidate evaluation, explicit ADR amendment/supersession, independent Architecture Review, and only then Hardware Target Freeze. Candidate inventory is not a selection decision.
 
 ---
 
@@ -223,7 +253,9 @@ At the next workbook sync, review at least:
 2. keep VLA-01 Blocked/In Progress and W1-001 unauthorized;
 3. add the frozen independent Simulation Lane and accepted SIM-C01/SIM-001/SIM-002/SIM-GATE facts;
 4. record `SIM_GO` without changing any physical/Week authorization;
-5. reconcile MVP-001 through MVP-008 with actual Git history;
-6. review G0/G1 milestone status against their exact evidence requirements;
-7. revise original Week-1/Week-2 dates if readiness work materially shifted the schedule;
-8. update GPU/resource and hardware/device/safety risks using accepted evidence.
+5. add SIM-003 through SIM-010 and SIM-E2E as `PROPOSED`, not approved/started;
+6. add HW-SELECT-001 and its later ADR/review/freeze flow as `PROPOSED`;
+7. reconcile MVP-001 through MVP-008 with actual Git history;
+8. review G0/G1 milestone status against their exact evidence requirements;
+9. revise original Week-1/Week-2 dates if readiness work materially shifted the schedule;
+10. update GPU/resource and hardware/device/safety risks using accepted evidence.
