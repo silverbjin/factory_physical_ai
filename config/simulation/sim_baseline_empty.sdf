@@ -1,0 +1,9 @@
+<?xml version="1.0" ?>
+<sdf version="1.10">
+  <world name="sim_baseline_v1">
+    <physics name="baseline" type="ignored">
+      <max_step_size>0.001</max_step_size>
+      <real_time_factor>0</real_time_factor>
+    </physics>
+  </world>
+</sdf>
