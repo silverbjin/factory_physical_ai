@@ -48,26 +48,39 @@ SIM-C01 accepted
 
 `SIM_GO` is simulation-only. It does not authorize Week-1 work, Dataset V1, VLA fine-tuning, hardware freeze, teleoperation, or physical motion.
 
+Post-gate planning direction:
+
+```text
+ROS 2 Jazzy      = simulation/system integration middleware
+Gazebo Harmonic  = authoritative AMR/navigation/sensor/system simulator
+MuJoCo           = VLA/manipulation physics engineering backend
+Deterministic    = contract/lifecycle regression baseline
+```
+
+`TASK-SIM-003` must freeze exact runtime/version/source identities and the fidelity policy before SIM-004+ implementation. v1 real-time Gazebo↔MuJoCo dual-world co-simulation is not planned.
+
 ---
 
 ## Git Context
 
-Latest locally known remote-tracking integration baseline:
+Last accepted integration baseline recorded by prior reconciliation:
 
 ```text
 origin/master @ e3cc92b
 Merge pull request #12 from silverbjin/task/p0-SIM-
 ```
 
-Current worktree:
+The current repository tree includes Simulation Lane artifacts and `_v2` Codex workflow prompts, so the previous stale `task/PM_rev` topology note must not be treated as current truth.
 
-```text
-branch: task/PM_rev
-HEAD: b145c9d
-tracking origin/task/PM_rev
+Before creating `TASK-SIM-003` or a new Task worktree, refresh:
+
+```bash
+git status --short
+git branch --show-current
+git rev-parse HEAD
+git fetch origin
+git rev-parse origin/master
 ```
-
-Important: local `master @ eb73a86` is 26 commits behind `origin/master`. This PM branch predates the Simulation Lane merges, so reconcile it with `origin/master` before integration.
 
 ---
 
@@ -120,12 +133,26 @@ The local CUDA/LeRobot/SmolVLA code/config runtime is ready, but model loading, 
 
 No product Implementation Task is active in this PM worktree.
 
-Choose and specify one bounded direction:
+The immediate planning action is:
 
-1. Simulation Lane: create/review `TASK-SIM-003` under the accepted simulation mapping.
-2. Physical readiness: create/review hardware-selection and device/safety remediation work before another physical VLA re-gate.
+```text
+Create and review TASK-SIM-003
+— Simulation Toolchain Strategy & Baseline Freeze
+```
 
-Do not start `TASK-W1-001` or downstream physical/training work while P0-004R remains `NO_GO`.
+The specification should bind accepted SIM evidence and freeze the proposed simulator roles:
+
+```text
+ROS 2 Jazzy
+Gazebo Harmonic
+MuJoCo
+L0/L1/L2 fidelity policy
+no real-time dual-authority Gazebo↔MuJoCo co-simulation
+```
+
+It must verify/capture exact runnable toolchain facts before authorizing SIM-004+; it must not implement the downstream Gazebo or MuJoCo backends itself.
+
+Physical readiness remains a separate future track. Do not start `TASK-W1-001` or downstream physical/training work while P0-004R remains `NO_GO`.
 
 ---
 
@@ -138,7 +165,8 @@ AGENTS.md
 context/current_project_state.md
 context/project_management_context.md
 context/task_mapping.md
-context/simulation_task_mapping_v1.md   # from current origin/master
+context/simulation_task_mapping_v2.md   # current proposed post-gate backlog
+context/simulation_task_mapping_v1.md   # frozen historical gate input; read only when required
 relevant accepted evidence / TASK only
 ```
 
@@ -146,13 +174,14 @@ For a routed TASK command, follow `AGENTS.md` and the active Task's bounded cont
 
 ---
 
-## Known Management Anomalies
+## Known Management / Reconciliation Notes
 
-- The workbook is not present in this worktree; milestone/workbook reconciliation remains pending.
-- `AGENTS.md` points to five `_v2` workflow prompt paths that do not exist here; the Create workflow has no corresponding prompt file at all.
-- Simulation Lane files exist on `origin/master` but not on this stale-base PM branch.
+- The external project-management workbook has been updated with Simulation Week A/B planning, but the workbook is intentionally managed outside this repository.
+- The current repository tree supplied during reconciliation contains the `_v2` Codex workflow prompts referenced by `AGENTS.md`; treat the earlier missing-prompt note as resolved, subject to branch verification.
+- The last recorded PM branch was based on a stale local master, but the current tree contains the Simulation Lane files. Revalidate branch ancestry/HEAD rather than assuming the old divergence still exists.
+- `simulation_task_mapping_v1.md` is immutable accepted history; post-gate simulator planning belongs in `simulation_task_mapping_v2.md`.
 
-Resolve these branch/routing issues before treating the PM revision as integration-ready.
+Resolve any remaining branch divergence before treating the PM revision as integration-ready.
 
 ---
 
@@ -165,4 +194,4 @@ context/current_project_state.md
 context/session_handoff.md
 ```
 
-Update `context/task_mapping.md` or `context/simulation_task_mapping_v1.md` only when mapping/dependencies change. Reconcile the workbook every 3–5 Tasks, weekly, or at a Gate/Milestone.
+Update `context/task_mapping.md` only when global mapping changes. Never edit frozen `context/simulation_task_mapping_v1.md` in place. Update `context/simulation_task_mapping_v2.md` only when the proposed post-gate backlog/dependencies change, and version/freeze it through review when it becomes authoritative. Reconcile the external workbook every 3–5 Tasks, weekly, or at a Gate/Milestone.

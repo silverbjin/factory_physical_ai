@@ -1,6 +1,6 @@
 # Project Context — Factory Physical AI Agent
 
-> Last reviewed: 2026-08-28
+> Last reviewed: 2026-09-15
 > Status: authoritative project context for planning and implementation
 
 ## 1. Project name
@@ -25,6 +25,8 @@ This project is designed to prove rapid senior-level acquisition and operational
 2. **direct VLA dataset construction, fine-tuning, evaluation, and improvement**.
 
 The project deliberately reuses existing robot/system engineering competence where possible rather than spending the schedule re-proving known ROS/navigation/simulation skills.
+
+The accepted Simulation Lane now uses simulation as an engineering validation harness rather than as a research objective. The planned post-gate stack is **ROS 2 Jazzy + Gazebo Harmonic + MuJoCo**: ROS 2 Jazzy provides system integration/orchestration, Gazebo Harmonic provides the authoritative system-level AMR/sensor/navigation simulation, and MuJoCo provides component-level manipulation physics for VLA Skill validation.
 
 The target signal to an employer is not:
 
@@ -60,7 +62,7 @@ Operator goal
   -> mission completion
 ```
 
-The scenario should remain small enough for a six-week project but realistic enough to expose integration and operational failure modes.
+The scenario should remain small enough for the original six-week product scope plus the explicit Simulation Week A/B risk-reduction extension, while remaining realistic enough to expose integration and operational failure modes.
 
 ---
 
@@ -112,6 +114,46 @@ The scenario should remain small enough for a six-week project but realistic eno
                        Evaluation
 ```
 
+### 4.1 Simulation First execution topology
+
+The post-gate Simulation Lane increases fidelity in controlled layers while preserving the accepted Skill/Verification contracts:
+
+```text
+L0 — Deterministic contract/runtime
+Mission Executor
+  -> deterministic Navigation/VLA/Verification fixtures
+  -> lifecycle / timeout / reconciliation / fail-closed semantics
+
+L1-NAV — ROS 2 Jazzy + Gazebo Harmonic
+Mission Executor / Navigation Skill
+  -> ROS 2 Jazzy
+  -> Nav2-facing execution
+  -> Gazebo Harmonic AMR / sensor / world simulation
+
+L1-VLA — MuJoCo manipulation physics
+VLA Skill
+  -> contract-preserving MuJoCo backend
+  -> manipulator / object / contact / observation-action physics
+
+L2-SYSTEM — ROS 2 Jazzy + Gazebo Harmonic
+Factory mission
+  -> Mission Executor
+  -> Navigation / VLA / Verification boundaries
+  -> one authoritative Gazebo system world
+  -> normal system E2E and system-level failures
+```
+
+Simulation authority rules:
+
+- Gazebo Harmonic is the authoritative integrated system world for Simulation E2E.
+- MuJoCo is an engineering bench for manipulation physics and VLA Skill evidence.
+- deterministic fixtures remain the contract/lifecycle regression baseline.
+- the current v1 scope does not synchronize Gazebo and MuJoCo as two simultaneous authoritative physics worlds.
+- simulator models do not imply selection of myCobot, myAGV, D455, Orin Nano, or any other physical target.
+- a simulator backend must remain behind the accepted Skill/Verification contract and must not create a direct actuator contract.
+
+This strategy is intended to reduce sim-to-real and integration risk without turning the project into custom simulator, SLAM, or Nav2 research.
+
 ---
 
 ## 5. Responsibility boundaries
@@ -148,7 +190,37 @@ Responsible for the manipulation sensorimotor policy through a controlled skill 
 
 ### ROS 2
 
-Responsible for robot/sensor integration and execution.
+**ROS 2 Jazzy** is the planned Simulation Lane middleware baseline.
+
+Responsible for:
+
+- launch/orchestration of ROS-facing simulation components;
+- Nav2-facing navigation execution;
+- robot/sensor topic, service, action, and TF integration where required;
+- Gazebo Harmonic integration through the ROS/Gazebo boundary selected by the relevant Task;
+- preserving the accepted project Skill contracts above simulator-specific APIs.
+
+### Gazebo Harmonic
+
+Planned responsibility:
+
+- authoritative integrated Simulation world;
+- AMR/navigation/sensor/system-level simulation;
+- ROS 2 Jazzy system E2E;
+- system-level navigation and sensor failure injection.
+
+Gazebo is not evidence of physical robot readiness.
+
+### MuJoCo
+
+Planned responsibility:
+
+- manipulation-physics engineering backend;
+- contact/grasp/object interaction validation;
+- VLA observation/action execution experiments behind the accepted VLA Skill boundary;
+- manipulation-specific fault scenarios.
+
+MuJoCo is not a second authoritative system world and does not authorize model training or physical motion.
 
 ---
 
@@ -348,9 +420,26 @@ Metrics:
 
 ## 10. Schedule strategy
 
-Nominal total duration: **6 weeks**, approximately **20 hours/week**.
+The original project-management baseline remains **6 physical/product weeks**, approximately **20 hours/week**, with a portfolio-visible MVP by approximately Day 10.
 
-A portfolio-visible MVP should exist by approximately Day 10.
+The current execution plan adds two explicit **Simulation Weeks (A/B)** before the original physical Week-1 lane. This creates an 8-logical-week sequence unless calendar time is compressed; it does not rename or reinterpret the original `TASK-W1-*` through `TASK-W6-*` work.
+
+```text
+Simulation Architecture
+SIM-C01 -> SIM-001 -> SIM-002 -> SIM-GATE
+        ↓ accepted SIM_GO
+SIM Week A
+ROS 2 Jazzy / Gazebo Harmonic / MuJoCo component foundations
+        ↓
+SIM Week B
+Mission integration / Gazebo system E2E / multi-layer failure / qualification
+        ↓
+Hardware selection and readiness under separate authority
+        ↓
+Original Week 1 through Week 6
+```
+
+The Simulation Weeks are risk-reduction work. They must not be counted as Dataset V1, fine-tuning, physical teleoperation, or physical E2E evidence.
 
 ### Day-10 MVP
 
@@ -368,7 +457,7 @@ natural-language mission
 
 The MVP may use mocks/simulation at boundaries as long as they are explicitly labeled.
 
-### Six-week progression
+### Original six-week progression
 
 - Week 1: VLA vertical slice;
 - Week 2: VLA dataset iteration + skill service;
@@ -385,6 +474,8 @@ Unless they become necessary to an Exit Criterion, do not prioritize:
 
 - multi-agent architecture;
 - a photorealistic factory simulation;
+- real-time Gazebo↔MuJoCo dual-authority physics co-simulation in v1;
+- custom simulator-bridge research beyond the adapters needed by accepted Skill contracts;
 - advanced fleet optimization research;
 - custom SLAM/Nav2 research;
 - a new RL benchmark unrelated to the VLA/Agent gaps;
@@ -432,11 +523,12 @@ Every portfolio number must be traceable to a measured result or explicitly labe
 
 The project is successful when it can credibly demonstrate all of the following:
 
-1. a VLA was fine-tuned on a directly constructed/versioned demonstration dataset;
-2. VLA failures were classified and used to improve a later dataset/model version;
-3. a stateful Factory Agent was evaluated over a repeatable mission benchmark;
-4. LLM decisions were separated from deterministic execution/safety policies;
-5. Agent, VLA, ROS/factory tools were integrated through explicit contracts;
-6. representative failures were detected and recovered or safely escalated;
-7. production-like regression/Chaos/Soak evidence was generated;
-8. the final portfolio communicates business relevance, measured improvements, limitations, and engineering decisions without fabricated claims.
+1. the Simulation Lane produced reproducible deterministic, Gazebo Harmonic system, and MuJoCo manipulation evidence without conflating simulation with physical success;
+2. a VLA was fine-tuned on a directly constructed/versioned demonstration dataset;
+3. VLA failures were classified and used to improve a later dataset/model version;
+4. a stateful Factory Agent was evaluated over a repeatable mission benchmark;
+5. LLM decisions were separated from deterministic execution/safety policies;
+6. Agent, VLA, ROS/factory tools were integrated through explicit contracts;
+7. representative failures were detected and recovered or safely escalated;
+8. production-like regression/Chaos/Soak evidence was generated;
+9. the final portfolio communicates business relevance, measured improvements, limitations, and engineering decisions without fabricated claims.

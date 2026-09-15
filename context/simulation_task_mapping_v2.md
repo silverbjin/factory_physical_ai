@@ -1,20 +1,20 @@
-# Simulation Task Mapping v2 — Proposed Post-Gate Backlog
+# Simulation Task Mapping v2 — Proposed ROS 2 Jazzy / Gazebo Harmonic / MuJoCo Backlog
 
 > Status: `DRAFT / PROPOSED`
 > Planning revision: 2026-09-15
 > Governing frozen baseline: `context/simulation_task_mapping_v1.md`
 > Governing ADR: `docs/architecture/adr/ADR-Simulation-Lane-v1.md`
-> Purpose: Define the proposed Simulation First backlog after accepted `SIM_GO` without authorizing implementation or rewriting accepted evidence.
+> Purpose: Define the proposed post-`SIM_GO` Simulation First backlog using ROS 2 Jazzy, Gazebo Harmonic, and MuJoCo without authorizing implementation or rewriting accepted evidence.
 
 ---
 
 ## 1. Authority and Versioning
 
-`simulation_task_mapping_v1.md` is frozen and hash-bound by accepted `TASK-SIM-GATE` evidence. This v2 document is a planning overlay only.
+`simulation_task_mapping_v1.md` is frozen and hash-bound by accepted `TASK-SIM-GATE` evidence.
 
 ```text
 v1 = accepted historical gate input; immutable
-v2 = proposed downstream backlog; not approved
+v2 = proposed downstream planning overlay; not approved
 ```
 
 Nothing in v2 changes:
@@ -29,426 +29,516 @@ physical_motion_authorized = false
 hardware_target_frozen = false
 ```
 
----
-
-## 2. Completed Simulation-Lane Foundation
-
-These are verified merged/accepted facts, not proposed work:
-
-| Task | Status | Accepted result | Effect |
-|---|---|---|---|
-| `TASK-SIM-C01` | `COMPLETE / ACCEPTED` | `SIM_CONTRACT_GAPS_RESOLVED` | executable contract/schema established |
-| `TASK-SIM-001` | `COMPLETE / ACCEPTED` | `SIM_CONTRACT_PROFILE_READY` | SIM-002 enabled |
-| `TASK-SIM-002` | `COMPLETE / ACCEPTED` | `SIM_SMOKE_READY` | SIM-GATE evaluation enabled |
-| `TASK-SIM-GATE` | `COMPLETE / ACCEPTED` | `SIM_GO` | `simulation_lane_authorized = true` |
-
-The accepted foundation provides:
-
-- a closed executable Simulation Lane contract and JSON Schema;
-- logical operations `mission.execute`, `navigation.execute`, `vla.execute`, `action_status.get`, and `verification.verify`;
-- deterministic success, failure, timeout, and reconciliation smoke evidence;
-- explicit isolation from physical hardware, Dataset V1, and training authorization.
+No v2 item is executable until its own Task specification is created, reviewed, and approved.
 
 ---
 
-## 3. Proposed Delivery Roadmap
+## 2. Completed Simulation Foundation
 
-Every downstream item remains `PROPOSED` until its own Task specification is created, reviewed, and approved.
+| Task | Status | Accepted result |
+|---|---|---|
+| `TASK-SIM-C01` | `COMPLETE / ACCEPTED` | `SIM_CONTRACT_GAPS_RESOLVED` |
+| `TASK-SIM-001` | `COMPLETE / ACCEPTED` | `SIM_CONTRACT_PROFILE_READY` |
+| `TASK-SIM-002` | `COMPLETE / ACCEPTED` | `SIM_SMOKE_READY` |
+| `TASK-SIM-GATE` | `COMPLETE / ACCEPTED` | `SIM_GO`; `simulation_lane_authorized = true` |
+
+Accepted foundation:
+
+- executable Simulation Lane contract and JSON Schema;
+- operations `mission.execute`, `navigation.execute`, `vla.execute`, `action_status.get`, `verification.verify`;
+- deterministic success/failure/timeout/reconciliation evidence;
+- explicit isolation from physical hardware, Dataset V1, training, and Week authorization.
+
+Deterministic fixtures remain the L0 regression baseline after physics simulators are introduced.
+
+---
+
+## 3. Proposed Simulation Platform Strategy
+
+### 3.1 Required technology roles
+
+```text
+ROS 2 Jazzy
+= system middleware / launch / Skill integration / Nav2-facing execution
+
+Gazebo Harmonic
+= authoritative integrated Simulation world
+= AMR/navigation/sensor/world physics
+= normal system E2E and system-level navigation/sensor faults
+
+MuJoCo
+= manipulation-physics engineering backend
+= manipulator/object/contact dynamics
+= VLA observation/action physics and manipulation faults
+
+Deterministic fixtures
+= contract/lifecycle/timeout/reconciliation/fail-closed regression baseline
+```
+
+Exact installed versions, package identities, launch entry points, runtime facts, and hashes are not accepted evidence yet. `TASK-SIM-003` must measure and freeze them.
+
+### 3.2 Fidelity model
+
+```text
+L0       deterministic contract/runtime
+L1-NAV   ROS 2 Jazzy + Gazebo Harmonic navigation/component simulation
+L1-VLA   MuJoCo manipulation physics
+L1-VERIFY simulator-neutral Verification adapters
+L2-SYSTEM ROS 2 Jazzy + Gazebo Harmonic integrated system E2E
+```
+
+### 3.3 Authority rule
+
+Gazebo Harmonic is the single authoritative integrated world for L2 E2E.
+
+MuJoCo is a component manipulation bench. v1 does not synchronize Gazebo and MuJoCo as two live authoritative physics worlds.
+
+```text
+real-time Gazebo <-> MuJoCo dual-world co-simulation = OUT OF SCOPE for v1
+```
+
+MuJoCo evidence is consumed through accepted VLA/Verification boundaries, not by sharing live world state with Gazebo.
+
+### 3.4 Physical-target neutrality
+
+```text
+Gazebo robot model != frozen myAGV target
+MuJoCo arm model   != frozen myCobot target
+simulated camera   != frozen D455 contract
+simulation compute != frozen Orin deployment
+```
+
+Simulator models are engineering proxies until hardware selection is separately authorized.
+
+---
+
+## 4. Proposed Delivery Roadmap
 
 ```mermaid
 flowchart TD
-    SG[TASK-SIM-GATE\nCOMPLETE / ACCEPTED SIM_GO]
+    SG[TASK-SIM-GATE\nACCEPTED SIM_GO]
 
-    subgraph WA[SIM Week A - Simulation Skill Foundation]
-      S3[TASK-SIM-003\nBaseline Freeze\nPROPOSED]
-      S4[TASK-SIM-004\nNavigation Backend\nPROPOSED]
-      S5[TASK-SIM-005\nVLA Backend\nPROPOSED]
-      S6[TASK-SIM-006\nVerification Backend\nPROPOSED]
-    end
-
-    subgraph WB[SIM Week B - Mission Integration / Failure / E2E]
-      S7[TASK-SIM-007\nMission Integration\nPROPOSED]
-      S8[TASK-SIM-008\nNormal Simulation E2E\nPROPOSED]
-      S9[TASK-SIM-009\nFailure / Recovery Suite\nPROPOSED]
-      S10[TASK-SIM-010\nObservability / Regression\nPROPOSED]
-      SE[TASK-SIM-E2E\nQualification Gate\nPROPOSED]
-    end
-
-    HW[TASK-HW-SELECT-001\nCandidate Suitability Evaluation\nPROPOSED]
-    AR[ADR amendment / architecture review / hardware freeze\nPROPOSED]
-    OW[Original Week Graph\nunchanged / separately gated]
+    S3[TASK-SIM-003\nToolchain Strategy + Baseline Freeze]
+    S4[TASK-SIM-004\nROS2/Gazebo Navigation Backend]
+    S5[TASK-SIM-005\nMuJoCo VLA Manipulation Backend]
+    S6[TASK-SIM-006\nCross-Simulator Verification]
+    S7[TASK-SIM-007\nMission Integration / Backend Profiles]
+    S8[TASK-SIM-008\nGazebo Normal System E2E]
+    S9[TASK-SIM-009\nMulti-layer Failure / Recovery]
+    S10[TASK-SIM-010\nObservability / Regression]
+    SE[TASK-SIM-E2E\nQualification Gate]
 
     SG --> S3
     S3 --> S4
     S3 --> S5
-    S3 --> S6
-    S4 --> S7
-    S5 --> S7
-    S6 --> S7
-    S7 --> S8 --> S9 --> S10 --> SE
-    SE --> HW --> AR
-    AR -. separate authorization only .-> OW
+    S4 --> S6
+    S5 --> S6
+    S6 --> S7 --> S8 --> S9 --> S10 --> SE
 ```
 
-Default planning dependency:
+Planning sequence:
 
 ```text
-accepted SIM_GO
--> SIM-003 baseline frozen
--> SIM-004 Navigation backend
-   + SIM-005 VLA backend
-   + SIM-006 Verification backend accepted
--> SIM-007 Mission integration accepted
--> SIM-008 Normal E2E accepted
--> SIM-009 Failure/Recovery suite accepted
--> SIM-010 Observability/Regression accepted
--> SIM-E2E qualification accepted
--> hardware-selection track may begin under separate authority
+SIM Week A
+SIM-003
+-> SIM-004 Gazebo Navigation
+ + SIM-005 MuJoCo Manipulation
+-> SIM-006 Cross-Simulator Verification
+
+SIM Week B
+SIM-007 Mission Integration
+-> SIM-008 Gazebo Normal System E2E
+-> SIM-009 Multi-layer Failure/Recovery
+-> SIM-010 Observability/Regression
+-> SIM-E2E Qualification
+-> separate Hardware Selection track
 ```
+
+SIM-004 and SIM-005 may run in parallel after SIM-003 if file ownership/evidence paths do not materially overlap.
 
 ---
 
-## 4. SIM Week A — Simulation Skill Foundation
+## 5. SIM Week A — Simulator Strategy and Skill Foundations
 
-| Task | Purpose | Core output | Status |
+| Task | Purpose | Primary technology | Status |
 |---|---|---|---|
-| `TASK-SIM-003` | Simulation Baseline Freeze | accepted SIM artifacts, Git/source hashes, fixture/runtime/test baseline | `PROPOSED` |
-| `TASK-SIM-004` | Navigation Skill Deterministic Backend | navigation success/failure/timeout simulation | `PROPOSED` |
-| `TASK-SIM-005` | VLA Skill Deterministic Backend | VLA success/failure/unknown-outcome fixtures | `PROPOSED` |
-| `TASK-SIM-006` | Verification Backend | expected/observed verification and reconciliation fixtures | `PROPOSED` |
+| `TASK-SIM-003` | Simulation Toolchain Strategy & Baseline Freeze | all three | `PROPOSED` |
+| `TASK-SIM-004` | Navigation Skill Simulation Backend | ROS 2 Jazzy + Gazebo Harmonic | `PROPOSED` |
+| `TASK-SIM-005` | VLA Manipulation Simulation Backend | MuJoCo | `PROPOSED` |
+| `TASK-SIM-006` | Cross-Simulator Verification Backend | simulator-neutral | `PROPOSED` |
 
-### TASK-SIM-003 — Simulation Baseline Freeze
+### TASK-SIM-003 — Simulation Toolchain Strategy & Baseline Freeze
 
 ```text
-Status: PROPOSED
 Eligible for specification: YES
-Eligible for implementation: NO — no approved Task specification exists
+Eligible for implementation: NO
 Depends on: accepted TASK-SIM-GATE = SIM_GO
 ```
 
 Purpose:
 
-- freeze the accepted Simulation development baseline without adding substantive new runtime behavior;
-- bind the accepted SIM-001, SIM-002, and SIM-GATE artifacts to exact Git revisions and source hashes;
-- record the Simulation ADR, contract profile/schema, smoke runtime, fixture baseline, and test baseline as one reproducible manifest.
+- bind accepted SIM-C01/001/002/GATE artifacts to exact Git/source hashes;
+- freeze ROS 2 Jazzy, Gazebo Harmonic, and MuJoCo roles for the post-gate lane;
+- measure exact installed/runtime identities rather than guessing versions;
+- freeze L0/L1-NAV/L1-VLA/L1-VERIFY/L2-SYSTEM fidelity policy;
+- freeze Gazebo as integrated-world authority and MuJoCo as manipulation bench;
+- freeze `dual_world_cosimulation = prohibited_v1`;
+- establish minimal runnable toolchain smoke required before SIM-004/005 implementation.
 
 Required baseline inputs:
 
 ```text
-ACCEPTED SIM-001
-ACCEPTED SIM-002
-ACCEPTED SIM-GATE
+ACCEPTED SIM-C01 / SIM-001 / SIM-002 / SIM-GATE
 Simulation ADR
-executable contract and schema
+frozen simulation_task_mapping_v1.md
+proposed simulation_task_mapping_v2.md
+executable contract + JSON Schema
 contract profile
-smoke runtime
-fixture identity/version/hash
-Git commit SHA and source hashes
+deterministic smoke runtime
+fixture identity/hash
+Git SHA + source hashes
 focused/full test baseline
 ```
 
-Proposed output identity:
+Toolchain facts to capture:
+
+```text
+ROS 2 distribution/runtime identity
+Gazebo Harmonic runtime identity
+ros_gz / bridge availability
+Nav2-facing packages/entry points required by SIM-004
+MuJoCo package/runtime identity
+MuJoCo import/headless/step capability required by SIM-005
+Python/runtime environment
+launch/config/source hashes
+```
+
+Proposed output:
 
 ```text
 SIM_BASELINE_V1
 ```
 
-All later Simulation tasks must bind the accepted `SIM_BASELINE_V1` manifest, its Git revision, and relevant source hashes. The exact task-specific decision field and artifact paths must be frozen in the future Task specification.
+Expected strategy fields:
+
+```yaml
+ros2_distro: jazzy
+gazebo_release: harmonic
+mujoco_version: measured_not_guessed
+system_simulator: gazebo_harmonic
+navigation_backend: ros2_jazzy_gazebo_harmonic
+manipulation_physics_backend: mujoco
+integrated_world_authority: gazebo_harmonic
+dual_world_cosimulation: prohibited_v1
+```
 
 Explicitly excluded:
 
-- new Skill behavior or mission orchestration;
-- modification of accepted SIM evidence;
-- physical, Dataset V1, training, or Week authorization.
+- implementing SIM-004/005 Skill behavior;
+- Mission integration/E2E;
+- modifying accepted SIM evidence;
+- physical access/hardware freeze;
+- Dataset V1/fine-tuning/Week authorization.
 
-### TASK-SIM-004 — Navigation Skill Deterministic Backend
+`SIM_BASELINE_V1` is a Simulation development baseline, not a physical architecture freeze.
+
+### TASK-SIM-004 — Navigation Skill ROS 2 Jazzy + Gazebo Harmonic Backend
 
 ```text
-Status: PROPOSED
 Eligible for specification: after SIM-003 acceptance
-Eligible for implementation: NO
 Depends on: accepted SIM_BASELINE_V1
 ```
 
 Purpose:
 
-- place a deterministic backend behind the frozen Navigation Skill boundary;
-- validate Skill contract semantics before Gazebo/Nav2 or myAGV integration;
-- preserve stable action/idempotency identity, bounded execution, retry budget, and authoritative status lookup.
+- retain deterministic Navigation contract tests as L0 regression;
+- implement L1-NAV behind the frozen Navigation Skill boundary;
+- use ROS 2 Jazzy + Gazebo Harmonic and Nav2-facing execution required by the Task;
+- validate bounded robot/world/sensor/TF/odometry/goal-result behavior;
+- avoid custom SLAM/Nav2 research.
 
-Minimum scenario intent and contract mapping:
+Model policy:
 
-| Scenario intent | Contract representation |
-|---|---|
-| `SUCCESS` | `result=success`, `status=succeeded`, requested arrival verified |
-| `TIMEOUT` | `DEPENDENCY_TIMEOUT`, `result=pending`, `status=unknown`, reconciliation required |
-| `UNAVAILABLE` | `RESOURCE_UNAVAILABLE`, terminal/retryable behavior fixed by Task policy |
-| `INVALID_GOAL` | `VALIDATION`, fail closed before simulated execution |
-| `UNKNOWN_OUTCOME` | only through a contract-allowed `pending/unknown` result; never a new ad-hoc category |
-
-Proposed evidence:
-
-- schema-valid deterministic request/result fixtures;
-- repeated-run and bounded-cleanup evidence;
-- status/reconciliation correlation tests;
-- proof of no Gazebo, Nav2, myAGV, physical-device, or direct-actuator dependency.
-
-### TASK-SIM-005 — VLA Skill Deterministic Backend
-
-```text
-Status: PROPOSED
-Eligible for specification: after SIM-003 acceptance
-Eligible for implementation: NO
-Depends on: accepted SIM_BASELINE_V1
-```
-
-Purpose:
-
-- place a deterministic fixture backend behind the frozen VLA Skill boundary;
-- validate request-to-result semantics without SmolVLA model loading, inference, or fine-tuning;
-- preserve observation identity/hash, workspace profile, policy version, and reconciliation semantics.
+- use a generic/proxy mobile base sufficient to prove the contract;
+- do not claim it is the frozen myAGV target;
+- hash/version world, model, launch, bridge, and config assets.
 
 Minimum scenario intent:
 
 ```text
-request
-  -> deterministic VLA fixture
-  -> SUCCEEDED
-     FAILED
-     TIMED_OUT
-     UNKNOWN
-```
-
-`TIMED_OUT`/`UNKNOWN` must use the accepted contract's `pending/unknown` semantics and authoritative `action_status.get` reconciliation. The following invariants are mandatory:
-
-```text
-UNKNOWN -> SUCCEEDED directly is forbidden
-unknown outcome -> reconciliation before completion/retry
-observation evidence -> completion/reconcile/recovery/HITL decision
-uncertain != success
+SUCCESS
+TIMEOUT -> pending/unknown + reconciliation
+UNAVAILABLE / lifecycle-not-ready
+INVALID_GOAL -> fail closed
+BLOCKED_OR_ABORTED
+UNKNOWN_OUTCOME -> authoritative status reconciliation
 ```
 
 Proposed evidence:
 
-- deterministic VLA success, known failure, timeout, and unknown-result fixtures;
-- invalid/ambiguous observation rejection;
-- forbidden transition and bounded retry tests;
-- proof that no model, training, physical camera, or actuator path was used.
+- ROS 2 Jazzy / Gazebo Harmonic / bridge bindings;
+- Gazebo world/model/config hashes;
+- ROS action/topic/TF/odometry evidence required by the Task;
+- bounded launch and cleanup;
+- repeatability and reconciliation tests;
+- no physical robot/direct-actuator dependency.
 
-### TASK-SIM-006 — Verification Simulation Backend
+### TASK-SIM-005 — VLA Skill MuJoCo Manipulation Backend
 
 ```text
-Status: PROPOSED
 Eligible for specification: after SIM-003 acceptance
-Eligible for implementation: NO
 Depends on: accepted SIM_BASELINE_V1
 ```
 
 Purpose:
 
-- deterministically compare expected state with observed Simulation state;
-- preserve the accepted `verification.verify` verdicts `pass`, `fail`, and `uncertain`;
-- supply authoritative evidence for executor-owned confirmation, reconciliation, recovery, or HITL routing.
+- retain deterministic VLA fixtures as L0 regression;
+- implement L1-VLA behind the frozen VLA Skill boundary using MuJoCo;
+- validate manipulator/object/contact and observation/action physics without claiming physical performance;
+- preserve observation identity, action lifecycle, policy identity, and reconciliation semantics.
 
-Conceptual flow:
+Model policy:
+
+- use a generic/contract-compatible manipulator unless a later ADR freezes hardware;
+- do not label the model as the authoritative myCobot target;
+- hash/version model, scene, assets, and scenario config.
+
+Actual SmolVLA fine-tuning is not required or authorized. A deterministic/scripted policy may generate actions through the accepted VLA Skill contract while MuJoCo provides physics.
+
+Minimum scenarios:
 
 ```text
-Expected State + Observed Sim State
-               -> Verification verdict
-               -> CONFIRMED | RECONCILE | RECOVERY | HITL
+nominal manipulation objective
+grasp miss
+object slip/contact loss
+joint/workspace limit
+invalid/ambiguous observation
+bounded timeout
+unknown outcome -> action_status.get reconciliation
 ```
 
-The uppercase routing labels describe executor decisions, not new Verification contract verdicts. Recommended mapping:
+Mandatory invariants:
 
 ```text
-pass      -> CONFIRMED
-uncertain -> RECONCILE, then bounded RECOVERY or HITL if unresolved
-fail      -> deterministic RECOVERY or HITL policy
+UNKNOWN -> SUCCEEDED directly forbidden
+uncertain != success
+MuJoCo success != physical success
+no Dataset V1 / fine-tuning / physical camera / physical actuator
 ```
 
-Verification must not commit mission completion by itself.
+### TASK-SIM-006 — Cross-Simulator Verification Backend
 
-Proposed evidence:
+```text
+Eligible for specification: after SIM-004 and SIM-005 acceptance
+Depends on: accepted SIM-004 + SIM-005
+```
 
-- exact-match, mismatch, insufficient, ambiguous, and malformed observation cases;
-- immutable observation identity/version/hash checks;
-- deterministic verdict and routing-input evidence;
-- proof that `uncertain` never becomes `pass` by confidence metadata.
+Purpose:
 
-Completion of SIM Week A should answer:
+- preserve `verification.verify` verdicts `pass`, `fail`, `uncertain`;
+- normalize deterministic, Gazebo, and MuJoCo evidence into Verification inputs;
+- prove Verification semantics do not depend on simulator-specific hidden state;
+- supply executor routing input without committing mission completion.
 
-> Can the Mission Executor consume each individual Skill through the accepted contract without real hardware?
+Flow:
 
-It does not yet prove integrated mission execution.
+```text
+Expected State
++
+Observed Evidence
+  deterministic | Gazebo | MuJoCo
+        ↓
+normalized verification input
+        ↓
+pass | fail | uncertain
+        ↓
+CONFIRMED | RECONCILE | RECOVERY | HITL
+```
 
-SIM-004, SIM-005, and SIM-006 may be planned as parallel workstreams only after SIM-003 is accepted and only when implementation packages, evidence paths, and file ownership do not materially overlap. Otherwise execute them sequentially without introducing false semantic dependencies between the three Skill backends.
+Required evidence should cover exact match, mismatch, insufficient/ambiguous/stale/malformed observation, immutable observation identity, and `uncertain` never auto-promoting to `pass`.
+
+Week A completion should prove:
+
+> Navigation, manipulation physics, and Verification can execute through accepted contracts using ROS 2 Jazzy, Gazebo Harmonic, and MuJoCo without real hardware.
+
+It does not prove integrated mission E2E.
 
 ---
 
-## 5. SIM Week B — Mission Integration / Failure / E2E
+## 6. SIM Week B — Mission Integration / Failure / E2E
 
 | Task | Purpose | Status |
 |---|---|---|
-| `TASK-SIM-007` | Simulation Mission Integration | `PROPOSED` |
-| `TASK-SIM-008` | Normal Simulation E2E | `PROPOSED` |
-| `TASK-SIM-009` | Failure / Recovery Scenario Suite | `PROPOSED` |
-| `TASK-SIM-010` | Simulation Observability / Evidence / Regression | `PROPOSED` |
+| `TASK-SIM-007` | Mission Integration / Backend Profiles | `PROPOSED` |
+| `TASK-SIM-008` | Canonical Normal Gazebo System E2E | `PROPOSED` |
+| `TASK-SIM-009` | Multi-layer Failure / Recovery Suite | `PROPOSED` |
+| `TASK-SIM-010` | Simulator-aware Observability / Evidence / Regression | `PROPOSED` |
 | `TASK-SIM-E2E` | Simulation Qualification Gate | `PROPOSED` |
 
-### TASK-SIM-007 — Simulation Mission Integration
+### TASK-SIM-007 — Mission Integration / Backend Profiles
 
 ```text
-Status: PROPOSED
-Eligible for specification: after SIM-004, SIM-005, and SIM-006 are all accepted
-Eligible for implementation: NO
-Depends on: accepted SIM-004, SIM-005, and SIM-006 backends
+Eligible for specification: after SIM-006 acceptance
+Depends on: accepted SIM-004 + SIM-005 + SIM-006
 ```
 
 Purpose:
 
+- integrate Mission Executor with accepted Navigation/VLA/Verification Simulation backends;
+- use ROS 2 Jazzy for system-facing orchestration required by the Task;
+- support explicit backend profiles without changing the accepted public contract;
+- preserve one authoritative integrated world.
+
+Conceptual profiles:
+
 ```text
-Mission Executor
-  + Navigation Skill Sim
-  + VLA Skill Sim
-  + Verification Sim
-  -> one contract-bound integrated Simulation runtime
+deterministic:
+  Navigation = fixture
+  VLA = fixture
+  Verification = fixture
+
+navigation_physics:
+  Navigation = ROS2 Jazzy + Gazebo Harmonic
+  VLA = fixture/proxy
+  Verification = normalized evidence
+
+manipulation_physics:
+  Navigation = fixture
+  VLA = MuJoCo
+  Verification = normalized evidence
+
+system:
+  integrated world = Gazebo Harmonic
+  Navigation = ROS2 Jazzy + Gazebo Harmonic
+  VLA = contract-preserving system representation defined by Task
+  Verification = system observation adapter
 ```
 
-Existing MVP mission state, deterministic gateway, normal E2E, and single-failure recovery implementation may be reused when compatible. Reuse never auto-passes a SIM Exit Criterion:
+The `system` profile must not create live dual-authority Gazebo↔MuJoCo physics.
+
+Existing MVP implementation may be reused only with new SIM-specific tests/evidence.
+
+### TASK-SIM-008 — Canonical Normal Gazebo System E2E
 
 ```text
-reused implementation + new SIM-specific tests/evidence = eligible proof
-reused implementation alone = insufficient
-MVP complete != SIM backlog complete
-```
-
-Proposed evidence:
-
-- exact boundary wiring and version bindings;
-- mission/action lifecycle and idempotency tests;
-- authoritative verification required before mission completion;
-- no bypass of Skill/Verification contracts.
-
-### TASK-SIM-008 — Normal Simulation E2E
-
-```text
-Status: PROPOSED
 Eligible for specification: after SIM-007 acceptance
-Eligible for implementation: NO
-Depends on: accepted SIM-007 Mission integration
+Depends on: accepted SIM-007
 ```
 
 Purpose:
+
+Run the canonical mission with Gazebo Harmonic as the L2 authoritative world.
 
 ```text
 factory request
--> mission
--> simulated navigation
--> simulated VLA
--> verification
+-> Mission Executor
+-> Navigation Skill
+-> ROS 2 Jazzy / Nav2-facing execution
+-> Gazebo Harmonic system world
+-> contract-preserving manipulation step
+-> Verification
 -> mission success
 ```
 
-Minimum machine-readable evidence:
+The Task must state exactly how manipulation is represented in the Gazebo system E2E without claiming MuJoCo contact fidelity. Accepted SIM-005 MuJoCo evidence remains separately required.
+
+Minimum evidence:
 
 ```text
-mission_id
-action lifecycle
-initial state
-final state
-Skill results
-Verification result
-trace/correlation identity
-bounded duration
-fixture and contract versions
-source revision and hashes
+mission/action lifecycle
+initial/final state
+Navigation/VLA/Verification results
+ROS correlation identity
+Gazebo world/model/bridge/config identity
+bounded duration + simulation time
+source revisions/hashes
 ```
 
-One successful scenario proves only the bounded canonical Simulation path, not physical or production success.
-
-### TASK-SIM-009 — Failure / Recovery Scenario Suite
+### TASK-SIM-009 — Multi-layer Failure / Recovery Suite
 
 ```text
-Status: PROPOSED
 Eligible for specification: after SIM-008 acceptance
-Eligible for implementation: NO
-Depends on: accepted normal Simulation E2E
+Depends on: accepted normal Gazebo E2E
 ```
 
-Minimum proposed scenarios:
+Minimum fault classes:
 
 ```text
-Navigation timeout
-VLA failed
-VLA unknown outcome
-Verification mismatch
-Factory API invalid response
-Skill unavailable
+L0 contract/dependency:
+  malformed response
+  dependency timeout/unavailable
+  unknown or contradictory result/status
+
+L1-NAV Gazebo:
+  blocked path / obstacle
+  navigation abort/timeout
+  sensor/TF/dependency unavailable when Task-supported
+
+L1-VLA MuJoCo:
+  grasp miss
+  slip/contact loss
+  joint/workspace limit
+  timeout
+  ambiguous observation
+  unknown outcome
+
+L2 mission/verification:
+  Skill success but observed state mismatch
+  stale observation
+  uncertain verification -> reconcile/HITL
 ```
 
-Each scenario must explicitly prove its applicable decision:
+Each scenario must prove the intended `retry / reconcile / recover / HITL / fail-closed` behavior with bounded cleanup.
+
+### TASK-SIM-010 — Simulator-aware Observability / Evidence / Regression
 
 ```text
-retry?
-reconcile?
-recover?
-HITL?
-fail closed?
-```
-
-Factory API invalid-response coverage must reuse an existing typed boundary or first surface a concrete contract gap; it must not silently expand the frozen Simulation contract.
-
-Proposed evidence:
-
-- versioned scenario manifest with stable expected outcomes;
-- retry/reconciliation/idempotency and budget invariants;
-- fail-closed behavior for malformed or contradictory results;
-- no unbounded retry, sleep, process leak, or physical fault injection.
-
-### TASK-SIM-010 — Simulation Observability / Evidence / Regression
-
-```text
-Status: PROPOSED
 Eligible for specification: after SIM-009 acceptance
-Eligible for implementation: NO
-Depends on: accepted normal and failure Simulation suites
+Depends on: accepted normal + failure Simulation suites
 ```
 
-Purpose:
-
-- freeze structured evidence, trace correlation, mission/action timelines, failure codes, recovery decisions, fixture versions, and Git/source revisions;
-- add deterministic replay and regression comparison;
-- make metrics auditable without extrapolating to physical or production performance.
-
-Minimum outputs:
+Common provenance:
 
 ```text
-structured evidence
-trace correlation
-mission/action timeline
-failure_code
-recovery decision
-fixture/contract version
-Git SHA and source hashes
-replay/regression result
+mission/action/correlation identity
+Skill + Verification result
+failure_code + recovery decision
+contract version
+Git SHA + source hashes
+backend profile
 ```
 
-Explicitly excluded:
+Gazebo provenance where applicable:
 
-- physical latency/safety/reliability claims;
-- 24/72-hour production soak;
-- model-quality benchmark or fine-tuning claims.
+```text
+ROS 2 identity
+Gazebo version/release
+world/model hash
+ros_gz bridge/config hash
+launch/config hash
+simulation time / wall time / measured execution indicator
+```
+
+MuJoCo provenance where applicable:
+
+```text
+MuJoCo version
+model/scene/config hash
+seed or deterministic initialization identity
+timestep/step settings needed for reproduction
+initial-state identity
+```
+
+Simulation metrics must remain explicitly separate from physical/production claims.
 
 ---
 
-## 6. TASK-SIM-E2E — Simulation Qualification Gate
+## 7. TASK-SIM-E2E — Simulation Qualification Gate
 
 ```text
-Status: PROPOSED
 Eligible for specification: after SIM-010 acceptance
-Eligible for implementation: NO
-Depends on: accepted TASK-SIM-003 through TASK-SIM-010 evidence
-Gate behavior: evidence consumption/evaluation only; no remediation implementation
+Depends on: accepted SIM-003 through SIM-010 evidence
+Gate behavior: evidence evaluation only
 ```
 
 Proposed decisions:
@@ -458,46 +548,61 @@ SIM_E2E_QUALIFIED
 SIM_E2E_NOT_QUALIFIED
 ```
 
-Minimum qualification conditions:
+Minimum qualification matrix:
 
 ```yaml
-normal_e2e: PASS
-required_failure_cases: PASS
-physical_dependency: false
-forbidden_state_transition: false
-leaked_process: false
-evidence_reproducible: true
-regression_green: true
-observability_sufficient: true
+baseline:
+  sim_baseline_bound: PASS
+  accepted_contract_regression: PASS
+
+deterministic:
+  L0_contract_runtime: PASS
+  timeout_reconciliation: PASS
+
+gazebo:
+  ros2_jazzy_gazebo_navigation: PASS
+  normal_system_e2e: PASS
+  required_navigation_system_failures: PASS
+
+mujoco:
+  manipulation_backend: PASS
+  required_manipulation_failures: PASS
+  model_config_provenance: PASS
+
+verification:
+  cross_simulator_verification: PASS
+  uncertain_never_auto_success: PASS
+
+system:
+  required_failure_cases: PASS
+  forbidden_state_transition: false
+  leaked_process: false
+  evidence_reproducible: true
+  regression_green: true
+  observability_sufficient: true
+  physical_dependency: false
+  dual_world_cosimulation_required: false
 ```
 
-The future Task specification must define exact predicates, provenance rules, required evidence hashes, fail-closed behavior, and post-review acceptance recording. A truthful `SIM_E2E_NOT_QUALIFIED` remains a valid Gate-task completion outcome.
+A truthful `SIM_E2E_NOT_QUALIFIED` is a valid Gate-task completion.
 
-Accepted `SIM_E2E_QUALIFIED` is the substantive completion point for Simulation First. It remains simulation-only evidence and does not authorize the original Week graph or physical activity.
+Accepted `SIM_E2E_QUALIFIED` remains simulation-only evidence and does not authorize physical motion, Dataset V1, fine-tuning, hardware freeze, or original Week-1 execution.
 
 ---
 
-## 7. Proposed Hardware-Selection Track After Simulation E2E
+## 8. Hardware Selection After Simulation E2E
 
-The first proposed hardware task is:
-
-```text
-TASK-HW-SELECT-001
-Candidate Suitability Evaluation
-Status: PROPOSED
-```
-
-Proposed dependency and change-control flow:
+Proposed flow remains:
 
 ```text
 accepted SIM_E2E_QUALIFIED
 -> TASK-HW-SELECT-001 Candidate Suitability Evaluation
--> ADR amendments or supersession
+-> ADR amendments/supersession
 -> independent Architecture Review
 -> explicit Hardware Target Freeze
 ```
 
-Candidate set to evaluate:
+Candidate inventory:
 
 ```text
 Manipulator:  myCobot 280 Pi
@@ -506,15 +611,11 @@ Camera:       Intel RealSense D455
 Edge compute: Jetson Orin Nano
 ```
 
-The evaluation must consider control/state paths, gripper, workspace/safety, observation contract, simulation compatibility, deployment topology, and downstream integration impact. Candidate ownership does not imply selection, operational readiness, or motion authorization.
-
-`TASK-HW-SELECT-001` and all later ADR/review/freeze steps remain `PROPOSED`. Simulation E2E qualification does not automatically authorize them or guarantee a hardware choice.
+Simulation evidence may inform suitability but may not silently select a candidate.
 
 ---
 
-## 8. Backlog Status and Execution Rules
-
-For every proposed item:
+## 9. Backlog Status / Execution Rules
 
 ```text
 listed in mapping
@@ -524,48 +625,68 @@ listed in mapping
 != independently accepted
 ```
 
-Required status progression:
+Progression:
 
 ```text
 PROPOSED
--> Task specification created
--> human review/approval
+-> specification
+-> specification review/approval
 -> READY FOR IMPLEMENTATION
 -> implementation/evidence
--> independent read-only review
+-> independent review
 -> post-review acceptance
 -> COMPLETE / ACCEPTED
 ```
 
-Only `TASK-SIM-003` is currently eligible to proceed to Task-specification authoring. Every other new Task remains both `PROPOSED` and predecessor-blocked.
+Only `TASK-SIM-003` is currently eligible for specification authoring.
 
 ---
 
-## 9. Cross-Lane Invariants
+## 10. Cross-Lane / Cross-Simulator Invariants
 
 ```text
 SIM task ID != W task ID
 SIM_GO != W1_GO
-SIM_BASELINE_V1 != a new architecture freeze
+
+SIM_BASELINE_V1 != physical architecture freeze
 Simulation fixture != Dataset V1
 Simulation E2E != physical E2E
-Simulation success metric != production success metric
+Simulation success != production success
+
+ROS 2 Jazzy simulation integration != physical deployment evidence
+Gazebo model != frozen physical target
+MuJoCo model != frozen physical target
+
+Gazebo = authoritative integrated Simulation world
+MuJoCo = manipulation physics bench
+Gazebo + MuJoCo != dual live authoritative world in v1
+
 Simulation backend != direct actuator contract
 Candidate hardware != frozen target
 Device readiness != motion authorization
 Training remains independently gated
 ```
 
-No proposed Task may rewrite accepted P0/SIM evidence, silently change the frozen executable contract, or freeze candidate hardware.
+No Task may rewrite accepted P0/SIM evidence, silently change the executable contract, freeze candidate hardware, use simulation success as physical evidence, or add real-time dual-engine co-simulation without a separate architecture decision.
 
 ---
 
-## 10. Immediate Planning Decision
+## 11. Immediate Planning Decision
 
-The next planning action is limited to:
+Next action:
 
 ```text
-Create and review TASK-SIM-003 specification
+Create and review TASK-SIM-003
+— Simulation Toolchain Strategy & Baseline Freeze
 ```
 
-That specification should freeze only the accepted baseline identity, bound artifacts/hashes, validation method, and output decision needed by later Simulation tasks. It must not implement SIM-004+ behavior or pre-approve later backlog items.
+The Task specification should:
+
+1. bind accepted SIM evidence;
+2. verify exact ROS 2 Jazzy, Gazebo Harmonic, `ros_gz`/navigation-runtime, and MuJoCo facts;
+3. freeze simulator responsibilities/fidelity levels;
+4. freeze `dual_world_cosimulation = prohibited_v1`;
+5. define baseline artifact paths, hashes, validation commands, and task-specific decision;
+6. define eligibility for SIM-004 and SIM-005.
+
+It must not implement Gazebo Navigation, MuJoCo VLA behavior, Mission E2E, hardware selection, Dataset V1, fine-tuning, teleoperation, or physical motion.
