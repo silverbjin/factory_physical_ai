@@ -2,8 +2,9 @@
 
 > Purpose: Compact operational truth for the next engineering session.
 > Last reconciled: 2026-09-15 (Asia/Seoul).
-> Planning baseline: `Factory_Physical_AI_Project_Management_Task_Hierarchy.xlsx` (not present in this worktree).
+> Planning baseline: external `Factory_Physical_AI_Project_Management_Task_Hierarchy_Simulation_Updated.xlsx` (project-management workbook; not stored in this repository worktree).
 > Operational truth: merged Git history and accepted machine-readable evidence take precedence over stale workbook cells.
+> Simulation planning overlay: `context/simulation_task_mapping_v2.md`.
 
 ---
 
@@ -16,6 +17,7 @@ Physical device I/O              BLOCKED
 Training resource path           BLOCKED
 VLA readiness re-gate            NO_GO
 Simulation Lane                  SIM_GO / AUTHORIZED
+Simulation toolchain direction   ROS 2 Jazzy + Gazebo Harmonic + MuJoCo / PROPOSED FOR SIM-003 FREEZE
 Post-gate SIM backlog            PROPOSED / DESIGNING
 Week-1 physical VLA work         NOT AUTHORIZED
 ```
@@ -44,7 +46,7 @@ ADR + executable contract remediation
 
 ## 2. Git Baselines and Worktree State
 
-Latest locally known remote-tracking integration baseline:
+Last accepted integration baseline recorded by the previous reconciliation:
 
 ```text
 origin/master @ e3cc92b
@@ -52,26 +54,20 @@ Merge pull request #12 from silverbjin/task/p0-SIM-
 observed commit time: 2026-09-15 12:47:43 +0900
 ```
 
-Current PM worktree:
+The repository tree supplied for this update already contains the accepted Simulation Lane artifacts, `_v2` Codex workflow prompts, `simulation_task_mapping_v2.md`, executable Simulation contract/schema, and SIM acceptance/evidence files.
 
-```text
-branch: task/PM_rev
-HEAD:   b145c9d chore(codex): PM rev_2
-tracking: origin/task/PM_rev (in sync at inspection time)
-working tree before this reconciliation: clean
+Exact current branch, HEAD, ahead/behind state, and worktree cleanliness were **not re-measured** as part of this context rewrite. Before creating or implementing `TASK-SIM-003`, refresh:
+
+```bash
+git status --short
+git branch --show-current
+git rev-parse HEAD
+git fetch origin
+git rev-parse origin/master
+git log --oneline --decorate -10
 ```
 
-Branch topology anomaly:
-
-```text
-local master @ eb73a86
-origin/master @ e3cc92b
-local master is 26 commits behind origin/master
-task/PM_rev is based on local master and therefore does not contain
-the 51 Simulation Lane files already present on origin/master
-```
-
-Before merging `task/PM_rev`, reconcile it with current `origin/master` and rerun the relevant checks. Do not interpret absent Simulation Lane files in this worktree as deleted project work.
+Do not reuse the earlier stale `task/PM_rev` branch-topology claim as current truth without revalidation.
 
 ---
 
@@ -124,7 +120,7 @@ The following work is present on `origin/master` and accepted/merged:
 | `TASK-SIM-002` | `SIM_SMOKE_READY`, accepted |
 | `TASK-SIM-GATE` | `SIM_GO`, accepted; `simulation_lane_authorized = true` |
 
-The simulation lane validates bounded software contracts and deterministic smoke behavior without physical devices. The post-gate delivery sequence is now planned in `context/simulation_task_mapping_v2.md`, but every `TASK-SIM-003+` item remains `PROPOSED` until its own specification is created and approved.
+The simulation lane validates bounded software contracts and deterministic smoke behavior without physical devices. The proposed post-gate plan now escalates fidelity from deterministic contract fixtures to ROS 2 Jazzy / Gazebo Harmonic navigation and system simulation, plus MuJoCo manipulation-physics validation. The post-gate delivery sequence is planned in `context/simulation_task_mapping_v2.md`, but every `TASK-SIM-003+` item remains `PROPOSED` until its own specification is created and approved.
 
 The accepted `context/simulation_task_mapping_v1.md` remains frozen and hash-bound to SIM-GATE evidence. It must not be edited in place to record later planning state.
 
@@ -233,36 +229,70 @@ There is no active product Implementation Task in this PM worktree. The active m
 ```text
 branch: task/PM_rev
 planning state: TASK-SIM-003+ backlog design
+simulation platform direction: ROS 2 Jazzy + Gazebo Harmonic + MuJoCo
 all downstream SIM tasks: PROPOSED
 ```
+
+### Proposed Simulation Platform Roles
+
+The v2 planning direction assigns one clear responsibility to each simulation technology:
+
+```text
+ROS 2 Jazzy
+= system middleware / launch / Skill integration / Nav2-facing execution
+
+Gazebo Harmonic
+= authoritative system-level simulator for AMR, sensors, navigation,
+  ROS 2 integration, and normal system E2E
+
+MuJoCo
+= manipulation-physics engineering backend for VLA Skill validation,
+  contact/grasp/action behavior, and manipulation fault scenarios
+
+Deterministic fixtures
+= L0 contract/lifecycle/failure semantics baseline
+```
+
+The v1 plan does **not** use Gazebo and MuJoCo as two simultaneously authoritative world simulators. Real-time Gazebo↔MuJoCo physics co-simulation is outside the current scope. MuJoCo supplies component-level manipulation evidence; Gazebo supplies the authoritative integrated system world.
+
+Exact installed package/version facts, runnable entry points, bridge/runtime availability, and source hashes are **not yet accepted evidence**. `TASK-SIM-003` must capture and freeze them before downstream simulator implementation.
 
 Proposed Simulation Lane sequence:
 
 | Task | Proposed scope | Status |
 |---|---|---|
-| `TASK-SIM-003` | freeze `SIM_BASELINE_V1` from accepted SIM artifacts, Git/source hashes, fixtures, runtime, and tests | `PROPOSED` |
-| `TASK-SIM-004` | Navigation Skill deterministic backend | `PROPOSED` |
-| `TASK-SIM-005` | VLA Skill deterministic backend | `PROPOSED` |
-| `TASK-SIM-006` | Verification deterministic backend | `PROPOSED` |
-| `TASK-SIM-007` | Mission Executor and Simulation Skill integration | `PROPOSED` |
-| `TASK-SIM-008` | canonical normal Simulation E2E | `PROPOSED` |
-| `TASK-SIM-009` | failure/recovery scenario suite | `PROPOSED` |
-| `TASK-SIM-010` | observability, evidence, replay, and regression | `PROPOSED` |
-| `TASK-SIM-E2E` | Simulation Qualification Gate | `PROPOSED` |
+| `TASK-SIM-003` | Simulation Toolchain Strategy & Baseline Freeze: bind accepted SIM artifacts plus ROS 2 Jazzy / Gazebo Harmonic / MuJoCo runtime identities, fidelity policy, and baseline hashes | `PROPOSED` |
+| `TASK-SIM-004` | Navigation Skill ROS 2 Jazzy + Gazebo Harmonic backend, including Nav2-facing success/failure/timeout behavior | `PROPOSED` |
+| `TASK-SIM-005` | VLA Skill MuJoCo manipulation-physics backend with deterministic contract regression | `PROPOSED` |
+| `TASK-SIM-006` | simulator-independent Verification backend/adapters across deterministic, Gazebo, and MuJoCo observations | `PROPOSED` |
+| `TASK-SIM-007` | Mission Executor + Skill integration with ROS 2 Jazzy orchestration and explicit backend profiles | `PROPOSED` |
+| `TASK-SIM-008` | canonical normal Gazebo system E2E | `PROPOSED` |
+| `TASK-SIM-009` | multi-layer failure/recovery suite: contract, Gazebo navigation/system, MuJoCo manipulation, and verification mismatch faults | `PROPOSED` |
+| `TASK-SIM-010` | simulator-aware observability, evidence, replay, and regression | `PROPOSED` |
+| `TASK-SIM-E2E` | Simulation Qualification Gate requiring deterministic, Gazebo, and MuJoCo evidence | `PROPOSED` |
 
 Only `TASK-SIM-003` is the next candidate for specification. `SIM_GO` makes that specification eligible for consideration; it does not make an absent Task specification executable.
 
 Planned delivery order:
 
 ```text
-SIM Week A: SIM-003 through SIM-006
--> SIM Week B: SIM-007 through SIM-010
+SIM Week A:
+SIM-003
+-> SIM-004 Gazebo Navigation
+   + SIM-005 MuJoCo Manipulation
+-> SIM-006 Cross-Simulator Verification
+
+SIM Week B:
+SIM-007 Mission Integration
+-> SIM-008 Gazebo Normal System E2E
+-> SIM-009 Multi-layer Failure / Recovery
+-> SIM-010 Observability / Regression
 -> SIM-E2E Qualification Gate
 -> proposed TASK-HW-SELECT-001
 -> ADR amendment/review and explicit Hardware Target Freeze
 ```
 
-`TASK-HW-SELECT-001` is also `PROPOSED`. It will evaluate myCobot 280 Pi, myAGV JN 2023, Intel RealSense D455, and Jetson Orin Nano as candidates after Simulation E2E qualification; it does not preselect them.
+`TASK-HW-SELECT-001` remains `PROPOSED`. It will evaluate myCobot 280 Pi, myAGV JN 2023, Intel RealSense D455, and Jetson Orin Nano as candidates after Simulation E2E qualification; the simulator models used before that point do not preselect physical targets.
 
 Do not start `TASK-W1-001`, `TASK-W1-002`, Dataset V1, fine-tuning, or physical motion under the current authorization state.
 
@@ -287,19 +317,20 @@ tests/                    focused and regression tests
 results/                  machine-readable evidence and acceptances
 ```
 
-The accepted `docs/simulation`, `results/simulation`, `results/reviews`, `src/simulation_runtime`, and SIM task/test files are currently visible on `origin/master`, not in this stale-base PM worktree. This PM branch now carries the exact frozen v1 mapping plus the proposed v2 planning overlay.
+The current repository tree includes accepted `docs/simulation`, `results/simulation`, `results/reviews`, `src/simulation_runtime`, SIM task/test files, frozen v1 mapping, and proposed v2 planning overlay. Exact Git ancestry remains subject to the refresh commands in Section 2.
 
 ---
 
 ## 8. Project-Management Reconciliation Queue
 
-The workbook is not present in this repository worktree, so Excel synchronization remains pending. At the next workbook sync, update at least:
+The external project-management workbook has been revised to include Simulation Week A/B planning through the current post-gate state, but it is not stored in this repository worktree. Git/evidence remains the execution truth; workbook status remains the planning/control view. At the next workbook sync, update at least:
 
 - P0-005, P0-006, P0-007, and P0-004R as merged tasks with their truthful task-specific outcomes;
 - VLA-01 as blocked/in progress, not Done;
 - the final P0-004R gate as `NO_GO` and Week-1 authorization as false;
 - the independent Simulation Lane, accepted SIM tasks, and effective `SIM_GO` authorization;
 - proposed SIM-003 through SIM-010, SIM-E2E, and HW-SELECT-001 backlog entries, without marking them approved or started;
+- the proposed simulator-role split: ROS 2 Jazzy integration, Gazebo Harmonic system simulation, MuJoCo manipulation-physics validation, with no v1 real-time dual-engine co-simulation;
 - candidate hardware inventory without marking targets frozen;
 - R-01/R-02 and device/safety/resource risks;
 - original Week-1/Week-2 schedule impact;
@@ -309,20 +340,10 @@ The workbook is not present in this repository worktree, so Excel synchronizatio
 
 ## 9. Repository Management Issues
 
-### Broken prompt references on `task/PM_rev`
+### Workflow prompt routing
 
-`AGENTS.md` currently routes to these paths:
+The current repository tree supplied during this reconciliation contains the `_v2` Codex workflow prompts referenced by `AGENTS.md`, including task creation, implementation, review, fix, and task-history recording. Treat that routing issue as resolved for the current repository layout; verify the exact files again after any branch rebase/merge.
 
-```text
-prompts/codex/implement_task_v2.md
-prompts/codex/fix_review_findings_v2.md
-prompts/codex/read_only_review_v2.md
-prompts/codex/create_task_spec_v2.md
-prompts/codex/task_history_recording_v2.md
-```
+### Git state refresh required
 
-None of those files exists in this worktree. The only corresponding workflow files currently present are the non-`_v2` implementation, fix, review, and history files; there is no task-creation prompt. This makes exact TASK routing incomplete until the references and files are reconciled.
-
-### Branch reconciliation required
-
-Because `task/PM_rev` predates the Simulation Lane merges, rebase/merge conflict handling and validation are required before this PM revision can be safely integrated. No Git history rewrite or branch update was performed during this state-document reconciliation.
+The previous PM context recorded a stale-base `task/PM_rev` branch, but the current repository tree now contains Simulation Lane artifacts. Re-measure branch ancestry, HEAD, and worktree cleanliness before creating the next Task branch. This context update does not perform Git mutation or claim that the old branch divergence still exists.
