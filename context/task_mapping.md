@@ -28,12 +28,12 @@ VLA-04 / TASK-W1-004  Fine-tuning V1
 VLA-05 / TASK-W1-005  Baseline Evaluation
 ```
 
-### Operational override after P0-004
+### Verified operational chain after P0-004R
 
 `TASK-P0-004` produced `NO_GO`, therefore the simple workbook dependency
 `P0-004 GO → W1-001` is currently not satisfied.
 
-Current working decomposition:
+Merged/evidenced decomposition:
 
 ```text
 TASK-P0-004
@@ -42,25 +42,18 @@ VLA Readiness Gate
     NO_GO
       ↓
 TASK-P0-005
-Runtime / CUDA / PyTorch / LeRobot / SmolVLA readiness
+Runtime / CUDA / PyTorch / LeRobot / SmolVLA = RUNTIME_READY [VERIFIED]
       ↓
-additional blocker-resolution tasks as required [PROPOSED]
+TASK-P0-006 Device I/O = DEVICE_IO_BLOCKED [VERIFIED]
       ↓
-TASK-P0-004R
-VLA Readiness Re-Gate [PROPOSED]
-      ↓ only if GO
-TASK-W1-001
+TASK-P0-007 Training Resource = TRAINING_RESOURCE_BLOCKED [VERIFIED]
+      ↓
+TASK-P0-004R VLA Readiness Re-Gate = NO_GO [VERIFIED]
+      ↓
+TASK-W1-001 remains NOT AUTHORIZED
 ```
 
-Possible additional tasks discussed operationally but **not yet approved in the workbook**:
-
-```text
-TASK-P0-006  Robot / Camera / Device I/O Readiness       [PROPOSED]
-TASK-P0-007  Training Resource / Budget Readiness        [PROPOSED]
-TASK-P0-004R VLA Readiness Re-Gate                       [PROPOSED]
-```
-
-Do not treat these as approved work orders until their necessity/dependency is reviewed.
+P0-006, P0-007, and P0-004R were originally operational proposals but are now merged facts. The workbook still requires reconciliation. A future physical remediation task or another re-gate remains `PROPOSED` until separately approved.
 
 ---
 
@@ -68,7 +61,7 @@ Do not treat these as approved work orders until their necessity/dependency is r
 
 | Backlog | Project Goal | Workbook Implementation Task(s) | Relationship | Current Mapping Note |
 |---|---|---|---|---|
-| VLA-01 | LeRobot environment + HW I/O verification | `TASK-P0-004`, `TASK-W1-001` | Readiness Gate + Primary implementation | `P0-004=NO_GO`; `P0-005` is an operational blocker-resolution task linked to VLA-01 |
+| VLA-01 | LeRobot environment + HW I/O verification | `TASK-P0-004`, `TASK-W1-001` | Readiness Gate + Primary implementation | `P0-005=RUNTIME_READY`; `P0-006=DEVICE_IO_BLOCKED`; `P0-007=TRAINING_RESOURCE_BLOCKED`; `P0-004R=NO_GO`; `W1-001` unauthorized |
 | VLA-02 | Teleoperation workflow | `TASK-W1-002` | Primary implementation | Blocked until VLA-01/authorization chain |
 | VLA-03 | Dataset V1 (~50 episodes) | `TASK-W1-003` | Primary implementation | Must follow stable teleoperation |
 | VLA-04 | SmolVLA baseline fine-tuning | `TASK-W1-004` | Primary implementation | Requires Dataset V1 + approved runtime/resource |
@@ -156,46 +149,47 @@ Their Backlog Exit Criteria remain separate.
 
 ---
 
-## 8. Current Task Mapping: P0-005
+## 8. Verified Phase-0 Readiness Task Mapping
 
 ```text
-Implementation Task:
-TASK-P0-005
-
 Related Backlog:
 VLA-01
 
-Relationship:
-Blocker resolution after VLA Readiness NO_GO
-
-Current branch:
-task/p0-005-vla-runtime
-
-Current worktree:
-../factory_physical_ai_p0_005
-
-Purpose:
-Establish and verify isolated VLA software runtime:
-- `.venv-vla`
-- PyTorch CUDA
-- actual CUDA tensor operation
-- LeRobot pinned runtime/import
-- SmolVLA module/config discovery
-- RTX 2060 6GB capability classification
-
-Does not complete:
-- VLA-01
-- physical robot I/O
-- camera I/O
-- teleoperation
-- Dataset V1
-- fine-tuning
-- W1 authorization
+TASK-P0-004   original readiness gate              NO_GO
+TASK-P0-005   software runtime remediation          RUNTIME_READY
+TASK-P0-006   robot/camera/device I/O readiness     DEVICE_IO_BLOCKED
+TASK-P0-007   training resource readiness           TRAINING_RESOURCE_BLOCKED
+TASK-P0-004R  evidence-based readiness re-gate      NO_GO
 ```
+
+All five tasks are merged. They complete their bounded assessment/remediation scope, but they do not complete VLA-01 because its physical readiness and authorization Exit Criteria remain unsatisfied.
 
 ---
 
-## 9. Task Dependency Rules
+## 9. Independent Simulation Lane Mapping
+
+The frozen Simulation Lane mapping is maintained separately in:
+
+```text
+context/simulation_task_mapping_v1.md
+```
+
+Verified operational sequence on `origin/master`:
+
+```text
+ADR-Simulation-Lane-v1
+  -> TASK-SIM-C01  SIM_CONTRACT_GAPS_RESOLVED / ACCEPT
+  -> TASK-SIM-001  SIM_CONTRACT_PROFILE_READY / ACCEPT
+  -> TASK-SIM-002  SIM_SMOKE_READY / ACCEPT
+  -> TASK-SIM-GATE SIM_GO / ACCEPT
+  -> simulation_lane_authorized = true
+```
+
+Future `TASK-SIM-003+` items are proposed placeholders, not approved work orders. The Simulation Lane is independent of the workbook Week graph and cannot authorize W1, Dataset V1, training, hardware freeze, or physical motion.
+
+---
+
+## 10. Task Dependency Rules
 
 Before generating a new `TASK-*.md`:
 
@@ -217,21 +211,19 @@ TASK-W1-001
 
 must **not** begin while VLA readiness authorization remains false.
 
-A successful P0-005 alone does not automatically authorize W1-001.
+The accepted `P0-004R=NO_GO` explicitly keeps W1-001 unauthorized. `SIM_GO` does not override that decision.
 
 ---
 
-## 10. Workbook Reconciliation Queue
+## 11. Workbook Reconciliation Queue
 
 At the next workbook sync, review at least:
 
-1. `TASK-P0-004`
-   - Planned → Merged
-   - Gate Result → NO_GO
-2. `VLA-01`
-   - Not Started → Blocked/In Progress as appropriate
-3. add `TASK-P0-005` to `Implementation_Tasks` / `Branch_Register`
-4. reconcile MVP-001 through MVP-008 with actual Git history
-5. review G0/G1 milestone status against their exact evidence requirements
-6. revise original Week-1/Week-2 dates if readiness work materially shifted the schedule
-7. update `R-02` GPU/resource risk with measured RTX 2060 6GB facts
+1. record P0-004, P0-005, P0-006, P0-007, and P0-004R as merged with their exact task-specific decisions;
+2. keep VLA-01 Blocked/In Progress and W1-001 unauthorized;
+3. add the frozen independent Simulation Lane and accepted SIM-C01/SIM-001/SIM-002/SIM-GATE facts;
+4. record `SIM_GO` without changing any physical/Week authorization;
+5. reconcile MVP-001 through MVP-008 with actual Git history;
+6. review G0/G1 milestone status against their exact evidence requirements;
+7. revise original Week-1/Week-2 dates if readiness work materially shifted the schedule;
+8. update GPU/resource and hardware/device/safety risks using accepted evidence.
