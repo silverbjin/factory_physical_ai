@@ -16,6 +16,7 @@ Physical device I/O              BLOCKED
 Training resource path           BLOCKED
 VLA readiness re-gate            NO_GO
 Simulation Lane                  SIM_GO / AUTHORIZED
+Post-gate SIM backlog            PROPOSED / DESIGNING
 Week-1 physical VLA work         NOT AUTHORIZED
 ```
 
@@ -34,7 +35,7 @@ ADR + executable contract remediation
   -> SIM-001 contract profile accepted
   -> SIM-002 deterministic smoke accepted
   -> SIM-GATE accepted as SIM_GO
-  -> future SIM-003+ may be specified separately
+  -> SIM-003 through SIM-E2E backlog PROPOSED
 ```
 
 `SIM_GO` does not change the physical VLA gate, Week-task authorization, Dataset V1, fine-tuning, or physical-motion authorization.
@@ -123,7 +124,9 @@ The following work is present on `origin/master` and accepted/merged:
 | `TASK-SIM-002` | `SIM_SMOKE_READY`, accepted |
 | `TASK-SIM-GATE` | `SIM_GO`, accepted; `simulation_lane_authorized = true` |
 
-The simulation lane validates bounded software contracts and deterministic smoke behavior without physical devices. Future `TASK-SIM-003+` work remains unspecified/proposed until a separately reviewed Task specification exists.
+The simulation lane validates bounded software contracts and deterministic smoke behavior without physical devices. The post-gate delivery sequence is now planned in `context/simulation_task_mapping_v2.md`, but every `TASK-SIM-003+` item remains `PROPOSED` until its own specification is created and approved.
+
+The accepted `context/simulation_task_mapping_v1.md` remains frozen and hash-bound to SIM-GATE evidence. It must not be edited in place to record later planning state.
 
 ---
 
@@ -225,15 +228,29 @@ The local RTX 2060 6 GiB runtime is useful for development, but accepted evidenc
 
 ## 6. Active Work and Next Authorized Direction
 
-There is no active product Implementation Task in this PM worktree. The current branch is project-management/workflow maintenance:
+There is no active product Implementation Task in this PM worktree. The active management activity is post-gate Simulation Lane backlog design:
 
 ```text
-task/PM_rev
+branch: task/PM_rev
+planning state: TASK-SIM-003+ backlog design
+all downstream SIM tasks: PROPOSED
 ```
 
-The next product work must be selected explicitly from one of two lanes:
+Proposed Simulation Lane sequence:
 
-1. Simulation: create and review a bounded `TASK-SIM-003` specification under the accepted Simulation Lane mapping.
+| Task | Proposed scope | Status |
+|---|---|---|
+| `TASK-SIM-003` | deterministic Simulation Skill backends | `PROPOSED` |
+| `TASK-SIM-004` | Simulation Mission integration | `PROPOSED` |
+| `TASK-SIM-005` | failure and recovery scenarios | `PROPOSED` |
+| `TASK-SIM-006` | observability and evaluation harness | `PROPOSED` |
+| `TASK-SIM-E2E` | bounded Simulation E2E qualification | `PROPOSED` |
+
+Only `TASK-SIM-003` is the next candidate for specification. `SIM_GO` makes that specification eligible for consideration; it does not make an absent Task specification executable.
+
+The two available planning directions remain:
+
+1. Simulation: create and review a bounded `TASK-SIM-003` specification under the proposed v2 backlog.
 2. Physical readiness: define bounded hardware-selection/device/safety remediation before another physical VLA re-gate.
 
 Do not start `TASK-W1-001`, `TASK-W1-002`, Dataset V1, fine-tuning, or physical motion under the current authorization state.
@@ -244,7 +261,7 @@ Do not start `TASK-W1-001`, `TASK-W1-002`, Dataset V1, fine-tuning, or physical 
 
 ```text
 AGENTS.md                 routing and context-budget guardrails
-context/                  PM state, mappings, and session recovery
+context/                  PM state, frozen v1/proposed v2 mappings, session recovery
 plans/                    roadmap/risk/scope planning artifacts
 tasks/                    bounded TASK specifications
 prompts/codex/            implementation/review/fix/history workflows
@@ -259,7 +276,7 @@ tests/                    focused and regression tests
 results/                  machine-readable evidence and acceptances
 ```
 
-The `docs/simulation`, `results/simulation`, `results/reviews`, `src/simulation_runtime`, and SIM task/test files are currently visible on `origin/master`, not in this stale-base PM worktree.
+The accepted `docs/simulation`, `results/simulation`, `results/reviews`, `src/simulation_runtime`, and SIM task/test files are currently visible on `origin/master`, not in this stale-base PM worktree. This PM branch now carries the exact frozen v1 mapping plus the proposed v2 planning overlay.
 
 ---
 
@@ -271,6 +288,7 @@ The workbook is not present in this repository worktree, so Excel synchronizatio
 - VLA-01 as blocked/in progress, not Done;
 - the final P0-004R gate as `NO_GO` and Week-1 authorization as false;
 - the independent Simulation Lane, accepted SIM tasks, and effective `SIM_GO` authorization;
+- proposed SIM-003 through SIM-E2E backlog entries, without marking them approved or started;
 - candidate hardware inventory without marking targets frozen;
 - R-01/R-02 and device/safety/resource risks;
 - original Week-1/Week-2 schedule impact;

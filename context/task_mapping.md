@@ -168,11 +168,19 @@ All five tasks are merged. They complete their bounded assessment/remediation sc
 
 ## 9. Independent Simulation Lane Mapping
 
-The frozen Simulation Lane mapping is maintained separately in:
+The accepted frozen gate baseline is maintained in:
 
 ```text
 context/simulation_task_mapping_v1.md
 ```
+
+Post-gate planning is maintained separately in:
+
+```text
+context/simulation_task_mapping_v2.md
+```
+
+Do not edit v1 in place: SIM-GATE evidence binds its exact SHA-256. v2 is a `DRAFT / PROPOSED` overlay and does not change the accepted gate.
 
 Verified operational sequence on `origin/master`:
 
@@ -185,7 +193,17 @@ ADR-Simulation-Lane-v1
   -> simulation_lane_authorized = true
 ```
 
-Future `TASK-SIM-003+` items are proposed placeholders, not approved work orders. The Simulation Lane is independent of the workbook Week graph and cannot authorize W1, Dataset V1, training, hardware freeze, or physical motion.
+Proposed post-gate backlog:
+
+| Task | Proposed responsibility | Dependency | Status |
+|---|---|---|---|
+| `TASK-SIM-003` | Simulation Skill backends | accepted `SIM_GO` | `PROPOSED` |
+| `TASK-SIM-004` | Simulation Mission integration | accepted SIM-003 | `PROPOSED` |
+| `TASK-SIM-005` | failure/recovery scenario suite | accepted SIM-004 | `PROPOSED` |
+| `TASK-SIM-006` | observability/evaluation/replay harness | accepted SIM-005 | `PROPOSED` |
+| `TASK-SIM-E2E` | bounded Simulation E2E qualification | accepted SIM-003 through SIM-006 | `PROPOSED` |
+
+These are backlog definitions, not approved work orders. Only SIM-003 is currently eligible to proceed to Task-specification authoring. The Simulation Lane is independent of the workbook Week graph and cannot authorize W1, Dataset V1, training, hardware freeze, or physical motion.
 
 ---
 
@@ -223,7 +241,8 @@ At the next workbook sync, review at least:
 2. keep VLA-01 Blocked/In Progress and W1-001 unauthorized;
 3. add the frozen independent Simulation Lane and accepted SIM-C01/SIM-001/SIM-002/SIM-GATE facts;
 4. record `SIM_GO` without changing any physical/Week authorization;
-5. reconcile MVP-001 through MVP-008 with actual Git history;
-6. review G0/G1 milestone status against their exact evidence requirements;
-7. revise original Week-1/Week-2 dates if readiness work materially shifted the schedule;
-8. update GPU/resource and hardware/device/safety risks using accepted evidence.
+5. add SIM-003, SIM-004, SIM-005, SIM-006, and SIM-E2E as `PROPOSED`, not approved/started;
+6. reconcile MVP-001 through MVP-008 with actual Git history;
+7. review G0/G1 milestone status against their exact evidence requirements;
+8. revise original Week-1/Week-2 dates if readiness work materially shifted the schedule;
+9. update GPU/resource and hardware/device/safety risks using accepted evidence.
