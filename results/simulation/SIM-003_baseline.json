@@ -1,0 +1,636 @@
+{
+  "schema_version": "1.0",
+  "task_id": "TASK-SIM-003",
+  "baseline_id": "SIM_BASELINE_V1",
+  "implementation_complete": true,
+  "task_specific_result": "SIM_BASELINE_BLOCKED",
+  "generation_timestamp": "2026-09-15T15:09:28.290316Z",
+  "provenance": {
+    "git_sha": "ce412270fdce2975b3b688bc321dfed54936dcc3",
+    "worktree_clean": false,
+    "worktree_status": [
+      "?? config/simulation/mujoco_baseline.xml",
+      "?? config/simulation/sim_baseline_empty.sdf",
+      "?? docs/simulation/simulation_baseline_v1.md",
+      "?? results/simulation/SIM-003_baseline.json",
+      "?? scripts/verify_simulation_toolchain_baseline.py",
+      "?? tests/test_simulation_toolchain_baseline.py"
+    ],
+    "pre_implementation_clean": true,
+    "host": {
+      "system": "Linux",
+      "machine": "x86_64",
+      "python_version": "3.12.3"
+    }
+  },
+  "predecessors": {
+    "status": "PASS",
+    "bindings": [
+      {
+        "task_id": "TASK-SIM-C01",
+        "path": "results/reviews/SIM-C01_acceptance.json",
+        "sha256": "1aee7a19f24cf52da3a2c0b232872420aafe7f1e644ed5fb1a493a025c5ee2d5",
+        "review_decision": "ACCEPT",
+        "task_specific_decision": "SIM_CONTRACT_GAPS_RESOLVED",
+        "reviewed_commit": "0079940cee35362111d8cfd67dd0c14e135c27af"
+      },
+      {
+        "task_id": "TASK-SIM-001",
+        "path": "results/reviews/SIM-001_acceptance.json",
+        "sha256": "bf1fe8df30a73339fcdd90a5bbc3d0cf5963a0a02d538102e732054e175f5e53",
+        "review_decision": "ACCEPT",
+        "task_specific_decision": "SIM_CONTRACT_PROFILE_READY",
+        "reviewed_commit": "97bef9208b26c9fef577e97c26f76a125f220ed9"
+      },
+      {
+        "task_id": "TASK-SIM-002",
+        "path": "results/reviews/SIM-002_acceptance.json",
+        "sha256": "07ee8867208498719b1a5bed04fb7572a881e2e470b6d218648aaecaf5d02951",
+        "review_decision": "ACCEPT",
+        "task_specific_decision": "SIM_SMOKE_READY",
+        "reviewed_commit": "6abd9fc1158cd9fd0a02d2a496557fd74a16390b"
+      },
+      {
+        "task_id": "TASK-SIM-GATE",
+        "path": "results/reviews/SIM-GATE_acceptance.json",
+        "sha256": "31195148a649b142abae43fe91bc017744827615de1c3a1f662763262a0ced5a",
+        "review_decision": "ACCEPT",
+        "task_specific_decision": "SIM_GO",
+        "reviewed_commit": "6a30757602ea0fd7e540b2c3b10b9cab1c610ac0"
+      },
+      {
+        "task_id": "TASK-SIM-GATE-EVIDENCE",
+        "path": "results/simulation/SIM-GATE_readiness.json",
+        "sha256": "82c837e519c37799cb5a88af14470d2b74ba5d75913e811eac752f8e80f8b312",
+        "payload_sha256": "543bf8387ee0c9045e715efd805a0c439a0684df89a7af349320e83df94d6fc3",
+        "gate_result": "SIM_GO"
+      }
+    ],
+    "checks": [
+      {
+        "check_id": "TASK-SIM-C01:acceptance",
+        "status": "PASS",
+        "detail": "requires ACCEPT + SIM_CONTRACT_GAPS_RESOLVED"
+      },
+      {
+        "check_id": "TASK-SIM-C01:reviewed_commit",
+        "status": "PASS",
+        "detail": "reviewed commit must exist"
+      },
+      {
+        "check_id": "TASK-SIM-001:acceptance",
+        "status": "PASS",
+        "detail": "requires ACCEPT + SIM_CONTRACT_PROFILE_READY"
+      },
+      {
+        "check_id": "TASK-SIM-001:reviewed_commit",
+        "status": "PASS",
+        "detail": "reviewed commit must exist"
+      },
+      {
+        "check_id": "TASK-SIM-002:acceptance",
+        "status": "PASS",
+        "detail": "requires ACCEPT + SIM_SMOKE_READY"
+      },
+      {
+        "check_id": "TASK-SIM-002:reviewed_commit",
+        "status": "PASS",
+        "detail": "reviewed commit must exist"
+      },
+      {
+        "check_id": "TASK-SIM-GATE:acceptance",
+        "status": "PASS",
+        "detail": "requires ACCEPT + SIM_GO"
+      },
+      {
+        "check_id": "TASK-SIM-GATE:reviewed_commit",
+        "status": "PASS",
+        "detail": "reviewed commit must exist"
+      },
+      {
+        "check_id": "SIM-C01:evidence",
+        "status": "PASS",
+        "detail": "C01 evidence file and canonical payload must match acceptance"
+      },
+      {
+        "check_id": "SIM-001:evidence",
+        "status": "PASS",
+        "detail": "SIM-001 evidence file and canonical payload must match acceptance"
+      },
+      {
+        "check_id": "SIM-002:evidence",
+        "status": "PASS",
+        "detail": "SIM-002 evidence file and canonical payload must match acceptance"
+      },
+      {
+        "check_id": "SIM-C01:artifact_bindings",
+        "status": "PASS",
+        "detail": "all acceptance-bound artifacts must retain their accepted hashes"
+      },
+      {
+        "check_id": "SIM-001:artifact_bindings",
+        "status": "PASS",
+        "detail": "all acceptance-bound artifacts must retain their accepted hashes"
+      },
+      {
+        "check_id": "SIM-002:artifact_bindings",
+        "status": "PASS",
+        "detail": "all acceptance-bound artifacts must retain their accepted hashes"
+      },
+      {
+        "check_id": "acceptance_chain:SIM-C01",
+        "status": "PASS",
+        "detail": "SIM-001 and SIM-002 must bind the current C01 acceptance"
+      },
+      {
+        "check_id": "acceptance_chain:SIM-001",
+        "status": "PASS",
+        "detail": "SIM-002 and SIM-GATE must bind the current SIM-001 acceptance"
+      },
+      {
+        "check_id": "acceptance_chain:SIM-002",
+        "status": "PASS",
+        "detail": "SIM-GATE must bind the current SIM-002 acceptance"
+      },
+      {
+        "check_id": "SIM-GATE:readiness_binding",
+        "status": "PASS",
+        "detail": "accepted gate evidence must be canonical SIM_GO"
+      },
+      {
+        "check_id": "SIM-GATE:authorization",
+        "status": "PASS",
+        "detail": "post-review simulation authorization must preserve physical and Week isolation"
+      },
+      {
+        "check_id": "SIM-GATE:artifact_bindings",
+        "status": "PASS",
+        "detail": "accepted gate verifier, tests, and report must retain their hashes"
+      }
+    ]
+  },
+  "source_bindings": [
+    {
+      "path": "tasks/TASK-SIM-003.md",
+      "exists": true,
+      "sha256": "3e93cd85bc7903f1c1f947ad2dd817e217660f482753f068b284cd7d2349e61c"
+    },
+    {
+      "path": "docs/contracts/simulation_execution_contract_v1.md",
+      "exists": true,
+      "sha256": "0451e9abae4cee911d9468d11e68b8bbb0e3aff1a1a2d9cf104ed64264d28caa"
+    },
+    {
+      "path": "docs/contracts/schemas/simulation_execution_contract_v1.schema.json",
+      "exists": true,
+      "sha256": "112b1e2e0d1fefb03d7b353e8ed4d875b025fe342380d5ba1cbf050bcc7d944a"
+    },
+    {
+      "path": "scripts/run_simulation_smoke.py",
+      "exists": true,
+      "sha256": "8a23aac92fd41fcc9b64d029df9e64fb2584d196cdbc848d81004fdde31dfce8"
+    },
+    {
+      "path": "src/simulation_runtime/smoke.py",
+      "exists": true,
+      "sha256": "db682046baa092c36d9f1eca3bc720135a2f4ff9d969cbef90a659b567bea41a"
+    },
+    {
+      "path": "tests/test_simulation_execution_contract.py",
+      "exists": true,
+      "sha256": "52b9e445207dd189a5dd76c2c31638b8ae90ef7c61493cc6c238313c0d945534"
+    },
+    {
+      "path": "tests/test_simulation_smoke.py",
+      "exists": true,
+      "sha256": "c9128b6e4f670d60c61bfca5b09344cd8c697dc80742196265dcd987ec6ddb93"
+    },
+    {
+      "path": "scripts/verify_simulation_toolchain_baseline.py",
+      "exists": true,
+      "sha256": "0d3dc91eed0b9729d836f37d544907a580949951f95330064b9f6096e3548b1b"
+    },
+    {
+      "path": "tests/test_simulation_toolchain_baseline.py",
+      "exists": true,
+      "sha256": "fe7636a757c87e7336663a04c3b3ac77b5506c618113846498116e3b6857abd5"
+    },
+    {
+      "path": "config/simulation/sim_baseline_empty.sdf",
+      "exists": true,
+      "sha256": "623c63b73f11eee1d6c3f2e197afdbd7cce35dccf0efc838b97d735ba1fcbe95"
+    },
+    {
+      "path": "config/simulation/mujoco_baseline.xml",
+      "exists": true,
+      "sha256": "76c07b33fbc81474e34923372910999c0881ef1d40d63fdf2a2820cb0b85fd21"
+    }
+  ],
+  "runtime": {
+    "probe_order": "AFTER_PREDECESSOR_VALIDATION",
+    "python": {
+      "executable": "/usr/bin/python3",
+      "version": "3.12.3"
+    },
+    "ros2": {
+      "required_distro": "jazzy",
+      "measured_distro": "jazzy",
+      "executable": "/opt/ros/jazzy/bin/ros2",
+      "rclpy_version": "7.1.11",
+      "cli_probe": {
+        "command": [
+          "/opt/ros/jazzy/bin/ros2",
+          "--help"
+        ],
+        "timeout_seconds": 5,
+        "available": true,
+        "returncode": 0,
+        "timed_out": false,
+        "duration_seconds": 0.576461,
+        "stdout": "usage: ros2 [-h] [--use-python-default-buffering]\n            Call `ros2 <command> -h` for more detailed usage. ...\n\nros2 is an extensible command-line tool for ROS 2.\n\noptions:\n  -h, --help            show this help message and exit\n  --use-python-default-buffering\n                        Do not force line buffering in stdout and instead use\n                        the python default buffering, which might be affected\n                        by PYTHONUNBUFFERED/-u and depends on whatever stdout\n                        is interactive or not\n\nCommands:\n  action     Various action related sub-commands\n  bag        Various rosbag related sub-commands\n  component  Various component related sub-commands\n  control    Various control related sub-commands\n  daemon     Various daemon related sub-commands\n  doctor     Check ROS setup and other potential issues\n  interface  Show information about ROS interfaces\n  launch     Run a launch file\n  lifecycle  Various lifecycle related sub-commands\n  multicast  Various multicast related sub-commands\n  node       Various node related sub-commands\n  param      Various param related sub-commands\n  pkg        Various package related sub-commands\n  plugin     Various plugin related sub-commands\n  run        Run a package specific executable\n  security   Various security related sub-commands\n  service    Various service related sub-commands\n  topic      Various topic related sub-commands\n  wtf        Use `wtf` as alias to `doctor`\n\n  Call `ros2 <command> -h` for more detailed usage.",
+        "stderr": "",
+        "process_group_cleanup_complete": true
+      },
+      "status": "PASS"
+    },
+    "gazebo": {
+      "required_release": "harmonic",
+      "executable": "/opt/ros/jazzy/opt/gz_tools_vendor/bin/gz",
+      "version": "8.11.0",
+      "release": "harmonic",
+      "version_probe": {
+        "command": [
+          "/opt/ros/jazzy/opt/gz_tools_vendor/bin/gz",
+          "sim",
+          "--version"
+        ],
+        "timeout_seconds": 5,
+        "available": true,
+        "returncode": 0,
+        "timed_out": false,
+        "duration_seconds": 0.117369,
+        "stdout": "Gazebo Sim, version 8.11.0\nCopyright (C) 2018 Open Source Robotics Foundation.\nReleased under the Apache 2.0 License.",
+        "stderr": "",
+        "process_group_cleanup_complete": true
+      },
+      "headless_smoke": {
+        "command": [
+          "/opt/ros/jazzy/opt/gz_tools_vendor/bin/gz",
+          "sim",
+          "-s",
+          "-r",
+          "--iterations",
+          "2",
+          "/home/jinho/projects/factory_physical_ai_sim003/config/simulation/sim_baseline_empty.sdf"
+        ],
+        "timeout_seconds": 15,
+        "available": true,
+        "returncode": 0,
+        "timed_out": false,
+        "duration_seconds": 2.15725,
+        "stdout": "",
+        "stderr": "",
+        "process_group_cleanup_complete": true,
+        "temporary_workspace_created": true,
+        "temporary_workspace_cleanup_complete": true
+      },
+      "smoke_mode": "server_only_headless",
+      "iterations": 2,
+      "navigation_mission_executed": false,
+      "status": "PASS"
+    },
+    "ros_gz": {
+      "entry_points": [
+        {
+          "package": "ros_gz_bridge",
+          "executable": "parameter_bridge",
+          "available": true
+        },
+        {
+          "package": "ros_gz_sim",
+          "executable": "gzserver",
+          "available": true
+        },
+        {
+          "package": "ros_gz_sim",
+          "executable": "create",
+          "available": true
+        }
+      ],
+      "discovery_probes": {
+        "ros_gz_bridge": {
+          "command": [
+            "/opt/ros/jazzy/bin/ros2",
+            "pkg",
+            "executables",
+            "ros_gz_bridge"
+          ],
+          "timeout_seconds": 5,
+          "available": true,
+          "returncode": 0,
+          "timed_out": false,
+          "duration_seconds": 0.292865,
+          "stdout": "ros_gz_bridge bridge_node\nros_gz_bridge bridge_types\nros_gz_bridge parameter_bridge\nros_gz_bridge static_bridge",
+          "stderr": "",
+          "process_group_cleanup_complete": true
+        },
+        "ros_gz_sim": {
+          "command": [
+            "/opt/ros/jazzy/bin/ros2",
+            "pkg",
+            "executables",
+            "ros_gz_sim"
+          ],
+          "timeout_seconds": 5,
+          "available": true,
+          "returncode": 0,
+          "timed_out": false,
+          "duration_seconds": 0.312914,
+          "stdout": "ros_gz_sim create\nros_gz_sim delete_entity\nros_gz_sim gzserver\nros_gz_sim remove\nros_gz_sim set_entity_pose\nros_gz_sim spawn_entity",
+          "stderr": "",
+          "process_group_cleanup_complete": true
+        }
+      },
+      "status": "PASS"
+    },
+    "nav2": {
+      "purpose": "minimum SIM-004 Nav2-facing server surface; no navigation behavior executed",
+      "entry_points": [
+        {
+          "package": "nav2_amcl",
+          "executable": "amcl",
+          "available": true
+        },
+        {
+          "package": "nav2_behaviors",
+          "executable": "behavior_server",
+          "available": true
+        },
+        {
+          "package": "nav2_bt_navigator",
+          "executable": "bt_navigator",
+          "available": true
+        },
+        {
+          "package": "nav2_controller",
+          "executable": "controller_server",
+          "available": true
+        },
+        {
+          "package": "nav2_lifecycle_manager",
+          "executable": "lifecycle_manager",
+          "available": true
+        },
+        {
+          "package": "nav2_map_server",
+          "executable": "map_server",
+          "available": true
+        },
+        {
+          "package": "nav2_planner",
+          "executable": "planner_server",
+          "available": true
+        }
+      ],
+      "discovery_probes": {
+        "nav2_amcl": {
+          "command": [
+            "/opt/ros/jazzy/bin/ros2",
+            "pkg",
+            "executables",
+            "nav2_amcl"
+          ],
+          "timeout_seconds": 5,
+          "available": true,
+          "returncode": 0,
+          "timed_out": false,
+          "duration_seconds": 0.289741,
+          "stdout": "nav2_amcl amcl",
+          "stderr": "",
+          "process_group_cleanup_complete": true
+        },
+        "nav2_behaviors": {
+          "command": [
+            "/opt/ros/jazzy/bin/ros2",
+            "pkg",
+            "executables",
+            "nav2_behaviors"
+          ],
+          "timeout_seconds": 5,
+          "available": true,
+          "returncode": 0,
+          "timed_out": false,
+          "duration_seconds": 0.286587,
+          "stdout": "nav2_behaviors behavior_server",
+          "stderr": "",
+          "process_group_cleanup_complete": true
+        },
+        "nav2_bt_navigator": {
+          "command": [
+            "/opt/ros/jazzy/bin/ros2",
+            "pkg",
+            "executables",
+            "nav2_bt_navigator"
+          ],
+          "timeout_seconds": 5,
+          "available": true,
+          "returncode": 0,
+          "timed_out": false,
+          "duration_seconds": 0.285493,
+          "stdout": "nav2_bt_navigator bt_navigator",
+          "stderr": "",
+          "process_group_cleanup_complete": true
+        },
+        "nav2_controller": {
+          "command": [
+            "/opt/ros/jazzy/bin/ros2",
+            "pkg",
+            "executables",
+            "nav2_controller"
+          ],
+          "timeout_seconds": 5,
+          "available": true,
+          "returncode": 0,
+          "timed_out": false,
+          "duration_seconds": 0.285159,
+          "stdout": "nav2_controller controller_server",
+          "stderr": "",
+          "process_group_cleanup_complete": true
+        },
+        "nav2_lifecycle_manager": {
+          "command": [
+            "/opt/ros/jazzy/bin/ros2",
+            "pkg",
+            "executables",
+            "nav2_lifecycle_manager"
+          ],
+          "timeout_seconds": 5,
+          "available": true,
+          "returncode": 0,
+          "timed_out": false,
+          "duration_seconds": 0.302526,
+          "stdout": "nav2_lifecycle_manager lifecycle_manager",
+          "stderr": "",
+          "process_group_cleanup_complete": true
+        },
+        "nav2_map_server": {
+          "command": [
+            "/opt/ros/jazzy/bin/ros2",
+            "pkg",
+            "executables",
+            "nav2_map_server"
+          ],
+          "timeout_seconds": 5,
+          "available": true,
+          "returncode": 0,
+          "timed_out": false,
+          "duration_seconds": 0.289951,
+          "stdout": "nav2_map_server costmap_filter_info_server\nnav2_map_server map_saver_cli\nnav2_map_server map_saver_server\nnav2_map_server map_server",
+          "stderr": "",
+          "process_group_cleanup_complete": true
+        },
+        "nav2_planner": {
+          "command": [
+            "/opt/ros/jazzy/bin/ros2",
+            "pkg",
+            "executables",
+            "nav2_planner"
+          ],
+          "timeout_seconds": 5,
+          "available": true,
+          "returncode": 0,
+          "timed_out": false,
+          "duration_seconds": 0.322666,
+          "stdout": "nav2_planner planner_server",
+          "stderr": "",
+          "process_group_cleanup_complete": true
+        }
+      },
+      "status": "PASS"
+    },
+    "mujoco": {
+      "version": null,
+      "headless": true,
+      "model_path": "config/simulation/mujoco_baseline.xml",
+      "step_result": null,
+      "probe": {
+        "command": [
+          "/usr/bin/python3",
+          "-c",
+          "import json,sys\nimport mujoco\nmodel=mujoco.MjModel.from_xml_path(sys.argv[1])\ndata=mujoco.MjData(model)\nbefore=float(data.time)\nmujoco.mj_step(model,data)\nprint(json.dumps({'version':mujoco.__version__,'model_loaded':True,'steps':1,'time_before':before,'time_after':float(data.time),'nq':model.nq,'nv':model.nv,'viewer_used':False,'rendering_requested':False},sort_keys=True))\n",
+          "/home/jinho/projects/factory_physical_ai_sim003/config/simulation/mujoco_baseline.xml"
+        ],
+        "timeout_seconds": 10,
+        "available": true,
+        "returncode": 1,
+        "timed_out": false,
+        "duration_seconds": 0.127068,
+        "stdout": "",
+        "stderr": "Traceback (most recent call last):\n  File \"<string>\", line 2, in <module>\nModuleNotFoundError: No module named 'mujoco'",
+        "process_group_cleanup_complete": true
+      },
+      "status": "FAIL"
+    }
+  },
+  "fidelity_policy": {
+    "levels": [
+      "L0",
+      "L1-NAV",
+      "L1-VLA",
+      "L1-VERIFY",
+      "L2-SYSTEM"
+    ],
+    "L0": "deterministic_contract_lifecycle_regression",
+    "L1-NAV": "ros2_jazzy_gazebo_harmonic_navigation_component",
+    "L1-VLA": "mujoco_manipulation_physics_component",
+    "L1-VERIFY": "simulator_neutral_verification_adapter",
+    "L2-SYSTEM": "ros2_jazzy_gazebo_harmonic_integrated_world"
+  },
+  "authority_policy": {
+    "ros2_distro": "jazzy",
+    "gazebo_release": "harmonic",
+    "system_simulator": "gazebo_harmonic",
+    "navigation_backend": "ros2_jazzy_gazebo_harmonic",
+    "manipulation_physics_backend": "mujoco",
+    "integrated_world_authority": "gazebo_harmonic",
+    "dual_world_cosimulation": "prohibited_v1",
+    "mujoco_version": null,
+    "simulation_evidence_is_physical_evidence": false,
+    "physical_target_frozen": false
+  },
+  "deterministic_regression": {
+    "command": [
+      "/usr/bin/python3",
+      "-m",
+      "pytest",
+      "-q",
+      "-p",
+      "no:cacheprovider",
+      "tests/test_simulation_execution_contract.py",
+      "tests/test_simulation_smoke.py"
+    ],
+    "probe": {
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/test_simulation_execution_contract.py",
+        "tests/test_simulation_smoke.py"
+      ],
+      "timeout_seconds": 60,
+      "available": true,
+      "returncode": 0,
+      "timed_out": false,
+      "duration_seconds": 1.45561,
+      "stdout": ".....................................                                    [100%]\n37 passed in 1.03s",
+      "stderr": "",
+      "process_group_cleanup_complete": true
+    },
+    "accepted_evidence_modified": false,
+    "status": "PASS"
+  },
+  "validation_commands": {
+    "baseline_verifier": [
+      "/usr/bin/python3",
+      "scripts/verify_simulation_toolchain_baseline.py",
+      "--pre-implementation-clean"
+    ],
+    "focused": [
+      "/usr/bin/python3",
+      "-m",
+      "pytest",
+      "-q",
+      "-p",
+      "no:cacheprovider",
+      "tests/test_simulation_toolchain_baseline.py",
+      "tests/test_simulation_execution_contract.py",
+      "tests/test_simulation_smoke.py"
+    ],
+    "deterministic_regression": [
+      "/usr/bin/python3",
+      "-m",
+      "pytest",
+      "-q",
+      "-p",
+      "no:cacheprovider",
+      "tests/test_simulation_execution_contract.py",
+      "tests/test_simulation_smoke.py"
+    ]
+  },
+  "blockers": [
+    "mujoco_headless_step"
+  ],
+  "downstream_eligibility": {
+    "required_state": "ACCEPTED + SIM_BASELINE_READY",
+    "task_sim_004_eligible_now": false,
+    "task_sim_005_eligible_now": false,
+    "eligible_after_independent_acceptance": false,
+    "physical_authorization": false
+  },
+  "independent_acceptance": "PENDING",
+  "payload_hash_algorithm": "sha256(canonical JSON with sorted keys and compact separators, excluding payload_sha256)",
+  "payload_sha256": "edc43eacf62dddda645fb1111142c24bb7c2467431cae155bb80c9698502b407"
+}
