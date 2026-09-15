@@ -1,9 +1,8 @@
 # Factory Physical AI — Session Handoff
 
-> Use this file as the compact starting context for a new ChatGPT/Codex session.  
-> For deeper PM rules read `context/project_management_context.md`.  
-> For WBS/TASK mapping read `context/task_mapping.md`.  
-> For current operational detail read `context/current_project_state.md`.
+> Compact recovery context for a new planning/Codex session.
+> Last reconciled: 2026-09-15.
+> Detailed operational truth: `context/current_project_state.md`.
 
 ---
 
@@ -13,274 +12,147 @@
 Factory Physical AI Agent — autonomous parts supply & recovery system
 ```
 
-Core engineering objective:
+Core boundary:
 
 ```text
 LLM Agent
-→ semantic mission/tool/replan
-→ deterministic runtime
-→ bounded robot/VLA skills
-→ evidence-driven recovery
+-> semantic mission/tool/replan
+-> deterministic runtime
+-> bounded robot/VLA skills
+-> evidence-driven recovery
 ```
 
-The LLM does not own raw physical control or ambiguous physical success decisions.
+The LLM does not own raw physical control or ambiguous physical-success decisions.
 
 ---
 
 ## Current Position
 
 ```text
-Architecture Freeze
-        ↓
-Day-10 MVP complete
-        ↓
-TASK-P0-004 VLA Readiness Gate
-        ↓
-NO_GO
-        ↓
-TASK-P0-005 runtime blocker resolution   ← CURRENT
+Architecture / Day-10 MVP      COMPLETE
+
+Physical VLA lane:
+P0-004 NO_GO
+  -> P0-005 RUNTIME_READY
+  -> P0-006 DEVICE_IO_BLOCKED
+  -> P0-007 TRAINING_RESOURCE_BLOCKED
+  -> P0-004R NO_GO
+
+Independent Simulation Lane:
+SIM-C01 accepted
+  -> SIM-001 accepted
+  -> SIM-002 accepted
+  -> SIM-GATE accepted as SIM_GO
+  -> simulation_lane_authorized = true
 ```
 
-Latest known master:
+`SIM_GO` is simulation-only. It does not authorize Week-1 work, Dataset V1, VLA fine-tuning, hardware freeze, teleoperation, or physical motion.
+
+---
+
+## Git Context
+
+Latest locally known remote-tracking integration baseline:
 
 ```text
-1c1faa1
-Merge pull request #1 from silverbjin/task/p0-004-vla-readiness
+origin/master @ e3cc92b
+Merge pull request #12 from silverbjin/task/p0-SIM-
+```
+
+Current worktree:
+
+```text
+branch: task/PM_rev
+HEAD: b145c9d
+tracking origin/task/PM_rev
+```
+
+Important: local `master @ eb73a86` is 26 commits behind `origin/master`. This PM branch predates the Simulation Lane merges, so reconcile it with `origin/master` before integration.
+
+---
+
+## Current Authorization
+
+```text
+simulation_lane_authorized       true
+TASK-W1-001 authorized           false
+TASK-W1-002 authorized           false
+Dataset V1 authorized            false
+SmolVLA fine-tuning authorized   false
+physical motion authorized       false
+hardware target frozen           false
+```
+
+Known hardware is candidate inventory only:
+
+```text
+myCobot 280 Pi
+myAGV JN 2023
+Intel RealSense D455
+Jetson Orin Nano
 ```
 
 ---
 
-## Current Task
+## Open Blockers
 
-```text
-TASK-P0-005
-VLA Runtime Environment Enablement & CUDA/LeRobot/SmolVLA Verification
-```
+Physical path:
 
-Related Backlog:
+- official target hardware/camera selection;
+- stable identity, access, state, command, and gripper paths;
+- bounded camera acquisition;
+- workspace/motion limits;
+- abort/E-stop and supervised teleoperation prerequisites.
 
-```text
-VLA-01
-LeRobot development environment + hardware I/O verification
-```
+Training path:
 
-Branch:
+- execution mode and primary compute resource;
+- storage plan;
+- budget policy/feasibility;
+- fallback compute strategy;
+- model-specific training fit.
 
-```text
-task/p0-005-vla-runtime
-```
-
-Worktree:
-
-```text
-../factory_physical_ai_p0_005
-```
-
-Current stage:
-
-```text
-Task specification preparation/review
-```
-
-Do not assume `TASK-P0-005.md` exists without checking the repo.
+The local CUDA/LeRobot/SmolVLA code/config runtime is ready, but model loading, inference, and training fit were not established.
 
 ---
 
-## Latest Runtime Facts
+## Next Work Selection
 
-Latest measured in WSL:
+No product Implementation Task is active in this PM worktree.
 
-```text
-Ubuntu 24.04 / WSL2
+Choose and specify one bounded direction:
 
-nvidia-smi = PASS
-GPU = NVIDIA GeForce RTX 2060-class
-VRAM = 6144 MiB
-Driver = 581.57
-nvidia-smi CUDA field = 13.0
-/dev/dxg = present
-```
+1. Simulation Lane: create/review `TASK-SIM-003` under the accepted simulation mapping.
+2. Physical readiness: create/review hardware-selection and device/safety remediation work before another physical VLA re-gate.
 
-These facts mean GPU exposure now appears available.
-
-They do **not** prove:
-
-- PyTorch CUDA works;
-- CUDA Toolkit 13.0 is installed;
-- LeRobot is compatible;
-- SmolVLA can train in 6GB VRAM.
-
-P0-005 must re-measure and create evidence.
+Do not start `TASK-W1-001` or downstream physical/training work while P0-004R remains `NO_GO`.
 
 ---
 
-## P0-004 Decision
+## New-Session Reading Order
 
-```text
-VLA Readiness Gate = NO_GO
-TASK-W1-001 authorized = false
-```
-
-P0-004 is already merged.
-
-Do not rewrite P0-004 evidence to make it GO.
-It is historical evidence of the earlier environment state.
-
----
-
-## P0-005 Scope
-
-P0-005 should cover only:
-
-```text
-.venv-vla
-Python/uv
-PyTorch CUDA
-CUDA tensor execution
-LeRobot version decision + import
-SmolVLA module/config discovery
-RTX 2060 6GB capability classification
-machine-readable runtime evidence
-```
-
-Out of scope:
-
-```text
-robot/manipulator I/O
-camera
-physical teleoperation
-Dataset V1
-SmolVLA fine-tuning
-benchmark
-Skill Server
-ROS integration
-Agent integration
-```
-
----
-
-## Next-Task Protection
-
-A successful P0-005 does **not** automatically authorize W1-001.
-
-Current intended control flow:
-
-```text
-P0-005
-  ↓
-remaining readiness blockers
-  ↓
-P0-004R re-gate [PROPOSED]
-  ↓
-GO or explicitly bounded CONDITIONAL_GO
-  ↓
-W1-001
-```
-
-Possible but not yet workbook-approved blocker tasks:
-
-```text
-P0-006 device/camera readiness   [PROPOSED]
-P0-007 training resource         [PROPOSED]
-P0-004R readiness re-gate        [PROPOSED]
-```
-
-Review dependency necessity before creating them.
-
----
-
-## Project-Management Rules
-
-```text
-Backlog
-≠ Task
-
-Task implemented
-≠ Task complete
-
-Task merged
-≠ Backlog done
-
-Portfolio claim
-= measured evidence only
-```
-
-One task should use:
-
-```text
-1 Task
-= 1 Branch
-= 1 Worktree
-= 1 Codex implementation session
-```
-
-Merge only after:
-
-```text
-Review PASS
-Tests PASS
-Evidence PASS
-Exit Criteria PASS
-```
-
-A gate task may merge with `NO_GO` if the gate executed correctly.
-
----
-
-## Files to Read at a New Session
-
-Prefer:
+For project planning:
 
 ```text
 AGENTS.md
-context/project_management_context.md
 context/current_project_state.md
+context/project_management_context.md
 context/task_mapping.md
-context/implementation_context.md
-relevant architecture / ADR / contract
-relevant TASK
-relevant evidence
+context/simulation_task_mapping_v1.md   # from current origin/master
+relevant accepted evidence / TASK only
 ```
 
-Do not request the Excel workbook for an ordinary single-task implementation.
-
-Use the workbook only for:
-
-- weekly/milestone reconciliation;
-- roadmap changes;
-- backlog restructuring;
-- risk/milestone/dashboard updates.
+For a routed TASK command, follow `AGENTS.md` and the active Task's bounded context manifest instead of recursively reading the repository.
 
 ---
 
-## Immediate Recommended Prompt
+## Known Management Anomalies
 
-For the next task-specification session:
+- The workbook is not present in this worktree; milestone/workbook reconciliation remains pending.
+- `AGENTS.md` points to five `_v2` workflow prompt paths that do not exist here; the Create workflow has no corresponding prompt file at all.
+- Simulation Lane files exist on `origin/master` but not on this stale-base PM branch.
 
-```text
-First verify:
-- pwd
-- git branch --show-current
-- git status
-
-Read:
-- AGENTS.md
-- context/project_management_context.md
-- context/current_project_state.md
-- context/task_mapping.md
-- context/implementation_context.md
-- relevant architecture/ADR/contracts
-- P0-004 report/evidence
-
-Create `tasks/TASK-P0-005.md` only.
-
-Derive it from VLA-01 and the current P0-004 NO_GO blockers.
-
-Do not implement it.
-Do not install packages.
-Do not start W1-001.
-Stop after reporting the created task specification for human review.
-```
+Resolve these branch/routing issues before treating the PM revision as integration-ready.
 
 ---
 
@@ -293,6 +165,4 @@ context/current_project_state.md
 context/session_handoff.md
 ```
 
-Update `task_mapping.md` only if mapping/dependency changes.
-
-Reconcile Excel every 3–5 Tasks, weekly, or at a Gate/Milestone.
+Update `context/task_mapping.md` or `context/simulation_task_mapping_v1.md` only when mapping/dependencies change. Reconcile the workbook every 3–5 Tasks, weekly, or at a Gate/Milestone.
