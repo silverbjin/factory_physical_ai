@@ -197,13 +197,25 @@ Proposed post-gate backlog:
 
 | Task | Proposed responsibility | Dependency | Status |
 |---|---|---|---|
-| `TASK-SIM-003` | Simulation Skill backends | accepted `SIM_GO` | `PROPOSED` |
-| `TASK-SIM-004` | Simulation Mission integration | accepted SIM-003 | `PROPOSED` |
-| `TASK-SIM-005` | failure/recovery scenario suite | accepted SIM-004 | `PROPOSED` |
-| `TASK-SIM-006` | observability/evaluation/replay harness | accepted SIM-005 | `PROPOSED` |
-| `TASK-SIM-E2E` | bounded Simulation E2E qualification | accepted SIM-003 through SIM-006 | `PROPOSED` |
+| `TASK-SIM-003` | freeze `SIM_BASELINE_V1` | accepted `SIM_GO` | `PROPOSED` |
+| `TASK-SIM-004` | Navigation Skill deterministic backend | accepted SIM-003 baseline | `PROPOSED` |
+| `TASK-SIM-005` | VLA Skill deterministic backend | accepted SIM-003 baseline | `PROPOSED` |
+| `TASK-SIM-006` | Verification deterministic backend | accepted SIM-003 baseline | `PROPOSED` |
+| `TASK-SIM-007` | Mission Executor/Simulation Skill integration | accepted SIM-004 through SIM-006 | `PROPOSED` |
+| `TASK-SIM-008` | canonical normal Simulation E2E | accepted SIM-007 | `PROPOSED` |
+| `TASK-SIM-009` | failure/recovery scenario suite | accepted SIM-008 | `PROPOSED` |
+| `TASK-SIM-010` | observability/evidence/replay/regression | accepted SIM-009 | `PROPOSED` |
+| `TASK-SIM-E2E` | Simulation Qualification Gate | accepted SIM-003 through SIM-010 | `PROPOSED` |
 
 These are backlog definitions, not approved work orders. Only SIM-003 is currently eligible to proceed to Task-specification authoring. The Simulation Lane is independent of the workbook Week graph and cannot authorize W1, Dataset V1, training, hardware freeze, or physical motion.
+
+Proposed post-Simulation hardware transition:
+
+| Task | Proposed responsibility | Dependency | Status |
+|---|---|---|---|
+| `TASK-HW-SELECT-001` | evaluate manipulator, AMR, camera, and edge-compute candidates | accepted `SIM_E2E_QUALIFIED` | `PROPOSED` |
+
+The intended follow-up is candidate evaluation, explicit ADR amendment/supersession, independent Architecture Review, and only then Hardware Target Freeze. Candidate inventory is not a selection decision.
 
 ---
 
@@ -241,8 +253,9 @@ At the next workbook sync, review at least:
 2. keep VLA-01 Blocked/In Progress and W1-001 unauthorized;
 3. add the frozen independent Simulation Lane and accepted SIM-C01/SIM-001/SIM-002/SIM-GATE facts;
 4. record `SIM_GO` without changing any physical/Week authorization;
-5. add SIM-003, SIM-004, SIM-005, SIM-006, and SIM-E2E as `PROPOSED`, not approved/started;
-6. reconcile MVP-001 through MVP-008 with actual Git history;
-7. review G0/G1 milestone status against their exact evidence requirements;
-8. revise original Week-1/Week-2 dates if readiness work materially shifted the schedule;
-9. update GPU/resource and hardware/device/safety risks using accepted evidence.
+5. add SIM-003 through SIM-010 and SIM-E2E as `PROPOSED`, not approved/started;
+6. add HW-SELECT-001 and its later ADR/review/freeze flow as `PROPOSED`;
+7. reconcile MVP-001 through MVP-008 with actual Git history;
+8. review G0/G1 milestone status against their exact evidence requirements;
+9. revise original Week-1/Week-2 dates if readiness work materially shifted the schedule;
+10. update GPU/resource and hardware/device/safety risks using accepted evidence.

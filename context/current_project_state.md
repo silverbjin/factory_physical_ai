@@ -240,18 +240,29 @@ Proposed Simulation Lane sequence:
 
 | Task | Proposed scope | Status |
 |---|---|---|
-| `TASK-SIM-003` | deterministic Simulation Skill backends | `PROPOSED` |
-| `TASK-SIM-004` | Simulation Mission integration | `PROPOSED` |
-| `TASK-SIM-005` | failure and recovery scenarios | `PROPOSED` |
-| `TASK-SIM-006` | observability and evaluation harness | `PROPOSED` |
-| `TASK-SIM-E2E` | bounded Simulation E2E qualification | `PROPOSED` |
+| `TASK-SIM-003` | freeze `SIM_BASELINE_V1` from accepted SIM artifacts, Git/source hashes, fixtures, runtime, and tests | `PROPOSED` |
+| `TASK-SIM-004` | Navigation Skill deterministic backend | `PROPOSED` |
+| `TASK-SIM-005` | VLA Skill deterministic backend | `PROPOSED` |
+| `TASK-SIM-006` | Verification deterministic backend | `PROPOSED` |
+| `TASK-SIM-007` | Mission Executor and Simulation Skill integration | `PROPOSED` |
+| `TASK-SIM-008` | canonical normal Simulation E2E | `PROPOSED` |
+| `TASK-SIM-009` | failure/recovery scenario suite | `PROPOSED` |
+| `TASK-SIM-010` | observability, evidence, replay, and regression | `PROPOSED` |
+| `TASK-SIM-E2E` | Simulation Qualification Gate | `PROPOSED` |
 
 Only `TASK-SIM-003` is the next candidate for specification. `SIM_GO` makes that specification eligible for consideration; it does not make an absent Task specification executable.
 
-The two available planning directions remain:
+Planned delivery order:
 
-1. Simulation: create and review a bounded `TASK-SIM-003` specification under the proposed v2 backlog.
-2. Physical readiness: define bounded hardware-selection/device/safety remediation before another physical VLA re-gate.
+```text
+SIM Week A: SIM-003 through SIM-006
+-> SIM Week B: SIM-007 through SIM-010
+-> SIM-E2E Qualification Gate
+-> proposed TASK-HW-SELECT-001
+-> ADR amendment/review and explicit Hardware Target Freeze
+```
+
+`TASK-HW-SELECT-001` is also `PROPOSED`. It will evaluate myCobot 280 Pi, myAGV JN 2023, Intel RealSense D455, and Jetson Orin Nano as candidates after Simulation E2E qualification; it does not preselect them.
 
 Do not start `TASK-W1-001`, `TASK-W1-002`, Dataset V1, fine-tuning, or physical motion under the current authorization state.
 
@@ -288,7 +299,7 @@ The workbook is not present in this repository worktree, so Excel synchronizatio
 - VLA-01 as blocked/in progress, not Done;
 - the final P0-004R gate as `NO_GO` and Week-1 authorization as false;
 - the independent Simulation Lane, accepted SIM tasks, and effective `SIM_GO` authorization;
-- proposed SIM-003 through SIM-E2E backlog entries, without marking them approved or started;
+- proposed SIM-003 through SIM-010, SIM-E2E, and HW-SELECT-001 backlog entries, without marking them approved or started;
 - candidate hardware inventory without marking targets frozen;
 - R-01/R-02 and device/safety/resource risks;
 - original Week-1/Week-2 schedule impact;

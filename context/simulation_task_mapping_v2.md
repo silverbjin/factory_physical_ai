@@ -1,20 +1,20 @@
-# Simulation Task Mapping v2 — Proposed Delivery Backlog
+# Simulation Task Mapping v2 — Proposed Post-Gate Backlog
 
 > Status: `DRAFT / PROPOSED`
 > Planning revision: 2026-09-15
 > Governing frozen baseline: `context/simulation_task_mapping_v1.md`
 > Governing ADR: `docs/architecture/adr/ADR-Simulation-Lane-v1.md`
-> Purpose: Record the proposed post-`SIM_GO` delivery backlog without rewriting the accepted v1 mapping or authorizing implementation.
+> Purpose: Define the proposed Simulation First backlog after accepted `SIM_GO` without authorizing implementation or rewriting accepted evidence.
 
 ---
 
 ## 1. Authority and Versioning
 
-`simulation_task_mapping_v1.md` is frozen and hash-bound by the accepted `TASK-SIM-GATE` evidence. This v2 document is a planning overlay only.
+`simulation_task_mapping_v1.md` is frozen and hash-bound by accepted `TASK-SIM-GATE` evidence. This v2 document is a planning overlay only.
 
 ```text
 v1 = accepted historical gate input; immutable
-v2 = proposed downstream backlog; not yet approved
+v2 = proposed downstream backlog; not approved
 ```
 
 Nothing in v2 changes:
@@ -33,13 +33,13 @@ hardware_target_frozen = false
 
 ## 2. Completed Simulation-Lane Foundation
 
-The following are verified merged/accepted facts, not proposed work:
+These are verified merged/accepted facts, not proposed work:
 
-| Task | Status | Accepted result | Downstream effect |
+| Task | Status | Accepted result | Effect |
 |---|---|---|---|
-| `TASK-SIM-C01` | `COMPLETE / ACCEPTED` | `SIM_CONTRACT_GAPS_RESOLVED` | enabled SIM-001 re-evaluation |
-| `TASK-SIM-001` | `COMPLETE / ACCEPTED` | `SIM_CONTRACT_PROFILE_READY` | enabled SIM-002 |
-| `TASK-SIM-002` | `COMPLETE / ACCEPTED` | `SIM_SMOKE_READY` | enabled SIM-GATE evaluation |
+| `TASK-SIM-C01` | `COMPLETE / ACCEPTED` | `SIM_CONTRACT_GAPS_RESOLVED` | executable contract/schema established |
+| `TASK-SIM-001` | `COMPLETE / ACCEPTED` | `SIM_CONTRACT_PROFILE_READY` | SIM-002 enabled |
+| `TASK-SIM-002` | `COMPLETE / ACCEPTED` | `SIM_SMOKE_READY` | SIM-GATE evaluation enabled |
 | `TASK-SIM-GATE` | `COMPLETE / ACCEPTED` | `SIM_GO` | `simulation_lane_authorized = true` |
 
 The accepted foundation provides:
@@ -51,250 +51,521 @@ The accepted foundation provides:
 
 ---
 
-## 3. Proposed Delivery Graph
+## 3. Proposed Delivery Roadmap
 
-Every downstream item remains `PROPOSED` until its own Task specification is created and approved.
+Every downstream item remains `PROPOSED` until its own Task specification is created, reviewed, and approved.
 
 ```mermaid
 flowchart TD
-    SG[TASK-SIM-GATE\nCOMPLETE / SIM_GO]
-    S3[TASK-SIM-003\nSimulation Skill Backends\nPROPOSED]
-    S4[TASK-SIM-004\nSimulation Mission Integration\nPROPOSED]
-    S5[TASK-SIM-005\nFailure and Recovery Scenarios\nPROPOSED]
-    S6[TASK-SIM-006\nObservability and Evaluation Harness\nPROPOSED]
-    SE[TASK-SIM-E2E\nSimulation E2E Qualification\nPROPOSED]
+    SG[TASK-SIM-GATE\nCOMPLETE / ACCEPTED SIM_GO]
+
+    subgraph WA[SIM Week A - Simulation Skill Foundation]
+      S3[TASK-SIM-003\nBaseline Freeze\nPROPOSED]
+      S4[TASK-SIM-004\nNavigation Backend\nPROPOSED]
+      S5[TASK-SIM-005\nVLA Backend\nPROPOSED]
+      S6[TASK-SIM-006\nVerification Backend\nPROPOSED]
+    end
+
+    subgraph WB[SIM Week B - Mission Integration / Failure / E2E]
+      S7[TASK-SIM-007\nMission Integration\nPROPOSED]
+      S8[TASK-SIM-008\nNormal Simulation E2E\nPROPOSED]
+      S9[TASK-SIM-009\nFailure / Recovery Suite\nPROPOSED]
+      S10[TASK-SIM-010\nObservability / Regression\nPROPOSED]
+      SE[TASK-SIM-E2E\nQualification Gate\nPROPOSED]
+    end
+
+    HW[TASK-HW-SELECT-001\nCandidate Suitability Evaluation\nPROPOSED]
+    AR[ADR amendment / architecture review / hardware freeze\nPROPOSED]
     OW[Original Week Graph\nunchanged / separately gated]
 
     SG --> S3
     S3 --> S4
-    S4 --> S5
-    S5 --> S6
-    S6 --> SE
-    SE -. risk-reduction evidence only .-> OW
+    S3 --> S5
+    S3 --> S6
+    S4 --> S7
+    S5 --> S7
+    S6 --> S7
+    S7 --> S8 --> S9 --> S10 --> SE
+    SE --> HW --> AR
+    AR -. separate authorization only .-> OW
 ```
 
-Planning dependency:
+Default planning dependency:
 
 ```text
-SIM-GATE accepted
-  -> SIM-003 accepted
-  -> SIM-004 accepted
-  -> SIM-005 accepted
-  -> SIM-006 accepted
-  -> SIM-E2E qualified
+accepted SIM_GO
+-> SIM-003 baseline frozen
+-> SIM-004 Navigation backend
+   + SIM-005 VLA backend
+   + SIM-006 Verification backend accepted
+-> SIM-007 Mission integration accepted
+-> SIM-008 Normal E2E accepted
+-> SIM-009 Failure/Recovery suite accepted
+-> SIM-010 Observability/Regression accepted
+-> SIM-E2E qualification accepted
+-> hardware-selection track may begin under separate authority
 ```
-
-This linear order is the planning default. A future reviewed planning change may split or parallelize tasks only when contracts, file ownership, and evidence dependencies make that safe.
 
 ---
 
-## 4. Proposed Backlog
+## 4. SIM Week A — Simulation Skill Foundation
 
-### TASK-SIM-003 — Simulation Skill Backends
+| Task | Purpose | Core output | Status |
+|---|---|---|---|
+| `TASK-SIM-003` | Simulation Baseline Freeze | accepted SIM artifacts, Git/source hashes, fixture/runtime/test baseline | `PROPOSED` |
+| `TASK-SIM-004` | Navigation Skill Deterministic Backend | navigation success/failure/timeout simulation | `PROPOSED` |
+| `TASK-SIM-005` | VLA Skill Deterministic Backend | VLA success/failure/unknown-outcome fixtures | `PROPOSED` |
+| `TASK-SIM-006` | Verification Backend | expected/observed verification and reconciliation fixtures | `PROPOSED` |
+
+### TASK-SIM-003 — Simulation Baseline Freeze
 
 ```text
 Status: PROPOSED
 Eligible for specification: YES
-Eligible for implementation: NO — no approved TASK-SIM-003 specification exists
+Eligible for implementation: NO — no approved Task specification exists
 Depends on: accepted TASK-SIM-GATE = SIM_GO
 ```
 
-Proposed objective:
+Purpose:
 
-- implement deterministic, bounded simulation backends behind the accepted Navigation Skill, VLA Skill, and Verification boundaries;
-- support only the frozen logical operations and closed request/result schema;
-- provide stable fixture selection and action-status lookup suitable for later mission integration;
-- preserve deterministic time, identity, idempotency, and cleanup behavior.
+- freeze the accepted Simulation development baseline without adding substantive new runtime behavior;
+- bind the accepted SIM-001, SIM-002, and SIM-GATE artifacts to exact Git revisions and source hashes;
+- record the Simulation ADR, contract profile/schema, smoke runtime, fixture baseline, and test baseline as one reproducible manifest.
 
-Proposed exit evidence:
+Required baseline inputs:
 
-- schema-valid backend request/result tests;
-- deterministic repeated-run evidence;
-- bounded execution/cleanup evidence;
-- proof that no public direct-actuator or physical-device interface was added.
+```text
+ACCEPTED SIM-001
+ACCEPTED SIM-002
+ACCEPTED SIM-GATE
+Simulation ADR
+executable contract and schema
+contract profile
+smoke runtime
+fixture identity/version/hash
+Git commit SHA and source hashes
+focused/full test baseline
+```
+
+Proposed output identity:
+
+```text
+SIM_BASELINE_V1
+```
+
+All later Simulation tasks must bind the accepted `SIM_BASELINE_V1` manifest, its Git revision, and relevant source hashes. The exact task-specific decision field and artifact paths must be frozen in the future Task specification.
 
 Explicitly excluded:
 
-- mission-level orchestration;
-- physical robot/camera access;
-- ROS/Nav2/MoveIt/`ros2_control` binding;
-- model loading, inference, training, or Dataset V1.
+- new Skill behavior or mission orchestration;
+- modification of accepted SIM evidence;
+- physical, Dataset V1, training, or Week authorization.
 
-### TASK-SIM-004 — Simulation Mission Integration
+### TASK-SIM-004 — Navigation Skill Deterministic Backend
 
 ```text
 Status: PROPOSED
-Eligible for specification: after SIM-003 acceptance, unless dependency review explicitly permits earlier authoring
+Eligible for specification: after SIM-003 acceptance
 Eligible for implementation: NO
-Depends on: TASK-SIM-003 accepted
+Depends on: accepted SIM_BASELINE_V1
 ```
 
-Proposed objective:
+Purpose:
 
-- connect the Deterministic Mission Executor to the accepted simulation skill backends through existing boundaries;
-- execute one canonical simulation-only line-side supply mission end to end;
-- preserve mission/action state, correlation identity, idempotency, completion authority, and verification rules;
-- produce a reproducible successful mission trace.
+- place a deterministic backend behind the frozen Navigation Skill boundary;
+- validate Skill contract semantics before Gazebo/Nav2 or myAGV integration;
+- preserve stable action/idempotency identity, bounded execution, retry budget, and authoritative status lookup.
 
-Proposed exit evidence:
+Minimum scenario intent and contract mapping:
 
-- one deterministic canonical success mission;
-- state-transition and idempotency tests;
-- evidence that completion requires authoritative skill results plus verification `pass`;
-- no bypass around the executable contract.
+| Scenario intent | Contract representation |
+|---|---|
+| `SUCCESS` | `result=success`, `status=succeeded`, requested arrival verified |
+| `TIMEOUT` | `DEPENDENCY_TIMEOUT`, `result=pending`, `status=unknown`, reconciliation required |
+| `UNAVAILABLE` | `RESOURCE_UNAVAILABLE`, terminal/retryable behavior fixed by Task policy |
+| `INVALID_GOAL` | `VALIDATION`, fail closed before simulated execution |
+| `UNKNOWN_OUTCOME` | only through a contract-allowed `pending/unknown` result; never a new ad-hoc category |
 
-Explicitly excluded:
+Proposed evidence:
 
-- failure/recovery coverage beyond the minimum integration guard cases;
-- physical motion or physical telemetry;
-- synthetic fixture claims as Dataset V1;
-- Week-task completion claims.
+- schema-valid deterministic request/result fixtures;
+- repeated-run and bounded-cleanup evidence;
+- status/reconciliation correlation tests;
+- proof of no Gazebo, Nav2, myAGV, physical-device, or direct-actuator dependency.
 
-### TASK-SIM-005 — Simulation Failure and Recovery Scenarios
+### TASK-SIM-005 — VLA Skill Deterministic Backend
 
 ```text
 Status: PROPOSED
-Eligible for specification: after SIM-004 acceptance
+Eligible for specification: after SIM-003 acceptance
 Eligible for implementation: NO
-Depends on: TASK-SIM-004 accepted
+Depends on: accepted SIM_BASELINE_V1
 ```
 
-Proposed objective:
+Purpose:
 
-- extend the integrated mission path with a bounded failure taxonomy;
-- cover navigation failure, VLA failure, timeout/unknown, reconciliation, verification fail/uncertain, retry exhaustion, and escalation;
-- prove that ambiguous outcomes cannot become success without authoritative reconciliation;
-- keep retry and recovery policy deterministic and bounded.
+- place a deterministic fixture backend behind the frozen VLA Skill boundary;
+- validate request-to-result semantics without SmolVLA model loading, inference, or fine-tuning;
+- preserve observation identity/hash, workspace profile, policy version, and reconciliation semantics.
 
-Proposed exit evidence:
+Minimum scenario intent:
 
-- scenario manifest with stable IDs and expected outcomes;
-- machine-readable traces for each mandatory failure class;
-- retry/reconciliation/idempotency invariant tests;
-- fail-closed evidence for unknown, malformed, or contradictory results.
+```text
+request
+  -> deterministic VLA fixture
+  -> SUCCEEDED
+     FAILED
+     TIMED_OUT
+     UNKNOWN
+```
 
-Explicitly excluded:
+`TIMED_OUT`/`UNKNOWN` must use the accepted contract's `pending/unknown` semantics and authoritative `action_status.get` reconciliation. The following invariants are mandatory:
 
-- physical fault injection;
-- production success-rate or reliability claims;
-- unbounded retry or wall-clock soak;
-- Agent-selected raw recovery commands.
+```text
+UNKNOWN -> SUCCEEDED directly is forbidden
+unknown outcome -> reconciliation before completion/retry
+observation evidence -> completion/reconcile/recovery/HITL decision
+uncertain != success
+```
 
-### TASK-SIM-006 — Simulation Observability and Evaluation Harness
+Proposed evidence:
+
+- deterministic VLA success, known failure, timeout, and unknown-result fixtures;
+- invalid/ambiguous observation rejection;
+- forbidden transition and bounded retry tests;
+- proof that no model, training, physical camera, or actuator path was used.
+
+### TASK-SIM-006 — Verification Simulation Backend
 
 ```text
 Status: PROPOSED
-Eligible for specification: after SIM-005 acceptance
+Eligible for specification: after SIM-003 acceptance
 Eligible for implementation: NO
-Depends on: TASK-SIM-005 accepted
+Depends on: accepted SIM_BASELINE_V1
 ```
 
-Proposed objective:
+Purpose:
 
-- provide structured mission/action/skill/verification traces across the accepted scenario suite;
-- add deterministic replay and result comparison;
-- compute clearly scoped simulation metrics without extrapolating to physical or production performance;
-- bind scenario, code, contract, and evidence versions.
+- deterministically compare expected state with observed Simulation state;
+- preserve the accepted `verification.verify` verdicts `pass`, `fail`, and `uncertain`;
+- supply authoritative evidence for executor-owned confirmation, reconciliation, recovery, or HITL routing.
 
-Proposed exit evidence:
-
-- versioned scenario/evaluation manifest;
-- repeatable replay results;
-- machine-readable metrics with numerator, denominator, and exclusion rules;
-- evidence-integrity and tamper/fail-closed tests.
-
-Explicitly excluded:
-
-- production observability readiness;
-- physical latency, safety, or reliability claims;
-- 24/72-hour soak requirements;
-- model-quality benchmarking or fine-tuning.
-
-### TASK-SIM-E2E — Simulation End-to-End Qualification
+Conceptual flow:
 
 ```text
-Status: PROPOSED
-Eligible for specification: after SIM-006 acceptance
-Eligible for implementation: NO
-Depends on: TASK-SIM-003 through TASK-SIM-006 accepted
+Expected State + Observed Sim State
+               -> Verification verdict
+               -> CONFIRMED | RECONCILE | RECOVERY | HITL
 ```
 
-Proposed objective:
+The uppercase routing labels describe executor decisions, not new Verification contract verdicts. Recommended mapping:
 
-- execute and independently evaluate the complete bounded simulation scenario suite;
-- verify contract, mission, recovery, observability, replay, and evidence-integrity requirements as one qualification package;
-- produce exactly one task-specific decision such as `SIM_E2E_QUALIFIED` or `SIM_E2E_BLOCKED`, to be frozen by its future Task specification.
+```text
+pass      -> CONFIRMED
+uncertain -> RECONCILE, then bounded RECOVERY or HITL if unresolved
+fail      -> deterministic RECOVERY or HITL policy
+```
 
-Proposed exit evidence:
+Verification must not commit mission completion by itself.
 
-- canonical E2E scenario results;
-- full regression and deterministic replay evidence;
-- unresolved limitation register;
-- independent read-only review and post-review acceptance record.
+Proposed evidence:
 
-Explicitly excluded:
+- exact-match, mismatch, insufficient, ambiguous, and malformed observation cases;
+- immutable observation identity/version/hash checks;
+- deterministic verdict and routing-input evidence;
+- proof that `uncertain` never becomes `pass` by confidence metadata.
 
-- automatic authorization of the original Week graph;
-- physical hardware readiness or motion authorization;
-- Dataset V1, real VLA benchmark, or production-readiness claims.
+Completion of SIM Week A should answer:
+
+> Can the Mission Executor consume each individual Skill through the accepted contract without real hardware?
+
+It does not yet prove integrated mission execution.
+
+SIM-004, SIM-005, and SIM-006 may be planned as parallel workstreams only after SIM-003 is accepted and only when implementation packages, evidence paths, and file ownership do not materially overlap. Otherwise execute them sequentially without introducing false semantic dependencies between the three Skill backends.
 
 ---
 
-## 5. Backlog Status Rules
+## 5. SIM Week B — Mission Integration / Failure / E2E
+
+| Task | Purpose | Status |
+|---|---|---|
+| `TASK-SIM-007` | Simulation Mission Integration | `PROPOSED` |
+| `TASK-SIM-008` | Normal Simulation E2E | `PROPOSED` |
+| `TASK-SIM-009` | Failure / Recovery Scenario Suite | `PROPOSED` |
+| `TASK-SIM-010` | Simulation Observability / Evidence / Regression | `PROPOSED` |
+| `TASK-SIM-E2E` | Simulation Qualification Gate | `PROPOSED` |
+
+### TASK-SIM-007 — Simulation Mission Integration
+
+```text
+Status: PROPOSED
+Eligible for specification: after SIM-004, SIM-005, and SIM-006 are all accepted
+Eligible for implementation: NO
+Depends on: accepted SIM-004, SIM-005, and SIM-006 backends
+```
+
+Purpose:
+
+```text
+Mission Executor
+  + Navigation Skill Sim
+  + VLA Skill Sim
+  + Verification Sim
+  -> one contract-bound integrated Simulation runtime
+```
+
+Existing MVP mission state, deterministic gateway, normal E2E, and single-failure recovery implementation may be reused when compatible. Reuse never auto-passes a SIM Exit Criterion:
+
+```text
+reused implementation + new SIM-specific tests/evidence = eligible proof
+reused implementation alone = insufficient
+MVP complete != SIM backlog complete
+```
+
+Proposed evidence:
+
+- exact boundary wiring and version bindings;
+- mission/action lifecycle and idempotency tests;
+- authoritative verification required before mission completion;
+- no bypass of Skill/Verification contracts.
+
+### TASK-SIM-008 — Normal Simulation E2E
+
+```text
+Status: PROPOSED
+Eligible for specification: after SIM-007 acceptance
+Eligible for implementation: NO
+Depends on: accepted SIM-007 Mission integration
+```
+
+Purpose:
+
+```text
+factory request
+-> mission
+-> simulated navigation
+-> simulated VLA
+-> verification
+-> mission success
+```
+
+Minimum machine-readable evidence:
+
+```text
+mission_id
+action lifecycle
+initial state
+final state
+Skill results
+Verification result
+trace/correlation identity
+bounded duration
+fixture and contract versions
+source revision and hashes
+```
+
+One successful scenario proves only the bounded canonical Simulation path, not physical or production success.
+
+### TASK-SIM-009 — Failure / Recovery Scenario Suite
+
+```text
+Status: PROPOSED
+Eligible for specification: after SIM-008 acceptance
+Eligible for implementation: NO
+Depends on: accepted normal Simulation E2E
+```
+
+Minimum proposed scenarios:
+
+```text
+Navigation timeout
+VLA failed
+VLA unknown outcome
+Verification mismatch
+Factory API invalid response
+Skill unavailable
+```
+
+Each scenario must explicitly prove its applicable decision:
+
+```text
+retry?
+reconcile?
+recover?
+HITL?
+fail closed?
+```
+
+Factory API invalid-response coverage must reuse an existing typed boundary or first surface a concrete contract gap; it must not silently expand the frozen Simulation contract.
+
+Proposed evidence:
+
+- versioned scenario manifest with stable expected outcomes;
+- retry/reconciliation/idempotency and budget invariants;
+- fail-closed behavior for malformed or contradictory results;
+- no unbounded retry, sleep, process leak, or physical fault injection.
+
+### TASK-SIM-010 — Simulation Observability / Evidence / Regression
+
+```text
+Status: PROPOSED
+Eligible for specification: after SIM-009 acceptance
+Eligible for implementation: NO
+Depends on: accepted normal and failure Simulation suites
+```
+
+Purpose:
+
+- freeze structured evidence, trace correlation, mission/action timelines, failure codes, recovery decisions, fixture versions, and Git/source revisions;
+- add deterministic replay and regression comparison;
+- make metrics auditable without extrapolating to physical or production performance.
+
+Minimum outputs:
+
+```text
+structured evidence
+trace correlation
+mission/action timeline
+failure_code
+recovery decision
+fixture/contract version
+Git SHA and source hashes
+replay/regression result
+```
+
+Explicitly excluded:
+
+- physical latency/safety/reliability claims;
+- 24/72-hour production soak;
+- model-quality benchmark or fine-tuning claims.
+
+---
+
+## 6. TASK-SIM-E2E — Simulation Qualification Gate
+
+```text
+Status: PROPOSED
+Eligible for specification: after SIM-010 acceptance
+Eligible for implementation: NO
+Depends on: accepted TASK-SIM-003 through TASK-SIM-010 evidence
+Gate behavior: evidence consumption/evaluation only; no remediation implementation
+```
+
+Proposed decisions:
+
+```text
+SIM_E2E_QUALIFIED
+SIM_E2E_NOT_QUALIFIED
+```
+
+Minimum qualification conditions:
+
+```yaml
+normal_e2e: PASS
+required_failure_cases: PASS
+physical_dependency: false
+forbidden_state_transition: false
+leaked_process: false
+evidence_reproducible: true
+regression_green: true
+observability_sufficient: true
+```
+
+The future Task specification must define exact predicates, provenance rules, required evidence hashes, fail-closed behavior, and post-review acceptance recording. A truthful `SIM_E2E_NOT_QUALIFIED` remains a valid Gate-task completion outcome.
+
+Accepted `SIM_E2E_QUALIFIED` is the substantive completion point for Simulation First. It remains simulation-only evidence and does not authorize the original Week graph or physical activity.
+
+---
+
+## 7. Proposed Hardware-Selection Track After Simulation E2E
+
+The first proposed hardware task is:
+
+```text
+TASK-HW-SELECT-001
+Candidate Suitability Evaluation
+Status: PROPOSED
+```
+
+Proposed dependency and change-control flow:
+
+```text
+accepted SIM_E2E_QUALIFIED
+-> TASK-HW-SELECT-001 Candidate Suitability Evaluation
+-> ADR amendments or supersession
+-> independent Architecture Review
+-> explicit Hardware Target Freeze
+```
+
+Candidate set to evaluate:
+
+```text
+Manipulator:  myCobot 280 Pi
+AMR:          myAGV JN 2023
+Camera:       Intel RealSense D455
+Edge compute: Jetson Orin Nano
+```
+
+The evaluation must consider control/state paths, gripper, workspace/safety, observation contract, simulation compatibility, deployment topology, and downstream integration impact. Candidate ownership does not imply selection, operational readiness, or motion authorization.
+
+`TASK-HW-SELECT-001` and all later ADR/review/freeze steps remain `PROPOSED`. Simulation E2E qualification does not automatically authorize them or guarantee a hardware choice.
+
+---
+
+## 8. Backlog Status and Execution Rules
 
 For every proposed item:
 
 ```text
 listed in mapping
-!= TASK specification approved
+!= Task specification approved
 != implementation authorized
 != implementation complete
 != independently accepted
 ```
 
-Status progression must be explicit:
+Required status progression:
 
 ```text
 PROPOSED
--> TASK specification created
+-> Task specification created
 -> human review/approval
 -> READY FOR IMPLEMENTATION
 -> implementation/evidence
 -> independent read-only review
--> acceptance record
+-> post-review acceptance
 -> COMPLETE / ACCEPTED
 ```
 
-Only `TASK-SIM-003` is currently the next candidate for specification. Later items may remain visible for roadmap coherence but may not be implemented merely because they appear in this document.
+Only `TASK-SIM-003` is currently eligible to proceed to Task-specification authoring. Every other new Task remains both `PROPOSED` and predecessor-blocked.
 
 ---
 
-## 6. Cross-Lane Invariants
+## 9. Cross-Lane Invariants
 
 ```text
 SIM task ID != W task ID
 SIM_GO != W1_GO
+SIM_BASELINE_V1 != a new architecture freeze
 Simulation fixture != Dataset V1
 Simulation E2E != physical E2E
 Simulation success metric != production success metric
-Simulation skill backend != direct actuator contract
+Simulation backend != direct actuator contract
+Candidate hardware != frozen target
 Device readiness != motion authorization
 Training remains independently gated
 ```
 
-No proposed task may rewrite accepted P0/SIM evidence, silently change the frozen executable contract, or freeze candidate hardware.
+No proposed Task may rewrite accepted P0/SIM evidence, silently change the frozen executable contract, or freeze candidate hardware.
 
 ---
 
-## 7. Planning Decisions Still Required
+## 10. Immediate Planning Decision
 
-Before creating `TASK-SIM-003`, review and freeze only the choices needed by that task:
+The next planning action is limited to:
 
-- backend ownership and package placement;
-- whether to extend the current smoke module or introduce a separate runtime package;
-- exact deterministic fixture configuration mechanism;
-- evidence file/report naming;
-- compatibility requirements with the existing MVP mission runtime;
-- Task-specific acceptance decision vocabulary.
+```text
+Create and review TASK-SIM-003 specification
+```
 
-Do not resolve SIM-004+ design details prematurely inside the SIM-003 specification.
+That specification should freeze only the accepted baseline identity, bound artifacts/hashes, validation method, and output decision needed by later Simulation tasks. It must not implement SIM-004+ behavior or pre-approve later backlog items.
