@@ -4,17 +4,13 @@
   "baseline_id": "SIM_BASELINE_V1",
   "implementation_complete": true,
   "task_specific_result": "SIM_BASELINE_BLOCKED",
-  "generation_timestamp": "2026-09-15T15:09:28.290316Z",
+  "generation_timestamp": "2026-09-15T15:26:25.698728Z",
   "provenance": {
-    "git_sha": "ce412270fdce2975b3b688bc321dfed54936dcc3",
+    "git_sha": "4d66d2dc229efe8cdd5306f28c98bf37a55de281",
     "worktree_clean": false,
     "worktree_status": [
-      "?? config/simulation/mujoco_baseline.xml",
-      "?? config/simulation/sim_baseline_empty.sdf",
-      "?? docs/simulation/simulation_baseline_v1.md",
-      "?? results/simulation/SIM-003_baseline.json",
-      "?? scripts/verify_simulation_toolchain_baseline.py",
-      "?? tests/test_simulation_toolchain_baseline.py"
+      "M scripts/verify_simulation_toolchain_baseline.py",
+      " M tests/test_simulation_toolchain_baseline.py"
     ],
     "pre_implementation_clean": true,
     "host": {
@@ -70,42 +66,42 @@
       {
         "check_id": "TASK-SIM-C01:acceptance",
         "status": "PASS",
-        "detail": "requires ACCEPT + SIM_CONTRACT_GAPS_RESOLVED"
+        "detail": "requires exact accepted hash + ACCEPT + SIM_CONTRACT_GAPS_RESOLVED"
       },
       {
         "check_id": "TASK-SIM-C01:reviewed_commit",
         "status": "PASS",
-        "detail": "reviewed commit must exist"
+        "detail": "exact reviewed commit must match and exist"
       },
       {
         "check_id": "TASK-SIM-001:acceptance",
         "status": "PASS",
-        "detail": "requires ACCEPT + SIM_CONTRACT_PROFILE_READY"
+        "detail": "requires exact accepted hash + ACCEPT + SIM_CONTRACT_PROFILE_READY"
       },
       {
         "check_id": "TASK-SIM-001:reviewed_commit",
         "status": "PASS",
-        "detail": "reviewed commit must exist"
+        "detail": "exact reviewed commit must match and exist"
       },
       {
         "check_id": "TASK-SIM-002:acceptance",
         "status": "PASS",
-        "detail": "requires ACCEPT + SIM_SMOKE_READY"
+        "detail": "requires exact accepted hash + ACCEPT + SIM_SMOKE_READY"
       },
       {
         "check_id": "TASK-SIM-002:reviewed_commit",
         "status": "PASS",
-        "detail": "reviewed commit must exist"
+        "detail": "exact reviewed commit must match and exist"
       },
       {
         "check_id": "TASK-SIM-GATE:acceptance",
         "status": "PASS",
-        "detail": "requires ACCEPT + SIM_GO"
+        "detail": "requires exact accepted hash + ACCEPT + SIM_GO"
       },
       {
         "check_id": "TASK-SIM-GATE:reviewed_commit",
         "status": "PASS",
-        "detail": "reviewed commit must exist"
+        "detail": "exact reviewed commit must match and exist"
       },
       {
         "check_id": "SIM-C01:evidence",
@@ -125,17 +121,17 @@
       {
         "check_id": "SIM-C01:artifact_bindings",
         "status": "PASS",
-        "detail": "all acceptance-bound artifacts must retain their accepted hashes"
+        "detail": "all canonical artifacts must match current and reviewed Git blob hashes"
       },
       {
         "check_id": "SIM-001:artifact_bindings",
         "status": "PASS",
-        "detail": "all acceptance-bound artifacts must retain their accepted hashes"
+        "detail": "all canonical artifacts must match current and reviewed Git blob hashes"
       },
       {
         "check_id": "SIM-002:artifact_bindings",
         "status": "PASS",
-        "detail": "all acceptance-bound artifacts must retain their accepted hashes"
+        "detail": "all canonical artifacts must match current and reviewed Git blob hashes"
       },
       {
         "check_id": "acceptance_chain:SIM-C01",
@@ -208,12 +204,12 @@
     {
       "path": "scripts/verify_simulation_toolchain_baseline.py",
       "exists": true,
-      "sha256": "0d3dc91eed0b9729d836f37d544907a580949951f95330064b9f6096e3548b1b"
+      "sha256": "1bbab4fe0f07c5253f31409fa0284535099f63fa4ebe994216d8016f9ae6382b"
     },
     {
       "path": "tests/test_simulation_toolchain_baseline.py",
       "exists": true,
-      "sha256": "fe7636a757c87e7336663a04c3b3ac77b5506c618113846498116e3b6857abd5"
+      "sha256": "a29579980bee4938059299d825b11501cc172b33267554993bd953963dea6480"
     },
     {
       "path": "config/simulation/sim_baseline_empty.sdf",
@@ -235,8 +231,11 @@
     "ros2": {
       "required_distro": "jazzy",
       "measured_distro": "jazzy",
+      "measured_prefix": "/opt/ros/jazzy",
+      "prefix_distro": "jazzy",
       "executable": "/opt/ros/jazzy/bin/ros2",
       "rclpy_version": "7.1.11",
+      "rclpy_module_path": "/opt/ros/jazzy/lib/python3.12/site-packages/rclpy/__init__.py",
       "cli_probe": {
         "command": [
           "/opt/ros/jazzy/bin/ros2",
@@ -246,11 +245,43 @@
         "available": true,
         "returncode": 0,
         "timed_out": false,
-        "duration_seconds": 0.576461,
+        "duration_seconds": 0.603643,
         "stdout": "usage: ros2 [-h] [--use-python-default-buffering]\n            Call `ros2 <command> -h` for more detailed usage. ...\n\nros2 is an extensible command-line tool for ROS 2.\n\noptions:\n  -h, --help            show this help message and exit\n  --use-python-default-buffering\n                        Do not force line buffering in stdout and instead use\n                        the python default buffering, which might be affected\n                        by PYTHONUNBUFFERED/-u and depends on whatever stdout\n                        is interactive or not\n\nCommands:\n  action     Various action related sub-commands\n  bag        Various rosbag related sub-commands\n  component  Various component related sub-commands\n  control    Various control related sub-commands\n  daemon     Various daemon related sub-commands\n  doctor     Check ROS setup and other potential issues\n  interface  Show information about ROS interfaces\n  launch     Run a launch file\n  lifecycle  Various lifecycle related sub-commands\n  multicast  Various multicast related sub-commands\n  node       Various node related sub-commands\n  param      Various param related sub-commands\n  pkg        Various package related sub-commands\n  plugin     Various plugin related sub-commands\n  run        Run a package specific executable\n  security   Various security related sub-commands\n  service    Various service related sub-commands\n  topic      Various topic related sub-commands\n  wtf        Use `wtf` as alias to `doctor`\n\n  Call `ros2 <command> -h` for more detailed usage.",
         "stderr": "",
         "process_group_cleanup_complete": true
       },
+      "prefix_probe": {
+        "command": [
+          "/opt/ros/jazzy/bin/ros2",
+          "pkg",
+          "prefix",
+          "rclpy"
+        ],
+        "timeout_seconds": 5,
+        "available": true,
+        "returncode": 0,
+        "timed_out": false,
+        "duration_seconds": 0.347559,
+        "stdout": "/opt/ros/jazzy",
+        "stderr": "",
+        "process_group_cleanup_complete": true
+      },
+      "rclpy_probe": {
+        "command": [
+          "/usr/bin/python3",
+          "-c",
+          "import importlib.metadata as m,json,rclpy; print(json.dumps({'version':m.version('rclpy'),'module_path':rclpy.__file__},sort_keys=True))"
+        ],
+        "timeout_seconds": 5,
+        "available": true,
+        "returncode": 0,
+        "timed_out": false,
+        "duration_seconds": 0.158872,
+        "stdout": "{\"module_path\": \"/opt/ros/jazzy/lib/python3.12/site-packages/rclpy/__init__.py\", \"version\": \"7.1.11\"}",
+        "stderr": "",
+        "process_group_cleanup_complete": true
+      },
+      "identity_matches": true,
       "status": "PASS"
     },
     "gazebo": {
@@ -268,7 +299,7 @@
         "available": true,
         "returncode": 0,
         "timed_out": false,
-        "duration_seconds": 0.117369,
+        "duration_seconds": 0.192058,
         "stdout": "Gazebo Sim, version 8.11.0\nCopyright (C) 2018 Open Source Robotics Foundation.\nReleased under the Apache 2.0 License.",
         "stderr": "",
         "process_group_cleanup_complete": true
@@ -287,7 +318,7 @@
         "available": true,
         "returncode": 0,
         "timed_out": false,
-        "duration_seconds": 2.15725,
+        "duration_seconds": 2.178619,
         "stdout": "",
         "stderr": "",
         "process_group_cleanup_complete": true,
@@ -329,7 +360,7 @@
           "available": true,
           "returncode": 0,
           "timed_out": false,
-          "duration_seconds": 0.292865,
+          "duration_seconds": 0.325232,
           "stdout": "ros_gz_bridge bridge_node\nros_gz_bridge bridge_types\nros_gz_bridge parameter_bridge\nros_gz_bridge static_bridge",
           "stderr": "",
           "process_group_cleanup_complete": true
@@ -345,7 +376,7 @@
           "available": true,
           "returncode": 0,
           "timed_out": false,
-          "duration_seconds": 0.312914,
+          "duration_seconds": 0.378104,
           "stdout": "ros_gz_sim create\nros_gz_sim delete_entity\nros_gz_sim gzserver\nros_gz_sim remove\nros_gz_sim set_entity_pose\nros_gz_sim spawn_entity",
           "stderr": "",
           "process_group_cleanup_complete": true
@@ -404,7 +435,7 @@
           "available": true,
           "returncode": 0,
           "timed_out": false,
-          "duration_seconds": 0.289741,
+          "duration_seconds": 0.347147,
           "stdout": "nav2_amcl amcl",
           "stderr": "",
           "process_group_cleanup_complete": true
@@ -420,7 +451,7 @@
           "available": true,
           "returncode": 0,
           "timed_out": false,
-          "duration_seconds": 0.286587,
+          "duration_seconds": 0.365139,
           "stdout": "nav2_behaviors behavior_server",
           "stderr": "",
           "process_group_cleanup_complete": true
@@ -436,7 +467,7 @@
           "available": true,
           "returncode": 0,
           "timed_out": false,
-          "duration_seconds": 0.285493,
+          "duration_seconds": 0.338107,
           "stdout": "nav2_bt_navigator bt_navigator",
           "stderr": "",
           "process_group_cleanup_complete": true
@@ -452,7 +483,7 @@
           "available": true,
           "returncode": 0,
           "timed_out": false,
-          "duration_seconds": 0.285159,
+          "duration_seconds": 0.354943,
           "stdout": "nav2_controller controller_server",
           "stderr": "",
           "process_group_cleanup_complete": true
@@ -468,7 +499,7 @@
           "available": true,
           "returncode": 0,
           "timed_out": false,
-          "duration_seconds": 0.302526,
+          "duration_seconds": 0.373454,
           "stdout": "nav2_lifecycle_manager lifecycle_manager",
           "stderr": "",
           "process_group_cleanup_complete": true
@@ -484,7 +515,7 @@
           "available": true,
           "returncode": 0,
           "timed_out": false,
-          "duration_seconds": 0.289951,
+          "duration_seconds": 0.309121,
           "stdout": "nav2_map_server costmap_filter_info_server\nnav2_map_server map_saver_cli\nnav2_map_server map_saver_server\nnav2_map_server map_server",
           "stderr": "",
           "process_group_cleanup_complete": true
@@ -500,7 +531,7 @@
           "available": true,
           "returncode": 0,
           "timed_out": false,
-          "duration_seconds": 0.322666,
+          "duration_seconds": 0.377071,
           "stdout": "nav2_planner planner_server",
           "stderr": "",
           "process_group_cleanup_complete": true
@@ -524,7 +555,7 @@
         "available": true,
         "returncode": 1,
         "timed_out": false,
-        "duration_seconds": 0.127068,
+        "duration_seconds": 0.175192,
         "stdout": "",
         "stderr": "Traceback (most recent call last):\n  File \"<string>\", line 2, in <module>\nModuleNotFoundError: No module named 'mujoco'",
         "process_group_cleanup_complete": true
@@ -584,13 +615,141 @@
       "available": true,
       "returncode": 0,
       "timed_out": false,
-      "duration_seconds": 1.45561,
-      "stdout": ".....................................                                    [100%]\n37 passed in 1.03s",
+      "duration_seconds": 2.425732,
+      "stdout": ".....................................                                    [100%]\n37 passed in 1.81s",
       "stderr": "",
       "process_group_cleanup_complete": true
     },
+    "status": "PASS",
     "accepted_evidence_modified": false,
-    "status": "PASS"
+    "accepted_artifact_preservation": {
+      "status": "PASS",
+      "paths": [
+        "results/reviews/SIM-C01_acceptance.json",
+        "results/reviews/SIM-001_acceptance.json",
+        "results/reviews/SIM-002_acceptance.json",
+        "results/reviews/SIM-GATE_acceptance.json",
+        "results/simulation/SIM-C01_contract_resolution.json",
+        "docs/contracts/simulation_execution_contract_v1.md",
+        "docs/contracts/schemas/simulation_execution_contract_v1.schema.json",
+        "results/simulation/SIM-001_contract_profile.json",
+        "docs/simulation/simulation_contract_profile_v1.md",
+        "results/simulation/SIM-002_smoke_runtime.json",
+        "docs/simulation/simulation_smoke_runtime_v1.md",
+        "scripts/run_simulation_smoke.py",
+        "src/simulation_runtime/smoke.py",
+        "tests/test_simulation_smoke.py",
+        "results/simulation/SIM-GATE_readiness.json",
+        "scripts/verify_simulation_lane_gate.py",
+        "tests/test_simulation_lane_gate.py",
+        "docs/simulation/simulation_lane_gate_v1.md"
+      ],
+      "hashes_before": {
+        "results/reviews/SIM-C01_acceptance.json": "1aee7a19f24cf52da3a2c0b232872420aafe7f1e644ed5fb1a493a025c5ee2d5",
+        "results/reviews/SIM-001_acceptance.json": "bf1fe8df30a73339fcdd90a5bbc3d0cf5963a0a02d538102e732054e175f5e53",
+        "results/reviews/SIM-002_acceptance.json": "07ee8867208498719b1a5bed04fb7572a881e2e470b6d218648aaecaf5d02951",
+        "results/reviews/SIM-GATE_acceptance.json": "31195148a649b142abae43fe91bc017744827615de1c3a1f662763262a0ced5a",
+        "results/simulation/SIM-C01_contract_resolution.json": "4685588a2b3978b0a063328e94e8f0469f06af612fb50dae8aabf32dd3d349e5",
+        "docs/contracts/simulation_execution_contract_v1.md": "0451e9abae4cee911d9468d11e68b8bbb0e3aff1a1a2d9cf104ed64264d28caa",
+        "docs/contracts/schemas/simulation_execution_contract_v1.schema.json": "112b1e2e0d1fefb03d7b353e8ed4d875b025fe342380d5ba1cbf050bcc7d944a",
+        "results/simulation/SIM-001_contract_profile.json": "c7ea4be8b6e34bc5eff3ef15c728ac76cb34d280d5def3a73fdabb52c6ad642d",
+        "docs/simulation/simulation_contract_profile_v1.md": "24e9dbdbccb34e4799a43a7a3bbef5f5ebbb84d211aa9506cdae567c238645e1",
+        "results/simulation/SIM-002_smoke_runtime.json": "0529b8a093426316f41abf0ba2ad0cdfd3400720fe1fdba2129b131f6f4cb9ce",
+        "docs/simulation/simulation_smoke_runtime_v1.md": "c4b4d91849883d8f4197d1be0128dc18c81ef2da9bc17197431262e0c738a0f6",
+        "scripts/run_simulation_smoke.py": "8a23aac92fd41fcc9b64d029df9e64fb2584d196cdbc848d81004fdde31dfce8",
+        "src/simulation_runtime/smoke.py": "db682046baa092c36d9f1eca3bc720135a2f4ff9d969cbef90a659b567bea41a",
+        "tests/test_simulation_smoke.py": "c9128b6e4f670d60c61bfca5b09344cd8c697dc80742196265dcd987ec6ddb93",
+        "results/simulation/SIM-GATE_readiness.json": "82c837e519c37799cb5a88af14470d2b74ba5d75913e811eac752f8e80f8b312",
+        "scripts/verify_simulation_lane_gate.py": "04b23c1734b18e7ef96cd534dc7ff70dd31d5d602a4c54add6cba861ab917637",
+        "tests/test_simulation_lane_gate.py": "a036e13a324ea16185ce03ad3232a6ae830e1c712164f3e6bb415e2205ab30ae",
+        "docs/simulation/simulation_lane_gate_v1.md": "036cc02fef12e146ba3e18af99dc19a9d87c49369a295d3e3f582fa38be711fd"
+      },
+      "hashes_after": {
+        "results/reviews/SIM-C01_acceptance.json": "1aee7a19f24cf52da3a2c0b232872420aafe7f1e644ed5fb1a493a025c5ee2d5",
+        "results/reviews/SIM-001_acceptance.json": "bf1fe8df30a73339fcdd90a5bbc3d0cf5963a0a02d538102e732054e175f5e53",
+        "results/reviews/SIM-002_acceptance.json": "07ee8867208498719b1a5bed04fb7572a881e2e470b6d218648aaecaf5d02951",
+        "results/reviews/SIM-GATE_acceptance.json": "31195148a649b142abae43fe91bc017744827615de1c3a1f662763262a0ced5a",
+        "results/simulation/SIM-C01_contract_resolution.json": "4685588a2b3978b0a063328e94e8f0469f06af612fb50dae8aabf32dd3d349e5",
+        "docs/contracts/simulation_execution_contract_v1.md": "0451e9abae4cee911d9468d11e68b8bbb0e3aff1a1a2d9cf104ed64264d28caa",
+        "docs/contracts/schemas/simulation_execution_contract_v1.schema.json": "112b1e2e0d1fefb03d7b353e8ed4d875b025fe342380d5ba1cbf050bcc7d944a",
+        "results/simulation/SIM-001_contract_profile.json": "c7ea4be8b6e34bc5eff3ef15c728ac76cb34d280d5def3a73fdabb52c6ad642d",
+        "docs/simulation/simulation_contract_profile_v1.md": "24e9dbdbccb34e4799a43a7a3bbef5f5ebbb84d211aa9506cdae567c238645e1",
+        "results/simulation/SIM-002_smoke_runtime.json": "0529b8a093426316f41abf0ba2ad0cdfd3400720fe1fdba2129b131f6f4cb9ce",
+        "docs/simulation/simulation_smoke_runtime_v1.md": "c4b4d91849883d8f4197d1be0128dc18c81ef2da9bc17197431262e0c738a0f6",
+        "scripts/run_simulation_smoke.py": "8a23aac92fd41fcc9b64d029df9e64fb2584d196cdbc848d81004fdde31dfce8",
+        "src/simulation_runtime/smoke.py": "db682046baa092c36d9f1eca3bc720135a2f4ff9d969cbef90a659b567bea41a",
+        "tests/test_simulation_smoke.py": "c9128b6e4f670d60c61bfca5b09344cd8c697dc80742196265dcd987ec6ddb93",
+        "results/simulation/SIM-GATE_readiness.json": "82c837e519c37799cb5a88af14470d2b74ba5d75913e811eac752f8e80f8b312",
+        "scripts/verify_simulation_lane_gate.py": "04b23c1734b18e7ef96cd534dc7ff70dd31d5d602a4c54add6cba861ab917637",
+        "tests/test_simulation_lane_gate.py": "a036e13a324ea16185ce03ad3232a6ae830e1c712164f3e6bb415e2205ab30ae",
+        "docs/simulation/simulation_lane_gate_v1.md": "036cc02fef12e146ba3e18af99dc19a9d87c49369a295d3e3f582fa38be711fd"
+      },
+      "modified_paths": []
+    }
+  },
+  "accepted_artifact_preservation": {
+    "status": "PASS",
+    "paths": [
+      "results/reviews/SIM-C01_acceptance.json",
+      "results/reviews/SIM-001_acceptance.json",
+      "results/reviews/SIM-002_acceptance.json",
+      "results/reviews/SIM-GATE_acceptance.json",
+      "results/simulation/SIM-C01_contract_resolution.json",
+      "docs/contracts/simulation_execution_contract_v1.md",
+      "docs/contracts/schemas/simulation_execution_contract_v1.schema.json",
+      "results/simulation/SIM-001_contract_profile.json",
+      "docs/simulation/simulation_contract_profile_v1.md",
+      "results/simulation/SIM-002_smoke_runtime.json",
+      "docs/simulation/simulation_smoke_runtime_v1.md",
+      "scripts/run_simulation_smoke.py",
+      "src/simulation_runtime/smoke.py",
+      "tests/test_simulation_smoke.py",
+      "results/simulation/SIM-GATE_readiness.json",
+      "scripts/verify_simulation_lane_gate.py",
+      "tests/test_simulation_lane_gate.py",
+      "docs/simulation/simulation_lane_gate_v1.md"
+    ],
+    "hashes_before": {
+      "results/reviews/SIM-C01_acceptance.json": "1aee7a19f24cf52da3a2c0b232872420aafe7f1e644ed5fb1a493a025c5ee2d5",
+      "results/reviews/SIM-001_acceptance.json": "bf1fe8df30a73339fcdd90a5bbc3d0cf5963a0a02d538102e732054e175f5e53",
+      "results/reviews/SIM-002_acceptance.json": "07ee8867208498719b1a5bed04fb7572a881e2e470b6d218648aaecaf5d02951",
+      "results/reviews/SIM-GATE_acceptance.json": "31195148a649b142abae43fe91bc017744827615de1c3a1f662763262a0ced5a",
+      "results/simulation/SIM-C01_contract_resolution.json": "4685588a2b3978b0a063328e94e8f0469f06af612fb50dae8aabf32dd3d349e5",
+      "docs/contracts/simulation_execution_contract_v1.md": "0451e9abae4cee911d9468d11e68b8bbb0e3aff1a1a2d9cf104ed64264d28caa",
+      "docs/contracts/schemas/simulation_execution_contract_v1.schema.json": "112b1e2e0d1fefb03d7b353e8ed4d875b025fe342380d5ba1cbf050bcc7d944a",
+      "results/simulation/SIM-001_contract_profile.json": "c7ea4be8b6e34bc5eff3ef15c728ac76cb34d280d5def3a73fdabb52c6ad642d",
+      "docs/simulation/simulation_contract_profile_v1.md": "24e9dbdbccb34e4799a43a7a3bbef5f5ebbb84d211aa9506cdae567c238645e1",
+      "results/simulation/SIM-002_smoke_runtime.json": "0529b8a093426316f41abf0ba2ad0cdfd3400720fe1fdba2129b131f6f4cb9ce",
+      "docs/simulation/simulation_smoke_runtime_v1.md": "c4b4d91849883d8f4197d1be0128dc18c81ef2da9bc17197431262e0c738a0f6",
+      "scripts/run_simulation_smoke.py": "8a23aac92fd41fcc9b64d029df9e64fb2584d196cdbc848d81004fdde31dfce8",
+      "src/simulation_runtime/smoke.py": "db682046baa092c36d9f1eca3bc720135a2f4ff9d969cbef90a659b567bea41a",
+      "tests/test_simulation_smoke.py": "c9128b6e4f670d60c61bfca5b09344cd8c697dc80742196265dcd987ec6ddb93",
+      "results/simulation/SIM-GATE_readiness.json": "82c837e519c37799cb5a88af14470d2b74ba5d75913e811eac752f8e80f8b312",
+      "scripts/verify_simulation_lane_gate.py": "04b23c1734b18e7ef96cd534dc7ff70dd31d5d602a4c54add6cba861ab917637",
+      "tests/test_simulation_lane_gate.py": "a036e13a324ea16185ce03ad3232a6ae830e1c712164f3e6bb415e2205ab30ae",
+      "docs/simulation/simulation_lane_gate_v1.md": "036cc02fef12e146ba3e18af99dc19a9d87c49369a295d3e3f582fa38be711fd"
+    },
+    "hashes_after": {
+      "results/reviews/SIM-C01_acceptance.json": "1aee7a19f24cf52da3a2c0b232872420aafe7f1e644ed5fb1a493a025c5ee2d5",
+      "results/reviews/SIM-001_acceptance.json": "bf1fe8df30a73339fcdd90a5bbc3d0cf5963a0a02d538102e732054e175f5e53",
+      "results/reviews/SIM-002_acceptance.json": "07ee8867208498719b1a5bed04fb7572a881e2e470b6d218648aaecaf5d02951",
+      "results/reviews/SIM-GATE_acceptance.json": "31195148a649b142abae43fe91bc017744827615de1c3a1f662763262a0ced5a",
+      "results/simulation/SIM-C01_contract_resolution.json": "4685588a2b3978b0a063328e94e8f0469f06af612fb50dae8aabf32dd3d349e5",
+      "docs/contracts/simulation_execution_contract_v1.md": "0451e9abae4cee911d9468d11e68b8bbb0e3aff1a1a2d9cf104ed64264d28caa",
+      "docs/contracts/schemas/simulation_execution_contract_v1.schema.json": "112b1e2e0d1fefb03d7b353e8ed4d875b025fe342380d5ba1cbf050bcc7d944a",
+      "results/simulation/SIM-001_contract_profile.json": "c7ea4be8b6e34bc5eff3ef15c728ac76cb34d280d5def3a73fdabb52c6ad642d",
+      "docs/simulation/simulation_contract_profile_v1.md": "24e9dbdbccb34e4799a43a7a3bbef5f5ebbb84d211aa9506cdae567c238645e1",
+      "results/simulation/SIM-002_smoke_runtime.json": "0529b8a093426316f41abf0ba2ad0cdfd3400720fe1fdba2129b131f6f4cb9ce",
+      "docs/simulation/simulation_smoke_runtime_v1.md": "c4b4d91849883d8f4197d1be0128dc18c81ef2da9bc17197431262e0c738a0f6",
+      "scripts/run_simulation_smoke.py": "8a23aac92fd41fcc9b64d029df9e64fb2584d196cdbc848d81004fdde31dfce8",
+      "src/simulation_runtime/smoke.py": "db682046baa092c36d9f1eca3bc720135a2f4ff9d969cbef90a659b567bea41a",
+      "tests/test_simulation_smoke.py": "c9128b6e4f670d60c61bfca5b09344cd8c697dc80742196265dcd987ec6ddb93",
+      "results/simulation/SIM-GATE_readiness.json": "82c837e519c37799cb5a88af14470d2b74ba5d75913e811eac752f8e80f8b312",
+      "scripts/verify_simulation_lane_gate.py": "04b23c1734b18e7ef96cd534dc7ff70dd31d5d602a4c54add6cba861ab917637",
+      "tests/test_simulation_lane_gate.py": "a036e13a324ea16185ce03ad3232a6ae830e1c712164f3e6bb415e2205ab30ae",
+      "docs/simulation/simulation_lane_gate_v1.md": "036cc02fef12e146ba3e18af99dc19a9d87c49369a295d3e3f582fa38be711fd"
+    },
+    "modified_paths": []
   },
   "validation_commands": {
     "baseline_verifier": [
@@ -632,5 +791,5 @@
   },
   "independent_acceptance": "PENDING",
   "payload_hash_algorithm": "sha256(canonical JSON with sorted keys and compact separators, excluding payload_sha256)",
-  "payload_sha256": "edc43eacf62dddda645fb1111142c24bb7c2467431cae155bb80c9698502b407"
+  "payload_sha256": "4e9cd917bcffcc9febfa536763fdd47f16b0a52642f491b5d1c9071b0f14718b"
 }

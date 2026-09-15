@@ -42,6 +42,77 @@ EXPECTED_DECISIONS = {
     "TASK-SIM-002": "SIM_SMOKE_READY",
     "TASK-SIM-GATE": "SIM_GO",
 }
+EXPECTED_ACCEPTANCE_IDENTITIES = {
+    "TASK-SIM-C01": {
+        "sha256": "1aee7a19f24cf52da3a2c0b232872420aafe7f1e644ed5fb1a493a025c5ee2d5",
+        "reviewed_commit": "0079940cee35362111d8cfd67dd0c14e135c27af",
+    },
+    "TASK-SIM-001": {
+        "sha256": "bf1fe8df30a73339fcdd90a5bbc3d0cf5963a0a02d538102e732054e175f5e53",
+        "reviewed_commit": "97bef9208b26c9fef577e97c26f76a125f220ed9",
+    },
+    "TASK-SIM-002": {
+        "sha256": "07ee8867208498719b1a5bed04fb7572a881e2e470b6d218648aaecaf5d02951",
+        "reviewed_commit": "6abd9fc1158cd9fd0a02d2a496557fd74a16390b",
+    },
+    "TASK-SIM-GATE": {
+        "sha256": "31195148a649b142abae43fe91bc017744827615de1c3a1f662763262a0ced5a",
+        "reviewed_commit": "6a30757602ea0fd7e540b2c3b10b9cab1c610ac0",
+    },
+}
+REVIEWED_ARTIFACT_BINDINGS = {
+    "TASK-SIM-C01": (
+        ("evidence_path", "evidence_sha256", "results/simulation/SIM-C01_contract_resolution.json"),
+        ("contract_path", "contract_sha256", "docs/contracts/simulation_execution_contract_v1.md"),
+        ("schema_path", "schema_sha256", "docs/contracts/schemas/simulation_execution_contract_v1.schema.json"),
+    ),
+    "TASK-SIM-001": (
+        ("evidence_path", "evidence_sha256", "results/simulation/SIM-001_contract_profile.json"),
+        ("profile_path", "profile_sha256", "docs/simulation/simulation_contract_profile_v1.md"),
+        (
+            "simulation_execution_contract_path",
+            "simulation_execution_contract_sha256",
+            "docs/contracts/simulation_execution_contract_v1.md",
+        ),
+        (
+            "simulation_execution_schema_path",
+            "simulation_execution_schema_sha256",
+            "docs/contracts/schemas/simulation_execution_contract_v1.schema.json",
+        ),
+    ),
+    "TASK-SIM-002": (
+        ("evidence_path", "evidence_sha256", "results/simulation/SIM-002_smoke_runtime.json"),
+        ("smoke_report_path", "smoke_report_sha256", "docs/simulation/simulation_smoke_runtime_v1.md"),
+        ("smoke_entry_point_path", "smoke_entry_point_sha256", "scripts/run_simulation_smoke.py"),
+        ("runtime_module_path", "runtime_module_sha256", "src/simulation_runtime/smoke.py"),
+        ("focused_test_path", "focused_test_sha256", "tests/test_simulation_smoke.py"),
+        (
+            "simulation_execution_contract_path",
+            "simulation_execution_contract_sha256",
+            "docs/contracts/simulation_execution_contract_v1.md",
+        ),
+        (
+            "simulation_execution_schema_path",
+            "simulation_execution_schema_sha256",
+            "docs/contracts/schemas/simulation_execution_contract_v1.schema.json",
+        ),
+    ),
+}
+GATE_REVIEWED_ARTIFACTS = {
+    "gate_evidence": "results/simulation/SIM-GATE_readiness.json",
+    "gate_verifier": "scripts/verify_simulation_lane_gate.py",
+    "gate_tests": "tests/test_simulation_lane_gate.py",
+    "gate_report": "docs/simulation/simulation_lane_gate_v1.md",
+}
+PRESERVED_ACCEPTED_PATHS = tuple(
+    dict.fromkeys(
+        (
+            *ACCEPTANCE_PATHS.values(),
+            *(item[2] for bindings in REVIEWED_ARTIFACT_BINDINGS.values() for item in bindings),
+            *GATE_REVIEWED_ARTIFACTS.values(),
+        )
+    )
+)
 SOURCE_PATHS = (
     "tasks/TASK-SIM-003.md",
     "docs/contracts/simulation_execution_contract_v1.md",
@@ -228,14 +299,80 @@ def _commit_exists(git_root: Path, commit: object) -> bool:
     return result["returncode"] == 0 and not result["timed_out"]
 
 
-def _binding_matches(root: Path, record: Mapping[str, Any], path_key: str, hash_key: str) -> bool:
+def _safe_relative_path(value: object) -> str | None:
+    if not isinstance(value, str):
+        return None
+    path = Path(value)
+    if path.is_absolute() or not path.parts or any(part in {"", ".", ".."} for part in path.parts):
+        return None
+    return value
+
+
+def _git_blob_sha256(git_root: Path, commit: object, relative: object) -> str | None:
+    relative_path = _safe_relative_path(relative)
+    if (
+        not isinstance(commit, str)
+        or not re.fullmatch(r"[0-9a-f]{40}", commit)
+        or relative_path is None
+    ):
+        return None
+    try:
+        completed = subprocess.run(
+            ["git", "show", f"{commit}:{relative_path}"],
+            cwd=git_root,
+            check=False,
+            capture_output=True,
+            timeout=5,
+        )
+    except (OSError, subprocess.TimeoutExpired):
+        return None
+    if completed.returncode != 0:
+        return None
+    return hashlib.sha256(completed.stdout).hexdigest()
+
+
+def _binding_matches(
+    root: Path,
+    record: Mapping[str, Any],
+    path_key: str,
+    hash_key: str,
+    expected_path: str,
+) -> bool:
     relative = record.get(path_key)
     expected = record.get(hash_key)
     return (
-        isinstance(relative, str)
+        relative == expected_path
         and isinstance(expected, str)
-        and _sha256(root / relative) == expected
+        and _sha256(root / expected_path) == expected
     )
+
+
+def _reviewed_binding_matches(
+    root: Path,
+    git_root: Path,
+    record: Mapping[str, Any],
+    path_key: str,
+    hash_key: str,
+    expected_path: str,
+) -> bool:
+    expected = record.get(hash_key)
+    return _binding_matches(root, record, path_key, hash_key, expected_path) and _git_blob_sha256(
+        git_root, record.get("reviewed_commit"), expected_path
+    ) == expected
+
+
+def _snapshot_hashes(root: Path) -> dict[str, str | None]:
+    return {relative: _sha256(root / relative) for relative in PRESERVED_ACCEPTED_PATHS}
+
+
+def _path_is_within(path: object, prefix: object) -> bool:
+    if not isinstance(path, str) or not isinstance(prefix, str):
+        return False
+    try:
+        Path(path).resolve(strict=False).relative_to(Path(prefix).resolve(strict=False))
+    except (OSError, ValueError):
+        return False
+    return True
 
 
 def _as_mapping(value: object) -> Mapping[str, Any]:
@@ -249,11 +386,13 @@ def _evidence_matches(
     evidence_path_key: str,
     evidence_hash_key: str,
     accepted_payload_key: str,
+    expected_path: str,
 ) -> bool:
-    if not _binding_matches(root, acceptance, evidence_path_key, evidence_hash_key):
+    if not _binding_matches(
+        root, acceptance, evidence_path_key, evidence_hash_key, expected_path
+    ):
         return False
-    relative = acceptance.get(evidence_path_key)
-    evidence = _load_json(root / str(relative))
+    evidence = _load_json(root / expected_path)
     return (
         _payload_valid(evidence)
         and evidence is not None
@@ -272,18 +411,22 @@ def validate_predecessors(root: Path, *, git_root: Path) -> dict[str, Any]:
 
     for task_id, expected_decision in EXPECTED_DECISIONS.items():
         record = records[task_id]
+        identity = EXPECTED_ACCEPTANCE_IDENTITIES[task_id]
         add(
             f"{task_id}:acceptance",
             isinstance(record, Mapping)
+            and _sha256(root / ACCEPTANCE_PATHS[task_id]) == identity["sha256"]
             and record.get("task_id") == task_id
             and record.get("review_decision") == "ACCEPT"
             and record.get("task_specific_decision") == expected_decision,
-            f"requires ACCEPT + {expected_decision}",
+            f"requires exact accepted hash + ACCEPT + {expected_decision}",
         )
         add(
             f"{task_id}:reviewed_commit",
-            isinstance(record, Mapping) and _commit_exists(git_root, record.get("reviewed_commit")),
-            "reviewed commit must exist",
+            isinstance(record, Mapping)
+            and record.get("reviewed_commit") == identity["reviewed_commit"]
+            and _commit_exists(git_root, record.get("reviewed_commit")),
+            "exact reviewed commit must match and exist",
         )
 
     c01 = records["TASK-SIM-C01"] or {}
@@ -300,6 +443,7 @@ def validate_predecessors(root: Path, *, git_root: Path) -> dict[str, Any]:
             evidence_path_key="evidence_path",
             evidence_hash_key="evidence_sha256",
             accepted_payload_key="accepted_payload_sha256",
+            expected_path="results/simulation/SIM-C01_contract_resolution.json",
         ),
         "C01 evidence file and canonical payload must match acceptance",
     )
@@ -311,6 +455,7 @@ def validate_predecessors(root: Path, *, git_root: Path) -> dict[str, Any]:
             evidence_path_key="evidence_path",
             evidence_hash_key="evidence_sha256",
             accepted_payload_key="accepted_payload_sha256",
+            expected_path="results/simulation/SIM-001_contract_profile.json",
         ),
         "SIM-001 evidence file and canonical payload must match acceptance",
     )
@@ -322,42 +467,25 @@ def validate_predecessors(root: Path, *, git_root: Path) -> dict[str, Any]:
             evidence_path_key="evidence_path",
             evidence_hash_key="evidence_sha256",
             accepted_payload_key="evidence_payload_sha256",
+            expected_path="results/simulation/SIM-002_smoke_runtime.json",
         ),
         "SIM-002 evidence file and canonical payload must match acceptance",
     )
 
-    for task_name, record, bindings in (
-        (
-            "SIM-C01",
-            c01,
-            (("contract_path", "contract_sha256"), ("schema_path", "schema_sha256")),
-        ),
-        (
-            "SIM-001",
-            sim001,
-            (
-                ("profile_path", "profile_sha256"),
-                ("simulation_execution_contract_path", "simulation_execution_contract_sha256"),
-                ("simulation_execution_schema_path", "simulation_execution_schema_sha256"),
-            ),
-        ),
-        (
-            "SIM-002",
-            sim002,
-            (
-                ("smoke_report_path", "smoke_report_sha256"),
-                ("smoke_entry_point_path", "smoke_entry_point_sha256"),
-                ("runtime_module_path", "runtime_module_sha256"),
-                ("focused_test_path", "focused_test_sha256"),
-                ("simulation_execution_contract_path", "simulation_execution_contract_sha256"),
-                ("simulation_execution_schema_path", "simulation_execution_schema_sha256"),
-            ),
-        ),
+    for task_id, task_name, record in (
+        ("TASK-SIM-C01", "SIM-C01", c01),
+        ("TASK-SIM-001", "SIM-001", sim001),
+        ("TASK-SIM-002", "SIM-002", sim002),
     ):
         add(
             f"{task_name}:artifact_bindings",
-            all(_binding_matches(root, record, path_key, hash_key) for path_key, hash_key in bindings),
-            "all acceptance-bound artifacts must retain their accepted hashes",
+            all(
+                _reviewed_binding_matches(
+                    root, git_root, record, path_key, hash_key, expected_path
+                )
+                for path_key, hash_key, expected_path in REVIEWED_ARTIFACT_BINDINGS[task_id]
+            ),
+            "all canonical artifacts must match current and reviewed Git blob hashes",
         )
 
     c01_hash = _sha256(root / ACCEPTANCE_PATHS["TASK-SIM-C01"])
@@ -366,7 +494,9 @@ def validate_predecessors(root: Path, *, git_root: Path) -> dict[str, Any]:
     readiness_hash = _sha256(root / "results/simulation/SIM-GATE_readiness.json")
     add(
         "acceptance_chain:SIM-C01",
-        c01_hash == sim001.get("sim_c01_acceptance_sha256") == sim002.get("sim_c01_acceptance_sha256"),
+        c01_hash == sim001.get("sim_c01_acceptance_sha256") == sim002.get("sim_c01_acceptance_sha256")
+        and sim001.get("sim_c01_acceptance_path") == ACCEPTANCE_PATHS["TASK-SIM-C01"]
+        and sim002.get("sim_c01_acceptance_path") == ACCEPTANCE_PATHS["TASK-SIM-C01"],
         "SIM-001 and SIM-002 must bind the current C01 acceptance",
     )
     gate_predecessors = _as_mapping(gate.get("predecessor_acceptance"))
@@ -376,17 +506,21 @@ def validate_predecessors(root: Path, *, git_root: Path) -> dict[str, Any]:
     gate_authorization = _as_mapping(gate.get("authorization"))
     add(
         "acceptance_chain:SIM-001",
-        sim001_hash == sim002.get("sim_001_acceptance_sha256") == gate_sim001.get("sha256"),
+        sim001_hash == sim002.get("sim_001_acceptance_sha256") == gate_sim001.get("sha256")
+        and sim002.get("sim_001_acceptance_path") == ACCEPTANCE_PATHS["TASK-SIM-001"]
+        and gate_sim001.get("path") == ACCEPTANCE_PATHS["TASK-SIM-001"],
         "SIM-002 and SIM-GATE must bind the current SIM-001 acceptance",
     )
     add(
         "acceptance_chain:SIM-002",
-        sim002_hash == gate_sim002.get("sha256"),
+        sim002_hash == gate_sim002.get("sha256")
+        and gate_sim002.get("path") == ACCEPTANCE_PATHS["TASK-SIM-002"],
         "SIM-GATE must bind the current SIM-002 acceptance",
     )
     add(
         "SIM-GATE:readiness_binding",
         isinstance(gate_readiness, Mapping)
+        and gate_evidence.get("path") == "results/simulation/SIM-GATE_readiness.json"
         and readiness_hash == gate_evidence.get("sha256")
         and _payload_valid(gate_readiness)
         and gate_readiness.get("payload_sha256") == gate_evidence.get("payload_sha256")
@@ -402,13 +536,15 @@ def validate_predecessors(root: Path, *, git_root: Path) -> dict[str, Any]:
         "post-review simulation authorization must preserve physical and Week isolation",
     )
     grouped_gate_ok = True
-    for key in ("gate_verifier", "gate_tests", "gate_report"):
+    for key, expected_path in GATE_REVIEWED_ARTIFACTS.items():
         item = _as_mapping(gate.get(key))
         relative = item.get("path")
         grouped_gate_ok = (
             grouped_gate_ok
-            and isinstance(relative, str)
-            and _sha256(root / relative) == item.get("sha256")
+            and relative == expected_path
+            and _sha256(root / expected_path) == item.get("sha256")
+            and _git_blob_sha256(git_root, gate.get("reviewed_commit"), expected_path)
+            == item.get("sha256")
         )
     add(
         "SIM-GATE:artifact_bindings",
@@ -508,6 +644,7 @@ def evaluate_baseline(
     git_root = git_root or root
     environment = dict(os.environ if environ is None else environ)
     generated_at = generation_timestamp or datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
+    accepted_hashes_before = _snapshot_hashes(root)
     predecessors = validate_predecessors(root, git_root=git_root)
     blockers: list[str] = []
 
@@ -527,20 +664,53 @@ def evaluate_baseline(
         ros_help = runner(
             [ros2_executable or "ros2", "--help"], timeout_seconds=5, cwd=root, env=environment
         )
-        rclpy = runner(
-            [sys.executable, "-c", "import importlib.metadata as m; print(m.version('rclpy'))"],
+        rclpy_prefix = runner(
+            [ros2_executable or "ros2", "pkg", "prefix", "rclpy"],
             timeout_seconds=5,
             cwd=root,
             env=environment,
         )
+        rclpy_code = (
+            "import importlib.metadata as m,json,rclpy; "
+            "print(json.dumps({'version':m.version('rclpy'),'module_path':rclpy.__file__},sort_keys=True))"
+        )
+        rclpy = runner(
+            [sys.executable, "-c", rclpy_code],
+            timeout_seconds=5,
+            cwd=root,
+            env=environment,
+        )
+        measured_prefix = rclpy_prefix["stdout"] if _probe_ok(rclpy_prefix) else None
+        try:
+            decoded_rclpy = json.loads(rclpy["stdout"]) if _probe_ok(rclpy) else {}
+        except json.JSONDecodeError:
+            decoded_rclpy = {}
+        rclpy_detail = decoded_rclpy if isinstance(decoded_rclpy, dict) else {}
+        prefix_distro = Path(measured_prefix).name if measured_prefix else None
+        identity_matches = (
+            prefix_distro == "jazzy"
+            and _path_is_within(ros2_executable, measured_prefix)
+            and _path_is_within(rclpy_detail.get("module_path"), measured_prefix)
+        )
         ros2 = {
             "required_distro": "jazzy",
             "measured_distro": ros_distro,
+            "measured_prefix": measured_prefix,
+            "prefix_distro": prefix_distro,
             "executable": ros2_executable,
-            "rclpy_version": rclpy["stdout"] if _probe_ok(rclpy) else None,
+            "rclpy_version": rclpy_detail.get("version"),
+            "rclpy_module_path": rclpy_detail.get("module_path"),
             "cli_probe": ros_help,
+            "prefix_probe": rclpy_prefix,
+            "rclpy_probe": rclpy,
+            "identity_matches": identity_matches,
             "status": "PASS"
-            if ros2_executable and ros_distro == "jazzy" and _probe_ok(ros_help) and _probe_ok(rclpy)
+            if ros2_executable
+            and ros_distro == "jazzy"
+            and _probe_ok(ros_help)
+            and _probe_ok(rclpy_prefix)
+            and _probe_ok(rclpy)
+            and identity_matches
             else "FAIL",
         }
 
@@ -692,7 +862,6 @@ def evaluate_baseline(
         deterministic = {
             "command": list(DETERMINISTIC_COMMAND),
             "probe": deterministic_probe,
-            "accepted_evidence_modified": False,
             "status": "PASS" if _probe_ok(deterministic_probe) else "FAIL",
         }
         runtime = {
@@ -714,6 +883,25 @@ def evaluate_baseline(
         ):
             if item["status"] != "PASS":
                 blockers.append(name)
+
+    accepted_hashes_after = _snapshot_hashes(root)
+    modified_accepted_paths = sorted(
+        relative
+        for relative in PRESERVED_ACCEPTED_PATHS
+        if accepted_hashes_before.get(relative) != accepted_hashes_after.get(relative)
+    )
+    preservation = {
+        "status": "PASS" if not modified_accepted_paths else "FAIL",
+        "paths": list(PRESERVED_ACCEPTED_PATHS),
+        "hashes_before": accepted_hashes_before,
+        "hashes_after": accepted_hashes_after,
+        "modified_paths": modified_accepted_paths,
+    }
+    deterministic["accepted_evidence_modified"] = bool(modified_accepted_paths)
+    deterministic["accepted_artifact_preservation"] = preservation
+    if modified_accepted_paths:
+        deterministic["status"] = "FAIL"
+        blockers.append("accepted_evidence_preservation")
 
     source_bindings = [
         {"path": relative, "exists": (root / relative).is_file(), "sha256": _sha256(root / relative)}
@@ -757,6 +945,7 @@ def evaluate_baseline(
             "physical_target_frozen": False,
         },
         "deterministic_regression": deterministic,
+        "accepted_artifact_preservation": preservation,
         "validation_commands": {
             "baseline_verifier": [
                 sys.executable,
