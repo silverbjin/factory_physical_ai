@@ -33,6 +33,13 @@ def _result(command: Sequence[str], stdout: str = "", *, returncode: int = 0) ->
     }
 
 
+def _copy_predecessors(destination_root: Path) -> None:
+    for relative in baseline.PRESERVED_ACCEPTED_PATHS:
+        destination = destination_root / relative
+        destination.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copyfile(ROOT / relative, destination)
+
+
 class ReadyRunner:
     def __init__(self, *, mujoco_available: bool = True) -> None:
         self.commands: list[list[str]] = []
@@ -51,8 +58,18 @@ class ReadyRunner:
         self.commands.append(command)
         if command[-1:] == ["--help"]:
             return _result(command, "ros2 help")
-        if "m.version('rclpy')" in " ".join(command):
-            return _result(command, "7.1.11")
+        if command[-3:] == ["pkg", "prefix", "rclpy"]:
+            return _result(command, "/opt/ros/jazzy")
+        if "importlib.metadata" in " ".join(command) and "rclpy" in " ".join(command):
+            return _result(
+                command,
+                json.dumps(
+                    {
+                        "version": "7.1.11",
+                        "module_path": "/opt/ros/jazzy/lib/python3.12/site-packages/rclpy/__init__.py",
+                    }
+                ),
+            )
         if len(command) >= 4 and command[-3:-1] == ["pkg", "executables"]:
             pairs = (*baseline.ROS_GZ_ENTRY_POINTS, *baseline.NAV2_ENTRY_POINTS)
             requested_package = command[-1]
@@ -115,29 +132,9 @@ class SimulationToolchainBaselineTests(unittest.TestCase):
         self.assertEqual(decisions["TASK-SIM-GATE"], "SIM_GO")
 
     def test_toolchain_probes_run_only_after_predecessors_pass(self) -> None:
-        paths = {
-            *baseline.ACCEPTANCE_PATHS.values(),
-            "results/simulation/SIM-GATE_readiness.json",
-            "results/simulation/SIM-C01_contract_resolution.json",
-            "results/simulation/SIM-001_contract_profile.json",
-            "results/simulation/SIM-002_smoke_runtime.json",
-            "docs/contracts/simulation_execution_contract_v1.md",
-            "docs/contracts/schemas/simulation_execution_contract_v1.schema.json",
-            "docs/simulation/simulation_contract_profile_v1.md",
-            "docs/simulation/simulation_smoke_runtime_v1.md",
-            "docs/simulation/simulation_lane_gate_v1.md",
-            "scripts/run_simulation_smoke.py",
-            "src/simulation_runtime/smoke.py",
-            "tests/test_simulation_smoke.py",
-            "scripts/verify_simulation_lane_gate.py",
-            "tests/test_simulation_lane_gate.py",
-        }
         with tempfile.TemporaryDirectory() as temporary:
             temporary_root = Path(temporary)
-            for relative in paths:
-                destination = temporary_root / relative
-                destination.parent.mkdir(parents=True, exist_ok=True)
-                shutil.copyfile(ROOT / relative, destination)
+            _copy_predecessors(temporary_root)
             acceptance_path = temporary_root / baseline.ACCEPTANCE_PATHS["TASK-SIM-001"]
             acceptance = json.loads(acceptance_path.read_text(encoding="utf-8"))
             acceptance["review_decision"] = "REJECT"
@@ -154,6 +151,54 @@ class SimulationToolchainBaselineTests(unittest.TestCase):
             )
         self.assertEqual(result["task_specific_result"], "SIM_BASELINE_BLOCKED")
         self.assertEqual(result["runtime"]["probe_order"], "SKIPPED_DUE_TO_PREDECESSOR_FAILURE")
+
+    def test_unrelated_existing_reviewed_commit_fails_predecessor_validation(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            temporary_root = Path(temporary)
+            _copy_predecessors(temporary_root)
+            acceptance_path = temporary_root / baseline.ACCEPTANCE_PATHS["TASK-SIM-GATE"]
+            acceptance = json.loads(acceptance_path.read_text(encoding="utf-8"))
+            acceptance["reviewed_commit"] = "ce41227020357d95f14dfd2986f102ccc063c5f9"
+            acceptance_path.write_text(json.dumps(acceptance), encoding="utf-8")
+            result = baseline.validate_predecessors(temporary_root, git_root=ROOT)
+
+        checks = {item["check_id"]: item["status"] for item in result["checks"]}
+        self.assertEqual(result["status"], "FAIL")
+        self.assertEqual(checks["TASK-SIM-GATE:reviewed_commit"], "FAIL")
+
+    def test_regression_mutation_of_accepted_artifact_fails_closed(self) -> None:
+        class MutatingRunner(ReadyRunner):
+            def __call__(
+                self,
+                command: Sequence[str],
+                *,
+                timeout_seconds: float,
+                cwd: Path,
+                env: dict[str, str],
+            ) -> dict[str, Any]:
+                if "pytest" in command:
+                    target = cwd / "results/simulation/SIM-GATE_readiness.json"
+                    target.write_text(target.read_text(encoding="utf-8") + "\n", encoding="utf-8")
+                return super().__call__(
+                    command, timeout_seconds=timeout_seconds, cwd=cwd, env=env
+                )
+
+        with tempfile.TemporaryDirectory() as temporary:
+            temporary_root = Path(temporary)
+            _copy_predecessors(temporary_root)
+            result = baseline.evaluate_baseline(
+                temporary_root,
+                git_root=ROOT,
+                runner=MutatingRunner(),
+                environ={"ROS_DISTRO": "jazzy"},
+                which=lambda name: f"/opt/ros/jazzy/bin/{name}",
+                generation_timestamp="2026-09-16T00:00:00Z",
+            )
+
+        self.assertEqual(result["task_specific_result"], "SIM_BASELINE_BLOCKED")
+        self.assertIn("accepted_evidence_preservation", result["blockers"])
+        self.assertTrue(result["deterministic_regression"]["accepted_evidence_modified"])
+        self.assertEqual(result["accepted_artifact_preservation"]["status"], "FAIL")
 
     def test_ready_result_requires_every_runtime_and_bounded_smoke(self) -> None:
         result = self.evaluate(ReadyRunner())
@@ -185,6 +230,20 @@ class SimulationToolchainBaselineTests(unittest.TestCase):
             generation_timestamp="2026-09-16T00:00:00Z",
         )
         self.assertEqual(result["runtime"]["ros2"]["status"], "FAIL")
+        self.assertEqual(result["task_specific_result"], "SIM_BASELINE_BLOCKED")
+
+    def test_humble_executable_cannot_pass_with_jazzy_environment_label(self) -> None:
+        runner = ReadyRunner()
+        result = baseline.evaluate_baseline(
+            ROOT,
+            git_root=ROOT,
+            runner=runner,
+            environ={"ROS_DISTRO": "jazzy"},
+            which=lambda name: f"/opt/ros/humble/bin/{name}",
+            generation_timestamp="2026-09-16T00:00:00Z",
+        )
+        self.assertEqual(result["runtime"]["ros2"]["status"], "FAIL")
+        self.assertFalse(result["runtime"]["ros2"]["identity_matches"])
         self.assertEqual(result["task_specific_result"], "SIM_BASELINE_BLOCKED")
 
     def test_authority_and_fidelity_are_frozen_exactly(self) -> None:

@@ -2,8 +2,8 @@
 
 > Task: `TASK-SIM-003`
 > Result: `SIM_BASELINE_BLOCKED`
-> Generated: `2026-09-15T15:09:28.290316Z`
-> Git SHA: `ce412270fdce2975b3b688bc321dfed54936dcc3`
+> Generated: `2026-09-15T15:26:25.698728Z`
+> Git SHA: `4d66d2dc229efe8cdd5306f28c98bf37a55de281`
 > Independent acceptance: `PENDING`
 
 ## Runtime result
@@ -53,8 +53,8 @@ These identities are the minimum integration surface for `TASK-SIM-004`; they do
 | `src/simulation_runtime/smoke.py` | `db682046baa092c36d9f1eca3bc720135a2f4ff9d969cbef90a659b567bea41a` |
 | `tests/test_simulation_execution_contract.py` | `52b9e445207dd189a5dd76c2c31638b8ae90ef7c61493cc6c238313c0d945534` |
 | `tests/test_simulation_smoke.py` | `c9128b6e4f670d60c61bfca5b09344cd8c697dc80742196265dcd987ec6ddb93` |
-| `scripts/verify_simulation_toolchain_baseline.py` | `0d3dc91eed0b9729d836f37d544907a580949951f95330064b9f6096e3548b1b` |
-| `tests/test_simulation_toolchain_baseline.py` | `fe7636a757c87e7336663a04c3b3ac77b5506c618113846498116e3b6857abd5` |
+| `scripts/verify_simulation_toolchain_baseline.py` | `1bbab4fe0f07c5253f31409fa0284535099f63fa4ebe994216d8016f9ae6382b` |
+| `tests/test_simulation_toolchain_baseline.py` | `a29579980bee4938059299d825b11501cc172b33267554993bd953963dea6480` |
 | `config/simulation/sim_baseline_empty.sdf` | `623c63b73f11eee1d6c3f2e197afdbd7cce35dccf0efc838b97d735ba1fcbe95` |
 | `config/simulation/mujoco_baseline.xml` | `76c07b33fbc81474e34923372910999c0881ef1d40d63fdf2a2820cb0b85fd21` |
 
