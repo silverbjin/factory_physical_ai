@@ -1,5 +1,38 @@
 # Common Task Implementation Prompt v2.1
 
+## Orchestration Output Contract — MANDATORY
+
+This workflow may run standalone or as a child of `scripts/codex/run_task_orchestrator.py`.
+
+For orchestrated execution, the final response **MUST end with exactly one**
+`WORKFLOW_RESULT_JSON` line. A prose-only completion message is invalid.
+
+Completed Implementation:
+
+```text
+WORKFLOW_RESULT_JSON: {"v":1,"task_id":"<TASK_ID>","stage":"implementation","status":"COMPLETE","workflow_complete":true}
+```
+
+Technical result incomplete, but mandatory workflow bookkeeping completed:
+
+```text
+WORKFLOW_RESULT_JSON: {"v":1,"task_id":"<TASK_ID>","stage":"implementation","status":"INCOMPLETE","workflow_complete":true}
+```
+
+Mandatory Evidence/history/finalization failed:
+
+```text
+WORKFLOW_RESULT_JSON: {"v":1,"task_id":"<TASK_ID>","stage":"implementation","status":"INCOMPLETE","workflow_complete":false}
+```
+
+Rules:
+
+- never omit the marker;
+- the marker must be the **last non-empty line** of the final response;
+- do not replace it with prose such as `<TASK_ID> is complete`;
+- Implementation completion is not independent Review acceptance;
+- do not stage or commit.
+
 ## Purpose
 
 Implement exactly one repository task identified by the user's current Codex message.
@@ -448,7 +481,7 @@ Review:
 Recommended commit:
 <Conventional Commit message>
 
-<TASK_ID> is complete.
+Implementation workflow complete. Independent Read-only Review pending.
 ```
 
 Do not reproduce TASK, Evidence, or History content.
@@ -541,24 +574,6 @@ Keep:
 Do not stage or commit.
 ```
 
-At the end emit exactly one `WORKFLOW_RESULT_JSON`.
-
-Completed Implementation:
-
-```text
-WORKFLOW_RESULT_JSON: {"v":1,"task_id":"<TASK_ID>","stage":"implementation","status":"COMPLETE","workflow_complete":true}
-```
-
-Technical result incomplete, but mandatory workflow bookkeeping completed:
-
-```text
-WORKFLOW_RESULT_JSON: {"v":1,"task_id":"<TASK_ID>","stage":"implementation","status":"INCOMPLETE","workflow_complete":true}
-```
-
-Mandatory Evidence/history/finalization failed:
-
-```text
-WORKFLOW_RESULT_JSON: {"v":1,"task_id":"<TASK_ID>","stage":"implementation","status":"INCOMPLETE","workflow_complete":false}
-```
+The final response MUST follow the mandatory Orchestration Output Contract at the top of this file.
 
 Begin implementation of the TASK identifier supplied in the current user message.

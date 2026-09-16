@@ -1,5 +1,39 @@
 # Common Read-only Review Prompt v2
 
+## Orchestration Output Contract — MANDATORY
+
+This workflow may run standalone or as a child of `scripts/codex/run_task_orchestrator.py`.
+
+For orchestrated execution, the final response **MUST end with exactly one**
+`WORKFLOW_RESULT_JSON` line. A prose-only `ACCEPT` or `REJECT` is invalid.
+
+ACCEPT:
+
+```text
+WORKFLOW_RESULT_JSON: {"v":1,"task_id":"<TASK_ID>","stage":"review","status":"ACCEPT","workflow_complete":true}
+```
+
+REJECT:
+
+```text
+WORKFLOW_RESULT_JSON: {"v":1,"task_id":"<TASK_ID>","stage":"review","status":"REJECT","workflow_complete":true}
+```
+
+If mandatory Review-history/finalization fails, preserve the technically determined
+`status` (`ACCEPT` or `REJECT`) but set:
+
+```text
+"workflow_complete": false
+```
+
+Rules:
+
+- never omit the marker;
+- the marker must be the **last non-empty line** of the final response;
+- keep `REVIEW_METRICS_JSON` separate when telemetry is enabled;
+- if an acceptance handoff is emitted, place it **before** the final `WORKFLOW_RESULT_JSON`;
+- do not stage or commit.
+
 ## Purpose
 
 Perform an independent review of exactly one implementation TASK identified by the user's current Codex message.
@@ -750,26 +784,7 @@ Keep:
 Do not stage or commit.
 ```
 
-ACCEPT:
-
-```text
-WORKFLOW_RESULT_JSON: {"v":1,"task_id":"<TASK_ID>","stage":"review","status":"ACCEPT","workflow_complete":true}
-```
-
-REJECT:
-
-```text
-WORKFLOW_RESULT_JSON: {"v":1,"task_id":"<TASK_ID>","stage":"review","status":"REJECT","workflow_complete":true}
-```
-
-If mandatory Review-history/finalization fails, preserve the already-determined
-recommendation but set:
-
-```text
-"workflow_complete": false
-```
-
-Keep `REVIEW_METRICS_JSON` separately if already used for telemetry.
+The final response MUST follow the mandatory Orchestration Output Contract at the top of this file.
 
 while preserving independent review quality.
 

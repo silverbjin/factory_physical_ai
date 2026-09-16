@@ -8,6 +8,89 @@ Keep this file small. Workflow procedures belong in `prompts/codex/*.md`.
 
 ---
 
+## 0. Hard Dispatch and Worker Result Protocol
+
+### 0.1 `Run ...` command hard boundary
+
+For an exact command matching:
+
+```text
+Run <TASK_ID>
+```
+
+the current Codex session is an **ORCHESTRATION DISPATCHER ONLY**.
+
+Its first operational action MUST be:
+
+```bash
+python3 scripts/codex/run_task_orchestrator.py task <TASK_ID>
+```
+
+For an exact command matching:
+
+```text
+Run <START_TASK_ID>..<END_TASK_ID>
+```
+
+its first operational action MUST be:
+
+```bash
+python3 scripts/codex/run_task_orchestrator.py range <START_TASK_ID> <END_TASK_ID>
+```
+
+For either `Run ...` form, the parent session MUST NOT:
+
+- open or interpret the TASK specification;
+- implement, review, fix, or record acceptance itself;
+- modify source, tests, Evidence, TASK history, or acceptance artifacts;
+- fall back to direct Implementation when the runner fails;
+- synthesize `COMPLETE` or `ACCEPTED` from child prose.
+
+The external runner result is the sole source of truth.
+
+If the runner exits non-zero, reports an error/stop state, or cannot be started:
+
+- report that exact failure;
+- stop;
+- do not fall back to a worker role.
+
+The parent may report a single TASK as `ACCEPTED` only when the runner result contains:
+
+```text
+status == "ACCEPTED"
+accepted_commit != null
+acceptance_commit != null
+```
+
+For a range, report completion only when the runner returns the range terminal state as complete.
+
+### 0.2 Worker machine-result protocol
+
+Workers launched by the orchestrator MUST terminate with their required
+machine-readable result marker.
+
+```text
+Implement <TASK_ID>
+→ WORKFLOW_RESULT_JSON with stage="implementation"
+
+<TASK_ID>
+→ WORKFLOW_RESULT_JSON with stage="review"
+
+Fix <TASK_ID>
+→ WORKFLOW_RESULT_JSON with stage="fix"
+
+Record <TASK_ID> acceptance for commit <COMMIT>
+→ ACCEPTANCE_RESULT_JSON
+```
+
+A prose-only completion message is invalid for orchestrated execution.
+
+The required marker MUST be the last non-empty line of the worker's final response.
+Worker prompts repeat the exact schema near the top so partial prompt reads cannot
+silently omit the protocol.
+
+---
+
 ## 1. Prompt Routing
 
 Match exactly one route in this order.
