@@ -10,6 +10,7 @@ Current status: ACCEPTED
 | 04 | Review | ACCEPT | `04_review.md` |
 | 05 | Revalidation | SIM_BASELINE_READY | `05_revalidation.md` |
 | 06 | Review | ACCEPT | `06_review.md` |
+| 07 | Review | ACCEPT | `07_review.md` |
 
 ## Final Summary
 
