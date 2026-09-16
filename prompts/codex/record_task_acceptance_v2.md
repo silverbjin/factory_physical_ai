@@ -180,15 +180,26 @@ Example:
 SIM-003_acceptance.json
 ```
 
-Choose the directory in this order:
-
-1. explicit acceptance path declared by the TASK;
-2. same directory as the TASK's declared Evidence file;
-3. fallback:
+The repository-wide canonical acceptance path is:
 
 ```text
-results/acceptance/
+results/reviews/<TASK_SHORT>_acceptance.json
 ```
+
+Examples:
+
+```text
+TASK-SIM-003 -> results/reviews/SIM-003_acceptance.json
+TASK-MVP-002 -> results/reviews/MVP-002_acceptance.json
+```
+
+Rules:
+
+- always write the acceptance manifest under `results/reviews/`;
+- do not place acceptance manifests beside TASK Evidence;
+- do not use `results/simulation/`, `results/phase0/`, or another Evidence directory for acceptance manifests;
+- if the orchestrator child envelope supplies `acceptance_path=...`, it MUST equal this canonical path;
+- a TASK may declare its technical Evidence elsewhere; that does not change the acceptance-manifest directory.
 
 Do not invent another naming convention.
 
@@ -255,7 +266,7 @@ After writing:
 2. verify `task_id`;
 3. verify `status == "ACCEPT"`;
 4. verify `accepted_commit`;
-5. verify the filename;
+5. verify the exact canonical path `results/reviews/<TASK_SHORT>_acceptance.json`;
 6. verify Evidence path/hash when applicable;
 7. verify no repository file other than the acceptance JSON changed.
 
