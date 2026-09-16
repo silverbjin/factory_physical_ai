@@ -1,12 +1,31 @@
-<?xml version="1.0" ?>
-<sdf version="1.9">
-  <!-- TASK-SIM-004: generic Simulation proxy only; this is not a myAGV model. -->
+<?xml version="1.0"?>
+<sdf version="1.6" xmlns:xacro="http://www.ros.org/wiki/xacro" xmlns:experimental="http://sdformat.org/schemas/experimental">
+  <!-- TASK-SIM-004: fixed Gazebo Harmonic depot for a generic simulation proxy; never a myAGV target. -->
+  <xacro:arg name="headless" default="true"/>
   <world name="sim004_navigation_proxy_world">
-    <gravity>0 0 -9.8</gravity>
-    <model name="simulation_proxy_mobile_base">
-      <static>true</static>
-      <link name="base_link"><pose>0 0 0.1 0 0 0</pose></link>
-    </model>
-    <model name="blocked_route_obstacle"><static>true</static><link name="obstacle"/></model>
+    <scene><grid>false</grid></scene>
+    <physics name="1ms" type="ode">
+      <max_step_size>0.003</max_step_size>
+      <real_time_update_rate>1000.0</real_time_update_rate>
+      <real_time_factor>1.0</real_time_factor>
+    </physics>
+    <plugin filename="gz-sim-physics-system" name="gz::sim::systems::Physics"/>
+    <plugin filename="gz-sim-user-commands-system" name="gz::sim::systems::UserCommands"/>
+    <xacro:unless value="$(arg headless)">
+      <plugin filename="gz-sim-scene-broadcaster-system" name="gz::sim::systems::SceneBroadcaster"/>
+    </xacro:unless>
+    <plugin filename="gz-sim-sensors-system" name="gz::sim::systems::Sensors">
+      <render_engine>ogre2</render_engine>
+    </plugin>
+    <plugin filename="gz-sim-imu-system" name="gz::sim::systems::Imu"/>
+    <include>
+      <uri>https://fuel.gazebosim.org/1.0/OpenRobotics/models/Depot</uri>
+      <experimental:params>
+        <visual element_id="Fan1::visual" action="remove"/>
+        <visual element_id="Fan2::visual" action="remove"/>
+        <visual element_id="main::ROOF_visual" action="remove"/>
+        <visual element_id="main::FANS_visual" action="remove"/>
+      </experimental:params>
+    </include>
   </world>
 </sdf>

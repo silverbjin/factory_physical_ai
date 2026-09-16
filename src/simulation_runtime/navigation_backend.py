@@ -1,22 +1,23 @@
-"""Contract-only Navigation Skill adapter for the SIM-004 proxy Gazebo world.
+"""Navigation Skill contract adapter for a Gazebo/Nav2 simulation runtime.
 
-The adapter intentionally accepts semantic destinations only.  It has no
-hardware transport and makes ROS/Gazebo/Nav2 details private configuration.
+This module deliberately contains no Gazebo, ROS, or Nav2 command handling.
+Those details are supplied by the bounded runtime runner; the adapter accepts
+only its authoritative observations and exposes the frozen Navigation Skill
+contract to callers.
 """
 
 from __future__ import annotations
 
 import hashlib
-import json
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any
+from typing import Any, Protocol
 
 from .smoke import ContractViolation, validate_contract_message
 
 ROOT = Path(__file__).resolve().parents[2]
-COMPONENT_VERSION = "sim004-navigation-backend-v1"
+COMPONENT_VERSION = "sim004-navigation-backend-v2"
 DESTINATIONS = {"line-b-drop", "blocked-bay"}
 SPEED_PROFILES = {"sim-safe-v1"}
 
@@ -33,15 +34,37 @@ def _error(code: str, message: str, category: str, retryable: bool = False) -> d
     return {"code": code, "message": message, "category": category, "retryable": retryable}
 
 
+@dataclass(frozen=True)
+class RuntimeObservation:
+    """An authoritative result from the private Nav2-facing runtime."""
+
+    observed_status: str
+    arrival_verified: bool = False
+    error_code: str = "NAVIGATION_FAILED"
+    error_message: str = "Nav2 reported a non-success outcome"
+    error_category: str = "EXECUTION_FAILED"
+    retryable: bool = False
+
+
+class NavigationRuntime(Protocol):
+    """Private runtime boundary; implementations may use ROS actions only here."""
+
+    @property
+    def ready(self) -> bool: ...
+
+    def navigate(self, request: dict[str, Any]) -> RuntimeObservation: ...
+
+    def reconcile(self, action_id: str) -> RuntimeObservation: ...
+
+
 @dataclass
 class NavigationBackend:
-    """A bounded Nav2-facing proxy that preserves public contract identities."""
+    """Contract adapter; execution is impossible without an injected runtime."""
 
-    ready: bool = True
-    records: dict[str, dict[str, Any]] = field(default_factory=dict)
+    runtime: NavigationRuntime | None = None
+    records: dict[str, RuntimeObservation] = field(default_factory=dict)
 
-    def execute(self, request: dict[str, Any], *, behavior: str = "success") -> dict[str, Any]:
-        """Execute one allowlisted semantic navigation request without exposing ROS APIs."""
+    def execute(self, request: dict[str, Any]) -> dict[str, Any]:
         try:
             validate_contract_message(request)
         except ContractViolation as exc:
@@ -50,33 +73,31 @@ class NavigationBackend:
             return self._failure_from_request(request, "INVALID_OPERATION", "navigation.execute required", "VALIDATION")
         if request["destination_id"] not in DESTINATIONS or request["speed_profile_id"] not in SPEED_PROFILES:
             return self._failure_from_request(request, "INVALID_NAVIGATION_GOAL", "destination or speed profile is not allowlisted", "VALIDATION")
-        if not self.ready:
+        if self.runtime is None or not self.runtime.ready:
             return self._failure_from_request(request, "NAVIGATION_UNAVAILABLE", "Nav2 lifecycle is not ready", "RESOURCE_UNAVAILABLE")
-        action_id = request["action_id"]
-        if behavior == "success":
+
+        observation = self.runtime.navigate(request)
+        self.records[request["action_id"]] = observation
+        if observation.observed_status == "succeeded" and observation.arrival_verified:
             result = self._result(request, "succeeded", "success", arrival={"destination_id": request["destination_id"], "verified": True})
-            self.records[action_id] = {"observed_status": "succeeded", "result": result}
-        elif behavior in {"blocked", "aborted"}:
-            result = self._failure_from_request(request, "NAVIGATION_ABORTED", "proxy world route is blocked or aborted", "EXECUTION_FAILED")
-            self.records[action_id] = {"observed_status": "failed", "result": result}
-        elif behavior == "timeout":
-            result = self._result(request, "unknown", "pending", error=_error("NAVIGATION_TIMEOUT", "execution bound elapsed before authoritative outcome", "DEPENDENCY_TIMEOUT", True))
-            self.records[action_id] = {"observed_status": "succeeded", "result": result}
+        elif observation.observed_status == "unknown":
+            result = self._result(request, "unknown", "pending", error=_error(observation.error_code, observation.error_message, "DEPENDENCY_TIMEOUT", True))
         else:
-            return self._failure_from_request(request, "INVALID_BEHAVIOR", "unsupported simulation behavior", "VALIDATION")
+            result = self._failure_from_request(request, observation.error_code, observation.error_message, observation.error_category)
         validate_contract_message(result)
         return result
 
     def action_status_get(self, request: dict[str, Any]) -> dict[str, Any]:
-        """Read authoritative simulated status; this is the only reconciliation path."""
         try:
             validate_contract_message(request)
         except ContractViolation as exc:
             return self._failure_from_request(request, "INVALID_STATUS_REQUEST", str(exc), "VALIDATION", operation="action_status.get")
-        if request.get("operation") != "action_status.get" or request["action_id"] not in self.records:
+        action_id = request.get("action_id")
+        if request.get("operation") != "action_status.get" or action_id not in self.records:
             return self._failure_from_request(request, "ACTION_NOT_FOUND", "no authoritative action record", "RESOURCE_UNAVAILABLE", operation="action_status.get")
-        observed = self.records[request["action_id"]]["observed_status"]
-        return self._result(request, "succeeded", "success", operation="action_status.get", observed_status=observed)
+        observation = self.runtime.reconcile(action_id) if self.runtime is not None else self.records[action_id]
+        self.records[action_id] = observation
+        return self._result(request, "succeeded", "success", operation="action_status.get", observed_status=observation.observed_status)
 
     def _result(self, request: dict[str, Any], status: str, result: str, *, operation: str | None = None, **extra: Any) -> dict[str, Any]:
         payload: dict[str, Any] = {
@@ -92,7 +113,6 @@ class NavigationBackend:
         return payload
 
     def _failure_from_request(self, request: dict[str, Any], code: str, message: str, category: str, operation: str | None = None) -> dict[str, Any]:
-        # Invalid input may lack a schema-valid envelope; return the closed semantic result when possible.
         required = {"mission_id", "request_id", "trace_id", "action_id"}
         if not required <= request.keys():
             raise ContractViolation(f"{code}: {message}")
@@ -100,7 +120,6 @@ class NavigationBackend:
 
 
 def provenance() -> dict[str, Any]:
-    """Return actual immutable task-owned asset identities for generated evidence."""
     paths = [
         "configs/simulation/sim004_navigation_proxy.yaml",
         "data/simulation/sim004_navigation_proxy_world.sdf",
