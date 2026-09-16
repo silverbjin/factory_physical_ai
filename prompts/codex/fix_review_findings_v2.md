@@ -1,5 +1,37 @@
 # Common Review-Finding Fix Prompt v2
 
+## Orchestration Output Contract — MANDATORY
+
+This workflow may run standalone or as a child of `scripts/codex/run_task_orchestrator.py`.
+
+For orchestrated execution, the final response **MUST end with exactly one**
+`WORKFLOW_RESULT_JSON` line. A prose-only Fix result is invalid.
+
+Ready for independent re-review:
+
+```text
+WORKFLOW_RESULT_JSON: {"v":1,"task_id":"<TASK_ID>","stage":"fix","status":"READY_FOR_RE_REVIEW","workflow_complete":true}
+```
+
+Not ready, but mandatory workflow bookkeeping completed:
+
+```text
+WORKFLOW_RESULT_JSON: {"v":1,"task_id":"<TASK_ID>","stage":"fix","status":"NOT_READY_FOR_RE_REVIEW","workflow_complete":true}
+```
+
+Mandatory Evidence/history/finalization failed:
+
+```text
+WORKFLOW_RESULT_JSON: {"v":1,"task_id":"<TASK_ID>","stage":"fix","status":"NOT_READY_FOR_RE_REVIEW","workflow_complete":false}
+```
+
+Rules:
+
+- never omit the marker;
+- the marker must be the **last non-empty line** of the final response;
+- Fix completion must not be represented as independent `ACCEPT`;
+- do not stage or commit.
+
 ## Purpose
 
 Correct only the acceptance-blocking findings for exactly one TASK that failed an independent Read-only Review.
@@ -656,23 +688,7 @@ Keep:
 Do not stage or commit.
 ```
 
-Ready:
-
-```text
-WORKFLOW_RESULT_JSON: {"v":1,"task_id":"<TASK_ID>","stage":"fix","status":"READY_FOR_RE_REVIEW","workflow_complete":true}
-```
-
-Not ready, workflow bookkeeping complete:
-
-```text
-WORKFLOW_RESULT_JSON: {"v":1,"task_id":"<TASK_ID>","stage":"fix","status":"NOT_READY_FOR_RE_REVIEW","workflow_complete":true}
-```
-
-Mandatory Evidence/history/finalization failed:
-
-```text
-WORKFLOW_RESULT_JSON: {"v":1,"task_id":"<TASK_ID>","stage":"fix","status":"NOT_READY_FOR_RE_REVIEW","workflow_complete":false}
-```
+The final response MUST follow the mandatory Orchestration Output Contract at the top of this file.
 
 while preserving correctness and independent re-reviewability.
 

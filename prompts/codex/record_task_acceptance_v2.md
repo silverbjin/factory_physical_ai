@@ -1,5 +1,32 @@
 # Record TASK Acceptance v2
 
+## Orchestration Output Contract — MANDATORY
+
+This workflow is normally executed as a child of `scripts/codex/run_task_orchestrator.py`.
+
+The final response **MUST end with exactly one** `ACCEPTANCE_RESULT_JSON` line.
+A prose-only acceptance result is invalid.
+
+Successful recording:
+
+```text
+ACCEPTANCE_RESULT_JSON: {"v":1,"task_id":"<TASK_ID>","status":"RECORDED","accepted_commit":"<COMMIT>","acceptance_path":"<repo-relative-path>","workflow_complete":true}
+```
+
+Failure:
+
+```text
+ACCEPTANCE_RESULT_JSON: {"v":1,"task_id":"<TASK_ID>","status":"FAILED","accepted_commit":"<COMMIT>","acceptance_path":null,"workflow_complete":false}
+```
+
+Rules:
+
+- never omit the marker;
+- the marker must be the **last non-empty line** of the final response;
+- never claim `RECORDED` unless all preconditions and post-write verification pass;
+- create/replace only the resolved acceptance JSON;
+- do not stage or commit; the external orchestrator owns the acceptance-record commit.
+
 ## Purpose
 
 Create one machine-verifiable acceptance artifact after an independent Review
@@ -189,17 +216,7 @@ If verification fails, return failure and do not claim successful recording.
 
 ## 7. Final Output
 
-On success, return a concise summary and end with exactly one line:
-
-```text
-ACCEPTANCE_RESULT_JSON: {"v":1,"task_id":"<TASK_ID>","status":"RECORDED","accepted_commit":"<COMMIT>","acceptance_path":"<repo-relative-path>","workflow_complete":true}
-```
-
-On failure, do not fabricate an acceptance artifact. End with:
-
-```text
-ACCEPTANCE_RESULT_JSON: {"v":1,"task_id":"<TASK_ID>","status":"FAILED","accepted_commit":"<COMMIT>","acceptance_path":null,"workflow_complete":false}
-```
+Return a concise summary, then end with the exact machine-readable marker required by the mandatory Orchestration Output Contract at the top of this file.
 
 Use no guessed token or credit values in this result.
 
