@@ -3,16 +3,13 @@
   "task_id": "TASK-SIM-003",
   "baseline_id": "SIM_BASELINE_V1",
   "implementation_complete": true,
-  "task_specific_result": "SIM_BASELINE_BLOCKED",
-  "generation_timestamp": "2026-09-15T15:26:25.698728Z",
+  "task_specific_result": "SIM_BASELINE_READY",
+  "generation_timestamp": "2026-09-16T00:45:39.739513Z",
   "provenance": {
-    "git_sha": "4d66d2dc229efe8cdd5306f28c98bf37a55de281",
-    "worktree_clean": false,
-    "worktree_status": [
-      "M scripts/verify_simulation_toolchain_baseline.py",
-      " M tests/test_simulation_toolchain_baseline.py"
-    ],
-    "pre_implementation_clean": true,
+    "git_sha": "ffd37a607482a8d7a3e06110e1489b76b64fa241",
+    "worktree_clean": true,
+    "worktree_status": [],
+    "pre_implementation_clean": false,
     "host": {
       "system": "Linux",
       "machine": "x86_64",
@@ -225,7 +222,7 @@
   "runtime": {
     "probe_order": "AFTER_PREDECESSOR_VALIDATION",
     "python": {
-      "executable": "/usr/bin/python3",
+      "executable": "/home/jinho/projects/factory_physical_ai/.venv-sim/bin/python3",
       "version": "3.12.3"
     },
     "ros2": {
@@ -245,7 +242,7 @@
         "available": true,
         "returncode": 0,
         "timed_out": false,
-        "duration_seconds": 0.603643,
+        "duration_seconds": 0.704887,
         "stdout": "usage: ros2 [-h] [--use-python-default-buffering]\n            Call `ros2 <command> -h` for more detailed usage. ...\n\nros2 is an extensible command-line tool for ROS 2.\n\noptions:\n  -h, --help            show this help message and exit\n  --use-python-default-buffering\n                        Do not force line buffering in stdout and instead use\n                        the python default buffering, which might be affected\n                        by PYTHONUNBUFFERED/-u and depends on whatever stdout\n                        is interactive or not\n\nCommands:\n  action     Various action related sub-commands\n  bag        Various rosbag related sub-commands\n  component  Various component related sub-commands\n  control    Various control related sub-commands\n  daemon     Various daemon related sub-commands\n  doctor     Check ROS setup and other potential issues\n  interface  Show information about ROS interfaces\n  launch     Run a launch file\n  lifecycle  Various lifecycle related sub-commands\n  multicast  Various multicast related sub-commands\n  node       Various node related sub-commands\n  param      Various param related sub-commands\n  pkg        Various package related sub-commands\n  plugin     Various plugin related sub-commands\n  run        Run a package specific executable\n  security   Various security related sub-commands\n  service    Various service related sub-commands\n  topic      Various topic related sub-commands\n  wtf        Use `wtf` as alias to `doctor`\n\n  Call `ros2 <command> -h` for more detailed usage.",
         "stderr": "",
         "process_group_cleanup_complete": true
@@ -261,14 +258,14 @@
         "available": true,
         "returncode": 0,
         "timed_out": false,
-        "duration_seconds": 0.347559,
+        "duration_seconds": 0.28111,
         "stdout": "/opt/ros/jazzy",
         "stderr": "",
         "process_group_cleanup_complete": true
       },
       "rclpy_probe": {
         "command": [
-          "/usr/bin/python3",
+          "/home/jinho/projects/factory_physical_ai/.venv-sim/bin/python3",
           "-c",
           "import importlib.metadata as m,json,rclpy; print(json.dumps({'version':m.version('rclpy'),'module_path':rclpy.__file__},sort_keys=True))"
         ],
@@ -276,7 +273,7 @@
         "available": true,
         "returncode": 0,
         "timed_out": false,
-        "duration_seconds": 0.158872,
+        "duration_seconds": 0.118346,
         "stdout": "{\"module_path\": \"/opt/ros/jazzy/lib/python3.12/site-packages/rclpy/__init__.py\", \"version\": \"7.1.11\"}",
         "stderr": "",
         "process_group_cleanup_complete": true
@@ -299,7 +296,7 @@
         "available": true,
         "returncode": 0,
         "timed_out": false,
-        "duration_seconds": 0.192058,
+        "duration_seconds": 0.109056,
         "stdout": "Gazebo Sim, version 8.11.0\nCopyright (C) 2018 Open Source Robotics Foundation.\nReleased under the Apache 2.0 License.",
         "stderr": "",
         "process_group_cleanup_complete": true
@@ -312,13 +309,13 @@
           "-r",
           "--iterations",
           "2",
-          "/home/jinho/projects/factory_physical_ai_sim003/config/simulation/sim_baseline_empty.sdf"
+          "/home/jinho/projects/factory_physical_ai_sim003R/config/simulation/sim_baseline_empty.sdf"
         ],
         "timeout_seconds": 15,
         "available": true,
         "returncode": 0,
         "timed_out": false,
-        "duration_seconds": 2.178619,
+        "duration_seconds": 2.142461,
         "stdout": "",
         "stderr": "",
         "process_group_cleanup_complete": true,
@@ -360,7 +357,7 @@
           "available": true,
           "returncode": 0,
           "timed_out": false,
-          "duration_seconds": 0.325232,
+          "duration_seconds": 0.251906,
           "stdout": "ros_gz_bridge bridge_node\nros_gz_bridge bridge_types\nros_gz_bridge parameter_bridge\nros_gz_bridge static_bridge",
           "stderr": "",
           "process_group_cleanup_complete": true
@@ -376,7 +373,7 @@
           "available": true,
           "returncode": 0,
           "timed_out": false,
-          "duration_seconds": 0.378104,
+          "duration_seconds": 0.261712,
           "stdout": "ros_gz_sim create\nros_gz_sim delete_entity\nros_gz_sim gzserver\nros_gz_sim remove\nros_gz_sim set_entity_pose\nros_gz_sim spawn_entity",
           "stderr": "",
           "process_group_cleanup_complete": true
@@ -435,7 +432,7 @@
           "available": true,
           "returncode": 0,
           "timed_out": false,
-          "duration_seconds": 0.347147,
+          "duration_seconds": 0.275037,
           "stdout": "nav2_amcl amcl",
           "stderr": "",
           "process_group_cleanup_complete": true
@@ -451,7 +448,7 @@
           "available": true,
           "returncode": 0,
           "timed_out": false,
-          "duration_seconds": 0.365139,
+          "duration_seconds": 0.289061,
           "stdout": "nav2_behaviors behavior_server",
           "stderr": "",
           "process_group_cleanup_complete": true
@@ -467,7 +464,7 @@
           "available": true,
           "returncode": 0,
           "timed_out": false,
-          "duration_seconds": 0.338107,
+          "duration_seconds": 0.324381,
           "stdout": "nav2_bt_navigator bt_navigator",
           "stderr": "",
           "process_group_cleanup_complete": true
@@ -483,7 +480,7 @@
           "available": true,
           "returncode": 0,
           "timed_out": false,
-          "duration_seconds": 0.354943,
+          "duration_seconds": 0.288201,
           "stdout": "nav2_controller controller_server",
           "stderr": "",
           "process_group_cleanup_complete": true
@@ -499,7 +496,7 @@
           "available": true,
           "returncode": 0,
           "timed_out": false,
-          "duration_seconds": 0.373454,
+          "duration_seconds": 0.299068,
           "stdout": "nav2_lifecycle_manager lifecycle_manager",
           "stderr": "",
           "process_group_cleanup_complete": true
@@ -515,7 +512,7 @@
           "available": true,
           "returncode": 0,
           "timed_out": false,
-          "duration_seconds": 0.309121,
+          "duration_seconds": 0.297182,
           "stdout": "nav2_map_server costmap_filter_info_server\nnav2_map_server map_saver_cli\nnav2_map_server map_saver_server\nnav2_map_server map_server",
           "stderr": "",
           "process_group_cleanup_complete": true
@@ -531,7 +528,7 @@
           "available": true,
           "returncode": 0,
           "timed_out": false,
-          "duration_seconds": 0.377071,
+          "duration_seconds": 0.26166,
           "stdout": "nav2_planner planner_server",
           "stderr": "",
           "process_group_cleanup_complete": true
@@ -540,27 +537,37 @@
       "status": "PASS"
     },
     "mujoco": {
-      "version": null,
+      "version": "3.13.0",
       "headless": true,
       "model_path": "config/simulation/mujoco_baseline.xml",
-      "step_result": null,
+      "step_result": {
+        "model_loaded": true,
+        "nq": 7,
+        "nv": 6,
+        "rendering_requested": false,
+        "steps": 1,
+        "time_after": 0.002,
+        "time_before": 0.0,
+        "version": "3.13.0",
+        "viewer_used": false
+      },
       "probe": {
         "command": [
-          "/usr/bin/python3",
+          "/home/jinho/projects/factory_physical_ai/.venv-sim/bin/python3",
           "-c",
           "import json,sys\nimport mujoco\nmodel=mujoco.MjModel.from_xml_path(sys.argv[1])\ndata=mujoco.MjData(model)\nbefore=float(data.time)\nmujoco.mj_step(model,data)\nprint(json.dumps({'version':mujoco.__version__,'model_loaded':True,'steps':1,'time_before':before,'time_after':float(data.time),'nq':model.nq,'nv':model.nv,'viewer_used':False,'rendering_requested':False},sort_keys=True))\n",
-          "/home/jinho/projects/factory_physical_ai_sim003/config/simulation/mujoco_baseline.xml"
+          "/home/jinho/projects/factory_physical_ai_sim003R/config/simulation/mujoco_baseline.xml"
         ],
         "timeout_seconds": 10,
         "available": true,
-        "returncode": 1,
+        "returncode": 0,
         "timed_out": false,
-        "duration_seconds": 0.175192,
-        "stdout": "",
-        "stderr": "Traceback (most recent call last):\n  File \"<string>\", line 2, in <module>\nModuleNotFoundError: No module named 'mujoco'",
+        "duration_seconds": 0.199764,
+        "stdout": "{\"model_loaded\": true, \"nq\": 7, \"nv\": 6, \"rendering_requested\": false, \"steps\": 1, \"time_after\": 0.002, \"time_before\": 0.0, \"version\": \"3.13.0\", \"viewer_used\": false}",
+        "stderr": "",
         "process_group_cleanup_complete": true
       },
-      "status": "FAIL"
+      "status": "PASS"
     }
   },
   "fidelity_policy": {
@@ -585,13 +592,13 @@
     "manipulation_physics_backend": "mujoco",
     "integrated_world_authority": "gazebo_harmonic",
     "dual_world_cosimulation": "prohibited_v1",
-    "mujoco_version": null,
+    "mujoco_version": "3.13.0",
     "simulation_evidence_is_physical_evidence": false,
     "physical_target_frozen": false
   },
   "deterministic_regression": {
     "command": [
-      "/usr/bin/python3",
+      "/home/jinho/projects/factory_physical_ai/.venv-sim/bin/python3",
       "-m",
       "pytest",
       "-q",
@@ -602,7 +609,7 @@
     ],
     "probe": {
       "command": [
-        "/usr/bin/python3",
+        "/home/jinho/projects/factory_physical_ai/.venv-sim/bin/python3",
         "-m",
         "pytest",
         "-q",
@@ -615,8 +622,8 @@
       "available": true,
       "returncode": 0,
       "timed_out": false,
-      "duration_seconds": 2.425732,
-      "stdout": ".....................................                                    [100%]\n37 passed in 1.81s",
+      "duration_seconds": 1.306278,
+      "stdout": ".....................................                                    [100%]\n37 passed in 0.94s",
       "stderr": "",
       "process_group_cleanup_complete": true
     },
@@ -753,12 +760,12 @@
   },
   "validation_commands": {
     "baseline_verifier": [
-      "/usr/bin/python3",
+      "/home/jinho/projects/factory_physical_ai/.venv-sim/bin/python3",
       "scripts/verify_simulation_toolchain_baseline.py",
       "--pre-implementation-clean"
     ],
     "focused": [
-      "/usr/bin/python3",
+      "/home/jinho/projects/factory_physical_ai/.venv-sim/bin/python3",
       "-m",
       "pytest",
       "-q",
@@ -769,7 +776,7 @@
       "tests/test_simulation_smoke.py"
     ],
     "deterministic_regression": [
-      "/usr/bin/python3",
+      "/home/jinho/projects/factory_physical_ai/.venv-sim/bin/python3",
       "-m",
       "pytest",
       "-q",
@@ -779,17 +786,15 @@
       "tests/test_simulation_smoke.py"
     ]
   },
-  "blockers": [
-    "mujoco_headless_step"
-  ],
+  "blockers": [],
   "downstream_eligibility": {
     "required_state": "ACCEPTED + SIM_BASELINE_READY",
     "task_sim_004_eligible_now": false,
     "task_sim_005_eligible_now": false,
-    "eligible_after_independent_acceptance": false,
+    "eligible_after_independent_acceptance": true,
     "physical_authorization": false
   },
   "independent_acceptance": "PENDING",
   "payload_hash_algorithm": "sha256(canonical JSON with sorted keys and compact separators, excluding payload_sha256)",
-  "payload_sha256": "4e9cd917bcffcc9febfa536763fdd47f16b0a52642f491b5d1c9071b0f14718b"
+  "payload_sha256": "d01421b8ce5ebb184e3e14b5745ca7e156b7a5e13b6a56eeba3a9e84996319ba"
 }

@@ -1,9 +1,9 @@
 # SIM_BASELINE_V1 — Simulation Toolchain Baseline
 
 > Task: `TASK-SIM-003`
-> Result: `SIM_BASELINE_BLOCKED`
-> Generated: `2026-09-15T15:26:25.698728Z`
-> Git SHA: `4d66d2dc229efe8cdd5306f28c98bf37a55de281`
+> Result: `SIM_BASELINE_READY`
+> Generated: `2026-09-16T00:45:39.739513Z`
+> Git SHA: `ffd37a607482a8d7a3e06110e1489b76b64fa241`
 > Independent acceptance: `PENDING`
 
 ## Runtime result
@@ -12,7 +12,7 @@
 |---|---|---|---|
 | ROS 2 | Jazzy | `jazzy` | PASS |
 | Gazebo | Harmonic | `8.11.0` | PASS |
-| MuJoCo | measured, headless model load + step | `None` | FAIL |
+| MuJoCo | measured, headless model load + step | `3.13.0` | PASS |
 | Deterministic L0 | accepted contract + smoke regression | pytest | PASS |
 
 ## Frozen ROS/Gazebo and Nav2-facing entry points
@@ -60,9 +60,9 @@ These identities are the minimum integration surface for `TASK-SIM-004`; they do
 
 ## Validation commands
 
-- `baseline_verifier`: `/usr/bin/python3 scripts/verify_simulation_toolchain_baseline.py --pre-implementation-clean`
-- `focused`: `/usr/bin/python3 -m pytest -q -p no:cacheprovider tests/test_simulation_toolchain_baseline.py tests/test_simulation_execution_contract.py tests/test_simulation_smoke.py`
-- `deterministic_regression`: `/usr/bin/python3 -m pytest -q -p no:cacheprovider tests/test_simulation_execution_contract.py tests/test_simulation_smoke.py`
+- `baseline_verifier`: `/home/jinho/projects/factory_physical_ai/.venv-sim/bin/python3 scripts/verify_simulation_toolchain_baseline.py --pre-implementation-clean`
+- `focused`: `/home/jinho/projects/factory_physical_ai/.venv-sim/bin/python3 -m pytest -q -p no:cacheprovider tests/test_simulation_toolchain_baseline.py tests/test_simulation_execution_contract.py tests/test_simulation_smoke.py`
+- `deterministic_regression`: `/home/jinho/projects/factory_physical_ai/.venv-sim/bin/python3 -m pytest -q -p no:cacheprovider tests/test_simulation_execution_contract.py tests/test_simulation_smoke.py`
 
 ## Fidelity and authority
 
@@ -76,6 +76,6 @@ These identities are the minimum integration surface for `TASK-SIM-004`; they do
 
 ## Blockers
 
-- `mujoco_headless_step`
+None.
 
 `SIM_BASELINE_READY` still requires independent acceptance before `TASK-SIM-004` or `TASK-SIM-005` becomes eligible. `SIM_BASELINE_BLOCKED` is non-authorizing.
