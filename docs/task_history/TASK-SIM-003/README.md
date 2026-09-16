@@ -11,12 +11,13 @@ Current status: ACCEPTED
 | 05 | Revalidation | SIM_BASELINE_READY | `05_revalidation.md` |
 | 06 | Review | ACCEPT | `06_review.md` |
 | 07 | Review | ACCEPT | `07_review.md` |
+| 08 | Review | ACCEPT | `08_review.md` |
 
 ## Final Summary
 
 - Final validation: focused 51 tests PASS, baseline verifier `SIM_BASELINE_READY` 재현
 - Evidence: `results/simulation/SIM-003_baseline.json`
-- Final review: `06_review.md` (`2db027e390bef6626887c9c19598e8779d2a3b22`)
+- Final review: `08_review.md` (`ff87fb0f479d2febdc668abcdea0beac1e1111ed`)
 
 ## Portfolio Summary
 
