@@ -1,0 +1,28 @@
+{
+  "schema_version": 1,
+  "implementation": {
+    "model": "gpt-5.6-terra",
+    "reasoning_effort": "medium",
+    "rationale": "balanced default for normal implementation"
+  },
+  "review": {
+    "model": "gpt-5.6-sol",
+    "reasoning_effort": "low",
+    "rationale": "independent quality gate; preserve stronger judgment"
+  },
+  "fix": {
+    "model": "gpt-5.6-terra",
+    "reasoning_effort": "medium",
+    "rationale": "targeted correction after findings narrow the scope"
+  },
+  "rereview": {
+    "model": "gpt-5.6-sol",
+    "reasoning_effort": "low",
+    "rationale": "narrow but independent quality gate"
+  },
+  "acceptance": {
+    "model": "gpt-5.6-luna",
+    "reasoning_effort": "low",
+    "rationale": "structured post-ACCEPT provenance recording"
+  }
+}

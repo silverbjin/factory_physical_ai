@@ -535,4 +535,30 @@ over:
 maximum available context
 ```
 
+Keep:
+
+```text
+Do not stage or commit.
+```
+
+At the end emit exactly one `WORKFLOW_RESULT_JSON`.
+
+Completed Implementation:
+
+```text
+WORKFLOW_RESULT_JSON: {"v":1,"task_id":"<TASK_ID>","stage":"implementation","status":"COMPLETE","workflow_complete":true}
+```
+
+Technical result incomplete, but mandatory workflow bookkeeping completed:
+
+```text
+WORKFLOW_RESULT_JSON: {"v":1,"task_id":"<TASK_ID>","stage":"implementation","status":"INCOMPLETE","workflow_complete":true}
+```
+
+Mandatory Evidence/history/finalization failed:
+
+```text
+WORKFLOW_RESULT_JSON: {"v":1,"task_id":"<TASK_ID>","stage":"implementation","status":"INCOMPLETE","workflow_complete":false}
+```
+
 Begin implementation of the TASK identifier supplied in the current user message.

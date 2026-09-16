@@ -744,6 +744,33 @@ Prefer:
 minimum sufficient independent evidence
 ```
 
+Keep:
+
+```text
+Do not stage or commit.
+```
+
+ACCEPT:
+
+```text
+WORKFLOW_RESULT_JSON: {"v":1,"task_id":"<TASK_ID>","stage":"review","status":"ACCEPT","workflow_complete":true}
+```
+
+REJECT:
+
+```text
+WORKFLOW_RESULT_JSON: {"v":1,"task_id":"<TASK_ID>","stage":"review","status":"REJECT","workflow_complete":true}
+```
+
+If mandatory Review-history/finalization fails, preserve the already-determined
+recommendation but set:
+
+```text
+"workflow_complete": false
+```
+
+Keep `REVIEW_METRICS_JSON` separately if already used for telemetry.
+
 while preserving independent review quality.
 
 Begin the independent READ-ONLY review of the TASK identifier supplied in the current user message.
