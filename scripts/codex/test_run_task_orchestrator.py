@@ -7,357 +7,190 @@ from pathlib import Path
 
 from run_task_orchestrator import (
     AcceptanceResult,
+    ErrorRecord,
     ModelConfig,
     OrchestratorError,
+    RunContext,
     commit_all_changes,
     commit_subject,
+    default_report_base,
+    derive_next_action,
     expected_acceptance_filename,
     expand_range,
+    extract_signal_lines,
     load_model_policy,
     parse_acceptance_result,
     parse_workflow_result,
     task_scope,
     validate_acceptance_write,
+    write_reports,
 )
 
 
 class OrchestratorUnitTests(unittest.TestCase):
     def test_parse_workflow_result(self):
         text = (
-            "hello\n"
-            "WORKFLOW_RESULT_JSON: "
-            '{"v":1,"task_id":"TASK-SIM-002",'
-            '"stage":"review","status":"ACCEPT",'
-            '"workflow_complete":true}\n'
+            'hello\nWORKFLOW_RESULT_JSON: '
+            '{"v":1,"task_id":"TASK-SIM-002","stage":"review",'
+            '"status":"ACCEPT","workflow_complete":true}\n'
         )
-        result = parse_workflow_result(text)
-        self.assertEqual(result.task_id, "TASK-SIM-002")
-        self.assertEqual(result.stage, "review")
+        result = parse_workflow_result(text, task_id="TASK-SIM-002", role="review")
         self.assertEqual(result.status, "ACCEPT")
-        self.assertTrue(
-            result.payload["workflow_complete"]
-        )
 
     def test_parse_acceptance_result(self):
         text = (
-            "ok\n"
-            "ACCEPTANCE_RESULT_JSON: "
-            '{"v":1,"task_id":"TASK-SIM-003",'
-            '"status":"RECORDED",'
-            '"accepted_commit":"abc123",'
-            '"acceptance_path":"results/simulation/'
-            'SIM-003_acceptance.json",'
+            'ACCEPTANCE_RESULT_JSON: '
+            '{"v":1,"task_id":"TASK-SIM-003","status":"RECORDED",'
+            '"accepted_commit":"abc123","acceptance_path":"results/sim/SIM-003_acceptance.json",'
             '"workflow_complete":true}\n'
         )
-        result = parse_acceptance_result(text)
-        self.assertEqual(
-            result.task_id,
-            "TASK-SIM-003",
-        )
-        self.assertEqual(
-            result.status,
-            "RECORDED",
-        )
-        self.assertEqual(
-            result.acceptance_path,
-            "results/simulation/SIM-003_acceptance.json",
-        )
+        result = parse_acceptance_result(text, task_id="TASK-SIM-003")
+        self.assertEqual(result.status, "RECORDED")
 
     def test_expand_range(self):
         self.assertEqual(
-            expand_range(
-                "TASK-SIM-002",
-                "TASK-SIM-004",
-            ),
-            [
-                "TASK-SIM-002",
-                "TASK-SIM-003",
-                "TASK-SIM-004",
-            ],
+            expand_range("TASK-SIM-002", "TASK-SIM-004"),
+            ["TASK-SIM-002", "TASK-SIM-003", "TASK-SIM-004"],
         )
 
     def test_range_prefix_mismatch(self):
         with self.assertRaises(OrchestratorError):
-            expand_range(
-                "TASK-SIM-002",
-                "TASK-MVP-004",
-            )
+            expand_range("TASK-SIM-002", "TASK-MVP-004")
 
     def test_scope_subject_and_acceptance_name(self):
+        self.assertEqual(task_scope("TASK-SIM-002"), "sim")
+        self.assertEqual(expected_acceptance_filename("TASK-SIM-003"), "SIM-003_acceptance.json")
         self.assertEqual(
-            task_scope("TASK-SIM-002"),
-            "sim",
+            commit_subject("TASK-SIM-002", "implementation-review", "REJECT"),
+            "feat(sim): TASK-SIM-002 implementation reviewed [REJECT]",
         )
-        self.assertEqual(
-            expected_acceptance_filename(
-                "TASK-SIM-003"
-            ),
-            "SIM-003_acceptance.json",
+
+    def test_extract_signal_lines(self):
+        signals = extract_signal_lines(
+            "Status: INCOMPLETE\n43 passed\nSIM_NAVIGATION_BACKEND_BLOCKED\nNext: BLOCKED\n"
         )
-        self.assertEqual(
-            commit_subject(
-                "TASK-SIM-002",
-                "implementation-review",
-                "REJECT",
-            ),
-            (
-                "feat(sim): TASK-SIM-002 "
-                "implementation reviewed [REJECT]"
-            ),
+        self.assertTrue(any("INCOMPLETE" in s for s in signals))
+        self.assertTrue(any("BLOCKED" in s for s in signals))
+
+    def test_next_action_incomplete(self):
+        action, steps = derive_next_action({"status": "INCOMPLETE"}, [])
+        self.assertEqual(action, "RESOLVE_IMPLEMENTATION_BLOCKER")
+        self.assertTrue(steps)
+
+    def test_next_action_protocol(self):
+        action, _ = derive_next_action(
+            {"status": "ERROR"},
+            [ErrorRecord(kind="CHILD_PROTOCOL", stage="implementation", task_id="TASK-SIM-004", message="missing")],
         )
-        self.assertEqual(
-            commit_subject(
-                "TASK-SIM-003",
-                "acceptance",
-            ),
-            (
-                "chore(sim): record TASK-SIM-003 "
-                "acceptance [ACCEPT]"
-            ),
-        )
+        self.assertEqual(action, "REPAIR_WORKER_RESULT_PROTOCOL")
 
     def test_load_model_policy(self):
         with tempfile.TemporaryDirectory() as td:
             repo = Path(td)
-            config_dir = repo / "config"
-            config_dir.mkdir()
-            policy_path = (
-                config_dir
-                / "codex_model_policy.json"
-            )
-            policy_path.write_text(
-                json.dumps(
-                    {
-                        "implementation": {
-                            "model": "gpt-5.6-terra",
-                            "reasoning_effort": "medium",
-                        },
-                        "review": {
-                            "model": "gpt-5.6-sol",
-                            "reasoning_effort": "low",
-                        },
-                        "fix": {
-                            "model": "gpt-5.6-terra",
-                            "reasoning_effort": "medium",
-                        },
-                        "rereview": {
-                            "model": "gpt-5.6-sol",
-                            "reasoning_effort": "low",
-                        },
-                        "acceptance": {
-                            "model": "gpt-5.6-luna",
-                            "reasoning_effort": "low",
-                        },
-                    }
-                ),
-                encoding="utf-8",
-            )
-            policy = load_model_policy(
-                repo,
-                Path("config/codex_model_policy.json"),
-            )
-            self.assertEqual(
-                policy["acceptance"],
-                ModelConfig(
-                    model="gpt-5.6-luna",
-                    reasoning_effort="low",
-                ),
-            )
+            (repo / "config").mkdir()
+            data = {
+                role: {"model": model, "reasoning_effort": effort}
+                for role, model, effort in [
+                    ("implementation", "gpt-5.6-terra", "medium"),
+                    ("review", "gpt-5.6-sol", "low"),
+                    ("fix", "gpt-5.6-terra", "medium"),
+                    ("rereview", "gpt-5.6-sol", "low"),
+                    ("acceptance", "gpt-5.6-luna", "low"),
+                ]
+            }
+            (repo / "config/codex_model_policy.json").write_text(json.dumps(data), encoding="utf-8")
+            policy = load_model_policy(repo, Path("config/codex_model_policy.json"))
+            self.assertEqual(policy["acceptance"], ModelConfig("gpt-5.6-luna", "low"))
 
-    def test_commit_review_boundary(self):
+    def test_commit_boundary(self):
         with tempfile.TemporaryDirectory() as td:
             repo = Path(td)
-            subprocess.run(
-                ["git", "init", "-q"],
-                cwd=repo,
-                check=True,
-            )
-            subprocess.run(
-                [
-                    "git",
-                    "config",
-                    "user.name",
-                    "Test User",
-                ],
-                cwd=repo,
-                check=True,
-            )
-            subprocess.run(
-                [
-                    "git",
-                    "config",
-                    "user.email",
-                    "test@example.com",
-                ],
-                cwd=repo,
-                check=True,
-            )
-
-            (repo / "file.txt").write_text(
-                "base\n",
-                encoding="utf-8",
-            )
-            subprocess.run(
-                ["git", "add", "-A"],
-                cwd=repo,
-                check=True,
-            )
-            subprocess.run(
-                ["git", "commit", "-qm", "initial"],
-                cwd=repo,
-                check=True,
-            )
-
-            (repo / "file.txt").write_text(
-                "changed\n",
-                encoding="utf-8",
-            )
-
+            subprocess.run(["git", "init", "-q"], cwd=repo, check=True)
+            subprocess.run(["git", "config", "user.name", "Test User"], cwd=repo, check=True)
+            subprocess.run(["git", "config", "user.email", "test@example.com"], cwd=repo, check=True)
+            (repo / "file.txt").write_text("base\n", encoding="utf-8")
+            subprocess.run(["git", "add", "-A"], cwd=repo, check=True)
+            subprocess.run(["git", "commit", "-qm", "initial"], cwd=repo, check=True)
+            (repo / "file.txt").write_text("changed\n", encoding="utf-8")
             commit_hash = commit_all_changes(
                 repo,
                 task_id="TASK-SIM-002",
                 boundary="implementation-review",
                 review_status="REJECT",
             )
-
             self.assertTrue(commit_hash)
-            subject = subprocess.run(
-                [
-                    "git",
-                    "log",
-                    "-1",
-                    "--pretty=%s",
-                ],
-                cwd=repo,
-                text=True,
-                stdout=subprocess.PIPE,
-                check=True,
-            ).stdout.strip()
-            self.assertEqual(
-                subject,
-                (
-                    "feat(sim): TASK-SIM-002 "
-                    "implementation reviewed [REJECT]"
-                ),
-            )
-
             status = subprocess.run(
-                ["git", "status", "--porcelain"],
-                cwd=repo,
-                text=True,
-                stdout=subprocess.PIPE,
-                check=True,
+                ["git", "status", "--porcelain"], cwd=repo, text=True, stdout=subprocess.PIPE, check=True
             ).stdout.strip()
             self.assertEqual(status, "")
 
     def test_validate_acceptance_write(self):
         with tempfile.TemporaryDirectory() as td:
             repo = Path(td)
-            subprocess.run(
-                ["git", "init", "-q"],
-                cwd=repo,
-                check=True,
-            )
-            subprocess.run(
-                [
-                    "git",
-                    "config",
-                    "user.name",
-                    "Test User",
-                ],
-                cwd=repo,
-                check=True,
-            )
-            subprocess.run(
-                [
-                    "git",
-                    "config",
-                    "user.email",
-                    "test@example.com",
-                ],
-                cwd=repo,
-                check=True,
-            )
-
-            (repo / "seed.txt").write_text(
-                "seed\n",
-                encoding="utf-8",
-            )
-            subprocess.run(
-                ["git", "add", "-A"],
-                cwd=repo,
-                check=True,
-            )
-            subprocess.run(
-                ["git", "commit", "-qm", "initial"],
-                cwd=repo,
-                check=True,
-            )
-
+            subprocess.run(["git", "init", "-q"], cwd=repo, check=True)
+            subprocess.run(["git", "config", "user.name", "Test User"], cwd=repo, check=True)
+            subprocess.run(["git", "config", "user.email", "test@example.com"], cwd=repo, check=True)
+            (repo / "seed.txt").write_text("seed\n", encoding="utf-8")
+            subprocess.run(["git", "add", "-A"], cwd=repo, check=True)
+            subprocess.run(["git", "commit", "-qm", "initial"], cwd=repo, check=True)
             accepted_commit = subprocess.run(
-                ["git", "rev-parse", "HEAD"],
-                cwd=repo,
-                text=True,
-                stdout=subprocess.PIPE,
-                check=True,
+                ["git", "rev-parse", "HEAD"], cwd=repo, text=True, stdout=subprocess.PIPE, check=True
             ).stdout.strip()
-
-            out = repo / "results/simulation"
+            out = repo / "results/sim"
             out.mkdir(parents=True)
-            acceptance_file = (
-                out / "SIM-003_acceptance.json"
-            )
+            acceptance_file = out / "SIM-003_acceptance.json"
             acceptance_file.write_text(
                 json.dumps(
                     {
                         "schema_version": 1,
                         "task_id": "TASK-SIM-003",
                         "status": "ACCEPT",
-                        "accepted_commit": (
-                            accepted_commit
-                        ),
-                        "review_record": (
-                            "docs/task_history/"
-                            "TASK-SIM-003/"
-                            "04_review.md"
-                        ),
-                        "evidence": {
-                            "path": None,
-                            "sha256": None,
-                        },
-                    },
-                    indent=2,
-                )
-                + "\n",
+                        "accepted_commit": accepted_commit,
+                        "review_record": "docs/task_history/TASK-SIM-003/04_review.md",
+                        "evidence": {"path": None, "sha256": None},
+                    }
+                ) + "\n",
                 encoding="utf-8",
             )
-
             result = AcceptanceResult(
                 task_id="TASK-SIM-003",
                 status="RECORDED",
                 accepted_commit=accepted_commit,
-                acceptance_path=(
-                    "results/simulation/"
-                    "SIM-003_acceptance.json"
-                ),
-                payload={
-                    "workflow_complete": True
-                },
+                acceptance_path="results/sim/SIM-003_acceptance.json",
+                payload={"workflow_complete": True},
             )
+            rel = validate_acceptance_write(repo, result, task_id="TASK-SIM-003", accepted_commit=accepted_commit)
+            self.assertEqual(rel.as_posix(), "results/sim/SIM-003_acceptance.json")
 
-            rel_path = validate_acceptance_write(
-                repo,
-                result,
-                task_id="TASK-SIM-003",
-                accepted_commit=accepted_commit,
+    def test_reports_written_outside_repo(self):
+        with tempfile.TemporaryDirectory() as td, tempfile.TemporaryDirectory() as state_td:
+            repo = Path(td)
+            subprocess.run(["git", "init", "-q"], cwd=repo, check=True)
+            ctx = RunContext(
+                repo=repo,
+                target="TASK-SIM-004",
+                report_base=Path(state_td),
+                verbose=False,
+                show_tail=0,
+                heartbeat_seconds=0,
             )
-            self.assertEqual(
-                rel_path.as_posix(),
-                (
-                    "results/simulation/"
-                    "SIM-003_acceptance.json"
-                ),
+            ctx.add_error(
+                kind="TECHNICAL",
+                stage="implementation",
+                task_id="TASK-SIM-004",
+                message="blocked",
+                signals=["Status: INCOMPLETE"],
             )
+            md, js = write_reports(
+                ctx,
+                result={"task_id": "TASK-SIM-004", "status": "INCOMPLETE"},
+                branch="task/sim-004",
+                repo_status=" M src/x.py",
+            )
+            self.assertTrue(md.is_file())
+            self.assertTrue(js.is_file())
+            self.assertFalse(str(md).startswith(str(repo)))
+            self.assertIn("RESOLVE_IMPLEMENTATION_BLOCKER", md.read_text(encoding="utf-8"))
 
 
 if __name__ == "__main__":

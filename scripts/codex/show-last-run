@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+set -euo pipefail
+repo_root=$(git rev-parse --show-toplevel)
+repo_name=$(basename "$repo_root")
+base="${XDG_STATE_HOME:-$HOME/.local/state}/codex-task-orchestrator/$repo_name"
+if [[ ! -d "$base" ]]; then
+  echo "No orchestrator run directory found for $repo_name" >&2
+  exit 1
+fi
+latest=$(find "$base" -mindepth 1 -maxdepth 1 -type d -printf '%T@ %p\n' | sort -nr | head -1 | cut -d' ' -f2-)
+if [[ -z "${latest:-}" || ! -f "$latest/summary.md" ]]; then
+  echo "No summary.md found under $base" >&2
+  exit 1
+fi
+cat "$latest/summary.md"

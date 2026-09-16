@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+set -euo pipefail
+if [[ $# -ne 1 ]]; then
+  echo "usage: scripts/codex/run-task TASK-ID" >&2
+  exit 2
+fi
+exec python3 scripts/codex/run_task_orchestrator.py task "$1"

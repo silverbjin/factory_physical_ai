@@ -2,72 +2,50 @@
 
 ## Purpose
 
-Repository-wide Codex routing, context-budget, and orchestration guardrails.
+Repository-wide Codex worker routing and bounded-context guardrails.
 
-Keep this file small. Workflow procedures belong in `prompts/codex/*.md`.
+The **host-side Python orchestrator** owns full TASK lifecycle execution.
+Do not launch the orchestrator from inside a Codex-managed session because it
+starts fresh `codex exec` workers that need normal writable Codex state.
 
 ---
 
-## 0. Hard Dispatch and Worker Result Protocol
+## 0. Host-side Orchestration Boundary
 
-### 0.1 `Run ...` command hard boundary
+`Run <TASK_ID>` and `Run <START_TASK_ID>..<END_TASK_ID>` are **host-side workflow
+commands**, not nested Codex workflows.
 
-For an exact command matching:
-
-```text
-Run <TASK_ID>
-```
-
-the current Codex session is an **ORCHESTRATION DISPATCHER ONLY**.
-
-Its first operational action MUST be:
+Canonical entry points from a normal VS Code/WSL terminal:
 
 ```bash
 python3 scripts/codex/run_task_orchestrator.py task <TASK_ID>
 ```
 
-For an exact command matching:
-
-```text
-Run <START_TASK_ID>..<END_TASK_ID>
-```
-
-its first operational action MUST be:
-
 ```bash
 python3 scripts/codex/run_task_orchestrator.py range <START_TASK_ID> <END_TASK_ID>
 ```
 
-For either `Run ...` form, the parent session MUST NOT:
+Convenience wrappers may be used when installed:
 
-- open or interpret the TASK specification;
-- implement, review, fix, or record acceptance itself;
-- modify source, tests, Evidence, TASK history, or acceptance artifacts;
-- fall back to direct Implementation when the runner fails;
-- synthesize `COMPLETE` or `ACCEPTED` from child prose.
-
-The external runner result is the sole source of truth.
-
-If the runner exits non-zero, reports an error/stop state, or cannot be started:
-
-- report that exact failure;
-- stop;
-- do not fall back to a worker role.
-
-The parent may report a single TASK as `ACCEPTED` only when the runner result contains:
-
-```text
-status == "ACCEPTED"
-accepted_commit != null
-acceptance_commit != null
+```bash
+scripts/codex/run-task <TASK_ID>
+scripts/codex/run-task-range <START_TASK_ID> <END_TASK_ID>
 ```
 
-For a range, report completion only when the runner returns the range terminal state as complete.
+If a user types a `Run ...` command inside a Codex chat session:
 
-### 0.2 Worker machine-result protocol
+- do **not** invoke `run_task_orchestrator.py` from that Codex session;
+- do **not** implement/review/fix the TASK as a fallback;
+- return the matching host-terminal command only.
 
-Workers launched by the orchestrator MUST terminate with their required
-machine-readable result marker.
+The Python runner is the sole source of truth for full lifecycle status.
+
+---
+
+## 1. Worker Machine-result Protocol
+
+Workers launched by the host orchestrator MUST terminate with the required
+machine-readable marker as the **last non-empty line**.
 
 ```text
 Implement <TASK_ID>
@@ -84,52 +62,14 @@ Record <TASK_ID> acceptance for commit <COMMIT>
 ```
 
 A prose-only completion message is invalid for orchestrated execution.
-
-The required marker MUST be the last non-empty line of the worker's final response.
-Worker prompts repeat the exact schema near the top so partial prompt reads cannot
-silently omit the protocol.
+The exact schemas are repeated near the top of each worker prompt so partial
+prompt reads cannot silently omit the protocol.
 
 ---
 
-## 1. Prompt Routing
+## 2. Worker Prompt Routing
 
-Match exactly one route in this order.
-
-### TASK range automation
-
-```text
-Run <START_TASK_ID>..<END_TASK_ID>
-→ prompts/codex/run_task_range_v2.md
-```
-
-Example:
-
-```text
-Run TASK-SIM-002..TASK-SIM-004
-```
-
-### Single TASK automation
-
-```text
-Run <TASK_ID>
-→ prompts/codex/run_task_workflow_v2.md
-```
-
-Example:
-
-```text
-Run TASK-SIM-002
-```
-
-### Acceptance recording
-
-```text
-Record <TASK_ID> acceptance for commit <COMMIT>
-→ prompts/codex/record_task_acceptance_v2.md
-```
-
-This route is normally invoked only by the external orchestrator after an
-independent Review has returned `ACCEPT` and the reviewed snapshot has been committed.
+Match exactly one worker route.
 
 ### Implementation
 
@@ -147,14 +87,12 @@ Fix <TASK_ID>
 → tasks/<TASK_ID>.md
 ```
 
-### TASK creation
+### Acceptance recording
 
 ```text
-Create <TASK_ID>
-→ prompts/codex/create_task_spec_v2.md
+Record <TASK_ID> acceptance for commit <COMMIT>
+→ prompts/codex/record_task_acceptance_v2.md
 ```
-
-Do not require `tasks/<TASK_ID>.md` to exist before creation.
 
 ### Independent Read-only Review
 
@@ -168,14 +106,14 @@ routes to:
 
 ```text
 prompts/codex/read_only_review_v2.md
-tasks/<TASK_ID>.md
+→ tasks/<TASK_ID>.md
 ```
 
-Do not load multiple workflow prompts to decide a route.
+Do not load multiple worker prompts to decide a route.
 
 ---
 
-## 2. TASK File Resolution
+## 3. TASK File Resolution
 
 For an existing TASK:
 
@@ -183,22 +121,18 @@ For an existing TASK:
 TASK_FILE = tasks/<TASK_ID>.md
 ```
 
-Use the canonical path directly.
-
-Do not search the repository for the TASK specification when this path exists.
+Use the canonical path directly. Do not search the repository when it exists.
 
 ---
 
-## 3. Context Budget Policy
-
-Use bounded context by default.
+## 4. Context Budget Policy
 
 For worker TASK workflows:
 
 ```text
-routed workflow prompt
+routed worker prompt
 → active TASK specification
-→ Required Sources
+→ Authoritative Sources / Required
 → workflow-relevant target files
 ```
 
@@ -215,18 +149,14 @@ repository history
 
 unless the active workflow or TASK requires a specific file.
 
-Do not read previous or future TASK specifications merely to reconstruct project history.
-
+Do not read previous/future TASK specifications merely to reconstruct project history.
 Prefer exact paths over repository-wide search.
 
 ---
 
-## 4. Required / Conditional Sources
+## 5. Required / Conditional Sources
 
-The active TASK is the context manifest.
-
-Read `Authoritative Sources > Required` on the normal worker path.
-
+Read `Authoritative Sources > Required` on the normal path.
 Do not read `Authoritative Sources > Conditional` preemptively.
 
 Use:
@@ -237,161 +167,33 @@ minimum sufficient context
 → targeted context expansion
 ```
 
-Load only the Conditional Source needed for the active trigger.
-
-Acceptance recording is a special post-ACCEPT workflow and follows
-`record_task_acceptance_v2.md`; it must not load ordinary Required Sources unless
-that prompt explicitly needs a specific reference.
+Acceptance recording follows `record_task_acceptance_v2.md` and should read only
+provenance inputs needed for the acceptance artifact.
 
 ---
 
-## 5. Run Orchestration Boundary
+## 6. Git Ownership
 
-`Run ...` routes are orchestration-only.
+Worker contexts MUST NOT stage or commit.
 
-The parent orchestration context MUST NOT load:
+Only the host-side `scripts/codex/run_task_orchestrator.py` may stage/commit during
+automated TASK execution.
 
-- TASK specifications;
-- Required Sources;
-- Conditional Sources;
-- implementation files;
-- tests;
-- Evidence;
-- Review findings;
-- TASK history;
-- acceptance Evidence.
+The orchestrator requires:
 
-The routed Run prompt invokes the external orchestrator.
-
-Fresh child Codex contexts own all TASK-level work.
-
-For a TASK range, only compact terminal state crosses TASK boundaries.
-
----
-
-## 6. Orchestrated Git Ownership
-
-For `Run ...` workflows:
-
-- child Implementation, Review, Fix, Re-review, and Acceptance workers MUST NOT stage or commit;
-- only `scripts/codex/run_task_orchestrator.py` may stage and commit;
-- orchestration MUST start from a clean Git worktree;
-- orchestration should run on a dedicated automation branch, not `main` or `master`;
-- the first completed Review creates the Implementation+Review snapshot;
-- a completed Re-review after Fix creates the Fix+Re-review snapshot;
-- REJECT review states are committed as traceable snapshots;
-- after final Review `ACCEPT`, the accepted Review snapshot commit is frozen first;
-- Acceptance recording then creates exactly one acceptance JSON referring to that accepted commit;
-- Acceptance JSON is committed in a separate acceptance-record commit;
-- unrelated/pre-existing changes must never be auto-committed;
-- a downstream TASK may start only after the preceding TASK is `ACCEPTED`,
-  its acceptance record commit succeeded, and the worktree is clean.
-
-Outside `Run ...` orchestration, do not stage or commit unless explicitly requested.
+- clean worktree at entry;
+- dedicated automation/task branch (not `main`/`master` by default);
+- Review-boundary commit after completed Review;
+- Fix/Re-review commit after completed Re-review;
+- separate acceptance-record commit after final ACCEPT;
+- clean worktree before a downstream TASK starts.
 
 Do not rewrite Git history without explicit authorization.
 
 ---
 
-## 7. Worker Context Boundaries
+## 7. Late-loaded Policies
 
-### Implementation
-
-```text
-TASK
-→ Required Sources
-→ task-related implementation/tests
-```
-
-Do not preload Review, Fix, Acceptance, or TASK-history prompts.
-
-### Review
-
-```text
-TASK
-→ Required Sources
-→ TASK-specific change set
-→ relevant implementation/tests
-→ declared Evidence
-```
-
-Do not default to the entire merge-base diff.
-
-### Fix
-
-```text
-TASK
-→ latest blocking Review findings
-→ Required Sources
-→ finding-related code/tests
-```
-
-Do not repeat the complete Review by default.
-
-### Acceptance recording
-
-```text
-TASK identity
-→ accepted commit
-→ latest accepted Review record
-→ declared Evidence pointer if needed
-→ one acceptance JSON
-```
-
-Do not rediscover project context or inspect unrelated source files.
-
-### TASK Creation
-
-Load only the project-state/planning sources needed to define the requested TASK.
-
----
-
-## 8. Late-loaded Policies
-
-Do not preload:
-
-```text
-prompts/codex/task_history_recording_v2.md
-```
-
-Load TASK-history policy only when the routed worker reaches its history-recording step.
-
-Do not preload unrelated workflow prompts.
-
----
-
-## 9. Efficiency Invariant
-
-Normal worker path:
-
-```text
-route one workflow
-→ load one workflow prompt
-→ load active TASK when required
-→ load minimum authoritative inputs
-→ inspect only relevant files
-→ execute
-```
-
-Normal accepted TASK path:
-
-```text
-Implement
-→ Review ACCEPT
-→ commit reviewed snapshot
-→ Acceptance record
-→ commit acceptance JSON
-→ ACCEPTED
-```
-
-Normal range path:
-
-```text
-Run TASK-A..TASK-B
-→ parent state machine only
-→ isolated TASK-A lifecycle
-→ ACCEPTED + acceptance commit + clean
-→ isolated TASK-A+1 lifecycle
-```
-
-Avoid repository-wide rediscovery unless narrower resolution fails.
+Do not preload unrelated workflow prompts or project-management documents.
+Load `prompts/codex/task_history_recording_v2.md` only when the active worker reaches
+its history-recording step.
