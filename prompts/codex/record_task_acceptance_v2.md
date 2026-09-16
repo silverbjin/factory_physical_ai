@@ -158,31 +158,166 @@ git rev-parse HEAD
 git log -1 --format='%H'
 ```
 
-Read `reviewed_commit` from the persisted review handoff.
-
-Verify it exists:
+Read `reviewed_commit` from the persisted review handoff and verify that it exists:
 
 ```bash
 git cat-file -e <reviewed_commit>^{commit}
 ```
 
-Compare:
+Inspect every committed path changed after the reviewed commit:
 
 ```bash
-git diff --name-only <reviewed_commit>..HEAD
+git diff --name-status <reviewed_commit>..HEAD
 ```
 
-Allowed committed changes after the reviewed commit are limited to audit/review metadata for this exact TASK, for example:
+Also inspect working-tree changes:
+
+```bash
+git status --short
+```
+
+### 4.1 Post-review Change Classification
+
+Classify every post-review changed path as exactly one of:
+
+```text
+TASK_AUDIT_METADATA
+WORKFLOW_CONTROL_METADATA
+MATERIAL_TASK_CHANGE
+UNRELATED_CHANGE
+```
+
+Do not reject acceptance merely because `HEAD != reviewed_commit`.
+
+The acceptance decision is bound to the exact reviewed TASK artifacts through hashes and the persisted review record. The purpose of this classification is to determine whether later repository changes invalidate that reviewed TASK state.
+
+#### TASK_AUDIT_METADATA
+
+Allowed without invalidating the review:
 
 ```text
 docs/task_history/<TASK_ID>/**
 ```
 
-No source, test, TASK specification, canonical Evidence, contract, schema, config, or implementation file may materially differ from the reviewed commit.
+Examples include persisted review/fix/implementation history for the same TASK.
 
-For working-tree changes, persisted review-history changes for this exact TASK may already exist.
+These files may exist as committed or working-tree changes after the reviewed implementation commit.
 
-Any unrelated or material implementation change after review is a hard stop.
+#### WORKFLOW_CONTROL_METADATA
+
+The following repository-control files may change after the reviewed implementation commit without invalidating the implementation review:
+
+```text
+AGENTS.md
+prompts/codex/read_only_review_v2.md
+prompts/codex/task_history_recording_v2.md
+prompts/codex/record_task_acceptance_v2.md
+```
+
+They are allowed only when their changes do not modify the reviewed TASK's specification, implementation, tests, canonical Evidence, supporting Evidence, contracts, schemas, runtime configuration, or TASK-owned implementation/verifier behavior.
+
+Workflow-control changes affect repository procedure for current/future workflow execution. They do not by themselves change the implementation state that was independently reviewed.
+
+Do not rerun or reinterpret the independent review merely because one of these workflow-control files changed.
+
+If a repository uses an equivalent renamed workflow file, classify it as `WORKFLOW_CONTROL_METADATA` only when its role is clearly repository workflow/routing control and it has no TASK-owned implementation/evidence responsibility. Otherwise classify it as `UNRELATED_CHANGE` and evaluate conservatively.
+
+#### MATERIAL_TASK_CHANGE
+
+Any post-review modification to reviewed TASK material is a hard stop. This includes, when applicable:
+
+```text
+<TASK_FILE>
+canonical Evidence declared by <TASK_FILE>
+TASK-owned supporting Evidence/report artifacts
+TASK-owned implementation source
+TASK-owned tests
+TASK-owned runtime configuration
+TASK-owned implementation/verifier scripts
+contracts or schemas consumed/frozen by <TASK_ID>
+```
+
+Use the TASK specification, review handoff, canonical Evidence, and supporting-artifact list to identify these paths precisely.
+
+Do not classify an entire shared directory as material solely because the TASK read from it. A file is material when the reviewed TASK implementation or accepted Evidence depends on that exact file/revision.
+
+If any material TASK artifact changed after `reviewed_commit`, stop with:
+
+```text
+ACCEPTANCE NOT RECORDED
+
+Reason:
+material TASK content changed after the reviewed commit; a new independent review is required.
+```
+
+#### UNRELATED_CHANGE
+
+A repository change unrelated to `TASK_ID` must not automatically invalidate acceptance.
+
+It may be tolerated only when all of the following are true:
+
+```text
+- it does not modify a reviewed TASK artifact;
+- it does not modify a frozen contract/schema consumed by the TASK;
+- it does not alter the canonical Evidence or supporting artifact hashes;
+- it does not make repository identity or review provenance ambiguous.
+```
+
+If independence cannot be established narrowly, fail closed and report the path requiring resolution.
+
+### 4.2 Immutable Reviewed-artifact Invariant
+
+Acceptance may proceed only when the reviewed TASK identity is still cryptographically intact. At minimum require:
+
+```text
+TASK specification hash == review handoff hash
+canonical Evidence hash == review handoff hash, when required
+required supporting artifact hashes == review handoff hashes
+reviewed_commit exists
+persisted review == ACCEPT <TASK_ID>
+acceptance_recording_eligible == true
+```
+
+These immutable bindings, rather than equality between current `HEAD` and `reviewed_commit`, establish the reviewed TASK identity.
+
+### 4.3 Working-tree Rule
+
+Working-tree changes are evaluated using the same classification.
+
+Allowed:
+
+```text
+TASK_AUDIT_METADATA
+WORKFLOW_CONTROL_METADATA
+demonstrably unrelated non-material changes
+```
+
+Blocked:
+
+```text
+MATERIAL_TASK_CHANGE
+ambiguous unrelated changes
+```
+
+Do not alter, stash, reset, or clean working-tree changes to make recording easier.
+
+### 4.4 Post-review Change Audit
+
+Before creating the acceptance manifest, build a deterministic list of every path changed between `reviewed_commit` and `recording_base_commit`, plus relevant current working-tree changes.
+
+For each path record:
+
+```text
+path
+classification = TASK_AUDIT_METADATA | WORKFLOW_CONTROL_METADATA | UNRELATED_CHANGE
+source = committed | working_tree
+```
+
+Do not include `MATERIAL_TASK_CHANGE` because its presence blocks recording.
+
+Sort the list lexicographically by `path`, then by `source`.
+
+This list is audit metadata explaining why `recording_base_commit` may legitimately differ from `reviewed_commit`.
 
 ---
 
@@ -343,6 +478,13 @@ Create this logical structure:
     "path": "docs/task_history/TASK-SIM-003/02_review.md",
     "sha256": "<sha256>"
   },
+  "post_review_changes": [
+    {
+      "path": "prompts/codex/read_only_review_v2.md",
+      "classification": "WORKFLOW_CONTROL_METADATA",
+      "source": "committed"
+    }
+  ],
   "supporting_artifacts": [
     {
       "path": "docs/simulation/simulation_baseline_v1.md",
@@ -405,7 +547,8 @@ ACCEPT line does not match TASK_ID exactly
 acceptance_handoff missing
 acceptance_recording_eligible != true
 reviewed_commit missing or invalid
-material files changed after reviewed_commit
+material TASK artifacts changed after reviewed_commit
+post-review change classification is ambiguous for a path that may affect TASK identity
 TASK spec hash mismatch
 required Evidence missing
 Evidence hash mismatch
@@ -430,10 +573,11 @@ After creating the manifest:
 4. recompute Evidence hash if required;
 5. recompute review-record hash;
 6. recompute all supporting-artifact hashes;
-7. recompute `acceptance_payload_sha256`;
-8. verify `review_decision == ACCEPT`;
-9. verify the task-specific decision was copied unchanged;
-10. run:
+7. verify every `post_review_changes` entry against the actual Git/working-tree classification;
+8. recompute `acceptance_payload_sha256`;
+9. verify `review_decision == ACCEPT`;
+10. verify the task-specific decision was copied unchanged;
+11. run:
 
 ```bash
 git diff --check -- <ACCEPTANCE_FILE>
@@ -503,6 +647,7 @@ Task-specific decision: <exact value or null>
 Reviewed commit: <SHA>
 Review record: <path>
 Evidence: <path or NOT REQUIRED>
+Post-review changes: <count, all non-material>
 Acceptance payload SHA-256: <sha256>
 
 Repository mutations:

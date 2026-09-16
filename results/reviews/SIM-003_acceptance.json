@@ -1,0 +1,52 @@
+{
+  "acceptance_payload_sha256": "c192573afaf6b50eaf1b182ee2d29fd25f6f595a01e6559d971219b2c3673768",
+  "acceptance_recorded_at_utc": "2026-09-16T03:08:01Z",
+  "evidence": {
+    "path": "results/simulation/SIM-003_baseline.json",
+    "required": true,
+    "sha256": "97f92b1bd13ab2df0db2546cfca096eaf47c1076b72698bc1a47f72780fc7cb3"
+  },
+  "post_review_changes": [
+    {
+      "classification": "UNRELATED_CHANGE",
+      "path": "docs/task_history/README.md",
+      "source": "working_tree"
+    },
+    {
+      "classification": "TASK_AUDIT_METADATA",
+      "path": "docs/task_history/TASK-SIM-003/08_review.md",
+      "source": "working_tree"
+    },
+    {
+      "classification": "TASK_AUDIT_METADATA",
+      "path": "docs/task_history/TASK-SIM-003/README.md",
+      "source": "working_tree"
+    },
+    {
+      "classification": "WORKFLOW_CONTROL_METADATA",
+      "path": "prompts/codex/record_task_acceptance_v2.md",
+      "source": "working_tree"
+    }
+  ],
+  "recording_base_commit": "ff87fb0f479d2febdc668abcdea0beac1e1111ed",
+  "review_decision": "ACCEPT",
+  "review_record": {
+    "path": "docs/task_history/TASK-SIM-003/08_review.md",
+    "sha256": "1043b819c55718385af2fc5d6f1d4148797bc20881f391f082da98fda71f9126"
+  },
+  "reviewed_commit": "ff87fb0f479d2febdc668abcdea0beac1e1111ed",
+  "schema_version": "task_acceptance_v1",
+  "short_task_id": "SIM-003",
+  "supporting_artifacts": [
+    {
+      "path": "docs/simulation/simulation_baseline_v1.md",
+      "sha256": "78fab5c9bd272022cc72b275fd27adc51499f434ef3de6eda4be4206ec060987"
+    }
+  ],
+  "task_id": "TASK-SIM-003",
+  "task_spec": {
+    "path": "tasks/TASK-SIM-003.md",
+    "sha256": "3e93cd85bc7903f1c1f947ad2dd817e217660f482753f068b284cd7d2349e61c"
+  },
+  "task_specific_decision": "SIM_BASELINE_READY"
+}
