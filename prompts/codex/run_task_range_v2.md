@@ -41,3 +41,11 @@ the TASK boundary.
 
 Default console output is compact. Full worker logs and final responses are stored
 under `${XDG_STATE_HOME:-~/.local/state}/codex-task-orchestrator/`.
+
+
+## Child Worker Dispatch
+
+Each TASK lifecycle uses the same explicit `ORCHESTRATOR_CHILD` protocol as the
+single-TASK runner. No previous TASK's worker context is reused.
+
+Each stage prompt is persisted in the external run directory for dispatch auditing.

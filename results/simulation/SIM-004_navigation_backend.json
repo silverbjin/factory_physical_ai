@@ -1,0 +1,556 @@
+{
+  "baseline_binding": {
+    "acceptance_path": "results/reviews/SIM-003_acceptance.json",
+    "acceptance_sha256": "8e5220041f6b31dcbfed0e214b14ecc6bc55af0c2571999faa4be68d647d03e7",
+    "baseline_id": "SIM_BASELINE_V1",
+    "path": "results/simulation/SIM-003_baseline.json",
+    "sha256": "97f92b1bd13ab2df0db2546cfca096eaf47c1076b72698bc1a47f72780fc7cb3"
+  },
+  "bounded_lifecycle": {
+    "cleanup": {
+      "bound_ms": 5000,
+      "complete": true,
+      "processes": [
+        {
+          "pid": 219798,
+          "returncode": -15
+        }
+      ]
+    },
+    "execution_bound_ms": 30000,
+    "executions": [
+      {
+        "action_id": "64ee75b7-6142-4813-a10b-1f70090409b1",
+        "arrival_verified": true,
+        "destination_id": "line-b-drop",
+        "duration_ms": 5736.032,
+        "execution_bound_ms": 30000,
+        "goal": "{pose: {header: {frame_id: map}, pose: {position: {x: -6.0, y: 0.0, z: 0.0}, orientation: {w: 1.0}}}}",
+        "observed_status": "succeeded",
+        "returncode": 0,
+        "stderr_tail": "",
+        "stdout_tail": "Waiting for an action server to become available...\nSending goal:\n     pose:\n  header:\n    stamp:\n      sec: 0\n      nanosec: 0\n    frame_id: map\n  pose:\n    position:\n      x: -6.0\n      y: 0.0\n      z: 0.0\n    orientation:\n      x: 0.0\n      y: 0.0\n      z: 0.0\n      w: 1.0\nbehavior_tree: ''\n\nGoal accepted with ID: 1444ba6115c242548dc378d1661f8d10\n\nResult:\n    error_code: 0\nerror_msg: ''\n\nGoal finished with status: SUCCEEDED\n",
+        "terminal_status": "SUCCEEDED"
+      },
+      {
+        "action_id": "880538db-8d1d-47d1-ba8b-c2ff812913f9",
+        "arrival_verified": false,
+        "destination_id": "blocked-bay",
+        "duration_ms": 4128.465,
+        "execution_bound_ms": 30000,
+        "goal": "{pose: {header: {frame_id: map}, pose: {position: {x: 100.0, y: 100.0, z: 0.0}, orientation: {w: 1.0}}}}",
+        "observed_status": "failed",
+        "returncode": 0,
+        "stderr_tail": "",
+        "stdout_tail": "Waiting for an action server to become available...\nSending goal:\n     pose:\n  header:\n    stamp:\n      sec: 0\n      nanosec: 0\n    frame_id: map\n  pose:\n    position:\n      x: 100.0\n      y: 100.0\n      z: 0.0\n    orientation:\n      x: 0.0\n      y: 0.0\n      z: 0.0\n      w: 1.0\nbehavior_tree: ''\n\nGoal accepted with ID: 87a3a3845cb843f0a279334b423f20a1\n\nResult:\n    error_code: 204\nerror_msg: ''\n\nGoal finished with status: ABORTED\n",
+        "terminal_status": "ABORTED"
+      },
+      {
+        "action_id": "696f2f42-f22d-43ba-bd11-d6993bbe5035",
+        "arrival_verified": false,
+        "destination_id": "line-b-drop",
+        "duration_ms": 2.939,
+        "execution_bound_ms": 1,
+        "goal": "{pose: {header: {frame_id: map}, pose: {position: {x: -6.0, y: 0.0, z: 0.0}, orientation: {w: 1.0}}}}",
+        "observed_status": "unknown",
+        "returncode": null,
+        "stderr_tail": "",
+        "stdout_tail": "",
+        "terminal_status": null
+      }
+    ],
+    "localization": {
+      "amcl_active": true,
+      "initial_pose": {
+        "frame_id": "map",
+        "published": true,
+        "source": "depot.yaml free cell at (-6.5, 0.0), verified against map origin/resolution",
+        "x": -6.5,
+        "y": 0.0,
+        "yaw": 0.0
+      },
+      "map_to_odom_available": true,
+      "prerequisites": {
+        "map_available": true,
+        "odom_available": true,
+        "odom_to_base_available": true,
+        "scan_available": true
+      },
+      "probes": [
+        {
+          "command": [
+            "/opt/ros/jazzy/bin/ros2",
+            "lifecycle",
+            "set",
+            "/map_server",
+            "configure"
+          ],
+          "duration_ms": 3664.862,
+          "label": "/map_server:configure",
+          "returncode": 0,
+          "stderr": "",
+          "stdout": "Transitioning successful\n",
+          "timed_out": false
+        },
+        {
+          "command": [
+            "/opt/ros/jazzy/bin/ros2",
+            "lifecycle",
+            "set",
+            "/map_server",
+            "activate"
+          ],
+          "duration_ms": 5938.985,
+          "label": "/map_server:activate",
+          "returncode": 0,
+          "stderr": "",
+          "stdout": "Transitioning successful\n",
+          "timed_out": false
+        },
+        {
+          "command": [
+            "/opt/ros/jazzy/bin/ros2",
+            "lifecycle",
+            "set",
+            "/amcl",
+            "configure"
+          ],
+          "duration_ms": 2702.976,
+          "label": "/amcl:configure",
+          "returncode": 0,
+          "stderr": "",
+          "stdout": "Transitioning successful\n",
+          "timed_out": false
+        },
+        {
+          "command": [
+            "/opt/ros/jazzy/bin/ros2",
+            "lifecycle",
+            "set",
+            "/amcl",
+            "activate"
+          ],
+          "duration_ms": 2380.432,
+          "label": "/amcl:activate",
+          "returncode": 0,
+          "stderr": "",
+          "stdout": "Transitioning successful\n",
+          "timed_out": false
+        },
+        {
+          "command": [
+            "/opt/ros/jazzy/bin/ros2",
+            "topic",
+            "list",
+            "-t"
+          ],
+          "duration_ms": 1264.362,
+          "label": "localization_topics",
+          "returncode": 0,
+          "stderr": "",
+          "stdout": "ssed [sensor_msgs/msg/CompressedImage]\n/rgbd_camera/depth_image/compressedDepth [sensor_msgs/msg/CompressedImage]\n/rgbd_camera/depth_image/theora [theora_image_transport/msg/Packet]\n/rgbd_camera/depth_image/zstd [sensor_msgs/msg/CompressedImage]\n/rgbd_camera/image [sensor_msgs/msg/Image]\n/rgbd_camera/image/compressed [sensor_msgs/msg/CompressedImage]\n/rgbd_camera/image/compressedDepth [sensor_msgs/msg/CompressedImage]\n/rgbd_camera/image/theora [theora_image_transport/msg/Packet]\n/rgbd_camera/image/zstd [sensor_msgs/msg/CompressedImage]\n/robot_description [std_msgs/msg/String]\n/rosout [rcl_interfaces/msg/Log]\n/route_server/transition_event [lifecycle_msgs/msg/TransitionEvent]\n/scan [sensor_msgs/msg/LaserScan]\n/smoother_server/transition_event [lifecycle_msgs/msg/TransitionEvent]\n/tf [tf2_msgs/msg/TFMessage]\n/tf_static [tf2_msgs/msg/TFMessage]\n/velocity_smoother/transition_event [lifecycle_msgs/msg/TransitionEvent]\n/waypoint_follower/transition_event [lifecycle_msgs/msg/TransitionEvent]\n",
+          "timed_out": false
+        },
+        {
+          "command": [
+            "/opt/ros/jazzy/bin/ros2",
+            "lifecycle",
+            "get",
+            "/amcl"
+          ],
+          "duration_ms": 4938.687,
+          "label": "amcl_lifecycle",
+          "returncode": 0,
+          "stderr": "",
+          "stdout": "active [3]\n",
+          "timed_out": false
+        },
+        {
+          "available": true,
+          "command": [
+            "/opt/ros/jazzy/bin/ros2",
+            "run",
+            "tf2_ros",
+            "tf2_echo",
+            "odom",
+            "base_link"
+          ],
+          "duration_ms": 2502.508,
+          "label": "odom_to_base",
+          "observed_transform": true,
+          "output_tail": "[INFO] [1789555079.416970863] [tf2_echo]: Waiting for transform odom ->  base_link: Invalid frame ID \"odom\" passed to canTransform argument target_frame - frame does not exist\nAt time 8.424000000\n- Translation: [0.000, -0.000, 0.000]\n- Rotation: in Quaternion (xyzw) [0.000, 0.000, -0.000, 1.000]\n",
+          "source_frame": "base_link",
+          "target_frame": "odom",
+          "timed_out": false
+        },
+        {
+          "command": [
+            "/opt/ros/jazzy/bin/ros2",
+            "topic",
+            "pub",
+            "--once",
+            "/initialpose",
+            "geometry_msgs/msg/PoseWithCovarianceStamped",
+            "{header: {frame_id: map}, pose: {pose: {position: {x: -6.5, y: 0.0, z: 0.0}, orientation: {z: 0.0, w: 1.0}}, covariance: [0.25, 0, 0, 0, 0, 0, 0, 0.25, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]}}"
+          ],
+          "duration_ms": 2587.031,
+          "label": "initial_pose_publish",
+          "returncode": 0,
+          "stderr": "",
+          "stdout": "Waiting for at least 1 matching subscription(s)...\npublisher: beginning loop\npublishing #1: geometry_msgs.msg.PoseWithCovarianceStamped(header=std_msgs.msg.Header(stamp=builtin_interfaces.msg.Time(sec=0, nanosec=0), frame_id='map'), pose=geometry_msgs.msg.PoseWithCovariance(pose=geometry_msgs.msg.Pose(position=geometry_msgs.msg.Point(x=-6.5, y=0.0, z=0.0), orientation=geometry_msgs.msg.Quaternion(x=0.0, y=0.0, z=0.0, w=1.0)), covariance=array([0.25, 0.  , 0.  , 0.  , 0.  , 0.  , 0.  , 0.25, 0.  , 0.  , 0.  ,\n       0.  , 0.  , 0.  , 0.  , 0.  , 0.  , 0.  , 0.  , 0.  , 0.  , 0.  ,\n       0.  , 0.  , 0.  , 0.  , 0.  , 0.  , 0.  , 0.  , 0.  , 0.  , 0.  ,\n       0.  , 0.  , 0.  ])))\n\n",
+          "timed_out": false
+        },
+        {
+          "available": true,
+          "command": [
+            "/opt/ros/jazzy/bin/ros2",
+            "run",
+            "tf2_ros",
+            "tf2_echo",
+            "map",
+            "odom"
+          ],
+          "duration_ms": 4922.32,
+          "label": "map_to_odom",
+          "observed_transform": true,
+          "output_tail": "[INFO] [1789555084.464346222] [tf2_echo]: Waiting for transform map ->  odom: Invalid frame ID \"map\" passed to canTransform argument target_frame - frame does not exist\n[INFO] [1789555086.429583190] [tf2_echo]: Waiting for transform map ->  odom: Invalid frame ID \"map\" passed to canTransform argument target_frame - frame does not exist\n[INFO] [1789555089.179724786] [tf2_echo]: Waiting for transform map ->  odom: Invalid frame ID \"map\" passed to canTransform argument target_frame - frame does not exist\nAt time 15.802000000\n- Translation: [-6.470, -0.003, 0.000]\n- Rotation: in Quaternion (xyzw) [0.000, 0.000, 0.000, 1.000]\n",
+          "source_frame": "odom",
+          "target_frame": "map",
+          "timed_out": false
+        },
+        {
+          "command": [
+            "/opt/ros/jazzy/bin/ros2",
+            "service",
+            "call",
+            "/lifecycle_manager_navigation/manage_nodes",
+            "nav2_msgs/srv/ManageLifecycleNodes",
+            "{command: 0}"
+          ],
+          "duration_ms": 5533.751,
+          "label": "navigation_lifecycle_start",
+          "returncode": 0,
+          "stderr": "",
+          "stdout": "waiting for service to become available...\nrequester: making request: nav2_msgs.srv.ManageLifecycleNodes_Request(command=0)\n\nresponse:\nnav2_msgs.srv.ManageLifecycleNodes_Response(success=True)\n\n",
+          "timed_out": false
+        },
+        {
+          "command": [
+            "/opt/ros/jazzy/bin/ros2",
+            "lifecycle",
+            "get",
+            "/bt_navigator"
+          ],
+          "duration_ms": 5890.977,
+          "label": "bt_navigator_lifecycle",
+          "returncode": 0,
+          "stderr": "",
+          "stdout": "active [3]\n",
+          "timed_out": false
+        },
+        {
+          "command": [
+            "/opt/ros/jazzy/bin/ros2",
+            "action",
+            "list",
+            "-t"
+          ],
+          "duration_ms": 925.678,
+          "label": "navigate_to_pose_action",
+          "returncode": 0,
+          "stderr": "",
+          "stdout": "/assisted_teleop [nav2_msgs/action/AssistedTeleop]\n/backup [nav2_msgs/action/BackUp]\n/compute_and_track_route [nav2_msgs/action/ComputeAndTrackRoute]\n/compute_path_through_poses [nav2_msgs/action/ComputePathThroughPoses]\n/compute_path_to_pose [nav2_msgs/action/ComputePathToPose]\n/compute_route [nav2_msgs/action/ComputeRoute]\n/dock_robot [nav2_msgs/action/DockRobot]\n/drive_on_heading [nav2_msgs/action/DriveOnHeading]\n/follow_gps_waypoints [nav2_msgs/action/FollowGPSWaypoints]\n/follow_path [nav2_msgs/action/FollowPath]\n/follow_waypoints [nav2_msgs/action/FollowWaypoints]\n/navigate_through_poses [nav2_msgs/action/NavigateThroughPoses]\n/navigate_to_pose [nav2_msgs/action/NavigateToPose]\n/smooth_path [nav2_msgs/action/SmoothPath]\n/spin [nav2_msgs/action/Spin]\n/undock_robot [nav2_msgs/action/UndockRobot]\n/wait [nav2_msgs/action/Wait]\n",
+          "timed_out": false
+        }
+      ]
+    },
+    "physical_device_dependency": false,
+    "processes": [
+      {
+        "command": [
+          "/opt/ros/jazzy/bin/ros2",
+          "launch",
+          "nav2_bringup",
+          "tb4_simulation_launch.py",
+          "headless:=True",
+          "use_rviz:=False",
+          "autostart:=False",
+          "x_pose:=-6.5",
+          "y_pose:=0.0",
+          "yaw:=0.0",
+          "world:=/home/jinho/projects/factory_physical_ai_sim004R/data/simulation/sim004_navigation_proxy_world.sdf"
+        ],
+        "log_path": "/tmp/sim004-ros-pt7ep9eg/gazebo_nav2_proxy.log",
+        "log_tail": "gin navigating from current location (-6.47, -0.00) to (-6.00, 0.00)\n[component_container_isolated-8] [INFO] [1789555106.822217209] [controller_server]: Received a goal, begin computing control effort.\n[component_container_isolated-8] [WARN] [1789555106.822328664] [controller_server]: No goal checker was specified in parameter 'current_goal_checker'. Server will use only plugin loaded general_goal_checker . This warning will appear once.\n[component_container_isolated-8] [WARN] [1789555106.822353739] [controller_server]: No progress checker was specified in parameter 'current_progress_checker'. Server will use only plugin loaded progress_checker . This warning will appear once.\n[parameter_bridge-2] [INFO] [1789555106.941366181] [bridge_ros_gz]: Passing message from ROS geometry_msgs/msg/Twist to Gazebo gz.msgs.Twist (showing msg only once per type)\n[component_container_isolated-8] [INFO] [1789555107.872483639] [controller_server]: Passing new path to controller.\n[component_container_isolated-8] [INFO] [1789555108.279542580] [controller_server]: Reached the goal!\n[component_container_isolated-8] [INFO] [1789555108.280897966] [controller_server]: Optimizer reset\n[component_container_isolated-8] [INFO] [1789555108.301289489] [bt_navigator]: Goal succeeded\n[component_container_isolated-8] [INFO] [1789555112.411509166] [bt_navigator]: Begin navigating from current location (-6.15, 0.01) to (100.00, 100.00)\n[component_container_isolated-8] [WARN] [1789555112.412196774] [planner_server]: GridBased plugin failed to plan from (-6.15, 0.01) to (100.00, 100.00): \"Goal Coordinates of(100.000000, 100.000000) was outside bounds\"\n[component_container_isolated-8] [WARN] [1789555112.412275718] [planner_server]: [compute_path_to_pose] [ActionServer] Aborting handle.\n[component_container_isolated-8] [WARN] [1789555112.421725569] [bt_navigator]: [navigate_to_pose] [ActionServer] Aborting handle.\n[component_container_isolated-8] [ERROR] [1789555112.422065940] [bt_navigator]: Goal failed\n",
+        "name": "gazebo_nav2_proxy",
+        "pgid": 219798,
+        "pid": 219798,
+        "started_ms": 0.71
+      }
+    ],
+    "readiness": [
+      {
+        "command": [
+          "/opt/ros/jazzy/bin/ros2",
+          "action",
+          "list",
+          "-t"
+        ],
+        "duration_ms": 502.568,
+        "navigate_to_pose": false,
+        "returncode": 0
+      },
+      {
+        "command": [
+          "/opt/ros/jazzy/bin/ros2",
+          "action",
+          "list",
+          "-t"
+        ],
+        "duration_ms": 906.9,
+        "navigate_to_pose": false,
+        "returncode": 0
+      },
+      {
+        "bt_navigator_active": true,
+        "navigate_to_pose": true
+      }
+    ],
+    "started_at": "2026-09-16T10:37:32.155Z",
+    "startup_bound_ms": 45000
+  },
+  "generated_at": "2026-09-16T10:38:32.775Z",
+  "provenance": {
+    "assets": [
+      {
+        "path": "configs/simulation/sim004_navigation_proxy.yaml",
+        "sha256": "9ec6f3ae8b995e07275fdbd7e9c8a0cc50a7b441b9e7add028a76e75690d9c0e"
+      },
+      {
+        "path": "data/simulation/sim004_navigation_proxy_world.sdf",
+        "sha256": "c26bf7270026bce976abf4bce7f6b2a188885396281c2139970461db01486959"
+      },
+      {
+        "path": "scripts/run_simulation_navigation.py",
+        "sha256": "389b372392de00810ea62baa724510b795918a25dbb11c41b4ab3ac16644c112"
+      },
+      {
+        "path": "src/simulation_runtime/navigation_backend.py",
+        "sha256": "6d75bfe8f1ac9d71e1dcca4b8e4148304b42d4f9c53516e80502800b3ce259cb"
+      }
+    ],
+    "baseline_id": "SIM_BASELINE_V1",
+    "physical_target": false,
+    "proxy_model": "simulation_proxy_mobile_base"
+  },
+  "runtime_identity": {
+    "gazebo": {
+      "command": [
+        "gz",
+        "sim",
+        "--versions"
+      ],
+      "duration_ms": 101.591,
+      "returncode": 0,
+      "stderr": "",
+      "stdout": "8.11.0\n"
+    },
+    "nav2": {
+      "command": [
+        "/opt/ros/jazzy/bin/ros2",
+        "pkg",
+        "prefix",
+        "nav2_bringup"
+      ],
+      "duration_ms": 358.357,
+      "returncode": 0,
+      "stderr": "",
+      "stdout": "/opt/ros/jazzy\n"
+    },
+    "ros2": {
+      "command": [
+        "/opt/ros/jazzy/bin/ros2",
+        "--help"
+      ],
+      "duration_ms": 640.147,
+      "returncode": 0,
+      "stderr": "",
+      "stdout": "usage: ros2 [-h] [--use-python-default-buffering]\n            Call `ros2 <command> -h` for more detailed usage. ...\n\nros2 is an extensible command-line tool for ROS 2.\n\noptions:\n  -h, --help            show this help message and exit\n  --use-python-default-buffering\n                        Do not force line buffering in stdout and instead use\n                        the python default buffering, which might be affected\n                        by PYTHONUNBUFFERED/-u and depends on whatever stdout\n                        is interactive or not\n\nCommands:\n  action     Various action related sub-commands\n  bag        Various rosbag related sub-commands\n  component  Various component related sub-commands\n  control    Various control related sub-commands\n  daemon     Various daemon related sub-commands\n  doctor     Check ROS setup and other potential issues\n  interface  Show information about ROS interfaces\n  launch     Run a launch file\n  lifecycle  Various lifecycle related sub-commands\n  m"
+    }
+  },
+  "scenarios": [
+    {
+      "id": "success",
+      "pass": true,
+      "result": {
+        "action_id": "64ee75b7-6142-4813-a10b-1f70090409b1",
+        "arrival": {
+          "destination_id": "line-b-drop",
+          "verified": true
+        },
+        "component_version": "sim004-navigation-backend-v2",
+        "evidence_refs": [
+          {
+            "sha256": "71b4f1f6054986963fd5427071161ef0439f3ceaf8a688992e8f3e27f1b56cbb",
+            "uri": "urn:factory-evidence:sim-004:64ee75b7-6142-4813-a10b-1f70090409b1"
+          }
+        ],
+        "message_type": "result",
+        "mission_id": "c87e33c7-e477-4acb-aa70-dfe6615ad630",
+        "operation": "navigation.execute",
+        "request_id": "12530069-52aa-4884-958b-6b337a961200",
+        "result": "success",
+        "schema_version": "1.0",
+        "source_kind": "mock",
+        "status": "succeeded",
+        "timestamp": "2026-09-16T10:38:28.524Z",
+        "trace_id": "b522c9ba-a677-41dc-9e8d-b212a97d758a"
+      }
+    },
+    {
+      "id": "invalid_goal",
+      "pass": true,
+      "result": {
+        "action_id": "53ee000f-2e9f-405e-94ea-0e147c9a870d",
+        "component_version": "sim004-navigation-backend-v2",
+        "error": {
+          "category": "VALIDATION",
+          "code": "INVALID_NAVIGATION_GOAL",
+          "message": "destination or speed profile is not allowlisted",
+          "retryable": false
+        },
+        "evidence_refs": [
+          {
+            "sha256": "c5783319870b22d6660969d1db3fa2bf46b4dce3a9d2870cd1f8fc005d6e1efc",
+            "uri": "urn:factory-evidence:sim-004:53ee000f-2e9f-405e-94ea-0e147c9a870d"
+          }
+        ],
+        "message_type": "result",
+        "mission_id": "0cf0e7ca-437c-4042-a6b2-194fd2568915",
+        "operation": "navigation.execute",
+        "request_id": "4e15a5fb-1d10-4d24-8203-80fb56cf170c",
+        "result": "failure",
+        "schema_version": "1.0",
+        "source_kind": "mock",
+        "status": "failed",
+        "timestamp": "2026-09-16T10:38:28.529Z",
+        "trace_id": "22d35e87-df8e-44b6-ba65-9f2a250e3dbf"
+      }
+    },
+    {
+      "id": "unavailable",
+      "pass": true,
+      "result": {
+        "action_id": "1c91ddfd-ece4-4454-b402-3d3fa699a663",
+        "component_version": "sim004-navigation-backend-v2",
+        "error": {
+          "category": "RESOURCE_UNAVAILABLE",
+          "code": "NAVIGATION_UNAVAILABLE",
+          "message": "Nav2 lifecycle is not ready",
+          "retryable": false
+        },
+        "evidence_refs": [
+          {
+            "sha256": "78efd52473fa32ffa315da23b52ed6792fdc9adad291e71f19135d7735cce71c",
+            "uri": "urn:factory-evidence:sim-004:1c91ddfd-ece4-4454-b402-3d3fa699a663"
+          }
+        ],
+        "message_type": "result",
+        "mission_id": "3c29761e-7e62-4b71-8f4d-9df01e0a0a48",
+        "operation": "navigation.execute",
+        "request_id": "95b18299-1ae8-42f6-8c5f-28029f7e593c",
+        "result": "failure",
+        "schema_version": "1.0",
+        "source_kind": "mock",
+        "status": "failed",
+        "timestamp": "2026-09-16T10:38:28.530Z",
+        "trace_id": "3f2e8aa3-b0ec-4928-bd17-10f28f384edd"
+      }
+    },
+    {
+      "id": "blocked",
+      "pass": true,
+      "result": {
+        "action_id": "880538db-8d1d-47d1-ba8b-c2ff812913f9",
+        "component_version": "sim004-navigation-backend-v2",
+        "error": {
+          "category": "EXECUTION_FAILED",
+          "code": "NAVIGATION_ABORTED",
+          "message": "NavigateToPose did not report a successful terminal status",
+          "retryable": false
+        },
+        "evidence_refs": [
+          {
+            "sha256": "55900ff7c798949617643ec9d06cbba9209e9b33389cedb3c896bd1087def6a1",
+            "uri": "urn:factory-evidence:sim-004:880538db-8d1d-47d1-ba8b-c2ff812913f9"
+          }
+        ],
+        "message_type": "result",
+        "mission_id": "48f34a30-ce2b-4dab-8e13-33f0fa5ee059",
+        "operation": "navigation.execute",
+        "request_id": "e8880031-7430-4f0c-91c5-941a2ee997e0",
+        "result": "failure",
+        "schema_version": "1.0",
+        "source_kind": "mock",
+        "status": "failed",
+        "timestamp": "2026-09-16T10:38:32.661Z",
+        "trace_id": "23a01408-6f93-454f-8104-25a0bdf11a07"
+      }
+    },
+    {
+      "id": "timeout_reconciliation",
+      "pass": true,
+      "status": {
+        "action_id": "696f2f42-f22d-43ba-bd11-d6993bbe5035",
+        "component_version": "sim004-navigation-backend-v2",
+        "evidence_refs": [
+          {
+            "sha256": "bb8b045acd5d9862d4cf1b6b9f95ac1f357f8759dfca382bbde37faa63baf39d",
+            "uri": "urn:factory-evidence:sim-004:696f2f42-f22d-43ba-bd11-d6993bbe5035"
+          }
+        ],
+        "message_type": "result",
+        "mission_id": "2426718f-649d-475c-8307-f89c3c62ea87",
+        "observed_at": "2026-09-16T10:38:32.674Z",
+        "observed_status": "unknown",
+        "operation": "action_status.get",
+        "request_id": "6e6db1d2-8bdb-4b69-9425-cf5330987395",
+        "result": "success",
+        "schema_version": "1.0",
+        "source_kind": "mock",
+        "status": "succeeded",
+        "timestamp": "2026-09-16T10:38:32.674Z",
+        "trace_id": "55278c11-15d0-4172-aa51-2ec4928a3ab9"
+      },
+      "timeout": {
+        "action_id": "696f2f42-f22d-43ba-bd11-d6993bbe5035",
+        "component_version": "sim004-navigation-backend-v2",
+        "error": {
+          "category": "DEPENDENCY_TIMEOUT",
+          "code": "NAVIGATION_TIMEOUT",
+          "message": "NavigateToPose exceeded the bounded execution window",
+          "retryable": true
+        },
+        "evidence_refs": [
+          {
+            "sha256": "bb8b045acd5d9862d4cf1b6b9f95ac1f357f8759dfca382bbde37faa63baf39d",
+            "uri": "urn:factory-evidence:sim-004:696f2f42-f22d-43ba-bd11-d6993bbe5035"
+          }
+        ],
+        "message_type": "result",
+        "mission_id": "2426718f-649d-475c-8307-f89c3c62ea87",
+        "operation": "navigation.execute",
+        "request_id": "6d6d70cf-5841-49ec-9309-33fec48bb0db",
+        "result": "pending",
+        "schema_version": "1.0",
+        "source_kind": "mock",
+        "status": "unknown",
+        "timestamp": "2026-09-16T10:38:32.667Z",
+        "trace_id": "55278c11-15d0-4172-aa51-2ec4928a3ab9"
+      }
+    }
+  ],
+  "schema_version": "1.0",
+  "task_id": "TASK-SIM-004",
+  "task_specific_result": "SIM_NAVIGATION_BACKEND_READY"
+}

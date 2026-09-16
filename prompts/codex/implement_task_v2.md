@@ -33,6 +33,30 @@ Rules:
 - Implementation completion is not independent Review acceptance;
 - do not stage or commit.
 
+## Orchestrated Child Invocation
+
+When the current user message begins with:
+
+```text
+ORCHESTRATOR_CHILD
+worker_role=implementation
+task_id=<TASK_ID>
+```
+
+this process is already a child worker of `scripts/codex/run_task_orchestrator.py`.
+
+Treat the supplied `task_id` as the active TASK.
+
+Do **not**:
+
+- invoke or recommend `run_task_orchestrator.py`;
+- redirect the user to a terminal;
+- perform Review, Fix, Re-review, or Acceptance;
+- reinterpret the message as a host-side `Run ...` request.
+
+Execute this Implementation workflow only, then end with the mandatory
+`WORKFLOW_RESULT_JSON` marker defined above.
+
 ## Purpose
 
 Implement exactly one repository task identified by the user's current Codex message.

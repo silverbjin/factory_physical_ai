@@ -11,6 +11,7 @@ from run_task_orchestrator import (
     ModelConfig,
     OrchestratorError,
     RunContext,
+    child_prompt,
     commit_all_changes,
     commit_subject,
     default_report_base,
@@ -46,6 +47,44 @@ class OrchestratorUnitTests(unittest.TestCase):
         )
         result = parse_acceptance_result(text, task_id="TASK-SIM-003")
         self.assertEqual(result.status, "RECORDED")
+
+    def test_child_prompt_implementation(self):
+        prompt = child_prompt(
+            task_id="TASK-SIM-004",
+            worker_role="implementation",
+        )
+        self.assertTrue(prompt.startswith("ORCHESTRATOR_CHILD\n"))
+        self.assertIn("worker_role=implementation", prompt)
+        self.assertIn("task_id=TASK-SIM-004", prompt)
+        self.assertIn(
+            "worker_prompt=prompts/codex/implement_task_v2.md",
+            prompt,
+        )
+        self.assertIn("Do NOT invoke or recommend the host orchestrator.", prompt)
+
+    def test_child_prompt_rereview(self):
+        prompt = child_prompt(
+            task_id="TASK-SIM-004",
+            worker_role="rereview",
+        )
+        self.assertIn("worker_role=rereview", prompt)
+        self.assertIn(
+            "worker_prompt=prompts/codex/read_only_review_v2.md",
+            prompt,
+        )
+
+    def test_child_prompt_acceptance(self):
+        prompt = child_prompt(
+            task_id="TASK-SIM-004",
+            worker_role="acceptance",
+            accepted_commit="a" * 40,
+        )
+        self.assertIn("worker_role=acceptance", prompt)
+        self.assertIn(f"accepted_commit={'a' * 40}", prompt)
+        self.assertIn(
+            "worker_prompt=prompts/codex/record_task_acceptance_v2.md",
+            prompt,
+        )
 
     def test_expand_range(self):
         self.assertEqual(
@@ -174,6 +213,12 @@ class OrchestratorUnitTests(unittest.TestCase):
                 show_tail=0,
                 heartbeat_seconds=0,
             )
+            stage = ctx.new_stage(
+                "TASK-SIM-004",
+                "implementation",
+                ModelConfig("gpt-5.6-terra", "medium"),
+            )
+            self.assertTrue(stage.prompt_path.endswith("_prompt.txt"))
             ctx.add_error(
                 kind="TECHNICAL",
                 stage="implementation",
