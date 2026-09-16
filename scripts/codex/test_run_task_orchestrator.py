@@ -17,6 +17,11 @@ from run_task_orchestrator import (
     default_report_base,
     derive_next_action,
     expected_acceptance_filename,
+    create_manual_resume_state,
+    load_resume_checkpoint,
+    resume_checkpoint_path,
+    save_resume_checkpoint,
+    validate_resume_state,
     expand_range,
     extract_signal_lines,
     load_model_policy,
@@ -61,6 +66,21 @@ class OrchestratorUnitTests(unittest.TestCase):
             prompt,
         )
         self.assertIn("Do NOT invoke or recommend the host orchestrator.", prompt)
+
+    def test_child_prompt_resume(self):
+        prompt = child_prompt(
+            task_id="TASK-SIM-004",
+            worker_role="implementation",
+            resume=True,
+            resume_from_stage="implementation",
+            previous_run_dir="/tmp/previous-run",
+            resume_reason="token limit",
+        )
+        self.assertIn("resume=true", prompt)
+        self.assertIn("resume_from_stage=implementation", prompt)
+        self.assertIn("previous_run_dir=/tmp/previous-run", prompt)
+        self.assertIn("resume_reason=token limit", prompt)
+        self.assertIn("RESUME RULES:", prompt)
 
     def test_child_prompt_rereview(self):
         prompt = child_prompt(
@@ -113,7 +133,7 @@ class OrchestratorUnitTests(unittest.TestCase):
 
     def test_next_action_incomplete(self):
         action, steps = derive_next_action({"status": "INCOMPLETE"}, [])
-        self.assertEqual(action, "RESOLVE_IMPLEMENTATION_BLOCKER")
+        self.assertEqual(action, "RESOLVE_IMPLEMENTATION_BLOCKER_THEN_RESUME")
         self.assertTrue(steps)
 
     def test_next_action_protocol(self):
@@ -201,6 +221,72 @@ class OrchestratorUnitTests(unittest.TestCase):
             rel = validate_acceptance_write(repo, result, task_id="TASK-SIM-003", accepted_commit=accepted_commit)
             self.assertEqual(rel.as_posix(), "results/sim/SIM-003_acceptance.json")
 
+    def test_resume_checkpoint_round_trip(self):
+        with tempfile.TemporaryDirectory() as td, tempfile.TemporaryDirectory() as state_td:
+            repo = Path(td)
+            subprocess.run(["git", "init", "-q"], cwd=repo, check=True)
+            subprocess.run(["git", "config", "user.name", "Test User"], cwd=repo, check=True)
+            subprocess.run(["git", "config", "user.email", "test@example.com"], cwd=repo, check=True)
+            (repo / "seed.txt").write_text("seed\n", encoding="utf-8")
+            subprocess.run(["git", "add", "-A"], cwd=repo, check=True)
+            subprocess.run(["git", "commit", "-qm", "initial"], cwd=repo, check=True)
+
+            ctx = RunContext(
+                repo=repo,
+                target="TASK-SIM-004",
+                report_base=Path(state_td),
+                verbose=False,
+                show_tail=0,
+                heartbeat_seconds=0,
+            )
+            state = create_manual_resume_state(
+                repo,
+                "TASK-SIM-004",
+                phase="implementation",
+                max_fix_cycles=1,
+            )
+            save_resume_checkpoint(ctx, "TASK-SIM-004", state)
+            path, loaded = load_resume_checkpoint(
+                Path(state_td),
+                repo,
+                "TASK-SIM-004",
+            )
+            self.assertTrue(path.is_file())
+            self.assertEqual(loaded["phase"], "implementation")
+            validate_resume_state(repo, "TASK-SIM-004", loaded)
+
+    def test_resume_state_rejects_head_mismatch(self):
+        with tempfile.TemporaryDirectory() as td:
+            repo = Path(td)
+            subprocess.run(["git", "init", "-q"], cwd=repo, check=True)
+            subprocess.run(["git", "config", "user.name", "Test User"], cwd=repo, check=True)
+            subprocess.run(["git", "config", "user.email", "test@example.com"], cwd=repo, check=True)
+            (repo / "seed.txt").write_text("seed\n", encoding="utf-8")
+            subprocess.run(["git", "add", "-A"], cwd=repo, check=True)
+            subprocess.run(["git", "commit", "-qm", "initial"], cwd=repo, check=True)
+            state = create_manual_resume_state(
+                repo,
+                "TASK-SIM-004",
+                phase="implementation",
+                max_fix_cycles=1,
+            )
+            (repo / "later.txt").write_text("later\n", encoding="utf-8")
+            subprocess.run(["git", "add", "-A"], cwd=repo, check=True)
+            subprocess.run(["git", "commit", "-qm", "later"], cwd=repo, check=True)
+            with self.assertRaises(OrchestratorError):
+                validate_resume_state(repo, "TASK-SIM-004", state)
+
+    def test_resume_checkpoint_path_is_outside_repo(self):
+        with tempfile.TemporaryDirectory() as td, tempfile.TemporaryDirectory() as state_td:
+            repo = Path(td)
+            p = resume_checkpoint_path(
+                Path(state_td),
+                repo,
+                "TASK-SIM-004",
+            )
+            self.assertFalse(str(p).startswith(str(repo)))
+            self.assertTrue(p.name.startswith("resume_TASK-SIM-004"))
+
     def test_reports_written_outside_repo(self):
         with tempfile.TemporaryDirectory() as td, tempfile.TemporaryDirectory() as state_td:
             repo = Path(td)
@@ -235,7 +321,7 @@ class OrchestratorUnitTests(unittest.TestCase):
             self.assertTrue(md.is_file())
             self.assertTrue(js.is_file())
             self.assertFalse(str(md).startswith(str(repo)))
-            self.assertIn("RESOLVE_IMPLEMENTATION_BLOCKER", md.read_text(encoding="utf-8"))
+            self.assertIn("RESOLVE_IMPLEMENTATION_BLOCKER_THEN_RESUME", md.read_text(encoding="utf-8"))
 
 
 if __name__ == "__main__":

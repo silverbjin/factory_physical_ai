@@ -101,6 +101,38 @@ Never reinterpret `ORCHESTRATOR_CHILD` as a `Run ...` request.
 
 ---
 
+## Host-side Resume
+
+Token/context/runtime interruption does not authorize discarding target-task work.
+
+Canonical host command:
+
+```bash
+scripts/codex/resume-task <TASK_ID>
+```
+
+or:
+
+```bash
+python3 scripts/codex/run_task_orchestrator.py resume <TASK_ID>
+```
+
+`resume` uses the persistent checkpoint under the external orchestration state
+directory and re-enters exactly the interrupted lifecycle phase with a fresh
+bounded Codex child context.
+
+For runs created before checkpoint support, a manually verified bootstrap is:
+
+```bash
+python3 scripts/codex/run_task_orchestrator.py resume <TASK_ID> \
+  --from-stage <implementation|review|fix|rereview|acceptance>
+```
+
+Do not use `--force` unless branch/HEAD provenance has been manually verified.
+
+A Codex chat receiving `Resume <TASK_ID>` must not launch nested `codex exec`.
+It should direct the user to the host-terminal resume command above.
+
 ## 1. Worker Machine-result Protocol
 
 Workers launched by the host orchestrator MUST terminate with the required

@@ -53,6 +53,29 @@ Do **not**:
 Execute this Acceptance-recording workflow only, then end with the mandatory
 `ACCEPTANCE_RESULT_JSON` marker defined above.
 
+## Resume Invocation
+
+When the current `ORCHESTRATOR_CHILD` envelope contains:
+
+```text
+resume=true
+resume_from_stage=acceptance
+```
+
+continue acceptance recording from the current repository state.
+
+Normally Acceptance requires a clean worktree. During resume, a dirty worktree is
+allowed **only** when the sole changed path is the resolved
+`<TASK_SHORT>_acceptance.json` from the interrupted Acceptance attempt.
+
+Resume rules:
+
+- never modify source/tests/TASK/history;
+- validate or replace only the resolved acceptance JSON;
+- re-verify `accepted_commit`, Review provenance, Evidence path/hash, and filename;
+- end with the normal mandatory `ACCEPTANCE_RESULT_JSON` marker;
+- do not stage or commit.
+
 ## Purpose
 
 Create one machine-verifiable acceptance artifact after an independent Review
@@ -82,7 +105,7 @@ Do not perform implementation, Fix, or a new independent Review.
 Before writing anything:
 
 1. resolve `tasks/<TASK_ID>.md`;
-2. verify the Git worktree is clean;
+2. verify the Git worktree is clean, except for the narrow `resume=true` acceptance-file-only case defined above;
 3. verify:
 
 ```bash

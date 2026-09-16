@@ -57,6 +57,31 @@ Do **not**:
 Execute this Implementation workflow only, then end with the mandatory
 `WORKFLOW_RESULT_JSON` marker defined above.
 
+## Resume Invocation
+
+When the current `ORCHESTRATOR_CHILD` envelope contains:
+
+```text
+resume=true
+resume_from_stage=implementation
+```
+
+continue this worker stage from the **current repository/worktree state** using a
+fresh bounded Codex context.
+
+Resume rules:
+
+- do not reset, restore, clean, stash, checkout, or discard target-task changes;
+- inspect `git status --short` before deciding what remains;
+- preserve partial target-task implementation/Fix/Evidence/history;
+- do not repeat lifecycle stages that the host checkpoint has already completed;
+- prior incomplete history records are audit context, not proof of completion;
+- complete the current `implementation` stage and re-run its required validation;
+- end with the normal mandatory `WORKFLOW_RESULT_JSON` marker.
+
+If the supplied worktree cannot be reconciled safely with the active TASK, stop
+with the stage's non-success result rather than discarding work.
+
 ## Purpose
 
 Implement exactly one repository task identified by the user's current Codex message.

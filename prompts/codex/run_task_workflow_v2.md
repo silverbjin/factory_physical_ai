@@ -104,3 +104,16 @@ The exact child envelope for every stage is persisted beside its stage log as:
 ```text
 <stage>_prompt.txt
 ```
+
+
+## Interruption / Resume
+
+If a child stops because of token/context/runtime limits, preserve the worktree
+and use the host-side checkpointed resume command:
+
+```bash
+scripts/codex/resume-task <TASK_ID>
+```
+
+Do not restart the TASK from Implementation unless the checkpoint phase is
+`implementation`.

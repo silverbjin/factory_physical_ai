@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+if [[ $# -lt 1 ]]; then
+  echo "Usage: scripts/codex/resume-task TASK-ID [--from-stage STAGE] [--force]" >&2
+  exit 2
+fi
+
+TASK_ID="$1"
+shift
+
+exec python3 scripts/codex/run_task_orchestrator.py resume "$TASK_ID" "$@"
