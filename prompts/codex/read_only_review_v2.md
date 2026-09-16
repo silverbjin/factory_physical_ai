@@ -809,19 +809,3 @@ acceptance_handoff:
 10. If any required handoff fact is unavailable or ambiguous, eligibility is false.
 
 11. supporting_artifacts includes only task-owned artifacts actually hash-verified during review.
-
-**Workflow:**
-
-Implementation commit
-        ↓
-READ-ONLY REVIEW
-        ↓
-ACCEPT / REJECT
-        ↓
-persist review under docs/task_history/<TASK_ID>/
-        ↓
-if ACCEPT
-        ↓
-record_task_acceptance_v2.md
-        ↓
-results/reviews/<SHORT_TASK_ID>_acceptance.json
