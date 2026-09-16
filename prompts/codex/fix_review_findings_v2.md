@@ -650,6 +650,30 @@ Prefer:
 minimum sufficient corrective context
 ```
 
+Keep:
+
+```text
+Do not stage or commit.
+```
+
+Ready:
+
+```text
+WORKFLOW_RESULT_JSON: {"v":1,"task_id":"<TASK_ID>","stage":"fix","status":"READY_FOR_RE_REVIEW","workflow_complete":true}
+```
+
+Not ready, workflow bookkeeping complete:
+
+```text
+WORKFLOW_RESULT_JSON: {"v":1,"task_id":"<TASK_ID>","stage":"fix","status":"NOT_READY_FOR_RE_REVIEW","workflow_complete":true}
+```
+
+Mandatory Evidence/history/finalization failed:
+
+```text
+WORKFLOW_RESULT_JSON: {"v":1,"task_id":"<TASK_ID>","stage":"fix","status":"NOT_READY_FOR_RE_REVIEW","workflow_complete":false}
+```
+
 while preserving correctness and independent re-reviewability.
 
 Begin the corrective workflow for the TASK identifier supplied in the current user message.
