@@ -256,3 +256,104 @@ For every child stage the runner now saves the exact child prompt:
 ```
 
 If a child routes incorrectly, inspect the `_prompt.txt` file first.
+
+
+# Checkpointed Resume
+
+## Normal interruption recovery
+
+If a child stops because of token/context/runtime limits, do **not** delete the
+dirty worktree and do not restart the full TASK.
+
+Inspect the latest report:
+
+```bash
+scripts/codex/show-last-run
+```
+
+Then resume:
+
+```bash
+scripts/codex/resume-task TASK-SIM-004
+```
+
+Equivalent:
+
+```bash
+python3 scripts/codex/run_task_orchestrator.py resume TASK-SIM-004
+```
+
+The runner loads:
+
+```text
+~/.local/state/codex-task-orchestrator/<repo>/resume_TASK-SIM-004.json
+```
+
+and continues exactly the checkpointed phase.
+
+Examples:
+
+```text
+interrupted during Implementation -> resume Implementation only
+Implementation complete, Review interrupted -> resume Review
+REJECT committed, Fix interrupted -> resume Fix
+Fix complete, Re-review interrupted -> resume Re-review
+ACCEPT snapshot committed, Acceptance interrupted -> resume Acceptance
+```
+
+A fresh child Codex context is used on resume, so the exhausted token context is
+not reused.
+
+## Manual fresh-session prompt
+
+Every nonterminal report also attempts to write:
+
+```text
+resume_prompt.txt
+```
+
+inside the external run directory. It is a ready-to-paste
+`ORCHESTRATOR_CHILD ... resume=true` prompt for the interrupted worker stage.
+
+Use this only as a fallback when host-side resume is unavailable.
+
+## Older runs without checkpoint support
+
+After verifying branch/HEAD/worktree provenance:
+
+```bash
+python3 scripts/codex/run_task_orchestrator.py resume TASK-SIM-004 \
+  --from-stage implementation
+```
+
+Allowed stages:
+
+```text
+implementation
+review
+fix
+rereview
+acceptance
+```
+
+`--force` bypasses branch/HEAD mismatch protection and should be used only after
+manual provenance verification.
+
+
+## `resume-task` wrapper options
+
+The wrapper accepts resume-subcommand options:
+
+```bash
+scripts/codex/resume-task TASK-SIM-004 --from-stage implementation
+scripts/codex/resume-task TASK-SIM-004 --force
+```
+
+For global orchestrator options such as `--report-dir` or `--max-fix-cycles`,
+use the Python entry point directly and place global options before `resume`:
+
+```bash
+python3 scripts/codex/run_task_orchestrator.py \
+  --max-fix-cycles 2 \
+  resume TASK-SIM-004
+```

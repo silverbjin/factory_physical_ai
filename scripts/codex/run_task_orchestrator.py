@@ -36,8 +36,8 @@ PROTECTED_BRANCHES = {"main", "master"}
 DEFAULT_MODEL_POLICY_PATH = Path("config/codex_model_policy.json")
 SIGNAL_RE = re.compile(
     r"(status|result|evidence|error|fail|failed|failure|blocked|blocker|"
-    r"incomplete|reject|missing|cannot|unable|next|deviation|reason|"
-    r"실패|차단|원인|다음|불완전)",
+    r"incomplete|reject|missing|cannot|unable|next|deviation|reason|token|context|limit|quota|credit|"
+    r"실패|차단|원인|다음|불완전|토큰|한도)",
     re.IGNORECASE,
 )
 
@@ -487,6 +487,10 @@ def child_prompt(
     task_id: str,
     worker_role: str,
     accepted_commit: str | None = None,
+    resume: bool = False,
+    resume_from_stage: str | None = None,
+    previous_run_dir: str | None = None,
+    resume_reason: str | None = None,
 ) -> str:
     """Build an explicit child-worker envelope so Codex cannot confuse the worker
     with the host-side `Run ...` entry point.
@@ -505,6 +509,14 @@ def child_prompt(
     if accepted_commit is not None:
         lines.append(f"accepted_commit={accepted_commit}")
 
+    if resume:
+        lines.append("resume=true")
+        lines.append(f"resume_from_stage={resume_from_stage or worker_role}")
+        if previous_run_dir:
+            lines.append(f"previous_run_dir={previous_run_dir}")
+        if resume_reason:
+            lines.append(f"resume_reason={resume_reason}")
+
     lines.extend(
         [
             "",
@@ -520,7 +532,244 @@ def child_prompt(
             "as the last non-empty line of the final response.",
         ]
     )
+
+    if resume:
+        lines.extend(
+            [
+                "",
+                "RESUME RULES:",
+                "- Continue from the current repository/worktree state.",
+                "- Do not reset, restore, clean, stash, checkout, or discard target-task changes.",
+                "- Inspect existing partial target-task work before editing.",
+                "- Do not repeat already completed lifecycle stages.",
+                "- Complete only the declared resumed worker stage.",
+                "- Re-run that stage's required validation before reporting completion.",
+                "- Treat prior incomplete history/events as audit context, not proof of completion.",
+            ]
+        )
+
     return "\n".join(lines)
+
+
+
+RESUMABLE_PHASES = {
+    "implementation",
+    "review",
+    "commit_implementation_review",
+    "fix",
+    "rereview",
+    "commit_fix_rereview",
+    "acceptance",
+    "commit_acceptance",
+}
+
+
+def resume_checkpoint_path(report_base: Path, repo: Path, task_id: str) -> Path:
+    repo_key = safe_name(repo.name or "repo")
+    base = report_base.expanduser().resolve() / repo_key
+    base.mkdir(parents=True, exist_ok=True)
+    return base / f"resume_{safe_name(task_id)}.json"
+
+
+def _atomic_write_json(path: Path, payload: dict[str, Any]) -> None:
+    tmp = path.with_suffix(path.suffix + ".tmp")
+    tmp.write_text(
+        json.dumps(payload, ensure_ascii=False, indent=2) + "\n",
+        encoding="utf-8",
+    )
+    tmp.replace(path)
+
+
+def save_resume_checkpoint(
+    ctx: RunContext,
+    task_id: str,
+    state: dict[str, Any],
+) -> Path:
+    path = ctx.run_dir.parent / f"resume_{safe_name(task_id)}.json"
+    state["schema_version"] = 1
+    state["task_id"] = task_id
+    state["repo"] = str(ctx.repo)
+    state["current_run_dir"] = str(ctx.run_dir)
+    state["updated_at"] = iso_now()
+    try:
+        state["current_head"] = run_git(
+            ctx.repo, "rev-parse", "HEAD"
+        ).stdout.strip()
+    except Exception:
+        state.setdefault("current_head", None)
+    _atomic_write_json(path, state)
+    return path
+
+
+def load_resume_checkpoint(
+    report_base: Path,
+    repo: Path,
+    task_id: str,
+) -> tuple[Path, dict[str, Any]]:
+    path = resume_checkpoint_path(report_base, repo, task_id)
+    if not path.is_file():
+        raise OrchestratorError(
+            "No resume checkpoint found for "
+            f"{task_id}: {path}. "
+            "Use `resume <TASK_ID> --from-stage <stage>` only when "
+            "manually recovering a run created before checkpoint support."
+        )
+    try:
+        state = json.loads(path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError as exc:
+        raise OrchestratorError(
+            f"Invalid resume checkpoint JSON: {path}"
+        ) from exc
+    if state.get("task_id") != task_id:
+        raise OrchestratorError(
+            f"Resume checkpoint TASK mismatch: {state.get('task_id')} != {task_id}"
+        )
+    return path, state
+
+
+def create_manual_resume_state(
+    repo: Path,
+    task_id: str,
+    *,
+    phase: str,
+    max_fix_cycles: int,
+) -> dict[str, Any]:
+    if phase not in RESUMABLE_PHASES:
+        raise OrchestratorError(f"Unsupported resume phase: {phase}")
+    branch = current_branch(repo)
+    head = run_git(repo, "rev-parse", "HEAD").stdout.strip()
+    accepted_commit = head if phase in {"acceptance", "commit_acceptance"} else None
+    return {
+        "schema_version": 1,
+        "task_id": task_id,
+        "repo": str(repo),
+        "branch": branch,
+        "initial_head": head,
+        "current_head": head,
+        "phase": phase,
+        "status": "MANUAL_RESUME",
+        "review_status": None,
+        "accepted_commit": accepted_commit,
+        "acceptance_path": None,
+        "acceptance_commit": None,
+        "fix_cycles_used": 0,
+        "max_fix_cycles": max_fix_cycles,
+        "commits": [],
+        "previous_run_dir": None,
+        "current_run_dir": None,
+        "updated_at": iso_now(),
+    }
+
+
+def transition_checkpoint(
+    ctx: RunContext,
+    state: dict[str, Any],
+    *,
+    phase: str | None = None,
+    status: str | None = None,
+    **updates: Any,
+) -> Path:
+    if phase is not None:
+        state["phase"] = phase
+    if status is not None:
+        state["status"] = status
+    state.update(updates)
+    return save_resume_checkpoint(ctx, str(state["task_id"]), state)
+
+
+def mark_checkpoint_interrupted(
+    report_base: Path,
+    repo: Path,
+    task_id: str,
+    *,
+    error_type: str,
+    error_message: str,
+) -> None:
+    try:
+        path, state = load_resume_checkpoint(report_base, repo, task_id)
+    except Exception:
+        return
+    state["status"] = "INTERRUPTED"
+    state["last_error_type"] = error_type
+    state["last_error"] = error_message
+    state["updated_at"] = iso_now()
+    try:
+        state["current_head"] = run_git(
+            repo, "rev-parse", "HEAD"
+        ).stdout.strip()
+    except Exception:
+        pass
+    _atomic_write_json(path, state)
+
+
+def validate_resume_state(
+    repo: Path,
+    task_id: str,
+    state: dict[str, Any],
+    *,
+    force: bool = False,
+) -> None:
+    if state.get("task_id") != task_id:
+        raise OrchestratorError("Resume state TASK mismatch.")
+    if state.get("phase") == "accepted" or state.get("status") == "ACCEPTED":
+        raise OrchestratorError(f"{task_id} is already ACCEPTED; nothing to resume.")
+    phase = str(state.get("phase") or "")
+    if phase not in RESUMABLE_PHASES:
+        raise OrchestratorError(
+            f"Checkpoint phase is not resumable: {phase or '<missing>'}"
+        )
+
+    current = current_branch(repo)
+    expected_branch = state.get("branch")
+    if expected_branch and current != expected_branch and not force:
+        raise OrchestratorError(
+            f"Resume branch mismatch: current={current}, checkpoint={expected_branch}. "
+            "Use --force only after manually verifying repository provenance."
+        )
+
+    head = run_git(repo, "rev-parse", "HEAD").stdout.strip()
+    expected_head = state.get("current_head")
+    if expected_head and head != expected_head and not force:
+        raise OrchestratorError(
+            f"Resume HEAD mismatch: current={head}, checkpoint={expected_head}. "
+            "Use --force only after manually verifying the intervening Git change."
+        )
+
+
+def resumable_worker_role(phase: str) -> str | None:
+    return {
+        "implementation": "implementation",
+        "review": "review",
+        "fix": "fix",
+        "rereview": "rereview",
+        "acceptance": "acceptance",
+    }.get(phase)
+
+
+def write_manual_resume_prompt(
+    ctx: RunContext,
+    state: dict[str, Any],
+) -> Path | None:
+    phase = str(state.get("phase") or "")
+    role = resumable_worker_role(phase)
+    if role is None:
+        return None
+    accepted_commit = state.get("accepted_commit") if role == "acceptance" else None
+    prompt = child_prompt(
+        task_id=str(state["task_id"]),
+        worker_role=role,
+        accepted_commit=accepted_commit,
+        resume=True,
+        resume_from_stage=phase,
+        previous_run_dir=state.get("previous_run_dir")
+        or state.get("current_run_dir"),
+        resume_reason=state.get("last_error")
+        or state.get("status"),
+    )
+    path = ctx.run_dir / "resume_prompt.txt"
+    path.write_text(prompt, encoding="utf-8")
+    return path
+
 
 
 def run_codex_text(
@@ -835,34 +1084,60 @@ def validate_acceptance_write(repo: Path, result: AcceptanceResult, *, task_id: 
     return rel_path
 
 
-def record_acceptance_and_commit(
+def run_acceptance_record(
     repo: Path,
     *,
     task_id: str,
     accepted_commit: str,
     config: ModelConfig,
     ctx: RunContext,
-) -> tuple[str, str]:
-    ensure_clean_worktree(repo)
+    resume: bool = False,
+    previous_run_dir: str | None = None,
+    resume_reason: str | None = None,
+) -> str:
+    if resume:
+        dirty = changed_paths(repo)
+        if dirty:
+            expected_name = expected_acceptance_filename(task_id)
+            if len(dirty) != 1 or Path(dirty[0]).name != expected_name:
+                raise OrchestratorError(
+                    "Acceptance resume may start dirty only when the sole changed "
+                    f"path is {expected_name}; got {dirty}"
+                )
+    else:
+        ensure_clean_worktree(repo)
+
     head = run_git(repo, "rev-parse", "HEAD").stdout.strip()
     if head != accepted_commit:
         raise OrchestratorError(
             "Acceptance recording requires HEAD to equal accepted_commit. "
             f"HEAD={head}, accepted_commit={accepted_commit}"
         )
+
     prompt = child_prompt(
         task_id=task_id,
         worker_role="acceptance",
         accepted_commit=accepted_commit,
+        resume=resume,
+        resume_from_stage="acceptance" if resume else None,
+        previous_run_dir=previous_run_dir,
+        resume_reason=resume_reason,
     )
-    result = run_acceptance(prompt, repo, config, ctx=ctx, task_id=task_id)
+    result = run_acceptance(
+        prompt,
+        repo,
+        config,
+        ctx=ctx,
+        task_id=task_id,
+    )
     rel_path = validate_acceptance_write(
-        repo, result, task_id=task_id, accepted_commit=accepted_commit
+        repo,
+        result,
+        task_id=task_id,
+        accepted_commit=accepted_commit,
     )
-    acceptance_commit = commit_all_changes(
-        repo, task_id=task_id, boundary="acceptance", ctx=ctx
-    )
-    return rel_path.as_posix(), acceptance_commit
+    return rel_path.as_posix()
+
 
 
 def stage_event(result: StageResult, config: ModelConfig, *, role: str) -> dict[str, Any]:
@@ -937,6 +1212,27 @@ def finalize_accept(
             config=acceptance_config,
             ctx=ctx,
         )
+    except KeyboardInterrupt:
+        if args.command in {"task", "resume"}:
+            mark_checkpoint_interrupted(
+                args.report_dir,
+                repo,
+                args.task_id,
+                error_type="INTERRUPTED",
+                error_message="Host orchestration interrupted by user/process.",
+            )
+        ctx.add_error(
+            kind="INTERRUPTED",
+            stage="orchestrator",
+            task_id=target,
+            message="Host orchestration interrupted by user/process.",
+        )
+        result = {
+            "status": "ERROR",
+            "error_type": "INTERRUPTED",
+            "error": "Host orchestration interrupted by user/process.",
+            "target": target,
+        }
     except OrchestratorError as exc:
         ctx.add_error(
             kind="ACCEPTANCE",
@@ -983,130 +1279,519 @@ def run_task(
     *,
     ctx: RunContext,
     max_fix_cycles: int = 1,
+    resume_state: dict[str, Any] | None = None,
+    resume_force: bool = False,
 ) -> dict[str, Any]:
-    ensure_clean_worktree(repo)
+    """Run or resume one TASK lifecycle.
+
+    The checkpoint is written outside the repository before every lifecycle stage.
+    If a child is interrupted by token/context/runtime limits, `resume` re-enters
+    exactly that phase with a fresh bounded Codex context and preserves the
+    existing target-task worktree.
+    """
     events: list[dict[str, Any]] = []
-    commits: list[str] = []
 
-    implementation = run_stage(
-        child_prompt(task_id=task_id, worker_role="implementation"),
-        repo,
-        policy["implementation"],
-        ctx=ctx,
-        task_id=task_id,
-        role="implementation",
-    )
-    require_result(
-        implementation,
-        task_id=task_id,
-        stage="implementation",
-        allowed={"COMPLETE", "INCOMPLETE"},
-    )
-    events.append(stage_event(implementation, policy["implementation"], role="implementation"))
-    if not workflow_is_complete(implementation):
-        record_technical_stop(ctx, task_id, "implementation", "Implementation workflow bookkeeping incomplete.")
-        return {"task_id": task_id, "status": "IMPLEMENTATION_WORKFLOW_INCOMPLETE", "commits": commits, "events": events}
-    if implementation.status != "COMPLETE":
-        record_technical_stop(ctx, task_id, "implementation", "Implementation technical result is INCOMPLETE/BLOCKED.")
-        return {"task_id": task_id, "status": "INCOMPLETE", "commits": commits, "events": events}
-
-    review = run_stage(
-        child_prompt(task_id=task_id, worker_role="review"),
-        repo,
-        policy["review"],
-        ctx=ctx,
-        task_id=task_id,
-        role="review",
-    )
-    require_result(review, task_id=task_id, stage="review", allowed={"ACCEPT", "REJECT"})
-    events.append(stage_event(review, policy["review"], role="review"))
-    if not workflow_is_complete(review):
-        record_technical_stop(ctx, task_id, "review", "Review workflow bookkeeping incomplete.")
-        return {"task_id": task_id, "status": "REVIEW_WORKFLOW_INCOMPLETE", "commits": commits, "events": events}
-
-    first_commit = commit_all_changes(
-        repo,
-        task_id=task_id,
-        boundary="implementation-review",
-        review_status=review.status,
-        ctx=ctx,
-    )
-    commits.append(first_commit)
-    events.append(commit_event(task_id=task_id, boundary="implementation-review", review_status=review.status, commit_hash=first_commit))
-
-    if review.status == "ACCEPT":
-        return finalize_accept(
-            repo,
-            task_id=task_id,
-            accepted_commit=first_commit,
-            acceptance_config=policy["acceptance"],
-            commits=commits,
-            events=events,
-            ctx=ctx,
-        )
-
-    if max_fix_cycles == 0:
-        return {"task_id": task_id, "status": "REJECTED_NO_FIX", "commits": commits, "events": events}
-
-    for _ in range(max_fix_cycles):
+    if resume_state is None:
         ensure_clean_worktree(repo)
-        fix = run_stage(
-            child_prompt(task_id=task_id, worker_role="fix"),
+        initial_head = run_git(repo, "rev-parse", "HEAD").stdout.strip()
+        state: dict[str, Any] = {
+            "schema_version": 1,
+            "task_id": task_id,
+            "repo": str(repo),
+            "branch": current_branch(repo),
+            "initial_head": initial_head,
+            "current_head": initial_head,
+            "phase": "implementation",
+            "status": "RUNNING",
+            "review_status": None,
+            "accepted_commit": None,
+            "acceptance_path": None,
+            "acceptance_commit": None,
+            "fix_cycles_used": 0,
+            "max_fix_cycles": max_fix_cycles,
+            "commits": [],
+            "previous_run_dir": None,
+            "current_run_dir": str(ctx.run_dir),
+            "updated_at": iso_now(),
+        }
+        save_resume_checkpoint(ctx, task_id, state)
+        resuming = False
+        resume_source_dir: str | None = None
+        resume_reason: str | None = None
+    else:
+        state = dict(resume_state)
+        validate_resume_state(
             repo,
-            policy["fix"],
-            ctx=ctx,
-            task_id=task_id,
-            role="fix",
+            task_id,
+            state,
+            force=resume_force,
         )
-        require_result(
-            fix,
-            task_id=task_id,
-            stage="fix",
-            allowed={"READY_FOR_RE_REVIEW", "NOT_READY_FOR_RE_REVIEW"},
-        )
-        events.append(stage_event(fix, policy["fix"], role="fix"))
-        if not workflow_is_complete(fix):
-            record_technical_stop(ctx, task_id, "fix", "Fix workflow bookkeeping incomplete.")
-            return {"task_id": task_id, "status": "FIX_WORKFLOW_INCOMPLETE", "commits": commits, "events": events}
-        if fix.status != "READY_FOR_RE_REVIEW":
-            record_technical_stop(ctx, task_id, "fix", "Fix is NOT_READY_FOR_RE_REVIEW.")
-            return {"task_id": task_id, "status": "FIX_NOT_READY", "commits": commits, "events": events}
+        resume_source_dir = state.get("current_run_dir") or state.get("previous_run_dir")
+        resume_reason = state.get("last_error") or state.get("status")
+        state["previous_run_dir"] = resume_source_dir
+        state["current_run_dir"] = str(ctx.run_dir)
+        state["max_fix_cycles"] = max_fix_cycles
+        state["status"] = "RESUMING"
+        save_resume_checkpoint(ctx, task_id, state)
+        resuming = True
+        ctx.progress("RESUME", f"{task_id} from phase={state['phase']}")
 
-        rereview = run_stage(
-            child_prompt(task_id=task_id, worker_role="rereview"),
-            repo,
-            policy["rereview"],
-            ctx=ctx,
-            task_id=task_id,
-            role="rereview",
-        )
-        require_result(rereview, task_id=task_id, stage="review", allowed={"ACCEPT", "REJECT"})
-        events.append(stage_event(rereview, policy["rereview"], role="rereview"))
-        if not workflow_is_complete(rereview):
-            record_technical_stop(ctx, task_id, "rereview", "Re-review workflow bookkeeping incomplete.")
-            return {"task_id": task_id, "status": "REVIEW_WORKFLOW_INCOMPLETE", "commits": commits, "events": events}
+    commits: list[str] = list(state.get("commits") or [])
+    phase = str(state["phase"])
+    resume_phase = phase if resuming else None
 
-        fix_commit = commit_all_changes(
-            repo,
-            task_id=task_id,
-            boundary="fix-rereview",
-            review_status=rereview.status,
-            ctx=ctx,
+    def is_resumed_stage(name: str) -> bool:
+        return bool(resuming and resume_phase == name)
+
+    while True:
+        transition_checkpoint(
+            ctx,
+            state,
+            phase=phase,
+            status="RUNNING" if not is_resumed_stage(phase) else "RESUMING",
+            commits=commits,
         )
-        commits.append(fix_commit)
-        events.append(commit_event(task_id=task_id, boundary="fix-rereview", review_status=rereview.status, commit_hash=fix_commit))
-        if rereview.status == "ACCEPT":
-            return finalize_accept(
+
+        if phase == "implementation":
+            implementation = run_stage(
+                child_prompt(
+                    task_id=task_id,
+                    worker_role="implementation",
+                    resume=is_resumed_stage("implementation"),
+                    resume_from_stage="implementation" if is_resumed_stage("implementation") else None,
+                    previous_run_dir=resume_source_dir if is_resumed_stage("implementation") else None,
+                    resume_reason=resume_reason if is_resumed_stage("implementation") else None,
+                ),
+                repo,
+                policy["implementation"],
+                ctx=ctx,
+                task_id=task_id,
+                role="implementation",
+            )
+            require_result(
+                implementation,
+                task_id=task_id,
+                stage="implementation",
+                allowed={"COMPLETE", "INCOMPLETE"},
+            )
+            events.append(
+                stage_event(
+                    implementation,
+                    policy["implementation"],
+                    role="implementation",
+                )
+            )
+            if not workflow_is_complete(implementation):
+                record_technical_stop(
+                    ctx,
+                    task_id,
+                    "implementation",
+                    "Implementation workflow bookkeeping incomplete.",
+                )
+                transition_checkpoint(
+                    ctx,
+                    state,
+                    phase="implementation",
+                    status="BLOCKED",
+                    last_error="Implementation workflow bookkeeping incomplete.",
+                )
+                return {
+                    "task_id": task_id,
+                    "status": "IMPLEMENTATION_WORKFLOW_INCOMPLETE",
+                    "commits": commits,
+                    "events": events,
+                }
+            if implementation.status != "COMPLETE":
+                record_technical_stop(
+                    ctx,
+                    task_id,
+                    "implementation",
+                    "Implementation technical result is INCOMPLETE/BLOCKED.",
+                )
+                transition_checkpoint(
+                    ctx,
+                    state,
+                    phase="implementation",
+                    status="BLOCKED",
+                    last_error="Implementation technical result is INCOMPLETE/BLOCKED.",
+                )
+                return {
+                    "task_id": task_id,
+                    "status": "INCOMPLETE",
+                    "commits": commits,
+                    "events": events,
+                }
+            phase = "review"
+            resuming = False
+            continue
+
+        if phase == "review":
+            review = run_stage(
+                child_prompt(
+                    task_id=task_id,
+                    worker_role="review",
+                    resume=is_resumed_stage("review"),
+                    resume_from_stage="review" if is_resumed_stage("review") else None,
+                    previous_run_dir=resume_source_dir if is_resumed_stage("review") else None,
+                    resume_reason=resume_reason if is_resumed_stage("review") else None,
+                ),
+                repo,
+                policy["review"],
+                ctx=ctx,
+                task_id=task_id,
+                role="review",
+            )
+            require_result(
+                review,
+                task_id=task_id,
+                stage="review",
+                allowed={"ACCEPT", "REJECT"},
+            )
+            events.append(stage_event(review, policy["review"], role="review"))
+            if not workflow_is_complete(review):
+                record_technical_stop(
+                    ctx,
+                    task_id,
+                    "review",
+                    "Review workflow bookkeeping incomplete.",
+                )
+                transition_checkpoint(
+                    ctx,
+                    state,
+                    phase="review",
+                    status="BLOCKED",
+                    last_error="Review workflow bookkeeping incomplete.",
+                )
+                return {
+                    "task_id": task_id,
+                    "status": "REVIEW_WORKFLOW_INCOMPLETE",
+                    "commits": commits,
+                    "events": events,
+                }
+            state["review_status"] = review.status
+            phase = "commit_implementation_review"
+            resuming = False
+            continue
+
+        if phase == "commit_implementation_review":
+            review_status = state.get("review_status")
+            if review_status not in {"ACCEPT", "REJECT"}:
+                raise OrchestratorError(
+                    "Cannot resume implementation-review commit without review_status."
+                )
+            first_commit = commit_all_changes(
                 repo,
                 task_id=task_id,
-                accepted_commit=fix_commit,
-                acceptance_config=policy["acceptance"],
-                commits=commits,
-                events=events,
+                boundary="implementation-review",
+                review_status=str(review_status),
                 ctx=ctx,
             )
+            if first_commit not in commits:
+                commits.append(first_commit)
+            events.append(
+                commit_event(
+                    task_id=task_id,
+                    boundary="implementation-review",
+                    review_status=str(review_status),
+                    commit_hash=first_commit,
+                )
+            )
+            if review_status == "ACCEPT":
+                state["accepted_commit"] = first_commit
+                phase = "acceptance"
+            else:
+                if max_fix_cycles == 0:
+                    transition_checkpoint(
+                        ctx,
+                        state,
+                        phase="fix",
+                        status="REJECTED_NO_FIX",
+                        commits=commits,
+                    )
+                    return {
+                        "task_id": task_id,
+                        "status": "REJECTED_NO_FIX",
+                        "commits": commits,
+                        "events": events,
+                    }
+                phase = "fix"
 
-    return {"task_id": task_id, "status": "REJECTED_AFTER_REVIEW", "commits": commits, "events": events}
+            transition_checkpoint(
+                ctx,
+                state,
+                phase=phase,
+                status="RUNNING",
+                commits=commits,
+                accepted_commit=state.get("accepted_commit"),
+            )
+            continue
+
+        if phase == "fix":
+            used = int(state.get("fix_cycles_used") or 0)
+            if used >= max_fix_cycles:
+                transition_checkpoint(
+                    ctx,
+                    state,
+                    phase="fix",
+                    status="REJECTED_AFTER_REVIEW",
+                    commits=commits,
+                )
+                return {
+                    "task_id": task_id,
+                    "status": "REJECTED_AFTER_REVIEW",
+                    "commits": commits,
+                    "events": events,
+                }
+
+            fix = run_stage(
+                child_prompt(
+                    task_id=task_id,
+                    worker_role="fix",
+                    resume=is_resumed_stage("fix"),
+                    resume_from_stage="fix" if is_resumed_stage("fix") else None,
+                    previous_run_dir=resume_source_dir if is_resumed_stage("fix") else None,
+                    resume_reason=resume_reason if is_resumed_stage("fix") else None,
+                ),
+                repo,
+                policy["fix"],
+                ctx=ctx,
+                task_id=task_id,
+                role="fix",
+            )
+            require_result(
+                fix,
+                task_id=task_id,
+                stage="fix",
+                allowed={"READY_FOR_RE_REVIEW", "NOT_READY_FOR_RE_REVIEW"},
+            )
+            events.append(stage_event(fix, policy["fix"], role="fix"))
+            if not workflow_is_complete(fix):
+                record_technical_stop(
+                    ctx,
+                    task_id,
+                    "fix",
+                    "Fix workflow bookkeeping incomplete.",
+                )
+                transition_checkpoint(
+                    ctx,
+                    state,
+                    phase="fix",
+                    status="BLOCKED",
+                    last_error="Fix workflow bookkeeping incomplete.",
+                )
+                return {
+                    "task_id": task_id,
+                    "status": "FIX_WORKFLOW_INCOMPLETE",
+                    "commits": commits,
+                    "events": events,
+                }
+            if fix.status != "READY_FOR_RE_REVIEW":
+                record_technical_stop(
+                    ctx,
+                    task_id,
+                    "fix",
+                    "Fix is NOT_READY_FOR_RE_REVIEW.",
+                )
+                transition_checkpoint(
+                    ctx,
+                    state,
+                    phase="fix",
+                    status="BLOCKED",
+                    last_error="Fix is NOT_READY_FOR_RE_REVIEW.",
+                )
+                return {
+                    "task_id": task_id,
+                    "status": "FIX_NOT_READY",
+                    "commits": commits,
+                    "events": events,
+                }
+
+            state["fix_cycles_used"] = used + 1
+            phase = "rereview"
+            resuming = False
+            continue
+
+        if phase == "rereview":
+            rereview = run_stage(
+                child_prompt(
+                    task_id=task_id,
+                    worker_role="rereview",
+                    resume=is_resumed_stage("rereview"),
+                    resume_from_stage="rereview" if is_resumed_stage("rereview") else None,
+                    previous_run_dir=resume_source_dir if is_resumed_stage("rereview") else None,
+                    resume_reason=resume_reason if is_resumed_stage("rereview") else None,
+                ),
+                repo,
+                policy["rereview"],
+                ctx=ctx,
+                task_id=task_id,
+                role="rereview",
+            )
+            require_result(
+                rereview,
+                task_id=task_id,
+                stage="review",
+                allowed={"ACCEPT", "REJECT"},
+            )
+            events.append(
+                stage_event(
+                    rereview,
+                    policy["rereview"],
+                    role="rereview",
+                )
+            )
+            if not workflow_is_complete(rereview):
+                record_technical_stop(
+                    ctx,
+                    task_id,
+                    "rereview",
+                    "Re-review workflow bookkeeping incomplete.",
+                )
+                transition_checkpoint(
+                    ctx,
+                    state,
+                    phase="rereview",
+                    status="BLOCKED",
+                    last_error="Re-review workflow bookkeeping incomplete.",
+                )
+                return {
+                    "task_id": task_id,
+                    "status": "REVIEW_WORKFLOW_INCOMPLETE",
+                    "commits": commits,
+                    "events": events,
+                }
+            state["review_status"] = rereview.status
+            phase = "commit_fix_rereview"
+            resuming = False
+            continue
+
+        if phase == "commit_fix_rereview":
+            review_status = state.get("review_status")
+            if review_status not in {"ACCEPT", "REJECT"}:
+                raise OrchestratorError(
+                    "Cannot resume fix-rereview commit without review_status."
+                )
+            fix_commit = commit_all_changes(
+                repo,
+                task_id=task_id,
+                boundary="fix-rereview",
+                review_status=str(review_status),
+                ctx=ctx,
+            )
+            if fix_commit not in commits:
+                commits.append(fix_commit)
+            events.append(
+                commit_event(
+                    task_id=task_id,
+                    boundary="fix-rereview",
+                    review_status=str(review_status),
+                    commit_hash=fix_commit,
+                )
+            )
+            if review_status == "ACCEPT":
+                state["accepted_commit"] = fix_commit
+                phase = "acceptance"
+            else:
+                if int(state.get("fix_cycles_used") or 0) < max_fix_cycles:
+                    phase = "fix"
+                else:
+                    transition_checkpoint(
+                        ctx,
+                        state,
+                        phase="fix",
+                        status="REJECTED_AFTER_REVIEW",
+                        commits=commits,
+                    )
+                    return {
+                        "task_id": task_id,
+                        "status": "REJECTED_AFTER_REVIEW",
+                        "commits": commits,
+                        "events": events,
+                    }
+
+            transition_checkpoint(
+                ctx,
+                state,
+                phase=phase,
+                status="RUNNING",
+                commits=commits,
+                accepted_commit=state.get("accepted_commit"),
+            )
+            continue
+
+        if phase == "acceptance":
+            accepted_commit = state.get("accepted_commit")
+            if not accepted_commit:
+                accepted_commit = run_git(repo, "rev-parse", "HEAD").stdout.strip()
+                state["accepted_commit"] = accepted_commit
+            acceptance_path = run_acceptance_record(
+                repo,
+                task_id=task_id,
+                accepted_commit=str(accepted_commit),
+                config=policy["acceptance"],
+                ctx=ctx,
+                resume=is_resumed_stage("acceptance"),
+                previous_run_dir=resume_source_dir if is_resumed_stage("acceptance") else None,
+                resume_reason=resume_reason if is_resumed_stage("acceptance") else None,
+            )
+            state["acceptance_path"] = acceptance_path
+            phase = "commit_acceptance"
+            resuming = False
+            transition_checkpoint(
+                ctx,
+                state,
+                phase=phase,
+                status="RUNNING",
+                acceptance_path=acceptance_path,
+                accepted_commit=state.get("accepted_commit"),
+                commits=commits,
+            )
+            continue
+
+        if phase == "commit_acceptance":
+            acceptance_path = state.get("acceptance_path")
+            if not acceptance_path:
+                raise OrchestratorError(
+                    "Cannot commit acceptance without acceptance_path."
+                )
+            acceptance_commit = commit_all_changes(
+                repo,
+                task_id=task_id,
+                boundary="acceptance",
+                ctx=ctx,
+            )
+            if acceptance_commit not in commits:
+                commits.append(acceptance_commit)
+            state["acceptance_commit"] = acceptance_commit
+            events.append(
+                acceptance_event(
+                    task_id=task_id,
+                    accepted_commit=str(state["accepted_commit"]),
+                    acceptance_path=str(acceptance_path),
+                    acceptance_commit=acceptance_commit,
+                    config=policy["acceptance"],
+                )
+            )
+            transition_checkpoint(
+                ctx,
+                state,
+                phase="accepted",
+                status="ACCEPTED",
+                commits=commits,
+                acceptance_commit=acceptance_commit,
+            )
+            return {
+                "task_id": task_id,
+                "status": "ACCEPTED",
+                "accepted_commit": state["accepted_commit"],
+                "acceptance_path": acceptance_path,
+                "acceptance_commit": acceptance_commit,
+                "commits": commits,
+                "events": events,
+            }
+
+        raise OrchestratorError(f"Unsupported lifecycle phase: {phase}")
+
 
 
 def expand_range(start: str, end: str) -> list[str]:
@@ -1175,20 +1860,22 @@ def derive_next_action(result: dict[str, Any], errors: list[ErrorRecord]) -> tup
     if status in {"ACCEPTED", "COMPLETE"}:
         return "NONE", ["No TASK lifecycle action is required."]
     if status in {"INCOMPLETE", "IMPLEMENTATION_WORKFLOW_INCOMPLETE"}:
-        return "RESOLVE_IMPLEMENTATION_BLOCKER", [
+        return "RESOLVE_IMPLEMENTATION_BLOCKER_THEN_RESUME", [
             "Inspect the failing Implementation final response and full log listed below.",
-            "Resolve the implementation/environment blocker and re-run the required focused validation.",
-            "Reconcile the dirty worktree before starting a new automated run.",
+            "Resolve the implementation/environment blocker without discarding target-task work.",
+            "Then resume with: scripts/codex/resume-task <TASK_ID>",
         ]
     if status == "REVIEW_WORKFLOW_INCOMPLETE":
-        return "REPAIR_REVIEW_WORKFLOW", [
+        return "REPAIR_REVIEW_WORKFLOW_THEN_RESUME", [
             "Inspect the Review/Re-review final response and protocol/error log.",
             "Do not claim acceptance until an independent Review completes and is committed.",
+            "Then resume the checkpointed stage with: scripts/codex/resume-task <TASK_ID>",
         ]
     if status in {"FIX_NOT_READY", "FIX_WORKFLOW_INCOMPLETE"}:
-        return "RESOLVE_FIX_BLOCKER", [
+        return "RESOLVE_FIX_BLOCKER_THEN_RESUME", [
             "Inspect the Fix final response/log and remaining Findings.",
-            "Resolve the blocker before independent re-review.",
+            "Resolve the blocker without discarding target-task work.",
+            "Then resume with: scripts/codex/resume-task <TASK_ID>",
         ]
     if status in {"REJECTED_AFTER_REVIEW", "REJECTED_NO_FIX"}:
         return "MANUAL_REVIEW_REQUIRED", [
@@ -1196,9 +1883,10 @@ def derive_next_action(result: dict[str, Any], errors: list[ErrorRecord]) -> tup
             "Decide whether another Fix cycle is authorized before continuing.",
         ]
     if status == "ACCEPTANCE_RECORD_FAILED":
-        return "REPAIR_ACCEPTANCE_RECORDING", [
+        return "REPAIR_ACCEPTANCE_RECORDING_THEN_RESUME", [
             "Inspect the Acceptance worker final response/log.",
             "Do not start a downstream TASK until acceptance JSON and acceptance commit are valid.",
+            "Then resume with: scripts/codex/resume-task <TASK_ID>",
         ]
     if status == "STOPPED":
         stopping = result.get("stopping_status")
@@ -1214,9 +1902,10 @@ def derive_next_action(result: dict[str, Any], errors: list[ErrorRecord]) -> tup
             "Keep the technical failure signals separate from the protocol failure.",
         ]
     if "CHILD_PROCESS" in kinds:
-        return "INSPECT_CHILD_PROCESS_FAILURE", [
+        return "INSPECT_CHILD_PROCESS_FAILURE_THEN_RESUME", [
             "Inspect the child full log and final response.",
-            "Resolve the process/runtime failure before retrying orchestration.",
+            "If the child stopped because of token/context/runtime limits, preserve the current worktree.",
+            "Resume the checkpointed stage with: scripts/codex/resume-task <TASK_ID>",
         ]
     if "GIT" in kinds or "AUTO_COMMIT" in " ".join(e.message for e in errors):
         return "RECONCILE_GIT_STATE", [
@@ -1258,7 +1947,26 @@ def write_reports(
         "worktree_status": repo_status,
         "stages": [asdict(r) for r in ctx.stage_records],
         "errors": [asdict(e) for e in ctx.errors],
+        "resume_checkpoint": None,
+        "resume_command": None,
+        "manual_resume_prompt": None,
     }
+
+    terminal_task_for_resume = result_terminal_task(result)
+    if terminal_task_for_resume:
+        checkpoint = ctx.run_dir.parent / f"resume_{safe_name(terminal_task_for_resume)}.json"
+        if checkpoint.is_file():
+            report["resume_checkpoint"] = str(checkpoint)
+            report["resume_command"] = f"scripts/codex/resume-task {terminal_task_for_resume}"
+            try:
+                resume_state = json.loads(checkpoint.read_text(encoding="utf-8"))
+                if resume_state.get("status") != "ACCEPTED":
+                    manual_prompt_path = write_manual_resume_prompt(ctx, resume_state)
+                    if manual_prompt_path:
+                        report["manual_resume_prompt"] = str(manual_prompt_path)
+            except Exception:
+                pass
+
     json_path = ctx.run_dir / "run_report.json"
     json_path.write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
 
@@ -1313,7 +2021,14 @@ def write_reports(
     lines += ["## Repository State", "", "```text", repo_status or "CLEAN", "```", ""]
     lines += ["## Next Action", "", f"`{next_action}`", ""]
     for i, step in enumerate(next_steps, 1):
-        lines.append(f"{i}. {step}")
+        rendered = step.replace("<TASK_ID>", terminal_task or "<TASK_ID>")
+        lines.append(f"{i}. {rendered}")
+    if report.get("resume_command"):
+        lines += ["", f"Resume command: `{report['resume_command']}`"]
+    if report.get("resume_checkpoint"):
+        lines.append(f"Resume checkpoint: `{report['resume_checkpoint']}`")
+    if report.get("manual_resume_prompt"):
+        lines.append(f"Manual fresh-session prompt: `{report['manual_resume_prompt']}`")
     lines += ["", "## Logs", ""]
     for r in ctx.stage_records:
         lines.append(f"- `{r.task_id}:{r.role}` prompt: `{r.prompt_path}`")
@@ -1356,8 +2071,15 @@ def print_final_console(ctx: RunContext, result: dict[str, Any], summary_path: P
                 print(f"      {signal}")
     next_action, steps = derive_next_action(result, ctx.errors)
     print(f"\nNext action: {next_action}")
+    terminal_task = result_terminal_task(result)
     for i, step in enumerate(steps, 1):
-        print(f"  {i}. {step}")
+        rendered = step.replace("<TASK_ID>", terminal_task or "<TASK_ID>")
+        print(f"  {i}. {rendered}")
+    if terminal_task:
+        checkpoint = ctx.run_dir.parent / f"resume_{safe_name(terminal_task)}.json"
+        if checkpoint.is_file() and status not in {"ACCEPTED", "COMPLETE"}:
+            print(f"  Resume: scripts/codex/resume-task {terminal_task}")
+            print(f"  Checkpoint: {checkpoint}")
     print(f"\nSummary: {summary_path}")
     print(f"Report:  {json_path}")
     print_failure_tail(ctx)
@@ -1380,10 +2102,40 @@ def main() -> int:
     range_parser = sub.add_parser("range")
     range_parser.add_argument("start_task_id")
     range_parser.add_argument("end_task_id")
+
+    resume_parser = sub.add_parser(
+        "resume",
+        help="Resume the last checkpointed stage for one TASK.",
+    )
+    resume_parser.add_argument("task_id")
+    resume_parser.add_argument(
+        "--from-stage",
+        choices=[
+            "implementation",
+            "review",
+            "fix",
+            "rereview",
+            "acceptance",
+        ],
+        default=None,
+        help=(
+            "Manual bootstrap/override stage. Use when resuming an older run "
+            "that has no checkpoint, or only after verifying repository state."
+        ),
+    )
+    resume_parser.add_argument(
+        "--force",
+        action="store_true",
+        help="Allow branch/HEAD mismatch after manual provenance verification.",
+    )
+
     args = parser.parse_args()
 
     repo = args.repo.resolve()
-    target = args.task_id if args.command == "task" else f"{args.start_task_id}..{args.end_task_id}"
+    if args.command in {"task", "resume"}:
+        target = args.task_id
+    else:
+        target = f"{args.start_task_id}..{args.end_task_id}"
     ctx = RunContext(
         repo=repo,
         target=target,
@@ -1399,12 +2151,15 @@ def main() -> int:
         ctx.progress("RUN", target)
         if not (repo / ".git").exists():
             raise OrchestratorError(f"Not a Git repository: {repo}")
-        branch = ensure_automation_branch(repo, allow_protected_branch=args.allow_protected_branch)
-        ensure_clean_worktree(repo)
-        ctx.progress("CHECK", f"branch={branch}, worktree=CLEAN")
+        branch = ensure_automation_branch(
+            repo,
+            allow_protected_branch=args.allow_protected_branch,
+        )
         policy = load_model_policy(repo, args.model_policy)
 
         if args.command == "task":
+            ensure_clean_worktree(repo)
+            ctx.progress("CHECK", f"branch={branch}, worktree=CLEAN")
             result = run_task(
                 args.task_id,
                 repo,
@@ -1412,7 +2167,53 @@ def main() -> int:
                 ctx=ctx,
                 max_fix_cycles=args.max_fix_cycles,
             )
+        elif args.command == "resume":
+            if args.from_stage:
+                checkpoint_path = resume_checkpoint_path(
+                    args.report_dir, repo, args.task_id
+                )
+                if checkpoint_path.is_file():
+                    _, resume_state = load_resume_checkpoint(
+                        args.report_dir, repo, args.task_id
+                    )
+                    resume_state["phase"] = args.from_stage
+                else:
+                    resume_state = create_manual_resume_state(
+                        repo,
+                        args.task_id,
+                        phase=args.from_stage,
+                        max_fix_cycles=args.max_fix_cycles,
+                    )
+            else:
+                _, resume_state = load_resume_checkpoint(
+                    args.report_dir, repo, args.task_id
+                )
+
+            validate_resume_state(
+                repo,
+                args.task_id,
+                resume_state,
+                force=args.force,
+            )
+            ctx.progress(
+                "CHECK",
+                (
+                    f"branch={branch}, resume_phase={resume_state['phase']}, "
+                    f"worktree={'CLEAN' if not worktree_status(repo) else 'PRESERVED-DIRTY'}"
+                ),
+            )
+            result = run_task(
+                args.task_id,
+                repo,
+                policy,
+                ctx=ctx,
+                max_fix_cycles=args.max_fix_cycles,
+                resume_state=resume_state,
+                resume_force=args.force,
+            )
         else:
+            ensure_clean_worktree(repo)
+            ctx.progress("CHECK", f"branch={branch}, worktree=CLEAN")
             result = run_range(
                 args.start_task_id,
                 args.end_task_id,
@@ -1427,6 +2228,14 @@ def main() -> int:
             for role, cfg in policy.items()
         }
     except ChildProtocolError as exc:
+        if args.command in {"task", "resume"}:
+            mark_checkpoint_interrupted(
+                args.report_dir,
+                repo,
+                exc.task_id,
+                error_type="CHILD_PROTOCOL",
+                error_message=str(exc),
+            )
         result = {
             "status": "ERROR",
             "error_type": "CHILD_PROTOCOL",
@@ -1435,6 +2244,14 @@ def main() -> int:
             "failed_stage": exc.role,
         }
     except ChildProcessError as exc:
+        if args.command in {"task", "resume"}:
+            mark_checkpoint_interrupted(
+                args.report_dir,
+                repo,
+                exc.task_id,
+                error_type="CHILD_PROCESS",
+                error_message=str(exc),
+            )
         result = {
             "status": "ERROR",
             "error_type": "CHILD_PROCESS",
@@ -1459,7 +2276,7 @@ def main() -> int:
     summary_path, json_path = write_reports(ctx, result=result, branch=branch, repo_status=repo_status)
     print_final_console(ctx, result, summary_path, json_path)
 
-    if args.command == "task":
+    if args.command in {"task", "resume"}:
         return 0 if result.get("status") == "ACCEPTED" else 1
     return 0 if result.get("status") == "COMPLETE" else 1
 

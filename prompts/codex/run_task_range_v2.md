@@ -49,3 +49,16 @@ Each TASK lifecycle uses the same explicit `ORCHESTRATOR_CHILD` protocol as the
 single-TASK runner. No previous TASK's worker context is reused.
 
 Each stage prompt is persisted in the external run directory for dispatch auditing.
+
+
+## Interruption / Resume
+
+If a child stops because of token/context/runtime limits, preserve the worktree
+and use the host-side checkpointed resume command:
+
+```bash
+scripts/codex/resume-task <TASK_ID>
+```
+
+Do not restart the TASK from Implementation unless the checkpoint phase is
+`implementation`.
