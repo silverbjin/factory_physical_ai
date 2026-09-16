@@ -1,0 +1,11 @@
+{
+  "schema_version": 1,
+  "task_id": "TASK-SIM-004",
+  "status": "ACCEPT",
+  "accepted_commit": "b7e8266abd17f48c18cca94d9433db50fd55464d",
+  "review_record": "docs/task_history/TASK-SIM-004/05_review.md",
+  "evidence": {
+    "path": "results/simulation/SIM-004_navigation_backend.json",
+    "sha256": "b4c0ce91dde6c2f92c57ea6a227149362279993dee0dec4fd1ab12877e73f1d9"
+  }
+}

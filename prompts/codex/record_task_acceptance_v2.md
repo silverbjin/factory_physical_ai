@@ -27,6 +27,32 @@ Rules:
 - create/replace only the resolved acceptance JSON;
 - do not stage or commit; the external orchestrator owns the acceptance-record commit.
 
+## Orchestrated Child Invocation
+
+When the current user message begins with:
+
+```text
+ORCHESTRATOR_CHILD
+worker_role=acceptance
+task_id=<TASK_ID>
+accepted_commit=<COMMIT>
+```
+
+this process is already a child worker of `scripts/codex/run_task_orchestrator.py`.
+
+Treat the supplied `task_id` and `accepted_commit` as authoritative orchestration
+inputs, subject to the verification rules in this prompt.
+
+Do **not**:
+
+- invoke or recommend `run_task_orchestrator.py`;
+- redirect the user to a terminal;
+- perform Implementation, Fix, or a new Review;
+- reinterpret the message as a host-side `Run ...` request.
+
+Execute this Acceptance-recording workflow only, then end with the mandatory
+`ACCEPTANCE_RESULT_JSON` marker defined above.
+
 ## Purpose
 
 Create one machine-verifiable acceptance artifact after an independent Review

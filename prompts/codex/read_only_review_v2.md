@@ -34,6 +34,41 @@ Rules:
 - if an acceptance handoff is emitted, place it **before** the final `WORKFLOW_RESULT_JSON`;
 - do not stage or commit.
 
+## Orchestrated Child Invocation
+
+When the current user message begins with either:
+
+```text
+ORCHESTRATOR_CHILD
+worker_role=review
+task_id=<TASK_ID>
+```
+
+or:
+
+```text
+ORCHESTRATOR_CHILD
+worker_role=rereview
+task_id=<TASK_ID>
+```
+
+this process is already a child worker of `scripts/codex/run_task_orchestrator.py`.
+
+Treat the supplied `task_id` as the active TASK.
+
+For `worker_role=rereview`, perform the same independent Read-only Review workflow
+against the current post-Fix repository state.
+
+Do **not**:
+
+- invoke or recommend `run_task_orchestrator.py`;
+- redirect the user to a terminal;
+- implement or fix findings;
+- reinterpret the message as a host-side `Run ...` request.
+
+Execute this Review workflow only, then end with the mandatory
+`WORKFLOW_RESULT_JSON` marker defined above.
+
 ## Purpose
 
 Perform an independent review of exactly one implementation TASK identified by the user's current Codex message.

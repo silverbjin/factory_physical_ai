@@ -111,6 +111,7 @@ class StageRunRecord:
     workflow_complete: bool | None = None
     log_path: str | None = None
     final_path: str | None = None
+    prompt_path: str | None = None
     tokens_reported: int | None = None
     signals: list[str] = field(default_factory=list)
     error_type: str | None = None
@@ -171,6 +172,7 @@ class RunContext:
             started_at=iso_now(),
             log_path=str(self.run_dir / f"{stem}.log"),
             final_path=str(self.run_dir / f"{stem}_final.txt"),
+            prompt_path=str(self.run_dir / f"{stem}_prompt.txt"),
         )
         self.stage_records.append(record)
         return record
@@ -470,6 +472,57 @@ def _reader_thread(stream: Any, q: queue.Queue[str | None]) -> None:
         q.put(None)
 
 
+
+CHILD_ROLE_PROMPTS = {
+    "implementation": "prompts/codex/implement_task_v2.md",
+    "review": "prompts/codex/read_only_review_v2.md",
+    "rereview": "prompts/codex/read_only_review_v2.md",
+    "fix": "prompts/codex/fix_review_findings_v2.md",
+    "acceptance": "prompts/codex/record_task_acceptance_v2.md",
+}
+
+
+def child_prompt(
+    *,
+    task_id: str,
+    worker_role: str,
+    accepted_commit: str | None = None,
+) -> str:
+    """Build an explicit child-worker envelope so Codex cannot confuse the worker
+    with the host-side `Run ...` entry point.
+    """
+    if worker_role not in CHILD_ROLE_PROMPTS:
+        raise OrchestratorError(f"Unsupported child worker role: {worker_role}")
+
+    lines = [
+        "ORCHESTRATOR_CHILD",
+        "protocol_version=1",
+        f"worker_role={worker_role}",
+        f"task_id={task_id}",
+        f"worker_prompt={CHILD_ROLE_PROMPTS[worker_role]}",
+    ]
+
+    if accepted_commit is not None:
+        lines.append(f"accepted_commit={accepted_commit}")
+
+    lines.extend(
+        [
+            "",
+            "You are already running as a child worker of",
+            "scripts/codex/run_task_orchestrator.py.",
+            "",
+            "Do NOT invoke or recommend the host orchestrator.",
+            "Do NOT redirect this work back to a normal terminal.",
+            "Do NOT reinterpret this message as a host-side `Run ...` request.",
+            "Execute exactly the declared worker_role using worker_prompt.",
+            "Resolve only the supplied task_id.",
+            "Finish with the mandatory machine-result marker required by worker_prompt",
+            "as the last non-empty line of the final response.",
+        ]
+    )
+    return "\n".join(lines)
+
+
 def run_codex_text(
     prompt: str,
     repo: Path,
@@ -485,6 +538,8 @@ def run_codex_text(
     record = ctx.new_stage(task_id, role, config)
     log_path = Path(record.log_path or "")
     final_path = Path(record.final_path or "")
+    prompt_path = Path(record.prompt_path or "")
+    prompt_path.write_text(prompt, encoding="utf-8")
     ctx.progress("START", f"{task_id} {role.upper()} — {config.model} / {config.reasoning_effort}")
 
     with tempfile.NamedTemporaryFile(
@@ -795,7 +850,11 @@ def record_acceptance_and_commit(
             "Acceptance recording requires HEAD to equal accepted_commit. "
             f"HEAD={head}, accepted_commit={accepted_commit}"
         )
-    prompt = f"Record {task_id} acceptance for commit {accepted_commit}"
+    prompt = child_prompt(
+        task_id=task_id,
+        worker_role="acceptance",
+        accepted_commit=accepted_commit,
+    )
     result = run_acceptance(prompt, repo, config, ctx=ctx, task_id=task_id)
     rel_path = validate_acceptance_write(
         repo, result, task_id=task_id, accepted_commit=accepted_commit
@@ -930,7 +989,7 @@ def run_task(
     commits: list[str] = []
 
     implementation = run_stage(
-        f"Implement {task_id}",
+        child_prompt(task_id=task_id, worker_role="implementation"),
         repo,
         policy["implementation"],
         ctx=ctx,
@@ -952,7 +1011,7 @@ def run_task(
         return {"task_id": task_id, "status": "INCOMPLETE", "commits": commits, "events": events}
 
     review = run_stage(
-        task_id,
+        child_prompt(task_id=task_id, worker_role="review"),
         repo,
         policy["review"],
         ctx=ctx,
@@ -992,7 +1051,7 @@ def run_task(
     for _ in range(max_fix_cycles):
         ensure_clean_worktree(repo)
         fix = run_stage(
-            f"Fix {task_id}",
+            child_prompt(task_id=task_id, worker_role="fix"),
             repo,
             policy["fix"],
             ctx=ctx,
@@ -1014,7 +1073,7 @@ def run_task(
             return {"task_id": task_id, "status": "FIX_NOT_READY", "commits": commits, "events": events}
 
         rereview = run_stage(
-            task_id,
+            child_prompt(task_id=task_id, worker_role="rereview"),
             repo,
             policy["rereview"],
             ctx=ctx,
@@ -1257,6 +1316,7 @@ def write_reports(
         lines.append(f"{i}. {step}")
     lines += ["", "## Logs", ""]
     for r in ctx.stage_records:
+        lines.append(f"- `{r.task_id}:{r.role}` prompt: `{r.prompt_path}`")
         lines.append(f"- `{r.task_id}:{r.role}` log: `{r.log_path}`")
         lines.append(f"- `{r.task_id}:{r.role}` final: `{r.final_path}`")
     lines += ["", f"Machine report: `{json_path}`", ""]
