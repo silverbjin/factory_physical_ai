@@ -1,0 +1,19 @@
+simulation:
+  baseline_id: SIM_BASELINE_V1
+  ros_distro: jazzy
+  gazebo_release: harmonic
+  model_label: simulation_proxy_mobile_base
+  physical_target: false
+  world: data/simulation/sim004_navigation_proxy_world.sdf
+  destinations: [line-b-drop, blocked-bay]
+  speed_profiles: [sim-safe-v1]
+nav2_facing:
+  action: navigate_to_pose
+  lifecycle_required: true
+bridge:
+  transport: ros_gz_bridge
+  physical_device_access: false
+process_bounds:
+  startup_ms: 5000
+  execution_ms: 1000
+  cleanup_ms: 1000

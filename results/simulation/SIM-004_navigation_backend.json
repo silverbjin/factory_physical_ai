@@ -1,0 +1,232 @@
+{
+  "baseline_binding": {
+    "acceptance_path": "results/reviews/SIM-003_acceptance.json",
+    "acceptance_sha256": "8e5220041f6b31dcbfed0e214b14ecc6bc55af0c2571999faa4be68d647d03e7",
+    "baseline_id": "SIM_BASELINE_V1",
+    "bridge_configuration": "configs/simulation/sim004_navigation_proxy.yaml",
+    "path": "results/simulation/SIM-003_baseline.json",
+    "runtime": {
+      "gazebo": {
+        "release": "harmonic",
+        "required_release": "harmonic",
+        "status": "PASS",
+        "version": "8.11.0"
+      },
+      "nav2": {
+        "status": "PASS"
+      },
+      "ros2": {
+        "measured_distro": "jazzy",
+        "required_distro": "jazzy",
+        "status": "PASS"
+      }
+    },
+    "sha256": "97f92b1bd13ab2df0db2546cfca096eaf47c1076b72698bc1a47f72780fc7cb3"
+  },
+  "bounded_lifecycle": {
+    "cleanup_bound_ms": 1000,
+    "cleanup_complete": true,
+    "execution_bound_ms": 1000,
+    "physical_device_dependency": false,
+    "startup_bound_ms": 5000
+  },
+  "generated_at": "2026-09-16T07:08:45.824567Z",
+  "provenance": {
+    "assets": [
+      {
+        "path": "configs/simulation/sim004_navigation_proxy.yaml",
+        "sha256": "9ec6f3ae8b995e07275fdbd7e9c8a0cc50a7b441b9e7add028a76e75690d9c0e"
+      },
+      {
+        "path": "data/simulation/sim004_navigation_proxy_world.sdf",
+        "sha256": "9c8f2856f45b0340b9a814de43d11f6a8304df67958df4080529ce71e20e91bf"
+      },
+      {
+        "path": "scripts/run_simulation_navigation.py",
+        "sha256": "6d5c670492db9feaf45c86b4a807d17f6765ee7a3ff7d9f2052da9e3a7445cb3"
+      },
+      {
+        "path": "src/simulation_runtime/navigation_backend.py",
+        "sha256": "6d7f0adab0aebbc71abb0da3596f82cd05caf4d59fe0fb2201f1c6ea483183b2"
+      }
+    ],
+    "baseline_id": "SIM_BASELINE_V1",
+    "physical_target": false,
+    "proxy_model": "simulation_proxy_mobile_base"
+  },
+  "scenarios": [
+    {
+      "id": "success",
+      "pass": true,
+      "result": {
+        "action_id": "9036b009-f6b3-42e6-8ccc-22e4ce8e790e",
+        "arrival": {
+          "destination_id": "line-b-drop",
+          "verified": true
+        },
+        "component_version": "sim004-navigation-backend-v1",
+        "evidence_refs": [
+          {
+            "sha256": "89bc64fa194b13517f2d72c8646d0117c2d911fcbf9cf81ea0e6e2c7b32674d5",
+            "uri": "urn:factory-evidence:sim-004:9036b009-f6b3-42e6-8ccc-22e4ce8e790e"
+          }
+        ],
+        "message_type": "result",
+        "mission_id": "4f3bbda4-1c58-465a-87f6-52c8801a9a74",
+        "operation": "navigation.execute",
+        "request_id": "15b8c2ab-9659-429c-a0c0-78d26334e638",
+        "result": "success",
+        "schema_version": "1.0",
+        "source_kind": "mock",
+        "status": "succeeded",
+        "timestamp": "2026-09-16T07:08:45.816Z",
+        "trace_id": "90eeca15-41c5-43ec-8a5d-9d462ec48248"
+      }
+    },
+    {
+      "id": "invalid_goal",
+      "pass": true,
+      "result": {
+        "action_id": "5b8b0620-addd-4dd6-b172-653800a4dc8c",
+        "component_version": "sim004-navigation-backend-v1",
+        "error": {
+          "category": "VALIDATION",
+          "code": "INVALID_NAVIGATION_GOAL",
+          "message": "destination or speed profile is not allowlisted",
+          "retryable": false
+        },
+        "evidence_refs": [
+          {
+            "sha256": "58c9d02af54d2d494194f26c335c64652e695af060e24e67de424106fb2664cf",
+            "uri": "urn:factory-evidence:sim-004:5b8b0620-addd-4dd6-b172-653800a4dc8c"
+          }
+        ],
+        "message_type": "result",
+        "mission_id": "27b7881d-3889-43c8-a55f-9b2a6c101f39",
+        "operation": "navigation.execute",
+        "request_id": "e126ae12-018a-44e8-a6c9-81771b8e9b87",
+        "result": "failure",
+        "schema_version": "1.0",
+        "source_kind": "mock",
+        "status": "failed",
+        "timestamp": "2026-09-16T07:08:45.818Z",
+        "trace_id": "5e24aaba-659c-4f14-9396-3a2d2d233002"
+      }
+    },
+    {
+      "id": "unavailable",
+      "pass": true,
+      "result": {
+        "action_id": "a78e5f49-620f-4a20-95c4-1e42e17e6992",
+        "component_version": "sim004-navigation-backend-v1",
+        "error": {
+          "category": "RESOURCE_UNAVAILABLE",
+          "code": "NAVIGATION_UNAVAILABLE",
+          "message": "Nav2 lifecycle is not ready",
+          "retryable": false
+        },
+        "evidence_refs": [
+          {
+            "sha256": "53ee7c5b37c8e5e8073065cb3703a973deb3a1422522d4f136d62f267e00d3c4",
+            "uri": "urn:factory-evidence:sim-004:a78e5f49-620f-4a20-95c4-1e42e17e6992"
+          }
+        ],
+        "message_type": "result",
+        "mission_id": "2f49fbf7-5939-4bc5-a913-9c156acd5071",
+        "operation": "navigation.execute",
+        "request_id": "84d3ba74-e996-4cc4-8f5d-8283bc4f0847",
+        "result": "failure",
+        "schema_version": "1.0",
+        "source_kind": "mock",
+        "status": "failed",
+        "timestamp": "2026-09-16T07:08:45.819Z",
+        "trace_id": "9f522c47-e860-4bc7-8691-c182637c3571"
+      }
+    },
+    {
+      "id": "blocked",
+      "pass": true,
+      "result": {
+        "action_id": "210b4c93-a6d0-4316-b187-589098d268f0",
+        "component_version": "sim004-navigation-backend-v1",
+        "error": {
+          "category": "EXECUTION_FAILED",
+          "code": "NAVIGATION_ABORTED",
+          "message": "proxy world route is blocked or aborted",
+          "retryable": false
+        },
+        "evidence_refs": [
+          {
+            "sha256": "30f03911faa567c0dd1104d0b538ad9f9a5b62fb9a19b72dba235f93fe3a4bb4",
+            "uri": "urn:factory-evidence:sim-004:210b4c93-a6d0-4316-b187-589098d268f0"
+          }
+        ],
+        "message_type": "result",
+        "mission_id": "c9d71ff0-7e9d-4bff-9bd5-1c057a5a20d4",
+        "operation": "navigation.execute",
+        "request_id": "adde4e66-283c-4ad4-b721-912e4e15e14a",
+        "result": "failure",
+        "schema_version": "1.0",
+        "source_kind": "mock",
+        "status": "failed",
+        "timestamp": "2026-09-16T07:08:45.820Z",
+        "trace_id": "a05bffd9-a250-4941-8d1e-41c9cc117f2b"
+      }
+    },
+    {
+      "id": "timeout_reconciliation",
+      "pass": true,
+      "status": {
+        "action_id": "bc90b5e9-50b3-4d94-8f38-0c31f4bd6512",
+        "component_version": "sim004-navigation-backend-v1",
+        "evidence_refs": [
+          {
+            "sha256": "101b7841fd97a383adc7e68a3e67d6ec5c776131127789f7afee3998178aa8ac",
+            "uri": "urn:factory-evidence:sim-004:bc90b5e9-50b3-4d94-8f38-0c31f4bd6512"
+          }
+        ],
+        "message_type": "result",
+        "mission_id": "8ca94afe-23c4-4fea-8f9a-985fc34f0a4c",
+        "observed_at": "2026-09-16T07:08:45.824Z",
+        "observed_status": "succeeded",
+        "operation": "action_status.get",
+        "request_id": "47e71815-62c8-4f43-be55-756c83d8e1b1",
+        "result": "success",
+        "schema_version": "1.0",
+        "source_kind": "mock",
+        "status": "succeeded",
+        "timestamp": "2026-09-16T07:08:45.824Z",
+        "trace_id": "3adc5f62-7563-4753-ba6a-5a9fbea03798"
+      },
+      "timeout": {
+        "action_id": "bc90b5e9-50b3-4d94-8f38-0c31f4bd6512",
+        "component_version": "sim004-navigation-backend-v1",
+        "error": {
+          "category": "DEPENDENCY_TIMEOUT",
+          "code": "NAVIGATION_TIMEOUT",
+          "message": "execution bound elapsed before authoritative outcome",
+          "retryable": true
+        },
+        "evidence_refs": [
+          {
+            "sha256": "101b7841fd97a383adc7e68a3e67d6ec5c776131127789f7afee3998178aa8ac",
+            "uri": "urn:factory-evidence:sim-004:bc90b5e9-50b3-4d94-8f38-0c31f4bd6512"
+          }
+        ],
+        "message_type": "result",
+        "mission_id": "8ca94afe-23c4-4fea-8f9a-985fc34f0a4c",
+        "operation": "navigation.execute",
+        "request_id": "1845f385-92fb-4158-be05-4757c3cfd0dd",
+        "result": "pending",
+        "schema_version": "1.0",
+        "source_kind": "mock",
+        "status": "unknown",
+        "timestamp": "2026-09-16T07:08:45.821Z",
+        "trace_id": "3adc5f62-7563-4753-ba6a-5a9fbea03798"
+      }
+    }
+  ],
+  "schema_version": "1.0",
+  "task_id": "TASK-SIM-004",
+  "task_specific_result": "SIM_NAVIGATION_BACKEND_READY"
+}

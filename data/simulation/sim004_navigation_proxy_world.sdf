@@ -1,0 +1,12 @@
+<?xml version="1.0" ?>
+<sdf version="1.9">
+  <!-- TASK-SIM-004: generic Simulation proxy only; this is not a myAGV model. -->
+  <world name="sim004_navigation_proxy_world">
+    <gravity>0 0 -9.8</gravity>
+    <model name="simulation_proxy_mobile_base">
+      <static>true</static>
+      <link name="base_link"><pose>0 0 0.1 0 0 0</pose></link>
+    </model>
+    <model name="blocked_route_obstacle"><static>true</static><link name="obstacle"/></model>
+  </world>
+</sdf>
