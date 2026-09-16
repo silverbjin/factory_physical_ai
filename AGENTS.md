@@ -6,7 +6,8 @@ This file defines repository-wide Codex routing and context-budget rules.
 
 Keep this file small.
 
-`AGENTS.md` is a dispatcher and guardrail only.  
+`AGENTS.md` is a dispatcher and guardrail only.
+
 Workflow procedures belong in `prompts/codex/*.md`.
 
 ---
@@ -94,6 +95,7 @@ Do not interpret:
 Implement <TASK_ID>
 Fix <TASK_ID>
 Create <TASK_ID>
+Record acceptance <TASK_ID>
 ```
 
 as Review commands.
@@ -126,6 +128,52 @@ Follow the routed workflow prompt to resolve only the planning/context sources n
 
 ---
 
+### Acceptance Recording
+
+Command:
+
+```text
+Record acceptance <TASK_ID>
+```
+
+Example:
+
+```text
+Record acceptance TASK-SIM-003
+```
+
+Load exactly:
+
+```text
+prompts/codex/record_task_acceptance_v2.md
+tasks/<TASK_ID>.md
+```
+
+Then follow the routed workflow prompt.
+
+This route records an already-completed independent ACCEPT review.
+
+It is not a Review command and must not rerun or reinterpret the independent review.
+
+Resolve:
+
+```text
+SHORT_TASK_ID = <TASK_ID> with the leading `TASK-` removed
+ACCEPTANCE_FILE = results/reviews/<SHORT_TASK_ID>_acceptance.json
+```
+
+Example:
+
+```text
+TASK_ID         = TASK-SIM-003
+SHORT_TASK_ID   = SIM-003
+ACCEPTANCE_FILE = results/reviews/SIM-003_acceptance.json
+```
+
+If the required TASK file is missing, follow the recorder workflow's fail-closed policy.
+
+---
+
 ### Routing Precedence
 
 Apply routing in this order:
@@ -134,7 +182,8 @@ Apply routing in this order:
 1. Implement <TASK_ID>
 2. Fix <TASK_ID>
 3. Create <TASK_ID>
-4. bare <TASK_ID>
+4. Record acceptance <TASK_ID>
+5. bare <TASK_ID>
 ```
 
 Match exactly one route.
@@ -177,8 +226,8 @@ For TASK workflows, use this loading order:
 
 ```text
 routed workflow prompt
-→ active TASK specification
-→ Required Sources
+→ active TASK specification when applicable
+→ Required Sources or workflow-declared inputs
 → workflow-relevant target files
 ```
 
@@ -263,7 +312,7 @@ TASK
 → task-related implementation/tests
 ```
 
-Do not load Review, Fix, or TASK-history prompts during initial implementation.
+Do not load Review, Fix, Acceptance Recording, or TASK-history prompts during initial implementation.
 
 ---
 
@@ -312,7 +361,32 @@ Do not reconstruct Git history by default.
 
 Load only the project-state, planning, architecture, backlog, or contract sources necessary to define the requested TASK.
 
-Do not use TASK-creation context rules during ordinary Implementation, Review, or Fix workflows.
+Do not use TASK-creation context rules during ordinary Implementation, Review, Fix, or Acceptance Recording workflows.
+
+---
+
+### Acceptance Recording
+
+Default context:
+
+```text
+TASK
+→ latest persisted independent Review for that TASK
+→ TASK-declared canonical Evidence
+→ only supporting artifacts named by the Review handoff
+```
+
+Do not reload the full implementation context.
+
+Do not load Implementation, Fix, Review, TASK-creation, or TASK-history workflow prompts merely to record acceptance.
+
+Do not reconstruct acceptance from project history, passing tests, or memory.
+
+The recorder must bind the persisted independent Review to the exact reviewed repository artifacts according to:
+
+```text
+prompts/codex/record_task_acceptance_v2.md
+```
 
 ---
 
@@ -345,7 +419,13 @@ at TASK start unless the routed workflow explicitly requires it at that stage.
 
 Load TASK-history policy only when the routed workflow reaches its history-recording step.
 
-Likewise, do not preload unrelated Implementation, Review, Fix, or TASK-creation prompts.
+For Acceptance Recording, inspect the already-persisted review record directly.
+
+Do not load `task_history_recording_v2.md` merely because the recorder consumes a review-history file.
+
+If the required persisted review is missing, follow the recorder's fail-closed instructions rather than switching workflows automatically.
+
+Likewise, do not preload unrelated Implementation, Review, Fix, TASK-creation, or Acceptance Recording prompts.
 
 ---
 
@@ -358,9 +438,21 @@ user command
 → route exactly one workflow
 → load exactly one workflow prompt
 → load active TASK when applicable
-→ load Required Sources
+→ load Required Sources or workflow-declared inputs
 → inspect only workflow-relevant files
 → execute workflow
+```
+
+For Acceptance Recording:
+
+```text
+Record acceptance <TASK_ID>
+→ record_task_acceptance_v2.md
+→ active TASK
+→ latest persisted ACCEPT review
+→ canonical Evidence
+→ explicitly bound supporting artifacts
+→ create/validate one acceptance artifact
 ```
 
 On anomaly:

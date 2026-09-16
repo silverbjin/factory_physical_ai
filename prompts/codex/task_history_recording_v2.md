@@ -521,3 +521,54 @@ over:
 ```text
 full snapshot duplication
 ```
+
+---
+
+## 12. Acceptance Recording Handoff
+
+section verbatim, including the fenced YAML block.
+
+**Rules:**
+
+1. Do not recompute or reinterpret the handoff while recording history.
+
+2. Do not change:
+
+- review_decision;
+
+- reviewed_commit;
+
+- task_specific_decision;
+
+- TASK spec path/hash;
+
+- Evidence path/hash;
+
+- supporting artifact path/hash;
+
+- acceptance_recording_eligible.
+
+3. The history recorder may add its normal history metadata outside the preserved review content, but must not rewrite the handoff.
+
+4. For REJECT reviews, preserve:
+
+- acceptance_recording_eligible: false
+
+5. The persisted review record under:
+
+- docs/task_history/<TASK_ID>/<NN>_review.md
+becomes the source hashed by record_task_acceptance_v2.md.
+
+6. Do not create the acceptance JSON in the history-recording workflow.
+
+Recommended flow:
+
+read_only_review_v2.md
+        ↓
+review output with handoff
+        ↓
+task_history_recording_v2.md
+        ↓
+persisted <NN>_review.md with handoff unchanged
+        ↓
+record_task_acceptance_v2.md
