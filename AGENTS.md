@@ -40,6 +40,65 @@ If a user types a `Run ...` command inside a Codex chat session:
 
 The Python runner is the sole source of truth for full lifecycle status.
 
+## 0.1 Orchestrator Child Boundary — HIGHEST PRECEDENCE
+
+A Codex execution whose current user message begins with:
+
+```text
+ORCHESTRATOR_CHILD
+```
+
+is already running under the host-side:
+
+```text
+scripts/codex/run_task_orchestrator.py
+```
+
+It is a **worker**, not a parent orchestration session.
+
+This rule takes precedence over every host-side `Run ...` redirect rule.
+
+For an `ORCHESTRATOR_CHILD` execution:
+
+- do **not** tell the user to run `run_task_orchestrator.py`;
+- do **not** invoke the host orchestrator;
+- do **not** redirect the work back to a normal terminal;
+- execute exactly one declared `worker_role`;
+- read exactly the worker prompt named in the child envelope;
+- resolve exactly the supplied `task_id`;
+- emit the required machine-result marker as the last non-empty line.
+
+Supported worker roles:
+
+```text
+worker_role=implementation
+→ prompts/codex/implement_task_v2.md
+→ tasks/<TASK_ID>.md
+
+worker_role=review
+→ prompts/codex/read_only_review_v2.md
+→ tasks/<TASK_ID>.md
+
+worker_role=rereview
+→ prompts/codex/read_only_review_v2.md
+→ tasks/<TASK_ID>.md
+
+worker_role=fix
+→ prompts/codex/fix_review_findings_v2.md
+→ tasks/<TASK_ID>.md
+
+worker_role=acceptance
+→ prompts/codex/record_task_acceptance_v2.md
+```
+
+For `worker_role=acceptance`, also use the supplied:
+
+```text
+accepted_commit=<COMMIT>
+```
+
+Never reinterpret `ORCHESTRATOR_CHILD` as a `Run ...` request.
+
 ---
 
 ## 1. Worker Machine-result Protocol
@@ -48,16 +107,16 @@ Workers launched by the host orchestrator MUST terminate with the required
 machine-readable marker as the **last non-empty line**.
 
 ```text
-Implement <TASK_ID>
+ORCHESTRATOR_CHILD + worker_role=implementation
 → WORKFLOW_RESULT_JSON with stage="implementation"
 
-<TASK_ID>
+ORCHESTRATOR_CHILD + worker_role=review|rereview
 → WORKFLOW_RESULT_JSON with stage="review"
 
-Fix <TASK_ID>
+ORCHESTRATOR_CHILD + worker_role=fix
 → WORKFLOW_RESULT_JSON with stage="fix"
 
-Record <TASK_ID> acceptance for commit <COMMIT>
+ORCHESTRATOR_CHILD + worker_role=acceptance
 → ACCEPTANCE_RESULT_JSON
 ```
 

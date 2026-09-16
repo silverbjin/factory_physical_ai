@@ -32,6 +32,30 @@ Rules:
 - Fix completion must not be represented as independent `ACCEPT`;
 - do not stage or commit.
 
+## Orchestrated Child Invocation
+
+When the current user message begins with:
+
+```text
+ORCHESTRATOR_CHILD
+worker_role=fix
+task_id=<TASK_ID>
+```
+
+this process is already a child worker of `scripts/codex/run_task_orchestrator.py`.
+
+Treat the supplied `task_id` as the active TASK.
+
+Do **not**:
+
+- invoke or recommend `run_task_orchestrator.py`;
+- redirect the user to a terminal;
+- perform the independent Re-review;
+- reinterpret the message as a host-side `Run ...` request.
+
+Execute this Fix workflow only, then end with the mandatory
+`WORKFLOW_RESULT_JSON` marker defined above.
+
 ## Purpose
 
 Correct only the acceptance-blocking findings for exactly one TASK that failed an independent Read-only Review.

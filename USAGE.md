@@ -180,3 +180,79 @@ Resolve the blocker identified under `Errors` / `Next Action`. The current runne
 cd scripts/codex
 python3 test_run_task_orchestrator.py
 ```
+
+
+# Child Dispatch Protocol Update
+
+## Why this update exists
+
+A host-run child must never interpret itself as the parent `Run TASK-*` session.
+Every child is now explicitly marked with:
+
+```text
+ORCHESTRATOR_CHILD
+protocol_version=1
+worker_role=...
+task_id=...
+```
+
+This fixes the failure mode where a child returned:
+
+```text
+Run this from a normal terminal:
+python3 scripts/codex/run_task_orchestrator.py task TASK-SIM-004
+```
+
+instead of executing its worker stage.
+
+## Verify installation
+
+From repository root:
+
+```bash
+grep -n "ORCHESTRATOR_CHILD" \
+  AGENTS.md \
+  scripts/codex/run_task_orchestrator.py \
+  prompts/codex/implement_task_v2.md \
+  prompts/codex/read_only_review_v2.md \
+  prompts/codex/fix_review_findings_v2.md \
+  prompts/codex/record_task_acceptance_v2.md
+```
+
+All files should return matches.
+
+Run tests:
+
+```bash
+cd scripts/codex
+python3 test_run_task_orchestrator.py
+```
+
+## Normal execution
+
+Use the host terminal only:
+
+```bash
+python3 scripts/codex/run_task_orchestrator.py task TASK-SIM-004
+```
+
+or:
+
+```bash
+scripts/codex/run-task TASK-SIM-004
+```
+
+Do not type `Run TASK-SIM-004` inside a Codex chat for lifecycle automation.
+
+## Dispatch audit
+
+For every child stage the runner now saves the exact child prompt:
+
+```text
+~/.local/state/codex-task-orchestrator/<repo>/<run>/
+  01_TASK-SIM-004_implementation_prompt.txt
+  01_TASK-SIM-004_implementation.log
+  01_TASK-SIM-004_implementation_final.txt
+```
+
+If a child routes incorrectly, inspect the `_prompt.txt` file first.

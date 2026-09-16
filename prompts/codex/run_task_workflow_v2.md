@@ -74,3 +74,33 @@ run_report.json
 ```
 
 Use `--verbose` only when the full child stream is needed.
+
+
+## Child Worker Dispatch
+
+The host runner never sends a bare `Implement`, bare TASK ID, or `Fix` command to a
+child as the complete child prompt.
+
+Every child begins with the explicit envelope:
+
+```text
+ORCHESTRATOR_CHILD
+protocol_version=1
+worker_role=<implementation|review|rereview|fix|acceptance>
+task_id=<TASK_ID>
+worker_prompt=<prompt path>
+```
+
+Acceptance also includes:
+
+```text
+accepted_commit=<COMMIT>
+```
+
+This prevents a child from confusing itself with the host-side `Run ...` entry point.
+
+The exact child envelope for every stage is persisted beside its stage log as:
+
+```text
+<stage>_prompt.txt
+```
