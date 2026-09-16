@@ -2,7 +2,7 @@
   "schema_version": 1,
   "task_id": "TASK-SIM-006",
   "result": "SIM_VERIFICATION_BACKEND_READY",
-  "generated_at": "2026-09-16T14:10:25Z",
+  "generated_at": "2026-09-16T14:49:28Z",
   "component_version": "sim006-verification-backend-v1",
   "simulation_only": true,
   "accepted_dependencies": [
@@ -24,12 +24,14 @@
     "gazebo": {
       "input_shape": "accepted SIM-004 navigation.execute success result",
       "backend_id": "sim004-gazebo-navigation-backend-v2",
-      "provenance_validation": "accepted task, commit, evidence path, and evidence sha256"
+      "provenance_validation": "accepted task, commit, evidence path, evidence sha256, and result evidence-ref identity",
+      "semantic_state": "SIM-004 evidence has no observed part_id; normalization is insufficient and cannot pass"
     },
     "mujoco": {
       "input_shape": "accepted SIM-005 manipulation scenario record",
       "backend_id": "sim005-mujoco-vla-backend-v1",
-      "provenance_validation": "accepted task, commit, evidence path, and evidence sha256"
+      "provenance_validation": "accepted task, commit, evidence path, evidence sha256, and observation_identity content_sha256",
+      "semantic_state": "SIM-005 evidence has no observed part_id or location_id; normalization is insufficient and cannot pass"
     }
   },
   "contract": {
@@ -46,9 +48,9 @@
     "insufficient_or_ambiguous": "uncertain",
     "stale_or_identity_hash_mismatch": "contract_failure_and_HITL",
     "mutable_identity_or_provenance": "rejected_and_HITL",
-    "accepted_backend_shape_conversion": "pass",
+    "accepted_backend_shape_conversion": "accepted Gazebo and MuJoCo identities are preserved; incomplete semantic state fails closed to uncertain",
     "uncertain_confidence_promotion": "forbidden",
-    "cross_backend_equivalence": "pass"
+    "cross_backend_equivalence": "equivalent incomplete Gazebo and MuJoCo evidence produces uncertain"
   },
   "validation": {
     "command": "PYTHONDONTWRITEBYTECODE=1 python3 -m pytest -q -p no:cacheprovider tests/test_simulation_verification_backend.py tests/test_simulation_execution_contract.py",
