@@ -25,6 +25,15 @@ OBSERVATION = {"quality": "valid", "part_id": "sim-workpiece", "location_id": "p
 TASKS = {"mujoco-place-nominal", "mujoco-grasp-miss", "mujoco-contact-loss", "mujoco-workspace-limit", "mujoco-timeout", "mujoco-unknown"}
 
 
+@dataclass(frozen=True)
+class ActionRecord:
+    mission_id: str
+    action_id: str
+    observed_status: str
+    recorded_at: str
+    measurement_json: str
+
+
 def _now() -> str:
     return datetime.now(timezone.utc).isoformat(timespec="milliseconds").replace("+00:00", "Z")
 
@@ -44,7 +53,7 @@ def observation_ref() -> dict[str, str]:
 @dataclass
 class MuJoCoVLABackend:
     """Contract adapter with bounded private MuJoCo execution and status records."""
-    records: dict[str, str] = field(default_factory=dict)
+    records: dict[tuple[str, str], ActionRecord] = field(default_factory=dict)
 
     def execute(self, request: dict[str, Any]) -> dict[str, Any]:
         try:
@@ -59,21 +68,26 @@ class MuJoCoVLABackend:
             return self._failure(request, "INVALID_OBSERVATION", "observation identity is missing, stale, or ambiguous", "VALIDATION")
         task = request["task_id"]
         if task == "mujoco-timeout":
-            self.records[request["action_id"]] = "unknown"
+            self._record(request, "unknown", {"scenario": task, "physics_started": False, "reason": "bounded_timeout"})
             return self._result(request, "unknown", "pending", "uncertain", error=_error("MUJOCO_TIMEOUT", "bounded physics budget expired", "MODEL_TIMEOUT", True))
         if task == "mujoco-unknown":
-            self.records[request["action_id"]] = "succeeded"
+            self._record(request, "succeeded", {"scenario": task, "physics_started": True, "authoritative_outcome": "succeeded"})
             return self._result(request, "unknown", "pending", "uncertain", error=_error("MUJOCO_OUTCOME_UNKNOWN", "result requires authoritative reconciliation", "DEPENDENCY_TIMEOUT", True))
         if task == "mujoco-workspace-limit":
-            self.records[request["action_id"]] = "failed"
+            self._record(request, "failed", {"scenario": task, "physics_started": False, "workspace_limit_enforced": True})
             return self._failure(request, "WORKSPACE_LIMIT", "scripted command exceeds bounded workspace", "SAFETY_POLICY")
-        measured = self._step_physics()
-        if task == "mujoco-place-nominal" and measured["object_x"] > 0.055:
-            self.records[request["action_id"]] = "succeeded"
+        measured = self._step_physics(task)
+        if task == "mujoco-place-nominal" and measured["transferred"] and measured["contact_detected"] and measured["final_contact"]:
+            self._record(request, "succeeded", measured)
             return self._result(request, "succeeded", "success", "succeeded", verifier_input_refs=[self._evidence_ref(request["action_id"])])
-        code = "GRASP_MISS" if task == "mujoco-grasp-miss" else "CONTACT_LOSS"
-        self.records[request["action_id"]] = "failed"
-        return self._failure(request, code, "measured object transfer did not meet the manipulation objective", "EXECUTION_FAILED")
+        if task == "mujoco-grasp-miss" and not measured["contact_detected"] and not measured["transferred"]:
+            code, message = "GRASP_MISS", "measured pusher/workpiece contact was absent"
+        elif task == "mujoco-contact-loss" and measured["contact_lost"] and measured["transferred"]:
+            code, message = "CONTACT_LOSS", "measured pusher/workpiece contact was lost after transfer"
+        else:
+            code, message = "MANIPULATION_OBJECTIVE_UNMET", "measured manipulation state did not meet the objective"
+        self._record(request, "failed", measured)
+        return self._failure(request, code, message, "EXECUTION_FAILED")
 
     def action_status_get(self, request: dict[str, Any]) -> dict[str, Any]:
         try:
@@ -81,18 +95,58 @@ class MuJoCoVLABackend:
         except ContractViolation as exc:
             return self._status_failure(request, "INVALID_STATUS_REQUEST", str(exc), "VALIDATION")
         action_id = request.get("action_id")
-        if request.get("operation") != "action_status.get" or action_id not in self.records:
+        record = self.records.get((request.get("mission_id"), action_id))
+        if request.get("operation") != "action_status.get" or record is None:
             return self._status_failure(request, "ACTION_NOT_FOUND", "no authoritative MuJoCo action record", "RESOURCE_UNAVAILABLE")
-        return {"operation": "action_status.get", "message_type": "result", "schema_version": "1.0", "mission_id": request["mission_id"], "request_id": request["request_id"], "trace_id": request["trace_id"], "action_id": action_id, "timestamp": _now(), "component_version": COMPONENT_VERSION, "source_kind": "mock", "status": "succeeded", "result": "success", "observed_at": _now(), "observed_status": self.records[action_id], "evidence_refs": [self._evidence_ref(action_id)]}
+        return {"operation": "action_status.get", "message_type": "result", "schema_version": "1.0", "mission_id": request["mission_id"], "request_id": request["request_id"], "trace_id": request["trace_id"], "action_id": action_id, "timestamp": _now(), "component_version": COMPONENT_VERSION, "source_kind": "mock", "status": "succeeded", "result": "success", "observed_at": record.recorded_at, "observed_status": record.observed_status, "evidence_refs": [self._evidence_ref(action_id, request["mission_id"])]}
 
-    def _step_physics(self) -> dict[str, float | int]:
+    def _step_physics(self, task: str) -> dict[str, float | int | bool | str]:
         model = mujoco.MjModel.from_xml_path(str(MODEL_PATH)); data = mujoco.MjData(model)
-        data.ctrl[0] = 0.30
-        for _ in range(400): mujoco.mj_step(model, data)
-        return {"object_x": float(data.qpos[1]), "steps": 400, "timestep_seconds": float(model.opt.timestep)}
+        pusher_body = mujoco.mj_name2id(model, mujoco.mjtObj.mjOBJ_BODY, "generic_pusher")
+        workpiece_body = mujoco.mj_name2id(model, mujoco.mjtObj.mjOBJ_BODY, "workpiece")
+        profiles = {
+            "mujoco-place-nominal": (0.0, ((0.17, 400),)),
+            "mujoco-grasp-miss": (0.12, ((0.17, 400),)),
+            "mujoco-contact-loss": (0.0, ((0.20, 200), (0.0, 200))),
+        }
+        initial_y, commands = profiles[task]
+        data.qpos[2] = initial_y
+        mujoco.mj_forward(model, data)
+        contact_detected = False
+        steps = 0
+        for control, budget in commands:
+            data.ctrl[0] = control
+            for _ in range(budget):
+                mujoco.mj_step(model, data); steps += 1
+                contact_detected = contact_detected or any(
+                    {int(model.geom_bodyid[data.contact[index].geom1]), int(model.geom_bodyid[data.contact[index].geom2])} == {pusher_body, workpiece_body}
+                    for index in range(data.ncon)
+                )
+        final_contact = any(
+            {int(model.geom_bodyid[data.contact[index].geom1]), int(model.geom_bodyid[data.contact[index].geom2])} == {pusher_body, workpiece_body}
+            for index in range(data.ncon)
+        )
+        object_x = float(data.qpos[1])
+        return {"scenario": task, "object_x_before": 0.0, "object_x_after": object_x, "object_y_initial": initial_y, "transferred": object_x >= 0.035, "contact_detected": contact_detected, "final_contact": final_contact, "contact_lost": contact_detected and not final_contact, "steps": steps, "timestep_seconds": float(model.opt.timestep)}
 
-    def _evidence_ref(self, action_id: str) -> dict[str, str]:
-        return {"uri": f"urn:factory-evidence:sim-005:{action_id}", "sha256": hashlib.sha256(action_id.encode()).hexdigest()}
+    def _record(self, request: dict[str, Any], observed_status: str, measurement: dict[str, Any]) -> None:
+        record = ActionRecord(request["mission_id"], request["action_id"], observed_status, _now(), json.dumps(measurement, sort_keys=True, separators=(",", ":")))
+        self.records[(record.mission_id, record.action_id)] = record
+
+    def measurement_for(self, mission_id: str, action_id: str) -> dict[str, Any]:
+        record = self.records[(mission_id, action_id)]
+        return json.loads(record.measurement_json)
+
+    def _evidence_ref(self, action_id: str, mission_id: str | None = None) -> dict[str, str]:
+        if mission_id is None:
+            matching = [record for (record_mission_id, record_action_id), record in self.records.items() if record_action_id == action_id]
+            if len(matching) != 1:
+                raise ContractViolation("action evidence requires a unique mission-bound action record")
+            record = matching[0]
+        else:
+            record = self.records[(mission_id, action_id)]
+        immutable_payload = {"mission_id": record.mission_id, "action_id": record.action_id, "observed_status": record.observed_status, "recorded_at": record.recorded_at, "component_version": COMPONENT_VERSION, "measurement": json.loads(record.measurement_json)}
+        return {"uri": f"urn:factory-evidence:sim-005:{record.mission_id}:{record.action_id}", "sha256": canonical_sha256(immutable_payload)}
 
     def _result(self, request: dict[str, Any], status: str, result: str, outcome: str, **extra: Any) -> dict[str, Any]:
         payload = {"operation": "vla.execute", "message_type": "result", "schema_version": "1.0", "mission_id": request["mission_id"], "request_id": request["request_id"], "trace_id": request["trace_id"], "action_id": request["action_id"], "timestamp": _now(), "component_version": COMPONENT_VERSION, "source_kind": "mock", "status": status, "result": result, "skill_outcome": outcome, "latency_ms": 800}

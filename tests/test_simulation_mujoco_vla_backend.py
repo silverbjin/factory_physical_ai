@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import sys
 import uuid
+import importlib.util
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
@@ -53,8 +54,56 @@ def test_timeout_and_unknown_require_status_lookup() -> None:
     assert unknown["action_id"] == lookup["action_id"] and lookup["observed_status"] == "succeeded"
 
 
+def test_status_lookup_rejects_action_record_from_another_mission() -> None:
+    backend = MuJoCoVLABackend()
+    executed = request("mujoco-unknown")
+    backend.execute(executed)
+    lookup_request = status_request(executed)
+    lookup_request["mission_id"] = str(uuid.uuid4())
+
+    result = backend.action_status_get(lookup_request)
+
+    validate_contract_message(result)
+    assert result["result"] == "failure"
+    assert result["error"]["code"] == "ACTION_NOT_FOUND"
+
+
+def test_scenario_outcomes_are_driven_by_measured_transfer_and_contact_state() -> None:
+    backend = MuJoCoVLABackend()
+    expected = {
+        "mujoco-place-nominal": {"result": "success", "transferred": True, "contact_detected": True, "contact_lost": False},
+        "mujoco-grasp-miss": {"result": "failure", "transferred": False, "contact_detected": False, "contact_lost": False},
+        "mujoco-contact-loss": {"result": "failure", "transferred": True, "contact_detected": True, "contact_lost": True},
+    }
+
+    for task, expectation in expected.items():
+        executed = request(task)
+        result = backend.execute(executed)
+        measurement = backend.measurement_for(executed["mission_id"], executed["action_id"])
+
+        assert result["result"] == expectation["result"]
+        assert measurement["transferred"] is expectation["transferred"]
+        assert measurement["contact_detected"] is expectation["contact_detected"]
+        assert measurement["contact_lost"] is expectation["contact_lost"]
+
+
 def test_provenance_is_explicit_generic_and_hashed() -> None:
     info = provenance()
     assert info["baseline_id"] == "SIM_BASELINE_V1" and info["physical_target"] is False
     assert info["model_kind"] == "generic_simulation_proxy_manipulator"
     assert len(info["assets"]) == 3 and all(len(item["sha256"]) == 64 for item in info["assets"])
+
+
+def test_evidence_builder_records_identities_measurements_and_invalid_observation() -> None:
+    spec = importlib.util.spec_from_file_location("sim005_runner", ROOT / "scripts" / "run_simulation_mujoco_vla.py")
+    assert spec and spec.loader
+    runner = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(runner)
+
+    evidence = runner.build_evidence()
+
+    invalid = next(row for row in evidence["scenarios"] if row["scenario"] == "mujoco-invalid-observation")
+    nominal = next(row for row in evidence["scenarios"] if row["scenario"] == "mujoco-place-nominal")
+    assert invalid["expected_error_code"] == "INVALID_OBSERVATION" and invalid["pass"] is True
+    assert nominal["measurement"]["transferred"] is True and nominal["observation_identity"] == observation_ref()
+    assert nominal["policy_identity"] == "sim005-scripted-policy-v1"

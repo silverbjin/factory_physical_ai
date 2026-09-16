@@ -29,7 +29,7 @@
       },
       {
         "path": "src/simulation_runtime/mujoco_vla_backend.py",
-        "sha256": "551a21f7c647602349edbb2dff65e3ed551f0d2f7c528f833447863ccefb4587"
+        "sha256": "61cc33fbddae862c937d350c0baf8015ff6485605ac6267e7aadcff9cf19db2f"
       }
     ],
     "backend_id": "sim005-mujoco-vla-backend-v1",
@@ -44,50 +44,235 @@
   },
   "scenarios": [
     {
-      "action_id": "cf9fe4d4-2c76-4e15-8d8a-f7cba7a38da2",
+      "action_id": "b3c82456-4c35-4ddc-8088-6b79b8b4fae3",
+      "actual_error_code": null,
+      "expected_error_code": null,
+      "expected_result": "success",
+      "expected_status": "succeeded",
+      "initial_state_identity": "sim005-seed-5005-workpiece-origin-v1",
+      "measurement": {
+        "contact_detected": true,
+        "contact_lost": false,
+        "final_contact": true,
+        "object_x_after": 0.039870901474435165,
+        "object_x_before": 0.0,
+        "object_y_initial": 0.0,
+        "scenario": "mujoco-place-nominal",
+        "steps": 400,
+        "timestep_seconds": 0.002,
+        "transferred": true
+      },
+      "mission_id": "db42b4f4-2a97-4ad8-9cf5-753d121998ef",
+      "observation_identity": {
+        "content_sha256": "84e47e21e8605d0c7d2054b800e69735444d4e25825bb2cdf456c8d525d1f4b6",
+        "fixture_id": "mujoco-observation-v1",
+        "fixture_set_id": "SIM_FIXTURE_SET_V1",
+        "fixture_version": "1",
+        "source_kind": "mock",
+        "timestamp": "2026-09-16T00:00:00Z"
+      },
       "pass": true,
+      "policy_identity": "sim005-scripted-policy-v1",
+      "request_id": "e2d6113b-a955-4e4f-b269-e12ceb363469",
       "result": "success",
       "scenario": "mujoco-place-nominal",
       "status": "succeeded"
     },
     {
-      "action_id": "dd1493fb-1a8d-4e53-a6fd-2f1a9897a1d8",
+      "action_id": "ef0b247a-5b67-4a19-89d6-0188c26a1def",
+      "actual_error_code": "GRASP_MISS",
+      "expected_error_code": "GRASP_MISS",
+      "expected_result": "failure",
+      "expected_status": "failed",
+      "initial_state_identity": "sim005-seed-5005-workpiece-origin-v1",
+      "measurement": {
+        "contact_detected": false,
+        "contact_lost": false,
+        "final_contact": false,
+        "object_x_after": -9.923303372121294e-18,
+        "object_x_before": 0.0,
+        "object_y_initial": 0.12,
+        "scenario": "mujoco-grasp-miss",
+        "steps": 400,
+        "timestep_seconds": 0.002,
+        "transferred": false
+      },
+      "mission_id": "d1458e6c-d927-4d2a-bbfc-700cf5c74914",
+      "observation_identity": {
+        "content_sha256": "84e47e21e8605d0c7d2054b800e69735444d4e25825bb2cdf456c8d525d1f4b6",
+        "fixture_id": "mujoco-observation-v1",
+        "fixture_set_id": "SIM_FIXTURE_SET_V1",
+        "fixture_version": "1",
+        "source_kind": "mock",
+        "timestamp": "2026-09-16T00:00:00Z"
+      },
       "pass": true,
+      "policy_identity": "sim005-scripted-policy-v1",
+      "request_id": "6fbf5e1c-afc1-4f70-abde-53375f167f04",
       "result": "failure",
       "scenario": "mujoco-grasp-miss",
       "status": "failed"
     },
     {
-      "action_id": "a8a34237-ac94-4986-8815-0ffbc6dbffce",
+      "action_id": "89672abb-3b15-4cd3-b7d9-108ef253b4a8",
+      "actual_error_code": "CONTACT_LOSS",
+      "expected_error_code": "CONTACT_LOSS",
+      "expected_result": "failure",
+      "expected_status": "failed",
+      "initial_state_identity": "sim005-seed-5005-workpiece-origin-v1",
+      "measurement": {
+        "contact_detected": true,
+        "contact_lost": true,
+        "final_contact": false,
+        "object_x_after": 0.09108324520873355,
+        "object_x_before": 0.0,
+        "object_y_initial": 0.0,
+        "scenario": "mujoco-contact-loss",
+        "steps": 400,
+        "timestep_seconds": 0.002,
+        "transferred": true
+      },
+      "mission_id": "b9deb1f8-7fbf-492d-b9fc-9ea3a5fae749",
+      "observation_identity": {
+        "content_sha256": "84e47e21e8605d0c7d2054b800e69735444d4e25825bb2cdf456c8d525d1f4b6",
+        "fixture_id": "mujoco-observation-v1",
+        "fixture_set_id": "SIM_FIXTURE_SET_V1",
+        "fixture_version": "1",
+        "source_kind": "mock",
+        "timestamp": "2026-09-16T00:00:00Z"
+      },
       "pass": true,
+      "policy_identity": "sim005-scripted-policy-v1",
+      "request_id": "65fbbb22-abd4-47b6-afb5-743656cdc969",
       "result": "failure",
       "scenario": "mujoco-contact-loss",
       "status": "failed"
     },
     {
-      "action_id": "34d8e003-a8e1-4d5e-90a2-25349b5cd24f",
+      "action_id": "efac7ad2-4918-40e8-9428-ca127ed963ae",
+      "actual_error_code": "WORKSPACE_LIMIT",
+      "expected_error_code": "WORKSPACE_LIMIT",
+      "expected_result": "failure",
+      "expected_status": "failed",
+      "initial_state_identity": "sim005-seed-5005-workpiece-origin-v1",
+      "measurement": {
+        "physics_started": false,
+        "scenario": "mujoco-workspace-limit",
+        "workspace_limit_enforced": true
+      },
+      "mission_id": "e74554eb-a652-4403-ae25-2674410b0bb4",
+      "observation_identity": {
+        "content_sha256": "84e47e21e8605d0c7d2054b800e69735444d4e25825bb2cdf456c8d525d1f4b6",
+        "fixture_id": "mujoco-observation-v1",
+        "fixture_set_id": "SIM_FIXTURE_SET_V1",
+        "fixture_version": "1",
+        "source_kind": "mock",
+        "timestamp": "2026-09-16T00:00:00Z"
+      },
       "pass": true,
+      "policy_identity": "sim005-scripted-policy-v1",
+      "request_id": "671dfc1e-b84a-45d6-9808-cbd7b515a2fa",
       "result": "failure",
       "scenario": "mujoco-workspace-limit",
       "status": "failed"
     },
     {
-      "action_id": "8fa6a1ea-ee88-426a-a99b-a993367d885f",
+      "action_id": "20f270fd-5bfa-4a94-b5ab-b31bc8a2719f",
+      "actual_error_code": "INVALID_OBSERVATION",
+      "expected_error_code": "INVALID_OBSERVATION",
+      "expected_result": "failure",
+      "expected_status": "failed",
+      "initial_state_identity": "sim005-seed-5005-workpiece-origin-v1",
+      "mission_id": "8baf1213-08a6-421a-bcd3-8af7520b3fb1",
+      "observation_identity": {
+        "content_sha256": "84e47e21e8605d0c7d2054b800e69735444d4e25825bb2cdf456c8d525d1f4b6",
+        "fixture_id": "ambiguous-observation",
+        "fixture_set_id": "SIM_FIXTURE_SET_V1",
+        "fixture_version": "1",
+        "source_kind": "mock",
+        "timestamp": "2026-09-16T00:00:00Z"
+      },
       "pass": true,
+      "policy_identity": "sim005-scripted-policy-v1",
+      "request_id": "1f7b0986-139d-4cdc-9910-4e4c7854642e",
+      "result": "failure",
+      "scenario": "mujoco-invalid-observation",
+      "status": "failed"
+    },
+    {
+      "action_id": "72715655-8b10-4758-81d9-dcc78d47ad41",
+      "actual_error_code": "MUJOCO_TIMEOUT",
+      "expected_error_code": "MUJOCO_TIMEOUT",
+      "expected_result": "pending",
+      "expected_status": "unknown",
+      "initial_state_identity": "sim005-seed-5005-workpiece-origin-v1",
+      "measurement": {
+        "physics_started": false,
+        "reason": "bounded_timeout",
+        "scenario": "mujoco-timeout"
+      },
+      "mission_id": "573c3e5b-8ff4-45f0-a0de-2f5797bb6f61",
+      "observation_identity": {
+        "content_sha256": "84e47e21e8605d0c7d2054b800e69735444d4e25825bb2cdf456c8d525d1f4b6",
+        "fixture_id": "mujoco-observation-v1",
+        "fixture_set_id": "SIM_FIXTURE_SET_V1",
+        "fixture_version": "1",
+        "source_kind": "mock",
+        "timestamp": "2026-09-16T00:00:00Z"
+      },
+      "pass": true,
+      "policy_identity": "sim005-scripted-policy-v1",
+      "request_id": "936105a8-27ac-4ed4-96ee-c2f589fcaa53",
       "result": "pending",
       "scenario": "mujoco-timeout",
       "status": "unknown"
     },
     {
-      "action_id": "f3273245-9fa3-4406-9717-c6fd423d9e07",
+      "action_id": "ec7ad93a-bfaf-4c2f-b0b4-fa4bd3874c78",
+      "actual_error_code": "MUJOCO_OUTCOME_UNKNOWN",
+      "expected_error_code": "MUJOCO_OUTCOME_UNKNOWN",
+      "expected_result": "pending",
+      "expected_status": "unknown",
+      "initial_state_identity": "sim005-seed-5005-workpiece-origin-v1",
+      "measurement": {
+        "authoritative_outcome": "succeeded",
+        "physics_started": true,
+        "scenario": "mujoco-unknown"
+      },
+      "mission_id": "d35b49b6-9a62-41fa-9e88-aab435de90dc",
+      "observation_identity": {
+        "content_sha256": "84e47e21e8605d0c7d2054b800e69735444d4e25825bb2cdf456c8d525d1f4b6",
+        "fixture_id": "mujoco-observation-v1",
+        "fixture_set_id": "SIM_FIXTURE_SET_V1",
+        "fixture_version": "1",
+        "source_kind": "mock",
+        "timestamp": "2026-09-16T00:00:00Z"
+      },
       "pass": true,
-      "reconciled_status": "succeeded",
+      "policy_identity": "sim005-scripted-policy-v1",
+      "request_id": "4d5db624-4f92-4311-bcc0-fb525ed0ca07",
       "result": "pending",
       "scenario": "mujoco-unknown",
-      "status": "unknown"
+      "status": "unknown",
+      "status_lookup": {
+        "action_id": "ec7ad93a-bfaf-4c2f-b0b4-fa4bd3874c78",
+        "evidence_refs": [
+          {
+            "sha256": "21450362cb5a6711302cf05a6ff047b94f8d9e4957af8b7ab7ddc68fb522a0e1",
+            "uri": "urn:factory-evidence:sim-005:d35b49b6-9a62-41fa-9e88-aab435de90dc:ec7ad93a-bfaf-4c2f-b0b4-fa4bd3874c78"
+          }
+        ],
+        "mission_id": "d35b49b6-9a62-41fa-9e88-aab435de90dc",
+        "observed_status": "succeeded",
+        "result": "success"
+      }
     }
   ],
   "schema_version": "1.0",
+  "source_hashes": {
+    "backend": "61cc33fbddae862c937d350c0baf8015ff6485605ac6267e7aadcff9cf19db2f",
+    "runner": "561f2f0dc9e9ca7ae31dcb0343fcf7e515b0bc3b2aaf8b25f8fe44d39b471902"
+  },
   "task_id": "TASK-SIM-005",
   "task_specific_result": "SIM_MANIPULATION_BACKEND_READY"
 }
