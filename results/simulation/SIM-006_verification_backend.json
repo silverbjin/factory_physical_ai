@@ -2,7 +2,7 @@
   "schema_version": 1,
   "task_id": "TASK-SIM-006",
   "result": "SIM_VERIFICATION_BACKEND_READY",
-  "generated_at": "2026-09-16T14:04:37Z",
+  "generated_at": "2026-09-16T14:10:25Z",
   "component_version": "sim006-verification-backend-v1",
   "simulation_only": true,
   "accepted_dependencies": [
@@ -20,6 +20,18 @@
     }
   ],
   "normalized_sources": ["deterministic", "gazebo", "mujoco"],
+  "adapter_bindings": {
+    "gazebo": {
+      "input_shape": "accepted SIM-004 navigation.execute success result",
+      "backend_id": "sim004-gazebo-navigation-backend-v2",
+      "provenance_validation": "accepted task, commit, evidence path, and evidence sha256"
+    },
+    "mujoco": {
+      "input_shape": "accepted SIM-005 manipulation scenario record",
+      "backend_id": "sim005-mujoco-vla-backend-v1",
+      "provenance_validation": "accepted task, commit, evidence path, and evidence sha256"
+    }
+  },
   "contract": {
     "operation": "verification.verify",
     "profile_version": "sim-exact-match-v1",
@@ -33,13 +45,15 @@
     "mismatch": "fail",
     "insufficient_or_ambiguous": "uncertain",
     "stale_or_identity_hash_mismatch": "contract_failure_and_HITL",
+    "mutable_identity_or_provenance": "rejected_and_HITL",
+    "accepted_backend_shape_conversion": "pass",
     "uncertain_confidence_promotion": "forbidden",
     "cross_backend_equivalence": "pass"
   },
   "validation": {
     "command": "PYTHONDONTWRITEBYTECODE=1 python3 -m pytest -q -p no:cacheprovider tests/test_simulation_verification_backend.py tests/test_simulation_execution_contract.py",
     "result": "PASS",
-    "tests_passed": 31,
+    "tests_passed": 33,
     "git_diff_check": "PASS"
   }
 }

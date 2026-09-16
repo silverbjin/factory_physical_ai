@@ -1,7 +1,9 @@
 from __future__ import annotations
 
+import json
 import sys
 import uuid
+from dataclasses import replace
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
@@ -33,20 +35,33 @@ def request(observation_refs: list[dict[str, str]], *, timestamp: datetime | Non
 
 
 def normalized(source: str = "deterministic", **payload: str) -> object:
-    adapter = {
-        "deterministic": normalize_deterministic_observation,
-        "gazebo": normalize_gazebo_observation,
-        "mujoco": normalize_mujoco_observation,
-    }[source]
-    return adapter(payload or {"quality": "valid", "part_id": "sim-workpiece", "location_id": "pickup-zone"}, fixture_id=f"{source}-observation", fixture_version="1", timestamp="2026-09-16T00:00:00Z")
+    assert source == "deterministic"
+    return normalize_deterministic_observation(payload or {"quality": "valid", "part_id": "sim-workpiece", "location_id": "pickup-zone"}, fixture_id="deterministic-observation", fixture_version="1", timestamp="2026-09-16T00:00:00Z")
+
+
+def accepted_gazebo_result() -> dict[str, object]:
+    evidence = json.loads((ROOT / "results/simulation/SIM-004_navigation_backend.json").read_text())
+    return next(scenario["result"] for scenario in evidence["scenarios"] if scenario["id"] == "success")
+
+
+def accepted_mujoco_scenario() -> dict[str, object]:
+    evidence = json.loads((ROOT / "results/simulation/SIM-005_mujoco_vla_backend.json").read_text())
+    return next(scenario for scenario in evidence["scenarios"] if scenario["scenario"] == "mujoco-place-nominal")
 
 
 def test_equivalent_backend_observations_produce_the_same_pass_verdict() -> None:
-    observations = [normalized(source) for source in ("deterministic", "gazebo", "mujoco")]
+    observations = [
+        normalized(part_id="sim-workpiece", location_id="line-b-drop", quality="valid"),
+        normalize_gazebo_observation(accepted_gazebo_result(), part_id="sim-workpiece"),
+        normalize_mujoco_observation(accepted_mujoco_scenario(), part_id="sim-workpiece", location_id="line-b-drop"),
+    ]
     backend = VerificationBackend()
     verdicts = []
     for observation in observations:
-        result = backend.verify(request([observation.reference]), [observation])
+        observed_at = datetime.fromisoformat(observation.reference["timestamp"].replace("Z", "+00:00"))
+        verification_request = request([observation.reference], timestamp=observed_at + timedelta(seconds=1))
+        verification_request["expected_state"] = {"part_id": "sim-workpiece", "location_id": "line-b-drop"}
+        result = backend.verify(verification_request, [observation])
         validate_contract_message(result)
         verdicts.append(result["verdict"])
     assert verdicts == ["pass", "pass", "pass"]
@@ -84,7 +99,27 @@ def test_confidence_cannot_promote_uncertain_and_routes_remain_separate() -> Non
 
 def test_adapter_rejects_hidden_state_and_malformed_payloads() -> None:
     with pytest.raises(ValueError):
-        normalize_gazebo_observation(
-            {"quality": "valid", "part_id": "sim-workpiece", "location_id": "pickup-zone", "world_state": "hidden"},
-            fixture_id="gazebo-observation", fixture_version="1", timestamp="2026-09-16T00:00:00Z",
-        )
+        normalize_gazebo_observation({"action_id": "x", "timestamp": "2026-09-16T00:00:00Z", "world_state": "hidden"}, part_id="sim-workpiece")
+
+
+def test_accepted_backend_shapes_are_adapted_and_non_success_is_insufficient() -> None:
+    gazebo = normalize_gazebo_observation(accepted_gazebo_result(), part_id="sim-workpiece")
+    mujoco = normalize_mujoco_observation(accepted_mujoco_scenario(), part_id="sim-workpiece", location_id="pickup-zone")
+    assert gazebo.payload == {"quality": "valid", "part_id": "sim-workpiece", "location_id": "line-b-drop"}
+    assert mujoco.payload == {"quality": "valid", "part_id": "sim-workpiece", "location_id": "pickup-zone"}
+    failed = dict(accepted_gazebo_result(), result="failure", status="failed")
+    assert normalize_gazebo_observation(failed, part_id="sim-workpiece").payload == {"quality": "insufficient"}
+
+
+def test_observation_and_accepted_provenance_are_immutable_and_tampering_fails_closed() -> None:
+    observation = normalize_gazebo_observation(accepted_gazebo_result(), part_id="sim-workpiece")
+    with pytest.raises(TypeError):
+        observation.reference["fixture_id"] = "forged"
+    with pytest.raises(TypeError):
+        observation.provenance["backend_id"] = "forged"
+    with pytest.raises(TypeError):
+        observation.payload |= {"part_id": "forged"}
+    forged = replace(observation, provenance={**observation.provenance, "backend_id": "forged"})
+    decision = VerificationBackend().verify_with_route(request([forged.reference]), [forged])
+    assert decision.result["result"] == "failure"
+    assert decision.route == "HITL"
