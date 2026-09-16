@@ -1,0 +1,16 @@
+<mujoco model="sim005_generic_manipulation_proxy">
+  <option timestep="0.002" gravity="0 0 -9.81"/>
+  <default><geom friction="1.2 0.02 0.001" density="800"/></default>
+  <worldbody>
+    <geom name="table" type="plane" size="1 1 0.1"/>
+    <body name="generic_pusher" pos="-0.18 0 0.035">
+      <joint name="pusher_slide" type="slide" axis="1 0 0" range="0 0.30" limited="true"/>
+      <geom type="box" size="0.02 0.04 0.03" mass="0.2"/>
+    </body>
+    <body name="workpiece" pos="0 0 0.035">
+      <freejoint/>
+      <geom type="box" size="0.03 0.03 0.03" mass="0.08"/>
+    </body>
+  </worldbody>
+  <actuator><position joint="pusher_slide" kp="200" ctrlrange="0 0.30"/></actuator>
+</mujoco>

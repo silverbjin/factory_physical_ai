@@ -1,0 +1,93 @@
+{
+  "baseline_binding": {
+    "baseline_id": "SIM_BASELINE_V1",
+    "path": "results/simulation/SIM-003_baseline.json",
+    "sha256": "97f92b1bd13ab2df0db2546cfca096eaf47c1076b72698bc1a47f72780fc7cb3"
+  },
+  "cleanup": {
+    "bounded": true,
+    "child_processes": 0
+  },
+  "isolation": {
+    "dataset_v1": false,
+    "dual_world": false,
+    "physical_actuator": false,
+    "physical_camera": false,
+    "physical_target": false,
+    "training": false
+  },
+  "l0_regression": "PASS",
+  "provenance": {
+    "assets": [
+      {
+        "path": "configs/simulation/sim005_mujoco_manipulation.yaml",
+        "sha256": "34c0900610d69e5f7500bcf0121490c984a62b20943e89dd3bc7d5c0c87b84a9"
+      },
+      {
+        "path": "data/simulation/sim005_mujoco_manipulation.xml",
+        "sha256": "21fcb775690b058285480d77c96c788779bd8e7aaced663ba6eeda4691dfd160"
+      },
+      {
+        "path": "src/simulation_runtime/mujoco_vla_backend.py",
+        "sha256": "551a21f7c647602349edbb2dff65e3ed551f0d2f7c528f833447863ccefb4587"
+      }
+    ],
+    "backend_id": "sim005-mujoco-vla-backend-v1",
+    "baseline_id": "SIM_BASELINE_V1",
+    "initial_state_id": "sim005-seed-5005-workpiece-origin-v1",
+    "maximum_steps": 400,
+    "model_kind": "generic_simulation_proxy_manipulator",
+    "mujoco_version": "3.13.0",
+    "physical_target": false,
+    "seed": 5005,
+    "timestep_seconds": 0.002
+  },
+  "scenarios": [
+    {
+      "action_id": "cf9fe4d4-2c76-4e15-8d8a-f7cba7a38da2",
+      "pass": true,
+      "result": "success",
+      "scenario": "mujoco-place-nominal",
+      "status": "succeeded"
+    },
+    {
+      "action_id": "dd1493fb-1a8d-4e53-a6fd-2f1a9897a1d8",
+      "pass": true,
+      "result": "failure",
+      "scenario": "mujoco-grasp-miss",
+      "status": "failed"
+    },
+    {
+      "action_id": "a8a34237-ac94-4986-8815-0ffbc6dbffce",
+      "pass": true,
+      "result": "failure",
+      "scenario": "mujoco-contact-loss",
+      "status": "failed"
+    },
+    {
+      "action_id": "34d8e003-a8e1-4d5e-90a2-25349b5cd24f",
+      "pass": true,
+      "result": "failure",
+      "scenario": "mujoco-workspace-limit",
+      "status": "failed"
+    },
+    {
+      "action_id": "8fa6a1ea-ee88-426a-a99b-a993367d885f",
+      "pass": true,
+      "result": "pending",
+      "scenario": "mujoco-timeout",
+      "status": "unknown"
+    },
+    {
+      "action_id": "f3273245-9fa3-4406-9717-c6fd423d9e07",
+      "pass": true,
+      "reconciled_status": "succeeded",
+      "result": "pending",
+      "scenario": "mujoco-unknown",
+      "status": "unknown"
+    }
+  ],
+  "schema_version": "1.0",
+  "task_id": "TASK-SIM-005",
+  "task_specific_result": "SIM_MANIPULATION_BACKEND_READY"
+}

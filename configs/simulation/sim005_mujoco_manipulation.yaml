@@ -1,0 +1,15 @@
+backend_id: sim005-mujoco-vla-backend-v1
+model_kind: generic_simulation_proxy_manipulator
+physical_target: false
+seed: 5005
+timestep_seconds: 0.002
+maximum_steps: 400
+workspace_limit_m: 0.25
+scenarios:
+  - nominal
+  - grasp_miss
+  - contact_loss
+  - workspace_limit
+  - invalid_observation
+  - timeout
+  - unknown_reconciliation
