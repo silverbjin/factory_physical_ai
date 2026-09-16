@@ -1,0 +1,59 @@
+{
+  "schema_version": "1.0",
+  "task_id": "TASK-SIM-GATE",
+  "review_decision": "ACCEPT",
+  "task_specific_decision": "SIM_GO",
+  "reviewed_commit": "6a30757602ea0fd7e540b2c3b10b9cab1c610ac0",
+  "review_provenance": {
+    "method": "human_content_equivalence_attestation",
+    "stable_commit_directly_reviewed_by_codex": false,
+    "basis": "A prior independent READ-ONLY review returned ACCEPT for the same Gate content before that worktree was committed. This recording independently verifies that the stable Git commit contains byte-identical Gate artifacts.",
+    "content_equivalence_verified": true
+  },
+  "gate_evidence": {
+    "path": "results/simulation/SIM-GATE_readiness.json",
+    "sha256": "82c837e519c37799cb5a88af14470d2b74ba5d75913e811eac752f8e80f8b312",
+    "payload_sha256": "543bf8387ee0c9045e715efd805a0c439a0684df89a7af349320e83df94d6fc3"
+  },
+  "gate_verifier": {
+    "path": "scripts/verify_simulation_lane_gate.py",
+    "sha256": "04b23c1734b18e7ef96cd534dc7ff70dd31d5d602a4c54add6cba861ab917637"
+  },
+  "gate_tests": {
+    "path": "tests/test_simulation_lane_gate.py",
+    "sha256": "a036e13a324ea16185ce03ad3232a6ae830e1c712164f3e6bb415e2205ab30ae"
+  },
+  "gate_report": {
+    "path": "docs/simulation/simulation_lane_gate_v1.md",
+    "sha256": "036cc02fef12e146ba3e18af99dc19a9d87c49369a295d3e3f582fa38be711fd"
+  },
+  "predecessor_acceptance": {
+    "SIM-001": {
+      "path": "results/reviews/SIM-001_acceptance.json",
+      "sha256": "bf1fe8df30a73339fcdd90a5bbc3d0cf5963a0a02d538102e732054e175f5e53"
+    },
+    "SIM-002": {
+      "path": "results/reviews/SIM-002_acceptance.json",
+      "sha256": "07ee8867208498719b1a5bed04fb7572a881e2e470b6d218648aaecaf5d02951"
+    }
+  },
+  "authorization": {
+    "simulation_lane_authorized": true,
+    "task_w1_001_authorized": false,
+    "task_w1_002_authorized": false,
+    "dataset_v1_authorized": false,
+    "fine_tuning_authorized": false,
+    "physical_motion_authorized": false,
+    "hardware_target_frozen": false,
+    "p0_004r": "NO_GO"
+  },
+  "verification": {
+    "git_blob_equivalence": true,
+    "canonical_hashes_verified": true,
+    "payload_hash_verified": true,
+    "gate_result_verified": true,
+    "worktree_clean_before_recording": true
+  },
+  "recorded_at": "2026-09-15T03:17:53.555299+00:00",
+  "note": "This record uses deterministic content-equivalence verification plus explicit human approval instead of consuming additional Codex credits for a duplicate review of byte-identical content."
+}

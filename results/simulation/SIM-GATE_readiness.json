@@ -1,0 +1,234 @@
+{
+  "schema_version": "1.0",
+  "task_id": "TASK-SIM-GATE",
+  "implementation_complete": true,
+  "gate_result": "SIM_GO",
+  "generation_timestamp": "2026-09-14T12:30:56Z",
+  "generation_git_head": "bdd6521f7d9f50bbc5f7b815de32c1a74ff8e1ac",
+  "worktree_state": {
+    "pre_implementation_clean": true,
+    "at_generation": "DIRTY",
+    "staged_changes": false,
+    "commit_performed": false
+  },
+  "required_context_bindings": [
+    {
+      "path": "docs/architecture/adr/ADR-Simulation-Lane-v1.md",
+      "exists": true,
+      "sha256": "1509577842464f48055f402f5a3f717efecaba77847ff4c70534d14086fb46e0"
+    },
+    {
+      "path": "context/simulation_task_mapping_v1.md",
+      "exists": true,
+      "sha256": "c0cf1671d97f4cec768de1a2836b8ecdd89c7ceace947bab108ab549c11396b2"
+    },
+    {
+      "path": "docs/architecture/system_architecture_v1.md",
+      "exists": true,
+      "sha256": "50e57f517cf613b5b8e26e31ec74965d03c729526b94f39d9423fa0a15371e3d"
+    },
+    {
+      "path": "docs/contracts/contract_plan.md",
+      "exists": true,
+      "sha256": "4fd3a4916fa118fdbb8792681a8450157cefc0473f495e8523842e3b09b59cde"
+    },
+    {
+      "path": "docs/hardware/hardware_target_selection_status_v1.md",
+      "exists": true,
+      "sha256": "fda8a33fe38fe1796f5d984d9b7a6c81dc4babe22e618f861375073043ad1109"
+    },
+    {
+      "path": "results/phase0/P0-004R_vla_readiness.json",
+      "exists": true,
+      "sha256": "f705896b9b6a48b08dde7401dfd3ca848d9fc46ac2711bd90fdd04d8b29f873d"
+    },
+    {
+      "path": "docs/simulation/simulation_contract_profile_v1.md",
+      "exists": true,
+      "sha256": "24e9dbdbccb34e4799a43a7a3bbef5f5ebbb84d211aa9506cdae567c238645e1"
+    },
+    {
+      "path": "results/simulation/SIM-001_contract_profile.json",
+      "exists": true,
+      "sha256": "c7ea4be8b6e34bc5eff3ef15c728ac76cb34d280d5def3a73fdabb52c6ad642d"
+    },
+    {
+      "path": "results/reviews/SIM-001_acceptance.json",
+      "exists": true,
+      "sha256": "bf1fe8df30a73339fcdd90a5bbc3d0cf5963a0a02d538102e732054e175f5e53"
+    },
+    {
+      "path": "docs/simulation/simulation_smoke_runtime_v1.md",
+      "exists": true,
+      "sha256": "c4b4d91849883d8f4197d1be0128dc18c81ef2da9bc17197431262e0c738a0f6"
+    },
+    {
+      "path": "results/simulation/SIM-002_smoke_runtime.json",
+      "exists": true,
+      "sha256": "0529b8a093426316f41abf0ba2ad0cdfd3400720fe1fdba2129b131f6f4cb9ce"
+    },
+    {
+      "path": "results/reviews/SIM-002_acceptance.json",
+      "exists": true,
+      "sha256": "07ee8867208498719b1a5bed04fb7572a881e2e470b6d218648aaecaf5d02951"
+    }
+  ],
+  "sim_001": {
+    "evidence_path": "results/simulation/SIM-001_contract_profile.json",
+    "evidence_sha256": "c7ea4be8b6e34bc5eff3ef15c728ac76cb34d280d5def3a73fdabb52c6ad642d",
+    "profile_path": "docs/simulation/simulation_contract_profile_v1.md",
+    "profile_sha256": "24e9dbdbccb34e4799a43a7a3bbef5f5ebbb84d211aa9506cdae567c238645e1",
+    "acceptance_path": "results/reviews/SIM-001_acceptance.json",
+    "acceptance_sha256": "bf1fe8df30a73339fcdd90a5bbc3d0cf5963a0a02d538102e732054e175f5e53",
+    "review_decision": "ACCEPT",
+    "task_specific_decision": "SIM_CONTRACT_PROFILE_READY",
+    "reviewed_commit": "97bef9208b26c9fef577e97c26f76a125f220ed9"
+  },
+  "sim_002": {
+    "evidence_path": "results/simulation/SIM-002_smoke_runtime.json",
+    "evidence_sha256": "0529b8a093426316f41abf0ba2ad0cdfd3400720fe1fdba2129b131f6f4cb9ce",
+    "report_path": "docs/simulation/simulation_smoke_runtime_v1.md",
+    "report_sha256": "c4b4d91849883d8f4197d1be0128dc18c81ef2da9bc17197431262e0c738a0f6",
+    "acceptance_path": "results/reviews/SIM-002_acceptance.json",
+    "acceptance_sha256": "07ee8867208498719b1a5bed04fb7572a881e2e470b6d218648aaecaf5d02951",
+    "review_decision": "ACCEPT",
+    "task_specific_decision": "SIM_SMOKE_READY",
+    "reviewed_commit": "6abd9fc1158cd9fd0a02d2a496557fd74a16390b",
+    "review_anchor_commit": "8f915f2899ea238003ba5321a44c8f1bfae5662c",
+    "review_anchor_sha256": "c54655d061c674077e8af539433549d71ddb0551fc7a1109503b2513fb6e7864",
+    "acceptance_introduction_commit": "6503618c83a51714a4ad948f58917832e8bbc4e2",
+    "bound_sim_001_acceptance_sha256": "bf1fe8df30a73339fcdd90a5bbc3d0cf5963a0a02d538102e732054e175f5e53"
+  },
+  "p0_004r": {
+    "path": "results/phase0/P0-004R_vla_readiness.json",
+    "sha256": "f705896b9b6a48b08dde7401dfd3ca848d9fc46ac2711bd90fdd04d8b29f873d",
+    "final_gate": "NO_GO"
+  },
+  "implementation_artifacts": {
+    "verifier_path": "scripts/verify_simulation_lane_gate.py",
+    "verifier_sha256": "04b23c1734b18e7ef96cd534dc7ff70dd31d5d602a4c54add6cba861ab917637",
+    "focused_test_path": "tests/test_simulation_lane_gate.py",
+    "focused_test_sha256": "a036e13a324ea16185ce03ad3232a6ae830e1c712164f3e6bb415e2205ab30ae",
+    "report_path": "docs/simulation/simulation_lane_gate_v1.md",
+    "report_sha256": "036cc02fef12e146ba3e18af99dc19a9d87c49369a295d3e3f582fa38be711fd"
+  },
+  "authorization_snapshot": {
+    "simulation_lane_authorized": false,
+    "task_w1_001_authorized": false,
+    "task_w1_002_authorized": false,
+    "dataset_v1_authorized": false,
+    "fine_tuning_authorized": false,
+    "physical_motion_authorized": false,
+    "physical_gripper_authorized": false,
+    "physical_teleop_authorized": false,
+    "physical_dataset_collection_authorized": false,
+    "hardware_target_frozen": false
+  },
+  "material_predicates": {
+    "C01": {
+      "name": "Governing ADR",
+      "status": "PASS",
+      "detail": "FROZEN ADR and predecessor source bindings must match."
+    },
+    "C02": {
+      "name": "Simulation Mapping",
+      "status": "PASS",
+      "detail": "Frozen acyclic ordering and hashes must match."
+    },
+    "C03": {
+      "name": "SIM-001 Independent Acceptance",
+      "status": "PASS",
+      "detail": "Independent acceptance, review record, and reviewed commit are reconstructed."
+    },
+    "C04": {
+      "name": "SIM-001 READY State",
+      "status": "PASS",
+      "detail": "Acceptance and canonical evidence must both state SIM_CONTRACT_PROFILE_READY."
+    },
+    "C05": {
+      "name": "SIM-001 Immutable Binding",
+      "status": "PASS",
+      "detail": "Profile, evidence, payload, source, contract, schema, and C01 bindings must match."
+    },
+    "C06": {
+      "name": "SIM-002 Independent Acceptance",
+      "status": "PASS",
+      "detail": "Independent acceptance, review record, and reviewed commit are reconstructed."
+    },
+    "C07": {
+      "name": "SIM-002 READY State",
+      "status": "PASS",
+      "detail": "Acceptance and canonical evidence must both state SIM_SMOKE_READY."
+    },
+    "C08": {
+      "name": "SIM-002 Immutable Binding",
+      "status": "PASS",
+      "detail": "Evidence, report, payload, code, test, and source bindings must match."
+    },
+    "C09": {
+      "name": "SIM-002 to SIM-001 Binding",
+      "status": "PASS",
+      "detail": "SIM-002 must bind the current accepted SIM-001 revision."
+    },
+    "C10": {
+      "name": "Bounded Smoke Execution",
+      "status": "PASS",
+      "detail": "Four semantic scenarios and cleanup must be finite and valid."
+    },
+    "C11": {
+      "name": "Physical Independence",
+      "status": "PASS",
+      "detail": "No physical robot dependency or authorization is allowed."
+    },
+    "C12": {
+      "name": "Camera Independence",
+      "status": "PASS",
+      "detail": "No physical camera dependency or authorization is allowed."
+    },
+    "C13": {
+      "name": "No Physical Motion",
+      "status": "PASS",
+      "detail": "No physical motion may be executed or authorized."
+    },
+    "C14": {
+      "name": "No Week Authorization Rewrite",
+      "status": "PASS",
+      "detail": "Week booleans must match P0-004R exactly."
+    },
+    "C15": {
+      "name": "Dataset Boundary",
+      "status": "PASS",
+      "detail": "SIM_FIXTURE_SET_V1 must remain distinct from unauthorized Dataset V1."
+    },
+    "C16": {
+      "name": "Training Boundary",
+      "status": "PASS",
+      "detail": "Simulation must not require or authorize fine-tuning."
+    },
+    "C17": {
+      "name": "Contract Boundary",
+      "status": "PASS",
+      "detail": "Only accepted executor/skill/verification logical operations are allowed."
+    },
+    "C18": {
+      "name": "No Direct Actuator Contract",
+      "status": "PASS",
+      "detail": "No direct actuator ownership or lower-level public port is allowed."
+    },
+    "C19": {
+      "name": "Historical P0 Evidence Preserved",
+      "status": "PASS",
+      "detail": "P0-004R must remain NO_GO and hardware informational/not frozen."
+    },
+    "C20": {
+      "name": "Decision Reconstruction",
+      "status": "PASS",
+      "detail": "Result is derived from C01-C19, not a self-reported PASS or SIM_GO field."
+    }
+  },
+  "unresolved_blockers": [],
+  "independent_acceptance": "PENDING",
+  "simulation_lane_authorization_effective": false,
+  "payload_hash_algorithm": "sha256(canonical JSON with sorted keys and compact separators, excluding payload_sha256)",
+  "payload_sha256": "543bf8387ee0c9045e715efd805a0c439a0684df89a7af349320e83df94d6fc3"
+}

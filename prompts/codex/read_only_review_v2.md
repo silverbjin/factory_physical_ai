@@ -747,3 +747,65 @@ minimum sufficient independent evidence
 while preserving independent review quality.
 
 Begin the independent READ-ONLY review of the TASK identifier supplied in the current user message.
+
+---
+
+## 11. Acceptance Recording Handoff
+
+Return exactly one fenced YAML block:
+
+acceptance_handoff:
+  schema_version: review_acceptance_handoff_v1
+  task_id: <TASK_ID>
+  review_decision: ACCEPT | REJECT
+  reviewed_commit: <40-character Git commit SHA>
+  task_specific_decision: <exact task-specific decision or null>
+
+  task_spec:
+    path: <repository-relative TASK specification path>
+    sha256: <sha256>
+
+  evidence:
+    required: true | false
+    path: <repository-relative canonical evidence path or null>
+    sha256: <sha256 or null>
+
+  supporting_artifacts:
+    - path: <repository-relative path>
+      sha256: <sha256>
+    # Use [] when none were independently verified.
+
+  acceptance_recording_eligible: true | false
+  blocking_reason: <null or concise reason>
+
+**Rules:**
+
+1. The reviewer remains READ-ONLY.
+
+2. Never create/update results/reviews/*_acceptance.json.
+
+3. reviewed_commit is the exact implementation commit reviewed.
+
+4. Independently compute the TASK spec SHA-256.
+
+5. If Evidence is required, independently compute its SHA-256.
+
+6. task_specific_decision comes from verified canonical Evidence/report, never from the review recommendation.
+
+7. ACCEPT + BLOCKED is valid. ACCEPT does not imply READY.
+
+8. Set acceptance_recording_eligible=true only when:
+
+-  Final Recommendation is exactly ACCEPT <TASK_ID>;
+
+-  the reviewed commit is unambiguous;
+
+-  required Evidence exists and its hash was independently verified;
+
+-  the task-specific decision is unambiguous when defined by the TASK.
+
+9. For REJECT, always set acceptance_recording_eligible=false.
+
+10. If any required handoff fact is unavailable or ambiguous, eligibility is false.
+
+11. supporting_artifacts includes only task-owned artifacts actually hash-verified during review.

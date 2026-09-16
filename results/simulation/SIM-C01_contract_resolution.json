@@ -1,0 +1,382 @@
+{
+  "task_id": "TASK-SIM-C01",
+  "implementation_complete": true,
+  "decision": "SIM_CONTRACT_GAPS_RESOLVED",
+  "generation_timestamp": "2026-09-12T00:46:13Z",
+  "generation_git_head": "fea1bdfb7b8c0e0f3f69c5b62d328e95b37a5561",
+  "worktree_state": {
+    "pre_implementation": "DIRTY",
+    "preexisting_changes": [
+      "tasks/TASK-SIM-C01.md"
+    ],
+    "pre_fix": "CLEAN",
+    "pre_fix_head": "fea1bdfb7b8c0e0f3f69c5b62d328e95b37a5561",
+    "at_generation": "DIRTY",
+    "staged_changes": false,
+    "commit_performed": false,
+    "task_generated_paths": [
+      "docs/contracts/simulation_execution_contract_v1.md",
+      "docs/contracts/schemas/simulation_execution_contract_v1.schema.json",
+      "docs/contracts/contract_plan.md",
+      "tasks/TASK-SIM-001.md",
+      "tests/test_simulation_execution_contract.py",
+      "results/simulation/SIM-C01_contract_resolution.json"
+    ]
+  },
+  "analysis_baseline": {
+    "branch": "task/p0-SIM-",
+    "head": "360c42ef2c61374788dfa0fdc36088305c309960",
+    "bindings_match": true,
+    "material_authoritative_change_detected": false
+  },
+  "fix_revision": {
+    "reviewed_implementation_commit": "7ca63be136e272b3c73031d3fb5fd24760cc62e6",
+    "review_record": {
+      "path": "docs/task_history/TASK-SIM-C01/02_review.md",
+      "sha256": "0d4248d2a39299c819b80f2408c1017a59f637d6858a877ee41a2e3b4d05f6cd"
+    },
+    "previous_evidence_sha256": "23044f27063dfd3910b098e3fd313eb88e24ab061d986366750676f09ff0561f",
+    "finding_status": {
+      "TASK-SIM-C01-REV-B01": "FIXED",
+      "TASK-SIM-C01-REV-H01": "FIXED",
+      "TASK-SIM-C01-REV-H02": "FIXED",
+      "TASK-SIM-C01-REV-M01": "FIXED"
+    },
+    "git_history_status": "NO HISTORY ACTION REQUIRED"
+  },
+  "input_bindings": [
+    {
+      "path": "docs/simulation/simulation_contract_profile_v1.md",
+      "sha256": "43da41ade5cf53230afc46b3092b733611f0c5989f4e8769286c67aa4a171d7a"
+    },
+    {
+      "path": "results/simulation/SIM-001_contract_profile.json",
+      "sha256": "98ae08b1ba664f7be42551a84b112608409362be5615c78a57f256a935a86559"
+    },
+    {
+      "path": "tasks/TASK-SIM-001.md",
+      "sha256": "7d2d097558a60e4806635e0a09abd8f61118e08bd039d8f5473e1943c49b85fb",
+      "binding_stage": "analysis_baseline"
+    },
+    {
+      "path": "docs/contracts/contract_plan.md",
+      "sha256": "aa7f9fe1477d650b3648c18d5df1fb3b0dabc6d06df6eff33e28dcdcc05e87d0",
+      "binding_stage": "analysis_baseline"
+    },
+    {
+      "path": "docs/architecture/system_architecture_v1.md",
+      "sha256": "50e57f517cf613b5b8e26e31ec74965d03c729526b94f39d9423fa0a15371e3d"
+    },
+    {
+      "path": "docs/architecture/adr/ADR-Simulation-Lane-v1.md",
+      "sha256": "1509577842464f48055f402f5a3f717efecaba77847ff4c70534d14086fb46e0"
+    },
+    {
+      "path": "context/simulation_task_mapping_v1.md",
+      "sha256": "c0cf1671d97f4cec768de1a2836b8ecdd89c7ceace947bab108ab549c11396b2"
+    },
+    {
+      "path": "docs/architecture/adr/ADR-001-manipulator.md",
+      "sha256": "93c41a83e018adaecf5c482fba70ad32548bd940e98d5a391f459b2662873537"
+    },
+    {
+      "path": "docs/architecture/adr/ADR-002-amr.md",
+      "sha256": "4d56a32ac5e45fc9af169b3c591c518841067bc8f9544c496b2dabdbbe2727cf"
+    },
+    {
+      "path": "docs/architecture/adr/ADR-005-camera-observation.md",
+      "sha256": "2cb2e00d5271e6a2ba5b3401f16bfe4da7f44b9876451b98287ce48bbeb5d882"
+    },
+    {
+      "path": "docs/architecture/adr/ADR-010-deployment-topology.md",
+      "sha256": "018ec1b9e9e525bc70367ace55581ec04d6343c2571c1805169227c937eb0825"
+    },
+    {
+      "path": "docs/hardware/hardware_target_selection_status_v1.md",
+      "sha256": "fda8a33fe38fe1796f5d984d9b7a6c81dc4babe22e618f861375073043ad1109"
+    },
+    {
+      "path": "results/phase0/P0-004R_vla_readiness.json",
+      "sha256": "f705896b9b6a48b08dde7401dfd3ca848d9fc46ac2711bd90fdd04d8b29f873d"
+    }
+  ],
+  "contract": {
+    "path": "docs/contracts/simulation_execution_contract_v1.md",
+    "sha256": "0451e9abae4cee911d9468d11e68b8bbb0e3aff1a1a2d9cf104ed64264d28caa"
+  },
+  "schema": {
+    "path": "docs/contracts/schemas/simulation_execution_contract_v1.schema.json",
+    "sha256": "112b1e2e0d1fefb03d7b353e8ed4d875b025fe342380d5ba1cbf050bcc7d944a"
+  },
+  "contract_tests": {
+    "path": "tests/test_simulation_execution_contract.py",
+    "sha256": "52b9e445207dd189a5dd76c2c31638b8ae90ef7c61493cc6c238313c0d945534"
+  },
+  "contract_plan": {
+    "path": "docs/contracts/contract_plan.md",
+    "sha256": "4fd3a4916fa118fdbb8792681a8450157cefc0473f495e8523842e3b09b59cde"
+  },
+  "task_sim_001_spec": {
+    "path": "tasks/TASK-SIM-001.md",
+    "sha256": "3219714d5beef58f4bed4fac95de09157c6bb6b1a59431ef020810b9d0cc5b50"
+  },
+  "gap_resolution": {
+    "GAP-SIM-001": {
+      "exact_wording": "no executable Mission Executor invocation, state-transition, completion, or failure contract exists.",
+      "status": "RESOLVED",
+      "authoritative_contract_section": "5",
+      "schema_definitions": [
+        "MissionExecuteRequest",
+        "MissionExecuteResult"
+      ]
+    },
+    "GAP-SIM-002": {
+      "exact_wording": "no executable Navigation Skill request/result or action-status reconciliation interface exists.",
+      "status": "RESOLVED",
+      "authoritative_contract_sections": [
+        "6",
+        "8"
+      ],
+      "schema_definitions": [
+        "NavigationExecuteRequest",
+        "NavigationExecuteResult",
+        "ActionStatusGetRequest",
+        "ActionStatusGetResult"
+      ]
+    },
+    "GAP-SIM-003": {
+      "exact_wording": "no executable VLA Skill request/result, uncertainty, or bounded action interface exists.",
+      "status": "RESOLVED",
+      "authoritative_contract_section": "7",
+      "schema_definitions": [
+        "VLAExecuteRequest",
+        "VLAExecuteResult"
+      ]
+    },
+    "GAP-SIM-004": {
+      "exact_wording": "no executable Verification request/result schema or deterministic acceptance-threshold contract exists.",
+      "status": "RESOLVED",
+      "authoritative_contract_section": "10",
+      "schema_definitions": [
+        "VerificationRequest",
+        "VerificationResult"
+      ]
+    },
+    "GAP-SIM-005": {
+      "exact_wording": "timeout and reconciliation rules are conceptual, but callable status lookup, concrete lifecycle values, and compatibility behavior are not executable contracts.",
+      "status": "RESOLVED",
+      "authoritative_contract_sections": [
+        "4",
+        "8",
+        "9"
+      ],
+      "schema_definitions": [
+        "ActionTransition",
+        "ReconciliationRecord",
+        "RetryAuthorization"
+      ]
+    },
+    "GAP-SIM-006": {
+      "exact_wording": "synthetic observation references are authorized conceptually, but their executable fixture shape and validation rules are undefined.",
+      "status": "RESOLVED",
+      "authoritative_contract_section": "11",
+      "schema_definitions": [
+        "SimulationObservationRef",
+        "SimulationFixtureManifest"
+      ]
+    }
+  },
+  "operation_identifiers": [
+    "mission.execute",
+    "navigation.execute",
+    "vla.execute",
+    "action_status.get",
+    "verification.verify"
+  ],
+  "lifecycle_contract": {
+    "mission_states": [
+      "created",
+      "ready",
+      "executing",
+      "reconciling",
+      "recovering",
+      "completed",
+      "failed",
+      "escalated"
+    ],
+    "mission_terminal_states": [
+      "completed",
+      "failed",
+      "escalated"
+    ],
+    "action_states": [
+      "requested",
+      "running",
+      "succeeded",
+      "failed",
+      "unknown",
+      "reconciling",
+      "reconciled"
+    ],
+    "timeout_result": "pending",
+    "timeout_status": "unknown",
+    "unknown_to_succeeded_direct": false,
+    "transition_table_machine_tested": true
+  },
+  "reconciliation_contract": {
+    "status_lookup_operation": "action_status.get",
+    "same_mission_id_required": true,
+    "same_action_id_required": true,
+    "lookup_request_id_binding_required": true,
+    "immutable_evidence_required": true,
+    "success_after_timeout_requires_reconciled_evidence": true,
+    "retry_requires_reconciled_failure": true,
+    "retry_requires_retryable_true": true,
+    "retry_requires_remaining_budget": true
+  },
+  "verification_contract": {
+    "operation": "verification.verify",
+    "verification_profile_version": "sim-exact-match-v1",
+    "operational_result_separate_from_verdict": true,
+    "verdicts": [
+      "pass",
+      "fail",
+      "uncertain"
+    ],
+    "uncertain_is_pass": false,
+    "deterministic_exact_match": true,
+    "mission_completion_authority": false
+  },
+  "fixture_contract": {
+    "identifier": "SIM_FIXTURE_SET_V1",
+    "source_kind": "mock",
+    "immutable_identity_version_hash": true,
+    "manifest_schema_defined": true,
+    "dataset_v1_equivalent": false,
+    "physical_camera_required": false,
+    "training_data": false
+  },
+  "frozen_source_before_after_hashes": [
+    {
+      "path": "docs/architecture/adr/ADR-Simulation-Lane-v1.md",
+      "before_sha256": "1509577842464f48055f402f5a3f717efecaba77847ff4c70534d14086fb46e0",
+      "after_sha256": "1509577842464f48055f402f5a3f717efecaba77847ff4c70534d14086fb46e0"
+    },
+    {
+      "path": "context/simulation_task_mapping_v1.md",
+      "before_sha256": "c0cf1671d97f4cec768de1a2836b8ecdd89c7ceace947bab108ab549c11396b2",
+      "after_sha256": "c0cf1671d97f4cec768de1a2836b8ecdd89c7ceace947bab108ab549c11396b2"
+    },
+    {
+      "path": "docs/architecture/system_architecture_v1.md",
+      "before_sha256": "50e57f517cf613b5b8e26e31ec74965d03c729526b94f39d9423fa0a15371e3d",
+      "after_sha256": "50e57f517cf613b5b8e26e31ec74965d03c729526b94f39d9423fa0a15371e3d"
+    },
+    {
+      "path": "docs/architecture/adr/ADR-001-manipulator.md",
+      "before_sha256": "93c41a83e018adaecf5c482fba70ad32548bd940e98d5a391f459b2662873537",
+      "after_sha256": "93c41a83e018adaecf5c482fba70ad32548bd940e98d5a391f459b2662873537"
+    },
+    {
+      "path": "docs/architecture/adr/ADR-002-amr.md",
+      "before_sha256": "4d56a32ac5e45fc9af169b3c591c518841067bc8f9544c496b2dabdbbe2727cf",
+      "after_sha256": "4d56a32ac5e45fc9af169b3c591c518841067bc8f9544c496b2dabdbbe2727cf"
+    },
+    {
+      "path": "docs/architecture/adr/ADR-005-camera-observation.md",
+      "before_sha256": "2cb2e00d5271e6a2ba5b3401f16bfe4da7f44b9876451b98287ce48bbeb5d882",
+      "after_sha256": "2cb2e00d5271e6a2ba5b3401f16bfe4da7f44b9876451b98287ce48bbeb5d882"
+    },
+    {
+      "path": "docs/architecture/adr/ADR-010-deployment-topology.md",
+      "before_sha256": "018ec1b9e9e525bc70367ace55581ec04d6343c2571c1805169227c937eb0825",
+      "after_sha256": "018ec1b9e9e525bc70367ace55581ec04d6343c2571c1805169227c937eb0825"
+    },
+    {
+      "path": "docs/hardware/hardware_target_selection_status_v1.md",
+      "before_sha256": "fda8a33fe38fe1796f5d984d9b7a6c81dc4babe22e618f861375073043ad1109",
+      "after_sha256": "fda8a33fe38fe1796f5d984d9b7a6c81dc4babe22e618f861375073043ad1109"
+    },
+    {
+      "path": "results/phase0/P0-004R_vla_readiness.json",
+      "before_sha256": "f705896b9b6a48b08dde7401dfd3ca848d9fc46ac2711bd90fdd04d8b29f873d",
+      "after_sha256": "f705896b9b6a48b08dde7401dfd3ca848d9fc46ac2711bd90fdd04d8b29f873d"
+    }
+  ],
+  "physical_authorization_modified": false,
+  "week_authorization_modified": false,
+  "dataset_v1_introduced": false,
+  "training_dependency_introduced": false,
+  "direct_actuator_contract_introduced": false,
+  "architecture_modified": false,
+  "adr_modified": false,
+  "focused_tests": {
+    "command": "PYTHONDONTWRITEBYTECODE=1 python3 -m pytest tests/test_simulation_execution_contract.py -q -p no:cacheprovider",
+    "passed": 26,
+    "failed": 0,
+    "status": "PASS"
+  },
+  "regression_tests": {
+    "command": "PYTHONDONTWRITEBYTECODE=1 python3 -m pytest -q -p no:cacheprovider",
+    "passed": 158,
+    "failed": 0,
+    "status": "PASS"
+  },
+  "checks": [
+    {"id": "C01", "status": "PASS", "detail": "Analysis baseline and all named bindings were resolved before implementation."},
+    {"id": "C02", "status": "PASS", "detail": "The exact six gap IDs and wording are preserved individually."},
+    {"id": "C03", "status": "PASS", "detail": "The frozen Simulation Lane ADR hash is unchanged."},
+    {"id": "C04", "status": "PASS", "detail": "The frozen Simulation task mapping hash is unchanged."},
+    {"id": "C05", "status": "PASS", "detail": "The system architecture hash is unchanged."},
+    {"id": "C06", "status": "PASS", "detail": "ADR-001 hash is unchanged."},
+    {"id": "C07", "status": "PASS", "detail": "ADR-002 hash is unchanged."},
+    {"id": "C08", "status": "PASS", "detail": "ADR-005 hash is unchanged."},
+    {"id": "C09", "status": "PASS", "detail": "ADR-010 hash is unchanged."},
+    {"id": "C10", "status": "PASS", "detail": "P0-004R hash and historical NO_GO are unchanged."},
+    {"id": "C11", "status": "PASS", "detail": "The Simulation Lane v1 executable contract exists."},
+    {"id": "C12", "status": "PASS", "detail": "The JSON Schema exists and Draft 2020-12 meta-validates."},
+    {"id": "C13", "status": "PASS", "detail": "The project-wide contract plan remains explicitly planning-only."},
+    {"id": "C14", "status": "PASS", "detail": "The contract plan delegates only the bounded Simulation Lane v1 executable surface."},
+    {"id": "C15", "status": "PASS", "detail": "TASK-SIM-001 Required Context and immutable binding requirements include the delegated contract and schema."},
+    {"id": "C16", "status": "PASS", "detail": "mission.execute executable semantics are defined."},
+    {"id": "C17", "status": "PASS", "detail": "navigation.execute executable semantics are defined without raw Nav2 commands."},
+    {"id": "C18", "status": "PASS", "detail": "vla.execute executable semantics are defined without actuator commands."},
+    {"id": "C19", "status": "PASS", "detail": "verification.verify executable semantics are defined."},
+    {"id": "C20", "status": "PASS", "detail": "action_status.get executable semantics are defined."},
+    {"id": "C21", "status": "PASS", "detail": "The synthetic fixture contract is defined and distinct from Dataset V1."},
+    {"id": "C22", "status": "PASS", "detail": "Finite mission and action lifecycle transition tables are machine-tested."},
+    {"id": "C23", "status": "PASS", "detail": "DEPENDENCY_TIMEOUT and MODEL_TIMEOUT both require pending/unknown and are machine-tested for Navigation and VLA."},
+    {"id": "C24", "status": "PASS", "detail": "Direct unknown-to-succeeded is prohibited and tested."},
+    {"id": "C25", "status": "PASS", "detail": "Reconciliation requires matching immutable action-status evidence."},
+    {"id": "C26", "status": "PASS", "detail": "Retry requires reconciled retryable failure and remaining budget."},
+    {"id": "C27", "status": "PASS", "detail": "Unsupported versions, operations, enums, public fields, and calendar-invalid RFC 3339 timestamps fail closed."},
+    {"id": "C28", "status": "PASS", "detail": "The sim-exact-match-v1 deterministic verification profile is executable and tested."},
+    {"id": "C29", "status": "PASS", "detail": "No direct actuator public contract was introduced."},
+    {"id": "C30", "status": "PASS", "detail": "No physical dependency or authorization was introduced."},
+    {"id": "C31", "status": "PASS", "detail": "SIM_FIXTURE_SET_V1 is not aliased to Dataset V1."},
+    {"id": "C32", "status": "PASS", "detail": "No training or fine-tuning dependency was introduced."},
+    {"id": "C33", "status": "PASS", "detail": "No Week-task authorization was modified."},
+    {"id": "C34", "status": "PASS", "detail": "No candidate hardware target was frozen."},
+    {"id": "C35", "status": "PASS", "detail": "All focused positive vectors pass."},
+    {"id": "C36", "status": "PASS", "detail": "All focused negative and semantic vectors pass, including timeout categories, destination correlation, and fixture tamper/duplicate cases."},
+    {"id": "C37", "status": "PASS", "detail": "All 158 repository regression tests pass."},
+    {"id": "C38", "status": "PASS", "detail": "git diff --check passes."},
+    {"id": "C39", "status": "PASS", "detail": "Evidence, schema, source, and payload hash validation passes."},
+    {"id": "C40", "status": "PASS", "detail": "All mandatory predicates support SIM_CONTRACT_GAPS_RESOLVED."}
+  ],
+  "unresolved_blockers": [],
+  "authorization_snapshot": {
+    "p0_004r_final_gate": "NO_GO",
+    "task_sim_001_re_evaluation_authorized": false,
+    "task_sim_002_authorized": false,
+    "physical_motion_authorized": false,
+    "physical_gripper_authorized": false,
+    "physical_teleoperation_authorized": false,
+    "physical_dataset_v1_collection_authorized": false,
+    "physical_camera_dependency_required": false,
+    "training_authorized": false,
+    "independent_acceptance": "PENDING"
+  },
+  "payload_hash_algorithm": "sha256(canonical JSON with sorted keys and compact separators, excluding payload_sha256)",
+  "payload_sha256": "e25fc1d9d3e4c8c1e3089dfcb116129b560a27e29e287b49436d8d93ae259acd"
+}
