@@ -1,0 +1,11 @@
+{
+  "schema_version": 1,
+  "task_id": "TASK-SIM-005",
+  "status": "ACCEPT",
+  "accepted_commit": "542514a4d10bc03087834e8a5f672d53afe6aa21",
+  "review_record": "docs/task_history/TASK-SIM-005/04_review.md",
+  "evidence": {
+    "path": "results/simulation/SIM-005_mujoco_vla_backend.json",
+    "sha256": "f4d41fdb1f13978e1b1e5c91b95e31b38a69825a0d432a8284ff7731a3beb84f"
+  }
+}
