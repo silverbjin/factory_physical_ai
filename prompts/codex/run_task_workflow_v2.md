@@ -1,159 +1,76 @@
-# Single TASK Workflow Orchestrator v2
+# Single TASK Orchestration — Host-side Entry Point
 
 ## Purpose
 
-Run one TASK lifecycle while keeping Implementation, Review, Fix, Re-review,
-and Acceptance recording in separate Codex contexts.
+The complete TASK lifecycle is executed by the **host-side Python orchestrator**.
+This file documents the canonical entry point; it must not start nested Codex
+workers from inside an existing Codex-managed session.
 
-Typical command:
+For:
 
 ```text
-Run TASK-SIM-002
+Run TASK-SIM-004
 ```
 
-This prompt is an orchestration dispatcher only.
-
-Do not implement, review, fix, record acceptance, or inspect TASK sources in
-the current context.
-
----
-
-## 1. Execution
-
-Extract exactly one `TASK_ID`.
-
-Run:
+run from a normal VS Code/WSL terminal:
 
 ```bash
-python3 scripts/codex/run_task_orchestrator.py task <TASK_ID>
+python3 scripts/codex/run_task_orchestrator.py task TASK-SIM-004
 ```
 
-The external runner launches fresh Codex contexts for:
+or:
 
-```text
-Implement <TASK_ID>
-<TASK_ID>
-Fix <TASK_ID>
-<TASK_ID>
-Record <TASK_ID> acceptance for commit <ACCEPTED_COMMIT>
+```bash
+scripts/codex/run-task TASK-SIM-004
 ```
 
----
-
-## 2. State Machine
+## Lifecycle
 
 ```text
 IMPLEMENT
   COMPLETE   -> REVIEW
-  INCOMPLETE -> STOP
+  INCOMPLETE -> STOP + final report
 
 REVIEW
-  workflow_complete=false -> STOP
-  ACCEPT/REJECT -> COMMIT_IMPLEMENTATION_REVIEW
-
-COMMIT_IMPLEMENTATION_REVIEW
-  failure -> STOP
-  REJECT  -> FIX
-  ACCEPT  -> RECORD_ACCEPTANCE
+  ACCEPT/REJECT -> review-boundary commit
+  REJECT        -> FIX
+  ACCEPT        -> RECORD_ACCEPTANCE
 
 FIX
-  workflow_complete=false       -> STOP
-  READY_FOR_RE_REVIEW           -> RE_REVIEW
-  NOT_READY_FOR_RE_REVIEW       -> STOP
+  READY_FOR_RE_REVIEW     -> RE_REVIEW
+  NOT_READY_FOR_RE_REVIEW -> STOP + final report
 
 RE_REVIEW
-  workflow_complete=false -> STOP
-  ACCEPT/REJECT -> COMMIT_FIX_RE_REVIEW
-
-COMMIT_FIX_RE_REVIEW
-  failure -> STOP
-  REJECT  -> STOP by default
-  ACCEPT  -> RECORD_ACCEPTANCE
+  ACCEPT/REJECT -> fix/re-review commit
+  REJECT        -> STOP + final report
+  ACCEPT        -> RECORD_ACCEPTANCE
 
 RECORD_ACCEPTANCE
-  workflow_complete=false -> STOP
-  RECORDED -> COMMIT_ACCEPTANCE
-
-COMMIT_ACCEPTANCE
-  failure -> STOP
-  success -> ACCEPTED
+  RECORDED -> acceptance commit -> ACCEPTED
+  FAILED   -> STOP + final report
 ```
 
-Default maximum Fix cycles:
+## Console / Logs
+
+Default terminal output is intentionally compact:
 
 ```text
-1
+START / WAIT / PASS / REJECT / COMMIT / FAIL / STOP / DONE
 ```
 
-Do not continue indefinitely after repeated REJECT results.
-
----
-
-## 3. Git / Acceptance Boundary
-
-Git staging and commits are owned exclusively by:
+Full child output is stored outside the repository under:
 
 ```text
-scripts/codex/run_task_orchestrator.py
+${XDG_STATE_HOME:-~/.local/state}/codex-task-orchestrator/
 ```
 
-Child Codex contexts must never commit.
-
-The accepted Review snapshot is committed BEFORE acceptance recording.
-
-Therefore the acceptance JSON records a stable `accepted_commit` rather than an
-uncommitted or moving worktree.
-
-For an accepted TASK the normal Git sequence is:
+Every run writes:
 
 ```text
-reviewed implementation/fix snapshot commit
-→ acceptance JSON generation
-→ acceptance JSON commit
+summary.md
+run_report.json
+<stage>.log
+<stage>_final.txt
 ```
 
----
-
-## 4. Context Boundary
-
-The current orchestration context must not load:
-
-- `tasks/<TASK_ID>.md`;
-- Required Sources;
-- Conditional Sources;
-- implementation files;
-- tests;
-- Evidence;
-- TASK history;
-- Review findings;
-- acceptance JSON contents.
-
-Those belong only to fresh child contexts started by the runner.
-
----
-
-## 5. Completion Safety
-
-A child stage may advance only when its final machine-readable marker contains:
-
-```json
-{"workflow_complete": true}
-```
-
-If it is false, stop without starting the next stage.
-
-Acceptance recording must also prove:
-
-```text
-accepted_commit == current HEAD at recording start
-```
-
-and must create exactly one acceptance JSON.
-
----
-
-## 6. Result
-
-Return only the runner's concise TASK result.
-
-Do not reconstruct child reports in this context.
+Use `--verbose` only when the full child stream is needed.
