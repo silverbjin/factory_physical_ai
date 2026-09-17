@@ -38,13 +38,13 @@
     "physical_activity": false,
     "startup_execution_cleanup_bounded": true
   },
-  "generated_at": "2026-09-17T08:07:32.051943Z",
+  "generated_at": "2026-09-17T08:26:59.947770Z",
   "profile_smoke": [
     {
       "action_ids": [
-        "7df50928-472d-4e15-8b18-bf46f5c07b69",
-        "5c1ec541-6a6b-461d-b995-4362221055cb",
-        "5c1ec541-6a6b-461d-b995-4362221055cb"
+        "5497ec98-06d5-4631-8171-7d6abf32bdbb",
+        "0f573034-6f40-4301-aa1f-60b3958e8294",
+        "0f573034-6f40-4301-aa1f-60b3958e8294"
       ],
       "cleanup_complete": true,
       "failure_code": null,
@@ -54,13 +54,13 @@
         "ready": null,
         "startup_attempted": false
       },
-      "mission_id": "047c42ce-12b1-4cf6-9c33-8bc175c985e4",
+      "mission_id": "d1ae1b23-82e6-42fa-b6d4-5e8b863e62ad",
       "mission_result": "success",
       "mujoco_live_world": false,
       "pass": true,
       "profile": "deterministic",
       "system_world": null,
-      "trace_id": "16204c40-6642-471f-a0b6-501ff81e28de",
+      "trace_id": "37215252-533f-426a-a423-93fa94b77b6e",
       "verification_before_completion": true
     },
     {
@@ -77,20 +77,20 @@
         "ready": false,
         "startup_attempted": true
       },
-      "mission_id": "d91fbfd3-8400-4812-a408-0c154c8d8836",
+      "mission_id": "a195b1bd-0de0-46ab-b52a-b681bd2391be",
       "mission_result": "failure",
       "mujoco_live_world": false,
       "pass": false,
       "profile": "navigation_physics",
       "system_world": "gazebo_harmonic",
-      "trace_id": "66fb7509-eecf-4723-9972-b1fb4b292f03",
+      "trace_id": "335a2638-8f7d-47a6-9955-9eab1a058817",
       "verification_before_completion": false
     },
     {
       "action_ids": [
-        "52d22407-15d8-4e71-bf10-50e6a2e1775c",
-        "7f15f3ff-0743-44d5-ba91-faaf4afbde76",
-        "7f15f3ff-0743-44d5-ba91-faaf4afbde76"
+        "869ba98e-7fa0-4ca1-a1f7-9b797bc81165",
+        "8619394d-73a9-43ed-ba29-553b76022fca",
+        "8619394d-73a9-43ed-ba29-553b76022fca"
       ],
       "cleanup_complete": true,
       "failure_code": "VERIFICATION_NOT_ELIGIBLE",
@@ -101,13 +101,13 @@
         "startup_attempted": false,
         "verification_observation": "live_gazebo_record_unaccepted"
       },
-      "mission_id": "15e0e800-fe3a-4f46-971a-cc3ad96276c8",
+      "mission_id": "cca4dad7-ddb7-488d-9ee0-b69a3c34c1e8",
       "mission_result": "failure",
       "mujoco_live_world": true,
       "pass": false,
       "profile": "manipulation_physics",
       "system_world": "mujoco",
-      "trace_id": "4cee763b-a7ca-4cd3-95f2-7a47bc4cfdc9",
+      "trace_id": "17250429-4124-4026-ad02-8ad2e06112b3",
       "verification_before_completion": true
     },
     {
@@ -124,13 +124,13 @@
         "ready": false,
         "startup_attempted": true
       },
-      "mission_id": "aa5d76dd-4435-4197-9428-72504874e670",
+      "mission_id": "3c155574-75d9-4d3f-be7e-455e707aedb7",
       "mission_result": "failure",
       "mujoco_live_world": false,
       "pass": false,
       "profile": "system",
       "system_world": "gazebo_harmonic",
-      "trace_id": "11e9fac1-a05e-4388-990c-1837c05692ef",
+      "trace_id": "dad561ac-7eb6-4e4d-ad57-08848160f21e",
       "verification_before_completion": false
     }
   ],

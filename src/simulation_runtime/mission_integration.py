@@ -127,21 +127,31 @@ class MissionIntegrationRuntime:
         if self.available_backends is not None and backend not in self.available_backends:
             raise ProfileUnavailable(f"required backend unavailable: {backend}")
 
+    def _close_runtime(self, runtime: ManagedNavigationRuntime) -> bool:
+        try:
+            return runtime.close()
+        except Exception:
+            return False
+
     def _navigation(self) -> tuple[NavigationBackend, ManagedNavigationRuntime | None]:
         backend = self.profile.navigation
         self._require_backend(backend)
         if backend == "ros2_jazzy_gazebo_harmonic":
-            runtime = self.gazebo_runtime_factory()
+            try:
+                runtime = self.gazebo_runtime_factory()
+            except Exception as exc:
+                self.lifecycle["cleanup_complete"] = True
+                raise ProfileUnavailable("accepted Gazebo/ROS 2 Navigation runtime could not be constructed") from exc
             self.lifecycle["startup_attempted"] = True
             try:
                 runtime.start()
                 ready = runtime.bootstrap_localization() and runtime.ready
-            except Exception:
-                self.lifecycle["cleanup_complete"] = runtime.close()
-                raise
+            except Exception as exc:
+                self.lifecycle["cleanup_complete"] = self._close_runtime(runtime)
+                raise ProfileUnavailable("accepted Gazebo/ROS 2 Navigation runtime failed to start") from exc
             self.lifecycle["ready"] = ready
             if not ready:
-                self.lifecycle["cleanup_complete"] = runtime.close()
+                self.lifecycle["cleanup_complete"] = self._close_runtime(runtime)
                 raise ProfileUnavailable("accepted Gazebo/ROS 2 Navigation runtime did not become ready")
             return NavigationBackend(runtime), runtime
         # Fixture profiles retain the same public boundary, without loading ROS.
@@ -200,9 +210,11 @@ class MissionIntegrationRuntime:
             return {"mission": self._mission_failure(mission_request, "PROFILE_UNAVAILABLE", str(exc)), "profile": self.profile, "bounded": time.monotonic() - started < 60, "lifecycle": dict(self.lifecycle)}
         finally:
             if managed_runtime is not None:
-                self.cleanup_complete = managed_runtime.close()
-            else:
+                self.cleanup_complete = self._close_runtime(managed_runtime)
+            elif self.lifecycle["cleanup_complete"] is None:
                 self.cleanup_complete = True
+            else:
+                self.cleanup_complete = self.lifecycle["cleanup_complete"]
             self.cleaned_up = self.cleanup_complete
             self.lifecycle["cleanup_complete"] = self.cleanup_complete
 
