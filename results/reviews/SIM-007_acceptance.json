@@ -1,0 +1,11 @@
+{
+  "schema_version": 1,
+  "task_id": "TASK-SIM-007",
+  "status": "ACCEPT",
+  "accepted_commit": "228eb7745aa05c230e1b272184601b5afd53853b",
+  "review_record": "docs/task_history/TASK-SIM-007/06_review.md",
+  "evidence": {
+    "path": "results/simulation/SIM-007_mission_integration.json",
+    "sha256": "7247f8db76c874e533f615f1c8c3f32febb7a7e2377790ff05e3e93320531711"
+  }
+}
