@@ -1,0 +1,45 @@
+{
+  "schema_version": 1,
+  "task_id": "TASK-SIM-006",
+  "result": "SIM_VERIFICATION_BACKEND_READY",
+  "generated_at": "2026-09-16T14:04:37Z",
+  "component_version": "sim006-verification-backend-v1",
+  "simulation_only": true,
+  "accepted_dependencies": [
+    {
+      "task_id": "TASK-SIM-004",
+      "accepted_commit": "b7e8266abd17f48c18cca94d9433db50fd55464d",
+      "evidence_path": "results/simulation/SIM-004_navigation_backend.json",
+      "evidence_sha256": "b4c0ce91dde6c2f92c57ea6a227149362279993dee0dec4fd1ab12877e73f1d9"
+    },
+    {
+      "task_id": "TASK-SIM-005",
+      "accepted_commit": "542514a4d10bc03087834e8a5f672d53afe6aa21",
+      "evidence_path": "results/simulation/SIM-005_mujoco_vla_backend.json",
+      "evidence_sha256": "f4d41fdb1f13978e1b1e5c91b95e31b38a69825a0d432a8284ff7731a3beb84f"
+    }
+  ],
+  "normalized_sources": ["deterministic", "gazebo", "mujoco"],
+  "contract": {
+    "operation": "verification.verify",
+    "profile_version": "sim-exact-match-v1",
+    "verdicts": ["pass", "fail", "uncertain"],
+    "routes": ["CONFIRMED", "RECONCILE", "RECOVERY", "HITL"],
+    "mission_completion_committed": false,
+    "hidden_simulator_state_access": false
+  },
+  "proof": {
+    "exact_match": "pass",
+    "mismatch": "fail",
+    "insufficient_or_ambiguous": "uncertain",
+    "stale_or_identity_hash_mismatch": "contract_failure_and_HITL",
+    "uncertain_confidence_promotion": "forbidden",
+    "cross_backend_equivalence": "pass"
+  },
+  "validation": {
+    "command": "PYTHONDONTWRITEBYTECODE=1 python3 -m pytest -q -p no:cacheprovider tests/test_simulation_verification_backend.py tests/test_simulation_execution_contract.py",
+    "result": "PASS",
+    "tests_passed": 31,
+    "git_diff_check": "PASS"
+  }
+}
