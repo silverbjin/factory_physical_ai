@@ -9,9 +9,13 @@ from simulation_runtime.smoke import validate_contract_message
 
 
 class SpyGazeboRuntime:
-    def __init__(self, *, ready: bool = True, cleanup: bool = True) -> None:
-        self.ready, self.cleanup, self.calls = ready, cleanup, []
-    def start(self) -> None: self.calls.append("start")
+    def __init__(self, *, ready: bool = True, cleanup: bool = True,
+                 start_error: Exception | None = None) -> None:
+        self.ready, self.cleanup, self.start_error, self.calls = ready, cleanup, start_error, []
+    def start(self) -> None:
+        self.calls.append("start")
+        if self.start_error is not None:
+            raise self.start_error
     def bootstrap_localization(self) -> bool:
         self.calls.append("bootstrap"); return self.ready
     def navigate(self, request: dict[str, object]) -> RuntimeObservation:
@@ -61,6 +65,21 @@ def test_startup_or_cleanup_failure_fails_closed() -> None:
     runtime = MissionIntegrationRuntime("system", gazebo_runtime_factory=lambda: cleanup)
     runtime.execute(make_mission_request())
     assert runtime.cleaned_up is False and cleanup.calls[-1] == "close"
+
+def test_backend_construction_and_start_exceptions_fail_closed() -> None:
+    factory_failure = MissionIntegrationRuntime(
+        "navigation_physics",
+        gazebo_runtime_factory=lambda: (_ for _ in ()).throw(RuntimeError("Gazebo missing")),
+    ).execute(make_mission_request())
+    assert factory_failure["mission"]["error"]["code"] == "PROFILE_UNAVAILABLE"
+    assert factory_failure["lifecycle"]["cleanup_complete"] is True
+
+    startup = SpyGazeboRuntime(start_error=RuntimeError("Nav2 startup failed"))
+    startup_failure = MissionIntegrationRuntime(
+        "navigation_physics", gazebo_runtime_factory=lambda: startup
+    ).execute(make_mission_request())
+    assert startup_failure["mission"]["error"]["code"] == "PROFILE_UNAVAILABLE"
+    assert startup.calls == ["start", "close"]
 
 def test_unknown_or_unavailable_profile_fails_closed() -> None:
     try: select_profile("unknown")
