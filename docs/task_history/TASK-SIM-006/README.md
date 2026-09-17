@@ -1,6 +1,6 @@
 # TASK-SIM-006 History
 
-Current status: REJECTED / FIX REQUIRED
+Current status: ACCEPTED
 
 | Seq | Type | Result | Record |
 |---:|---|---|---|
@@ -11,3 +11,4 @@ Current status: REJECTED / FIX REQUIRED
 | 05 | Fix | READY FOR RE-REVIEW | `05_fix.md` |
 | 06 | Review | REJECT | `06_review.md` |
 | 07 | Review | REJECT | `07_review.md` |
+| 08 | Review | ACCEPT | `08_review.md` |
