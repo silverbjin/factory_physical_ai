@@ -38,63 +38,100 @@
     "physical_activity": false,
     "startup_execution_cleanup_bounded": true
   },
-  "generated_at": "2026-09-17T07:58:19.718745Z",
+  "generated_at": "2026-09-17T08:07:32.051943Z",
   "profile_smoke": [
     {
       "action_ids": [
-        "6f255700-c249-4967-9773-2ec89781d16d",
-        "eca0f9c2-a53a-4f77-8f60-e8a4f3aa9504",
-        "eca0f9c2-a53a-4f77-8f60-e8a4f3aa9504"
+        "7df50928-472d-4e15-8b18-bf46f5c07b69",
+        "5c1ec541-6a6b-461d-b995-4362221055cb",
+        "5c1ec541-6a6b-461d-b995-4362221055cb"
       ],
-      "mission_id": "bfd3f01d-7945-4f6e-a632-438bc94b404d",
+      "cleanup_complete": true,
+      "failure_code": null,
+      "lifecycle": {
+        "cleanup_complete": true,
+        "profile": "deterministic",
+        "ready": null,
+        "startup_attempted": false
+      },
+      "mission_id": "047c42ce-12b1-4cf6-9c33-8bc175c985e4",
+      "mission_result": "success",
       "mujoco_live_world": false,
       "pass": true,
       "profile": "deterministic",
       "system_world": null,
-      "trace_id": "ea326589-6700-4554-9544-a279b9c9d2ca",
+      "trace_id": "16204c40-6642-471f-a0b6-501ff81e28de",
       "verification_before_completion": true
     },
     {
       "action_ids": [
-        "a6fde407-cf85-4a96-bd39-4e28d35f6f61",
-        "f6e4ba31-d20a-4786-b590-d547ea88042e",
-        "f6e4ba31-d20a-4786-b590-d547ea88042e"
+        null,
+        null,
+        null
       ],
-      "mission_id": "98b98da7-3b62-4824-90c3-ecec3253b05e",
+      "cleanup_complete": true,
+      "failure_code": "PROFILE_UNAVAILABLE",
+      "lifecycle": {
+        "cleanup_complete": true,
+        "profile": "navigation_physics",
+        "ready": false,
+        "startup_attempted": true
+      },
+      "mission_id": "d91fbfd3-8400-4812-a408-0c154c8d8836",
+      "mission_result": "failure",
       "mujoco_live_world": false,
-      "pass": true,
+      "pass": false,
       "profile": "navigation_physics",
       "system_world": "gazebo_harmonic",
-      "trace_id": "0fd9d8d8-f11e-4502-a892-d26812297e1c",
-      "verification_before_completion": true
+      "trace_id": "66fb7509-eecf-4723-9972-b1fb4b292f03",
+      "verification_before_completion": false
     },
     {
       "action_ids": [
-        "fda614c8-9325-416f-8c9c-2f059a92a116",
-        "d966732a-9312-4063-859f-86c611e9e1f0",
-        "d966732a-9312-4063-859f-86c611e9e1f0"
+        "52d22407-15d8-4e71-bf10-50e6a2e1775c",
+        "7f15f3ff-0743-44d5-ba91-faaf4afbde76",
+        "7f15f3ff-0743-44d5-ba91-faaf4afbde76"
       ],
-      "mission_id": "eab86f03-ef95-4dd9-8495-612897ef276c",
+      "cleanup_complete": true,
+      "failure_code": "VERIFICATION_NOT_ELIGIBLE",
+      "lifecycle": {
+        "cleanup_complete": true,
+        "profile": "manipulation_physics",
+        "ready": null,
+        "startup_attempted": false,
+        "verification_observation": "live_gazebo_record_unaccepted"
+      },
+      "mission_id": "15e0e800-fe3a-4f46-971a-cc3ad96276c8",
+      "mission_result": "failure",
       "mujoco_live_world": true,
-      "pass": true,
+      "pass": false,
       "profile": "manipulation_physics",
       "system_world": "mujoco",
-      "trace_id": "1b299263-c4ac-4e1c-9145-87a7fb1bf106",
+      "trace_id": "4cee763b-a7ca-4cd3-95f2-7a47bc4cfdc9",
       "verification_before_completion": true
     },
     {
       "action_ids": [
-        "4b862c3e-f639-4a3a-abfd-7de6f05e954c",
-        "348cad8f-2c5b-4154-b4e6-8ceceeaf8199",
-        "348cad8f-2c5b-4154-b4e6-8ceceeaf8199"
+        null,
+        null,
+        null
       ],
-      "mission_id": "aaec9e9b-8127-4ab1-9abb-0059c360e3af",
+      "cleanup_complete": true,
+      "failure_code": "PROFILE_UNAVAILABLE",
+      "lifecycle": {
+        "cleanup_complete": true,
+        "profile": "system",
+        "ready": false,
+        "startup_attempted": true
+      },
+      "mission_id": "aa5d76dd-4435-4197-9428-72504874e670",
+      "mission_result": "failure",
       "mujoco_live_world": false,
-      "pass": true,
+      "pass": false,
       "profile": "system",
       "system_world": "gazebo_harmonic",
-      "trace_id": "acedee5c-1e9f-49a3-8798-3bbbc0782ed9",
-      "verification_before_completion": true
+      "trace_id": "11e9fac1-a05e-4388-990c-1837c05692ef",
+      "verification_before_completion": false
     }
   ],
   "profiles": {
@@ -142,5 +179,5 @@
     "mujoco_live_world": false
   },
   "task_id": "TASK-SIM-007",
-  "task_specific_result": "SIM_MISSION_INTEGRATION_READY"
+  "task_specific_result": "SIM_MISSION_INTEGRATION_BLOCKED"
 }
