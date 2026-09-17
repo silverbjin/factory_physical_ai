@@ -10,3 +10,4 @@ Current status: REJECTED / FIX REQUIRED
 | 04 | Review | REJECT | `04_review.md` |
 | 05 | Fix | READY FOR RE-REVIEW | `05_fix.md` |
 | 06 | Review | REJECT | `06_review.md` |
+| 07 | Review | REJECT | `07_review.md` |
