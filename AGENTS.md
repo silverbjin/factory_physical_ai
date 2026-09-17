@@ -89,6 +89,7 @@ worker_role=fix
 
 worker_role=acceptance
 → prompts/codex/record_task_acceptance_v2.md
+→ canonical manifest: results/reviews/<TASK_SHORT>_acceptance.json
 ```
 
 For `worker_role=acceptance`, also use the supplied:

@@ -10,6 +10,7 @@ from run_task_orchestrator import (
     ErrorRecord,
     ModelConfig,
     OrchestratorError,
+    terminate_child_process,
     RunContext,
     child_prompt,
     commit_all_changes,
@@ -17,6 +18,7 @@ from run_task_orchestrator import (
     default_report_base,
     derive_next_action,
     expected_acceptance_filename,
+    expected_acceptance_path,
     create_manual_resume_state,
     load_resume_checkpoint,
     resume_checkpoint_path,
@@ -120,6 +122,10 @@ class OrchestratorUnitTests(unittest.TestCase):
         self.assertEqual(task_scope("TASK-SIM-002"), "sim")
         self.assertEqual(expected_acceptance_filename("TASK-SIM-003"), "SIM-003_acceptance.json")
         self.assertEqual(
+            expected_acceptance_path("TASK-SIM-003").as_posix(),
+            "results/reviews/SIM-003_acceptance.json",
+        )
+        self.assertEqual(
             commit_subject("TASK-SIM-002", "implementation-review", "REJECT"),
             "feat(sim): TASK-SIM-002 implementation reviewed [REJECT]",
         )
@@ -195,7 +201,7 @@ class OrchestratorUnitTests(unittest.TestCase):
             accepted_commit = subprocess.run(
                 ["git", "rev-parse", "HEAD"], cwd=repo, text=True, stdout=subprocess.PIPE, check=True
             ).stdout.strip()
-            out = repo / "results/sim"
+            out = repo / "results/reviews"
             out.mkdir(parents=True)
             acceptance_file = out / "SIM-003_acceptance.json"
             acceptance_file.write_text(
@@ -215,11 +221,48 @@ class OrchestratorUnitTests(unittest.TestCase):
                 task_id="TASK-SIM-003",
                 status="RECORDED",
                 accepted_commit=accepted_commit,
-                acceptance_path="results/sim/SIM-003_acceptance.json",
+                acceptance_path="results/reviews/SIM-003_acceptance.json",
                 payload={"workflow_complete": True},
             )
             rel = validate_acceptance_write(repo, result, task_id="TASK-SIM-003", accepted_commit=accepted_commit)
-            self.assertEqual(rel.as_posix(), "results/sim/SIM-003_acceptance.json")
+            self.assertEqual(rel.as_posix(), "results/reviews/SIM-003_acceptance.json")
+
+    def test_validate_acceptance_write_rejects_legacy_simulation_directory(self):
+        with tempfile.TemporaryDirectory() as td:
+            repo = Path(td)
+            subprocess.run(["git", "init", "-q"], cwd=repo, check=True)
+            subprocess.run(["git", "config", "user.name", "Test User"], cwd=repo, check=True)
+            subprocess.run(["git", "config", "user.email", "test@example.com"], cwd=repo, check=True)
+            (repo / "seed.txt").write_text("seed\n", encoding="utf-8")
+            subprocess.run(["git", "add", "-A"], cwd=repo, check=True)
+            subprocess.run(["git", "commit", "-qm", "initial"], cwd=repo, check=True)
+            accepted_commit = subprocess.run(
+                ["git", "rev-parse", "HEAD"], cwd=repo, text=True, stdout=subprocess.PIPE, check=True
+            ).stdout.strip()
+            out = repo / "results/simulation"
+            out.mkdir(parents=True)
+            acceptance_file = out / "SIM-003_acceptance.json"
+            acceptance_file.write_text(
+                json.dumps({
+                    "schema_version": 1,
+                    "task_id": "TASK-SIM-003",
+                    "status": "ACCEPT",
+                    "accepted_commit": accepted_commit,
+                    "review_record": "docs/task_history/TASK-SIM-003/04_review.md",
+                    "evidence": {"path": None, "sha256": None},
+                }) + "\n", encoding="utf-8"
+            )
+            result = AcceptanceResult(
+                task_id="TASK-SIM-003",
+                status="RECORDED",
+                accepted_commit=accepted_commit,
+                acceptance_path="results/simulation/SIM-003_acceptance.json",
+                payload={"workflow_complete": True},
+            )
+            with self.assertRaises(OrchestratorError):
+                validate_acceptance_write(
+                    repo, result, task_id="TASK-SIM-003", accepted_commit=accepted_commit
+                )
 
     def test_resume_checkpoint_round_trip(self):
         with tempfile.TemporaryDirectory() as td, tempfile.TemporaryDirectory() as state_td:
@@ -286,6 +329,105 @@ class OrchestratorUnitTests(unittest.TestCase):
             )
             self.assertFalse(str(p).startswith(str(repo)))
             self.assertTrue(p.name.startswith("resume_TASK-SIM-004"))
+
+    def test_interrupted_next_action_points_to_resume(self):
+        from run_task_orchestrator import ErrorRecord
+        action, steps = derive_next_action(
+            {"status": "ERROR", "task_id": "TASK-SIM-006"},
+            [
+                ErrorRecord(
+                    kind="INTERRUPTED",
+                    stage="implementation",
+                    task_id="TASK-SIM-006",
+                    message="Interrupted by Ctrl+C",
+                )
+            ],
+        )
+        self.assertEqual(action, "RESUME_INTERRUPTED_STAGE")
+        self.assertTrue(any("resume-task" in step for step in steps))
+
+    def test_terminate_child_process_stops_sleeping_process(self):
+        import sys
+        proc = subprocess.Popen(
+            [sys.executable, "-c", "import time; time.sleep(60)"],
+            start_new_session=True,
+        )
+        try:
+            terminate_child_process(proc, interrupt_grace=0.2, terminate_grace=0.2)
+            self.assertIsNotNone(proc.poll())
+        finally:
+            if proc.poll() is None:
+                proc.kill()
+                proc.wait(timeout=2)
+
+    def test_run_codex_text_converts_sigint_to_child_interrupted(self):
+        import signal
+        import sys
+        import time
+        with tempfile.TemporaryDirectory() as td:
+            td_path = Path(td)
+            fake_bin = td_path / "bin"
+            fake_bin.mkdir()
+            fake_codex = fake_bin / "codex"
+            fake_codex.write_text(
+                "#!/usr/bin/env bash\nexec sleep 60\n",
+                encoding="utf-8",
+            )
+            fake_codex.chmod(0o755)
+            repo = td_path / "repo"
+            repo.mkdir()
+            state = td_path / "state"
+            helper = td_path / "interrupt_helper.py"
+            module_dir = Path(__file__).resolve().parent
+            helper_source = "\n".join([
+                "import os, sys",
+                f"sys.path.insert(0, {str(module_dir)!r})",
+                "from pathlib import Path",
+                "from run_task_orchestrator import ChildInterruptedError, ModelConfig, RunContext, run_codex_text",
+                f"os.environ['PATH'] = {str(fake_bin)!r} + os.pathsep + os.environ.get('PATH', '')",
+                f"repo = Path({str(repo)!r})",
+                f"ctx = RunContext(repo=repo, target='TASK-SIM-006', report_base=Path({str(state)!r}), verbose=False, show_tail=0, heartbeat_seconds=0)",
+                "try:",
+                "    run_codex_text('test', repo, ModelConfig('fake', 'low'), ctx=ctx, task_id='TASK-SIM-006', role='implementation')",
+                "except ChildInterruptedError:",
+                "    print('INTERRUPT_CAUGHT')",
+                "    raise SystemExit(0)",
+                "raise SystemExit(3)",
+                "",
+            ])
+            helper.write_text(helper_source, encoding="utf-8")
+            proc = subprocess.Popen(
+                [sys.executable, str(helper)],
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT,
+                text=True,
+            )
+            captured = []
+            try:
+                assert proc.stdout is not None
+                deadline = time.time() + 10
+                while time.time() < deadline:
+                    line = proc.stdout.readline()
+                    if line:
+                        captured.append(line)
+                        if " CHILD " in line or "] CHILD" in line:
+                            break
+                    elif proc.poll() is not None:
+                        break
+                self.assertTrue(
+                    any("CHILD" in line for line in captured),
+                    "helper never reached child wait loop: " + "".join(captured),
+                )
+                proc.send_signal(signal.SIGINT)
+                rest, _ = proc.communicate(timeout=6)
+                output = "".join(captured) + rest
+            finally:
+                if proc.poll() is None:
+                    proc.kill()
+                    proc.wait(timeout=2)
+            self.assertEqual(proc.returncode, 0, output)
+            self.assertIn("INTERRUPT_CAUGHT", output)
+            self.assertNotIn("Traceback", output)
 
     def test_reports_written_outside_repo(self):
         with tempfile.TemporaryDirectory() as td, tempfile.TemporaryDirectory() as state_td:

@@ -19,6 +19,7 @@ import os
 import queue
 import re
 import shutil
+import signal
 import subprocess
 import sys
 import tempfile
@@ -48,6 +49,23 @@ class OrchestratorError(RuntimeError):
 
 class ChildProcessError(OrchestratorError):
     def __init__(self, message: str, *, task_id: str, role: str, log_path: Path, final_path: Path):
+        super().__init__(message)
+        self.task_id = task_id
+        self.role = role
+        self.log_path = log_path
+        self.final_path = final_path
+
+
+class ChildInterruptedError(OrchestratorError):
+    def __init__(
+        self,
+        message: str,
+        *,
+        task_id: str,
+        role: str,
+        log_path: Path,
+        final_path: Path,
+    ):
         super().__init__(message)
         self.task_id = task_id
         self.role = role
@@ -509,6 +527,9 @@ def child_prompt(
     if accepted_commit is not None:
         lines.append(f"accepted_commit={accepted_commit}")
 
+    if worker_role == "acceptance":
+        lines.append(f"acceptance_path={expected_acceptance_path(task_id).as_posix()}")
+
     if resume:
         lines.append("resume=true")
         lines.append(f"resume_from_stage={resume_from_stage or worker_role}")
@@ -772,6 +793,53 @@ def write_manual_resume_prompt(
 
 
 
+def terminate_child_process(
+    proc: subprocess.Popen[str],
+    *,
+    interrupt_grace: float = 2.0,
+    terminate_grace: float = 2.0,
+) -> None:
+    """Stop one Codex child process group without leaving an orphan.
+
+    Children are launched in a new session, so Ctrl+C reaches the host
+    orchestrator first. The host then performs SIGINT -> SIGTERM -> SIGKILL
+    escalation on the entire child process group.
+    """
+    if proc.poll() is not None:
+        return
+
+    def send(sig: int) -> None:
+        try:
+            if os.name == "posix":
+                os.killpg(proc.pid, sig)
+            elif sig == signal.SIGKILL:
+                proc.kill()
+            else:
+                proc.terminate()
+        except ProcessLookupError:
+            pass
+
+    send(signal.SIGINT)
+    try:
+        proc.wait(timeout=interrupt_grace)
+        return
+    except subprocess.TimeoutExpired:
+        pass
+
+    send(signal.SIGTERM)
+    try:
+        proc.wait(timeout=terminate_grace)
+        return
+    except subprocess.TimeoutExpired:
+        pass
+
+    send(signal.SIGKILL)
+    try:
+        proc.wait(timeout=1.0)
+    except subprocess.TimeoutExpired:
+        pass
+
+
 def run_codex_text(
     prompt: str,
     repo: Path,
@@ -821,37 +889,93 @@ def run_codex_text(
                 stderr=subprocess.STDOUT,
                 text=True,
                 bufsize=1,
+                start_new_session=True,
             )
             assert proc.stdout is not None
             q: queue.Queue[str | None] = queue.Queue()
             reader = threading.Thread(target=_reader_thread, args=(proc.stdout, q), daemon=True)
             reader.start()
+            ctx.progress(
+                "CHILD",
+                f"{task_id} {role.upper()} pid={proc.pid} started; waiting for Codex output",
+            )
             last_heartbeat = time.monotonic()
+            first_output_seen = False
             stream_done = False
 
-            while not stream_done:
-                timeout = 1.0
-                try:
-                    item = q.get(timeout=timeout)
-                except queue.Empty:
-                    item = ""
-                if item is None:
-                    stream_done = True
-                elif item:
-                    log_file.write(item)
-                    log_file.flush()
-                    if ctx.verbose:
-                        print(item, end="", flush=True)
+            try:
+                while not stream_done:
+                    timeout = 1.0
+                    try:
+                        item = q.get(timeout=timeout)
+                    except queue.Empty:
+                        item = ""
+                    if item is None:
+                        stream_done = True
+                    elif item:
+                        if not first_output_seen:
+                            first_output_seen = True
+                            ctx.progress(
+                                "ACTIVE",
+                                f"{task_id} {role.upper()} child output detected",
+                            )
+                        log_file.write(item)
+                        log_file.flush()
+                        if ctx.verbose:
+                            print(item, end="", flush=True)
 
-                now = time.monotonic()
-                if (
-                    ctx.heartbeat_seconds > 0
-                    and proc.poll() is None
-                    and now - last_heartbeat >= ctx.heartbeat_seconds
-                ):
-                    elapsed = int(now - started)
-                    ctx.progress("WAIT", f"{task_id} {role.upper()} still running ({elapsed}s)")
-                    last_heartbeat = now
+                    now = time.monotonic()
+                    if (
+                        ctx.heartbeat_seconds > 0
+                        and proc.poll() is None
+                        and now - last_heartbeat >= ctx.heartbeat_seconds
+                    ):
+                        elapsed = int(now - started)
+                        state = "active" if first_output_seen else "starting"
+                        ctx.progress(
+                            "WAIT",
+                            f"{task_id} {role.upper()} {state} ({elapsed}s)",
+                        )
+                        last_heartbeat = now
+            except KeyboardInterrupt:
+                ctx.progress(
+                    "INTERRUPT",
+                    f"{task_id} {role.upper()} Ctrl+C received; stopping child cleanly",
+                )
+                terminate_child_process(proc)
+                reader.join(timeout=2)
+                log_file.flush()
+
+                final_message = (
+                    last_message.read_text(encoding="utf-8")
+                    if last_message.exists()
+                    else ""
+                )
+                final_path.write_text(final_message, encoding="utf-8")
+                ended = time.monotonic()
+                record.ended_at = iso_now()
+                record.duration_seconds = round(ended - started, 3)
+                record.exit_code = proc.poll()
+                record.tokens_reported = extract_tokens(log_path)
+                record.signals = extract_signal_lines(final_message)
+                record.error_type = "INTERRUPTED"
+                record.error_message = "Interrupted by Ctrl+C while child Codex was running."
+                ctx.add_error(
+                    kind="INTERRUPTED",
+                    stage=role,
+                    task_id=task_id,
+                    message=record.error_message,
+                    signals=record.signals,
+                    log_path=str(log_path),
+                    final_path=str(final_path),
+                )
+                raise ChildInterruptedError(
+                    record.error_message,
+                    task_id=task_id,
+                    role=role,
+                    log_path=log_path,
+                    final_path=final_path,
+                )
 
             return_code = proc.wait()
             reader.join(timeout=1)
@@ -987,8 +1111,16 @@ def task_short(task_id: str) -> str:
     return task_id[len("TASK-"):]
 
 
+ACCEPTANCE_DIR = Path("results/reviews")
+
+
 def expected_acceptance_filename(task_id: str) -> str:
     return f"{task_short(task_id)}_acceptance.json"
+
+
+def expected_acceptance_path(task_id: str) -> Path:
+    """Return the repository-wide canonical acceptance manifest path."""
+    return ACCEPTANCE_DIR / expected_acceptance_filename(task_id)
 
 
 def commit_subject(task_id: str, boundary: str, review_status: str | None = None) -> str:
@@ -1058,9 +1190,11 @@ def validate_acceptance_write(repo: Path, result: AcceptanceResult, *, task_id: 
     rel_path = Path(result.acceptance_path)
     if rel_path.is_absolute() or ".." in rel_path.parts:
         raise OrchestratorError(f"Unsafe acceptance_path: {rel_path}")
-    if rel_path.name != expected_acceptance_filename(task_id):
+    expected_path = expected_acceptance_path(task_id)
+    if rel_path != expected_path:
         raise OrchestratorError(
-            f"Acceptance filename mismatch: expected {expected_acceptance_filename(task_id)}, got {rel_path.name}"
+            "Acceptance path mismatch: "
+            f"expected {expected_path.as_posix()}, got {rel_path.as_posix()}"
         )
     abs_path = repo / rel_path
     if not abs_path.is_file():
@@ -1098,11 +1232,11 @@ def run_acceptance_record(
     if resume:
         dirty = changed_paths(repo)
         if dirty:
-            expected_name = expected_acceptance_filename(task_id)
-            if len(dirty) != 1 or Path(dirty[0]).name != expected_name:
+            expected_path = expected_acceptance_path(task_id).as_posix()
+            if dirty != [expected_path]:
                 raise OrchestratorError(
                     "Acceptance resume may start dirty only when the sole changed "
-                    f"path is {expected_name}; got {dirty}"
+                    f"path is {expected_path}; got {dirty}"
                 )
     else:
         ensure_clean_worktree(repo)
@@ -1192,84 +1326,6 @@ def record_technical_stop(ctx: RunContext, task_id: str, role: str, message: str
         log_path=(record.log_path if record else None),
         final_path=(record.final_path if record else None),
     )
-
-
-def finalize_accept(
-    repo: Path,
-    *,
-    task_id: str,
-    accepted_commit: str,
-    acceptance_config: ModelConfig,
-    commits: list[str],
-    events: list[dict[str, Any]],
-    ctx: RunContext,
-) -> dict[str, Any]:
-    try:
-        acceptance_path, acceptance_commit = record_acceptance_and_commit(
-            repo,
-            task_id=task_id,
-            accepted_commit=accepted_commit,
-            config=acceptance_config,
-            ctx=ctx,
-        )
-    except KeyboardInterrupt:
-        if args.command in {"task", "resume"}:
-            mark_checkpoint_interrupted(
-                args.report_dir,
-                repo,
-                args.task_id,
-                error_type="INTERRUPTED",
-                error_message="Host orchestration interrupted by user/process.",
-            )
-        ctx.add_error(
-            kind="INTERRUPTED",
-            stage="orchestrator",
-            task_id=target,
-            message="Host orchestration interrupted by user/process.",
-        )
-        result = {
-            "status": "ERROR",
-            "error_type": "INTERRUPTED",
-            "error": "Host orchestration interrupted by user/process.",
-            "target": target,
-        }
-    except OrchestratorError as exc:
-        ctx.add_error(
-            kind="ACCEPTANCE",
-            stage="acceptance",
-            task_id=task_id,
-            message=str(exc),
-        )
-        ctx.progress("FAIL", f"{task_id} ACCEPTANCE — {exc}")
-        return {
-            "task_id": task_id,
-            "status": "ACCEPTANCE_RECORD_FAILED",
-            "accepted_commit": accepted_commit,
-            "acceptance_path": None,
-            "acceptance_commit": None,
-            "commits": commits,
-            "events": events,
-            "error": str(exc),
-        }
-    commits.append(acceptance_commit)
-    events.append(
-        acceptance_event(
-            task_id=task_id,
-            accepted_commit=accepted_commit,
-            acceptance_path=acceptance_path,
-            acceptance_commit=acceptance_commit,
-            config=acceptance_config,
-        )
-    )
-    return {
-        "task_id": task_id,
-        "status": "ACCEPTED",
-        "accepted_commit": accepted_commit,
-        "acceptance_path": acceptance_path,
-        "acceptance_commit": acceptance_commit,
-        "commits": commits,
-        "events": events,
-    }
 
 
 def run_task(
@@ -1896,6 +1952,12 @@ def derive_next_action(result: dict[str, Any], errors: list[ErrorRecord]) -> tup
         ]
 
     kinds = {e.kind for e in errors}
+    if "INTERRUPTED" in kinds:
+        return "RESUME_INTERRUPTED_STAGE", [
+            "The host received Ctrl+C while a child Codex stage was running.",
+            "The child process group was stopped and the TASK checkpoint/worktree were preserved.",
+            "Resume with: scripts/codex/resume-task <TASK_ID>",
+        ]
     if "CHILD_PROTOCOL" in kinds:
         return "REPAIR_WORKER_RESULT_PROTOCOL", [
             "Inspect the child final response; the required machine-result marker is missing/invalid.",
@@ -2094,7 +2156,7 @@ def main() -> int:
     parser.add_argument("--report-dir", type=Path, default=default_report_base(), help="Base directory for persistent orchestration logs/reports.")
     parser.add_argument("--verbose", action="store_true", help="Echo complete child Codex output to the terminal.")
     parser.add_argument("--show-tail", type=int, default=12, metavar="N", help="Show N lines from the failing child log at the end; 0 disables.")
-    parser.add_argument("--heartbeat-seconds", type=int, default=30, metavar="N", help="Print a quiet WAIT heartbeat every N seconds; 0 disables.")
+    parser.add_argument("--heartbeat-seconds", type=int, default=30, metavar="N", help="Print a quiet WAIT heartbeat every N seconds; 0 disables. Default: 30.")
 
     sub = parser.add_subparsers(dest="command", required=True)
     task_parser = sub.add_parser("task")
@@ -2227,15 +2289,29 @@ def main() -> int:
             role: {"model": cfg.model, "reasoning_effort": cfg.reasoning_effort}
             for role, cfg in policy.items()
         }
+    except ChildInterruptedError as exc:
+        mark_checkpoint_interrupted(
+            args.report_dir,
+            repo,
+            exc.task_id,
+            error_type="INTERRUPTED",
+            error_message=str(exc),
+        )
+        result = {
+            "status": "ERROR",
+            "error_type": "INTERRUPTED",
+            "error": str(exc),
+            "task_id": exc.task_id,
+            "failed_stage": exc.role,
+        }
     except ChildProtocolError as exc:
-        if args.command in {"task", "resume"}:
-            mark_checkpoint_interrupted(
-                args.report_dir,
-                repo,
-                exc.task_id,
-                error_type="CHILD_PROTOCOL",
-                error_message=str(exc),
-            )
+        mark_checkpoint_interrupted(
+            args.report_dir,
+            repo,
+            exc.task_id,
+            error_type="CHILD_PROTOCOL",
+            error_message=str(exc),
+        )
         result = {
             "status": "ERROR",
             "error_type": "CHILD_PROTOCOL",
@@ -2244,20 +2320,45 @@ def main() -> int:
             "failed_stage": exc.role,
         }
     except ChildProcessError as exc:
-        if args.command in {"task", "resume"}:
-            mark_checkpoint_interrupted(
-                args.report_dir,
-                repo,
-                exc.task_id,
-                error_type="CHILD_PROCESS",
-                error_message=str(exc),
-            )
+        mark_checkpoint_interrupted(
+            args.report_dir,
+            repo,
+            exc.task_id,
+            error_type="CHILD_PROCESS",
+            error_message=str(exc),
+        )
         result = {
             "status": "ERROR",
             "error_type": "CHILD_PROCESS",
             "error": str(exc),
             "task_id": exc.task_id,
             "failed_stage": exc.role,
+        }
+    except KeyboardInterrupt:
+        active_task = (
+            ctx.stage_records[-1].task_id
+            if ctx.stage_records
+            else (args.task_id if args.command in {"task", "resume"} else target)
+        )
+        if active_task and TASK_RE.fullmatch(str(active_task)):
+            mark_checkpoint_interrupted(
+                args.report_dir,
+                repo,
+                str(active_task),
+                error_type="INTERRUPTED",
+                error_message="Host orchestration interrupted by Ctrl+C.",
+            )
+        ctx.add_error(
+            kind="INTERRUPTED",
+            stage="orchestrator",
+            task_id=str(active_task),
+            message="Host orchestration interrupted by Ctrl+C.",
+        )
+        result = {
+            "status": "ERROR",
+            "error_type": "INTERRUPTED",
+            "error": "Host orchestration interrupted by Ctrl+C.",
+            "task_id": str(active_task),
         }
     except OrchestratorError as exc:
         ctx.add_error(kind="ORCHESTRATOR", stage="orchestrator", task_id=target, message=str(exc))
