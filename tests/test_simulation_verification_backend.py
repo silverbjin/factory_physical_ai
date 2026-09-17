@@ -18,6 +18,7 @@ from simulation_runtime.verification_backend import (  # noqa: E402
     normalize_gazebo_observation,
     normalize_mujoco_observation,
 )
+import simulation_runtime.verification_backend as verification_backend_module  # noqa: E402
 from simulation_runtime.smoke import canonical_sha256, validate_contract_message  # noqa: E402
 
 
@@ -39,20 +40,28 @@ def normalized(source: str = "deterministic", **payload: str) -> object:
     return normalize_deterministic_observation(payload or {"quality": "valid", "part_id": "sim-workpiece", "location_id": "pickup-zone"}, fixture_id="deterministic-observation", fixture_version="1", timestamp="2026-09-16T00:00:00Z")
 
 
-def accepted_gazebo_result() -> dict[str, object]:
+def accepted_gazebo_result(scenario_id: str = "success") -> dict[str, object]:
     evidence = json.loads((ROOT / "results/simulation/SIM-004_navigation_backend.json").read_text())
-    return next(scenario["result"] for scenario in evidence["scenarios"] if scenario["id"] == "success")
+    return next(scenario["result"] for scenario in evidence["scenarios"] if scenario["id"] == scenario_id)
 
 
-def accepted_mujoco_scenario() -> dict[str, object]:
+def accepted_mujoco_scenario(scenario_name: str = "mujoco-place-nominal") -> dict[str, object]:
     evidence = json.loads((ROOT / "results/simulation/SIM-005_mujoco_vla_backend.json").read_text())
-    return next(scenario for scenario in evidence["scenarios"] if scenario["scenario"] == "mujoco-place-nominal")
+    return next(scenario for scenario in evidence["scenarios"] if scenario["scenario"] == scenario_name)
 
 
 def accepted_observations() -> tuple[object, object]:
     return (
         normalize_gazebo_observation(accepted_gazebo_result()),
         normalize_mujoco_observation(accepted_mujoco_scenario()),
+    )
+
+
+def verify_observation(observation: object) -> object:
+    observed_at = datetime.fromisoformat(observation.reference["timestamp"].replace("Z", "+00:00"))
+    return VerificationBackend().verify_with_route(
+        request([observation.reference], timestamp=observed_at + timedelta(seconds=1)),
+        [observation],
     )
 
 
@@ -143,6 +152,24 @@ def test_t5_source_provenance_tampering_fails_closed() -> None:
         assert decision.route == "HITL"
 
 
+def test_t5_gazebo_valid_but_wrong_accepted_identity_substitution_fails_closed() -> None:
+    observation = normalize_gazebo_observation(accepted_gazebo_result("success"))
+    wrong_identity = accepted_gazebo_result("invalid_goal")["evidence_refs"][0]
+    forged = replace(observation, source_identity=wrong_identity)
+    decision = verify_observation(forged)
+    assert decision.result["result"] == "failure"
+    assert decision.route == "HITL"
+
+
+def test_t5_mujoco_valid_but_wrong_accepted_identity_substitution_fails_closed() -> None:
+    observation = normalize_mujoco_observation(accepted_mujoco_scenario("mujoco-place-nominal"))
+    wrong_identity = accepted_mujoco_scenario("mujoco-invalid-observation")["observation_identity"]
+    forged = replace(observation, source_identity=wrong_identity)
+    decision = verify_observation(forged)
+    assert decision.result["result"] == "failure"
+    assert decision.route == "HITL"
+
+
 def test_t6_coordinated_tampering_fails_closed() -> None:
     observation, _ = accepted_observations()
     forged_payload = {"quality": "valid", "part_id": "sim-workpiece", "location_id": "pickup-zone"}
@@ -150,6 +177,28 @@ def test_t6_coordinated_tampering_fails_closed() -> None:
     forged = replace(observation, payload=forged_payload, reference=forged_reference, source_identity=forged_reference)
     observed_at = datetime.fromisoformat(forged.reference["timestamp"].replace("Z", "+00:00"))
     decision = VerificationBackend().verify_with_route(request([forged.reference], timestamp=observed_at + timedelta(seconds=1)), [forged])
+    assert decision.result["result"] == "failure"
+    assert decision.route == "HITL"
+
+
+def test_t6_gazebo_coordinated_valid_provenance_substitution_fails_closed() -> None:
+    observation = normalize_gazebo_observation(accepted_gazebo_result("success"))
+    wrong_record = accepted_gazebo_result("invalid_goal")
+    assert "record_sha256" in observation.provenance
+    wrong_provenance = {**observation.provenance, "record_sha256": canonical_sha256(wrong_record)}
+    forged = replace(observation, provenance=wrong_provenance, source_identity=wrong_record["evidence_refs"][0])
+    decision = verify_observation(forged)
+    assert decision.result["result"] == "failure"
+    assert decision.route == "HITL"
+
+
+def test_t6_mujoco_coordinated_valid_provenance_substitution_fails_closed() -> None:
+    observation = normalize_mujoco_observation(accepted_mujoco_scenario("mujoco-place-nominal"))
+    wrong_record = accepted_mujoco_scenario("mujoco-invalid-observation")
+    assert "record_sha256" in observation.provenance
+    wrong_provenance = {**observation.provenance, "record_sha256": canonical_sha256(wrong_record)}
+    forged = replace(observation, provenance=wrong_provenance, source_identity=wrong_record["observation_identity"])
+    decision = verify_observation(forged)
     assert decision.result["result"] == "failure"
     assert decision.route == "HITL"
 
@@ -163,6 +212,30 @@ def test_t7_real_accepted_backend_shapes_are_required_for_adaptation() -> None:
         normalize_gazebo_observation(forged_gazebo)
     with pytest.raises(ValueError):
         normalize_mujoco_observation(forged_mujoco)
+
+
+def test_record_binding_rejects_no_match_and_ambiguous_match(monkeypatch: pytest.MonkeyPatch) -> None:
+    accepted = accepted_mujoco_scenario()
+    no_match = {**accepted, "request_id": "00000000-0000-4000-8000-000000000000"}
+    with pytest.raises(ValueError, match="exactly one"):
+        verification_backend_module._match_accepted_record("mujoco", no_match)
+    monkeypatch.setattr(verification_backend_module, "_accepted_records", lambda source: (accepted, accepted))
+    with pytest.raises(ValueError, match="exactly one"):
+        verification_backend_module._match_accepted_record("mujoco", accepted)
+
+
+def test_valid_same_record_binding_is_preserved_and_accepted() -> None:
+    gazebo_record = accepted_gazebo_result()
+    mujoco_record = accepted_mujoco_scenario()
+    for observation, record in (
+        (normalize_gazebo_observation(gazebo_record), gazebo_record),
+        (normalize_mujoco_observation(mujoco_record), mujoco_record),
+    ):
+        assert observation.provenance["record_sha256"] == canonical_sha256(record)
+        decision = verify_observation(observation)
+        assert decision.result["result"] == "success"
+        assert decision.result["verdict"] == "uncertain"
+        assert decision.route == "RECONCILE"
 
 
 def test_accepted_backend_shapes_fail_closed_without_semantic_state() -> None:

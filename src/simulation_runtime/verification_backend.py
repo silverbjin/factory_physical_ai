@@ -71,11 +71,35 @@ def _accepted_records(source: str) -> tuple[Mapping[str, Any], ...]:
     return tuple(records)
 
 
-def _verified_source_identity(source: str, candidate: Mapping[str, Any]) -> Mapping[str, str]:
-    """Return upstream identity from the verified accepted record, never caller data."""
-    trusted = next((record for record in _accepted_records(source) if dict(record) == dict(candidate)), None)
-    if trusted is None:
-        raise ValueError("upstream observation does not match accepted evidence")
+def _record_sha256(record: Mapping[str, Any]) -> str:
+    """Return the shared canonical identity for one full accepted record."""
+    return canonical_sha256(dict(record))
+
+
+def _match_accepted_record(source: str, candidate: Mapping[str, Any]) -> Mapping[str, Any]:
+    """Resolve caller input to exactly one byte-bound accepted artifact record."""
+    records = _accepted_records(source)
+    if source == "gazebo":
+        action_id = candidate.get("action_id")
+        records = tuple(record for record in records if record.get("action_id") == action_id)
+    matches = tuple(record for record in records if dict(record) == dict(candidate))
+    if len(matches) != 1:
+        raise ValueError("upstream observation must match exactly one accepted record")
+    return matches[0]
+
+
+def _accepted_record_by_hash(source: str, record_sha256: str) -> Mapping[str, Any]:
+    """Resolve a preserved record binding to exactly one accepted record."""
+    if len(record_sha256) != 64 or any(character not in "0123456789abcdef" for character in record_sha256):
+        raise ContractViolation("upstream record hash is malformed")
+    matches = tuple(record for record in _accepted_records(source) if _record_sha256(record) == record_sha256)
+    if len(matches) != 1:
+        raise ContractViolation("upstream record hash must resolve exactly one accepted record")
+    return matches[0]
+
+
+def _source_identity_from_record(source: str, trusted: Mapping[str, Any]) -> Mapping[str, str]:
+    """Extract provenance only from an already matched accepted record."""
     if source == "gazebo":
         evidence_refs = trusted.get("evidence_refs")
         if not isinstance(evidence_refs, list) or len(evidence_refs) != 1 or not isinstance(evidence_refs[0], Mapping):
@@ -90,15 +114,35 @@ def _verified_source_identity(source: str, candidate: Mapping[str, Any]) -> Mapp
     return identity
 
 
-def _validate_simulator_source_identity(source: str, source_identity: Mapping[str, str], payload: Mapping[str, str]) -> None:
-    """Bind simulator payload to a verified accepted identity and adapter extraction."""
-    identities = tuple(_verified_source_identity(source, record) for record in _accepted_records(source))
-    if not any(dict(source_identity) == dict(identity) for identity in identities):
-        raise ContractViolation("source identity does not bind to accepted upstream evidence")
-    # Accepted SIM-004/SIM-005 records contain no contract-visible part/location
-    # observation. Their only trusted normalized extraction is insufficient.
-    if dict(payload) != {"quality": "insufficient"}:
-        raise ContractViolation("simulator payload does not match accepted upstream observation")
+def _normalized_material_from_record(source: str, trusted: Mapping[str, Any]) -> tuple[dict[str, str], dict[str, str]]:
+    """Derive the only contract-visible payload/reference for one trusted record."""
+    payload = {"quality": "insufficient"}
+    if source == "gazebo":
+        action_id, timestamp = trusted.get("action_id"), trusted.get("timestamp")
+        if not isinstance(action_id, str) or not action_id or not isinstance(timestamp, str) or not timestamp:
+            raise ContractViolation("accepted SIM-004 record identity is malformed")
+        fixture_id = f"gazebo-navigation-{action_id}"
+        fixture_version = "sim004-navigation-backend-v2"
+    else:
+        identity = _source_identity_from_record(source, trusted)
+        fixture_id, fixture_version, timestamp = identity.get("fixture_id"), identity.get("fixture_version"), identity.get("timestamp")
+        if not all(isinstance(value, str) and value for value in (fixture_id, fixture_version, timestamp)):
+            raise ContractViolation("accepted SIM-005 record identity is malformed")
+    reference = {"fixture_set_id": "SIM_FIXTURE_SET_V1", "fixture_id": fixture_id, "fixture_version": fixture_version, "content_sha256": canonical_sha256(payload), "timestamp": timestamp, "source_kind": "mock"}
+    return payload, reference
+
+
+def _validate_simulator_record_binding(observation: NormalizedObservation) -> None:
+    """Verify record hash, source identity, payload, and reference as one binding."""
+    record_sha256 = observation.provenance.get("record_sha256")
+    if not isinstance(record_sha256, str):
+        raise ContractViolation("upstream record hash is missing")
+    trusted = _accepted_record_by_hash(observation.source, record_sha256)
+    if dict(observation.source_identity) != dict(_source_identity_from_record(observation.source, trusted)):
+        raise ContractViolation("source identity does not bind to the accepted upstream record")
+    expected_payload, expected_reference = _normalized_material_from_record(observation.source, trusted)
+    if dict(observation.payload) != expected_payload or dict(observation.reference) != expected_reference:
+        raise ContractViolation("normalized observation does not bind to the accepted upstream record")
 
 
 @dataclass(frozen=True)
@@ -130,7 +174,7 @@ def _normalized(
     fixture_id: str,
     fixture_version: str,
     timestamp: str,
-    source_identity: Mapping[str, str] | None = None,
+    trusted_record: Mapping[str, Any] | None = None,
 ) -> NormalizedObservation:
     if source not in _SOURCES:
         raise ValueError("unsupported observation source")
@@ -150,9 +194,17 @@ def _normalized(
         raise ValueError("insufficient or ambiguous evidence must not assert state")
     identity_hash = canonical_sha256(material)
     reference = {"fixture_set_id": "SIM_FIXTURE_SET_V1", "fixture_id": fixture_id, "fixture_version": fixture_version, "content_sha256": identity_hash, "timestamp": timestamp, "source_kind": "mock"}
-    if source_identity is None:
+    provenance = {"source": source, **_ACCEPTED_PROVENANCE[source]}
+    if source == "deterministic":
+        if trusted_record is not None:
+            raise ValueError("deterministic observations cannot carry simulator provenance")
         source_identity = reference
-    return NormalizedObservation(reference, material, source, {"source": source, **_ACCEPTED_PROVENANCE[source]}, source_identity)
+    else:
+        if trusted_record is None:
+            raise ValueError("simulator observations require a trusted accepted record")
+        provenance["record_sha256"] = _record_sha256(trusted_record)
+        source_identity = _source_identity_from_record(source, trusted_record)
+    return NormalizedObservation(reference, material, source, provenance, source_identity)
 
 
 def normalize_deterministic_observation(observation: Mapping[str, str], **identity: str) -> NormalizedObservation:
@@ -174,8 +226,8 @@ def normalize_gazebo_observation(navigation_result: Mapping[str, Any]) -> Normal
         raise ValueError("SIM-004 navigation evidence hash is malformed")
     # SIM-004 proves arrival at a destination but does not observe a part.  It
     # therefore cannot establish the complete expected state for a pass.
-    source_identity = _verified_source_identity("gazebo", navigation_result)
-    return _normalized("gazebo", {"quality": "insufficient"}, fixture_id=f"gazebo-navigation-{action_id}", fixture_version="sim004-navigation-backend-v2", timestamp=timestamp, source_identity=source_identity)
+    trusted_record = _match_accepted_record("gazebo", navigation_result)
+    return _normalized("gazebo", {"quality": "insufficient"}, fixture_id=f"gazebo-navigation-{action_id}", fixture_version="sim004-navigation-backend-v2", timestamp=timestamp, trusted_record=trusted_record)
 
 
 def normalize_mujoco_observation(scenario: Mapping[str, Any]) -> NormalizedObservation:
@@ -191,8 +243,8 @@ def normalize_mujoco_observation(scenario: Mapping[str, Any]) -> NormalizedObser
         raise ValueError("SIM-005 observation identity is malformed")
     # SIM-005 exposes manipulation success evidence, not semantic part or
     # location state.  Preserve its identity but fail closed as insufficient.
-    source_identity = _verified_source_identity("mujoco", scenario)
-    return _normalized("mujoco", {"quality": "insufficient"}, fixture_id=fixture_id, fixture_version=fixture_version, timestamp=timestamp, source_identity=source_identity)
+    trusted_record = _match_accepted_record("mujoco", scenario)
+    return _normalized("mujoco", {"quality": "insufficient"}, fixture_id=fixture_id, fixture_version=fixture_version, timestamp=timestamp, trusted_record=trusted_record)
 
 
 class VerificationBackend:
@@ -224,15 +276,23 @@ class VerificationBackend:
         for reference, observation in zip(references, observations, strict=True):
             if not isinstance(observation, NormalizedObservation) or dict(reference) != dict(observation.reference):
                 raise ContractViolation("observation identity, version, hash, or provenance mismatch")
-            if observation.source not in _SOURCES or dict(observation.provenance) != {"source": observation.source, **_ACCEPTED_PROVENANCE[observation.source]}:
+            if observation.source not in _SOURCES:
+                raise ContractViolation("unaccepted backend provenance")
+            provenance = dict(observation.provenance)
+            record_sha256 = provenance.pop("record_sha256", None)
+            if provenance != {"source": observation.source, **_ACCEPTED_PROVENANCE[observation.source]}:
                 raise ContractViolation("unaccepted backend provenance")
             if canonical_sha256(dict(observation.payload)) != observation.reference["content_sha256"]:
                 raise ContractViolation("observation content hash mismatch")
             if observation.source == "deterministic":
+                if record_sha256 is not None:
+                    raise ContractViolation("deterministic observation has simulator record provenance")
                 if dict(observation.reference) != dict(observation.source_identity):
                     raise ContractViolation("normalized reference does not preserve source identity")
             else:
-                _validate_simulator_source_identity(observation.source, observation.source_identity, observation.payload)
+                if not isinstance(record_sha256, str):
+                    raise ContractViolation("upstream record hash is missing")
+                _validate_simulator_record_binding(observation)
             age = request_time - _timestamp(observation.reference["timestamp"])
             if age < timedelta(0) or age > VALIDITY_WINDOW:
                 raise ContractViolation("observation is stale or from the future")
