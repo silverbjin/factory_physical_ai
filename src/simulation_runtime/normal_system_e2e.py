@@ -13,7 +13,7 @@ import json
 from pathlib import Path
 import time
 import uuid
-from typing import Any, Mapping, Protocol
+from typing import Any, Callable, Mapping, Protocol
 
 from .mission_integration import COMPONENT_VERSION as PROFILE_COMPONENT_VERSION, select_profile
 from .navigation_backend import NavigationBackend, RuntimeObservation
@@ -27,6 +27,14 @@ SCENARIO_PATH = ROOT / "configs/simulation/sim008_normal_system_scenario.json"
 
 def _timestamp(now: datetime | None = None) -> str:
     return (now or datetime.now(timezone.utc)).isoformat(timespec="milliseconds").replace("+00:00", "Z")
+
+
+def _utcnow() -> datetime:
+    return datetime.now(timezone.utc)
+
+
+class MissionDeadlineExceeded(RuntimeError):
+    """The canonical mission exceeded its declared execution deadline."""
 
 
 def _hash(path: Path) -> str:
@@ -77,14 +85,17 @@ class InMemoryGazeboWorld:
 
 
 class NormalSystemE2E:
-    def __init__(self, world: GazeboWorldPort, scenario: Mapping[str, Any] | None = None) -> None:
+    def __init__(self, world: GazeboWorldPort, scenario: Mapping[str, Any] | None = None,
+                 *, clock: Callable[[], datetime] = _utcnow) -> None:
         self.scenario = dict(scenario or load_scenario())
         self.world = world
+        self.clock = clock
         self.lifecycle: dict[str, Any] = {"startup_attempted": False, "cleanup_complete": None}
         self.execution_started_at: datetime | None = None
+        self.mission_deadline: datetime | None = None
 
     def _request(self, mission_id: str, trace_id: str, operation: str, *, action_id: str | None = None) -> dict[str, Any]:
-        now = datetime.now(timezone.utc)
+        now = self.clock()
         request: dict[str, Any] = {"operation": operation, "message_type": "request", "schema_version": "1.0", "mission_id": mission_id, "request_id": str(uuid.uuid4()), "trace_id": trace_id, "timestamp": _timestamp(now), "deadline_at": _timestamp(now + timedelta(seconds=30)), "timeout_ms": 30000, "component_version": COMPONENT_VERSION}
         if operation == "mission.execute":
             source, destination = self.scenario["regions"]["source"]["id"], self.scenario["regions"]["destination"]["id"]
@@ -93,6 +104,14 @@ class NormalSystemE2E:
             request.update({"idempotency_key": f"{self.scenario['scenario_id']}:{operation}:{action_id}", "action_id": action_id, "attempt": 1, "retry_budget_remaining": 0})
         elif operation == "verification.verify": request["action_id"] = action_id
         return request
+
+    def _require_mission_deadline(self) -> datetime:
+        if self.mission_deadline is None:
+            raise RuntimeError("mission deadline is unavailable")
+        current = self.clock()
+        if current > self.mission_deadline:
+            raise MissionDeadlineExceeded("mission deadline exceeded before trustworthy completion")
+        return current
 
     def _observation(self, mission_id: str, action_id: str) -> tuple[Any, dict[str, Any]]:
         raw = dict(self.world.observe())
@@ -132,34 +151,48 @@ class NormalSystemE2E:
         return normalize_gazebo_system_observation(record), raw
 
     def _verify(self, mission_id: str, trace_id: str, action_id: str, expected: Mapping[str, str]) -> tuple[dict[str, Any], dict[str, Any], Any]:
+        self._require_mission_deadline()
         observation, raw = self._observation(mission_id, action_id)
+        self._require_mission_deadline()
         request = self._request(mission_id, trace_id, "verification.verify", action_id=action_id)
         request.update({"verifier_id": "exact-state-verifier", "expected_state": dict(expected), "observation_refs": [dict(observation.reference)], "verification_profile_version": "sim-exact-match-v1"})
         validate_contract_message(request)
-        return VerificationBackend().verify(request, [observation]), raw, observation
+        result = VerificationBackend().verify(request, [observation])
+        self._require_mission_deadline()
+        return result, raw, observation
 
     def execute(self) -> dict[str, Any]:
-        started = time.monotonic(); self.execution_started_at = datetime.now(timezone.utc); mission_id, trace_id = str(uuid.uuid4()), str(uuid.uuid4())
-        mission_request = self._request(mission_id, trace_id, "mission.execute"); validate_contract_message(mission_request)
-        transitions = [{"from": "created", "to": "ready"}, {"from": "ready", "to": "executing"}]
+        started = time.monotonic(); self.execution_started_at = self.clock(); mission_id, trace_id = str(uuid.uuid4()), str(uuid.uuid4())
+        mission_request: dict[str, Any] | None = None
+        transitions = [{"from": "created", "to": "ready"}]
         steps: list[dict[str, Any]] = []
         source, destination = self.scenario["regions"]["source"], self.scenario["regions"]["destination"]
         try:
             if select_profile("system").integrated_world != "gazebo_harmonic": raise RuntimeError("system profile lost Gazebo authority")
             self.lifecycle["startup_attempted"] = True; self.world.start()
             if not (self.world.bootstrap_localization() and self.world.ready): raise RuntimeError("Gazebo system profile unavailable")
+            # Startup/readiness has its own scenario bound.  The mission's
+            # contract deadline begins only when the canonical mission is dispatched.
+            mission_request = self._request(mission_id, trace_id, "mission.execute"); validate_contract_message(mission_request)
+            self.mission_deadline = datetime.fromisoformat(str(mission_request["deadline_at"]).replace("Z", "+00:00"))
+            transitions.append({"from": "ready", "to": "executing"})
+            self._require_mission_deadline()
             nav = NavigationBackend(self.world)
             for label, region in (("source_navigation", source), ("destination_navigation", destination)):
+                self._require_mission_deadline()
                 action_id = str(uuid.uuid4()); request = self._request(mission_id, trace_id, "navigation.execute", action_id=action_id)
                 request.update({"robot_id": "amr-sim-001", "destination_id": region["id"], "speed_profile_id": "sim-safe-v1"})
                 result = nav.execute(request); steps.append({"name": label, "request": request, "result": result})
+                self._require_mission_deadline()
                 if result["result"] != "success": raise RuntimeError(f"{label} failed")
                 if label == "source_navigation":
                     verification, observed, normalized = self._verify(mission_id, trace_id, action_id, self.scenario["initial_state"]); steps.append({"name": "source_verification", "expected_state": dict(self.scenario["initial_state"]), "observation": observed, "result": verification})
                     if verification.get("verdict") != "pass": raise RuntimeError("source verification failed")
             vla_action = str(uuid.uuid4()); vla_request = self._request(mission_id, trace_id, "vla.execute", action_id=vla_action)
             vla_request.update({"robot_id": "manipulator-sim-001", "task_id": "place-brake-ecu", "policy_version": "sim008-gazebo-surrogate-v1", "workspace_profile_id": "sim008-workspace-v1", "observation_refs": [dict(normalized.reference)]})
+            self._require_mission_deadline()
             changed = self.world.apply_vla_surrogate(task_id=vla_request["task_id"], expected_from=self.scenario["initial_state"], expected_to={"part_id": "brake-ecu-b", "location_id": destination["id"]})
+            self._require_mission_deadline()
             vla_result = {"operation": "vla.execute", "message_type": "result", "schema_version": "1.0", "mission_id": mission_id, "request_id": vla_request["request_id"], "trace_id": trace_id, "action_id": vla_action, "timestamp": _timestamp(), "component_version": COMPONENT_VERSION, "source_kind": "mock", "status": "succeeded" if changed else "failed", "result": "success" if changed else "failure", "skill_outcome": "succeeded" if changed else "failed", "latency_ms": 1, "verifier_input_refs": [{"uri": f"urn:factory-evidence:sim008:{vla_action}", "sha256": hashlib.sha256(vla_action.encode()).hexdigest()}]}
             if not changed: vla_result["error"] = {"code": "GAZEBO_SURROGATE_FAILED", "message": "Gazebo-side surrogate did not apply declared state transition", "category": "EXECUTION_FAILED", "retryable": False}
             validate_contract_message(vla_result); steps.append({"name": "vla.execute", "request": vla_request, "result": vla_result})
@@ -167,10 +200,13 @@ class NormalSystemE2E:
             expected_final = {"part_id": "brake-ecu-b", "location_id": destination["id"]}
             final, observed, _ = self._verify(mission_id, trace_id, vla_action, expected_final); steps.append({"name": "final_verification", "expected_state": expected_final, "observation": observed, "result": final})
             if final.get("verdict") != "pass": raise RuntimeError("final verification failed")
+            completion_at = self._require_mission_deadline()
             transitions.append({"from": "executing", "to": "completed"})
-            mission = {"operation": "mission.execute", "message_type": "result", "schema_version": "1.0", "mission_id": mission_id, "request_id": mission_request["request_id"], "trace_id": trace_id, "timestamp": _timestamp(), "component_version": COMPONENT_VERSION, "source_kind": "mock", "status": "completed", "result": "success", "checkpoint_revision": 6, "outcome": "completed"}; validate_contract_message(mission)
+            mission = {"operation": "mission.execute", "message_type": "result", "schema_version": "1.0", "mission_id": mission_id, "request_id": mission_request["request_id"], "trace_id": trace_id, "timestamp": _timestamp(completion_at), "component_version": COMPONENT_VERSION, "source_kind": "mock", "status": "completed", "result": "success", "checkpoint_revision": 6, "outcome": "completed"}; validate_contract_message(mission)
         except Exception as exc:
-            transitions.append({"from": "executing", "to": "failed"}); mission = {"operation": "mission.execute", "message_type": "result", "schema_version": "1.0", "mission_id": mission_id, "request_id": mission_request["request_id"], "trace_id": trace_id, "timestamp": _timestamp(), "component_version": COMPONENT_VERSION, "source_kind": "mock", "status": "failed", "result": "failure", "checkpoint_revision": len(steps), "outcome": "failed", "error": {"code": "SYSTEM_E2E_FAILED", "message": str(exc), "category": "EXECUTION_FAILED", "retryable": False}}; validate_contract_message(mission)
+            if mission_request is None:
+                mission_request = self._request(mission_id, trace_id, "mission.execute")
+            transitions.append({"from": "executing", "to": "failed"}); mission = {"operation": "mission.execute", "message_type": "result", "schema_version": "1.0", "mission_id": mission_id, "request_id": mission_request["request_id"], "trace_id": trace_id, "timestamp": _timestamp(), "component_version": COMPONENT_VERSION, "source_kind": "mock", "status": "failed", "result": "failure", "checkpoint_revision": len(steps), "outcome": "failed", "error": {"code": "MISSION_DEADLINE_EXCEEDED" if isinstance(exc, MissionDeadlineExceeded) else "SYSTEM_E2E_FAILED", "message": str(exc), "category": "DEPENDENCY_TIMEOUT" if isinstance(exc, MissionDeadlineExceeded) else "EXECUTION_FAILED", "retryable": False}}; validate_contract_message(mission)
         finally:
             self.lifecycle["cleanup_complete"] = self.world.close()
         return {"mission": mission, "mission_request": mission_request, "transitions": transitions, "steps": steps, "lifecycle": self.lifecycle, "duration_ms": round((time.monotonic() - started) * 1000, 3)}

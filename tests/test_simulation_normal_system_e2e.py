@@ -4,7 +4,7 @@ import sys
 import subprocess
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
-from typing import Any, Mapping
+from typing import Any, Callable, Mapping
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
@@ -17,16 +17,24 @@ from scripts import run_simulation_normal_system_e2e as system_runner
 class AuthoritativeWorldDouble:
     """Test-only double whose observations are independent runtime records."""
 
-    def __init__(self, state: Mapping[str, str], *, observation_available: bool = True, observed_at: str | None = None) -> None:
+    def __init__(self, state: Mapping[str, str], *, observation_available: bool = True,
+                 observed_at: str | None = None, observation_clock: Callable[[], datetime] | None = None,
+                 on_navigate: Callable[[], None] | None = None,
+                 on_vla: Callable[[], None] | None = None) -> None:
         self.observed_state = dict(state)
         self.observation_available = observation_available
         self.observed_at = observed_at
+        self.observation_clock = observation_clock
+        self.on_navigate = on_navigate
+        self.on_vla = on_vla
         self.ready = True
         self.closed = False
 
     def start(self) -> None: pass
     def bootstrap_localization(self) -> bool: return True
     def navigate(self, request: dict[str, Any]) -> RuntimeObservation:
+        if self.on_navigate is not None:
+            self.on_navigate()
         return RuntimeObservation("succeeded", arrival_verified=True)
     def reconcile(self, action_id: str) -> RuntimeObservation:
         return RuntimeObservation("succeeded", arrival_verified=True)
@@ -42,7 +50,7 @@ class AuthoritativeWorldDouble:
             "entity_name": "brake_ecu_type_b_001",
             "pose": {"x": x, "y": 0.0, "z": 0.2},
             "semantic_state": dict(self.observed_state),
-            "observed_at": self.observed_at or datetime.now(timezone.utc).isoformat(timespec="milliseconds").replace("+00:00", "Z"),
+            "observed_at": self.observed_at or (self.observation_clock or (lambda: datetime.now(timezone.utc)))().isoformat(timespec="milliseconds").replace("+00:00", "Z"),
             "simulation_time": {"sec": 1, "nsec": 0},
             "snapshot_sha256": "a" * 64,
         }
@@ -50,10 +58,24 @@ class AuthoritativeWorldDouble:
         if task_id != "place-brake-ecu" or self.observed_state != dict(expected_from):
             return False
         self.observed_state = dict(expected_to)
+        if self.on_vla is not None:
+            self.on_vla()
         return True
+
     def close(self) -> bool:
         self.closed = True
         return True
+
+
+class ManualClock:
+    def __init__(self) -> None:
+        self.value = datetime(2026, 9, 18, tzinfo=timezone.utc)
+
+    def __call__(self) -> datetime:
+        return self.value
+
+    def advance(self, seconds: int) -> None:
+        self.value += timedelta(seconds=seconds)
 
 
 def test_system_e2e_import_does_not_require_mujoco_component_backend() -> None:
@@ -124,6 +146,40 @@ def test_stale_authoritative_observation_fails_closed() -> None:
     outcome = NormalSystemE2E(AuthoritativeWorldDouble(scenario["initial_state"], observed_at=stale), scenario).execute()
     assert outcome["mission"]["result"] == "failure"
     assert "stale" in outcome["mission"]["error"]["message"].lower()
+
+
+def test_mission_succeeds_when_completed_inside_deadline() -> None:
+    scenario = load_scenario()
+    clock = ManualClock()
+    world = AuthoritativeWorldDouble(scenario["initial_state"], observation_clock=clock)
+    outcome = NormalSystemE2E(world, scenario, clock=clock).execute()
+    assert outcome["mission"]["result"] == "success"
+
+
+def test_expiry_before_final_success_fails_closed() -> None:
+    scenario = load_scenario()
+    clock = ManualClock()
+    world = AuthoritativeWorldDouble(
+        scenario["initial_state"], observation_clock=clock,
+        on_vla=lambda: clock.advance(31),
+    )
+    outcome = NormalSystemE2E(world, scenario, clock=clock).execute()
+    assert outcome["mission"]["result"] == "failure"
+    assert outcome["mission"]["error"]["code"] == "MISSION_DEADLINE_EXCEEDED"
+    assert outcome["lifecycle"]["cleanup_complete"] is True
+
+
+def test_expiry_during_intermediate_action_fails_closed() -> None:
+    scenario = load_scenario()
+    clock = ManualClock()
+    world = AuthoritativeWorldDouble(
+        scenario["initial_state"], observation_clock=clock,
+        on_navigate=lambda: clock.advance(31),
+    )
+    outcome = NormalSystemE2E(world, scenario, clock=clock).execute()
+    assert outcome["mission"]["result"] == "failure"
+    assert outcome["mission"]["error"]["code"] == "MISSION_DEADLINE_EXCEEDED"
+    assert outcome["lifecycle"]["cleanup_complete"] is True
 
 
 def test_generated_world_snapshot_is_independently_mapped_to_semantic_state() -> None:
