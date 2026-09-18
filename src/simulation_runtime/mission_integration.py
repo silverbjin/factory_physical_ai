@@ -16,7 +16,6 @@ import time
 import uuid
 from typing import Any, Callable, Literal, Protocol
 
-from .mujoco_vla_backend import MuJoCoVLABackend, observation_ref
 from .navigation_backend import NavigationBackend, RuntimeObservation
 from .smoke import ContractViolation, canonical_sha256, validate_contract_message
 from .verification_backend import VerificationBackend, normalize_deterministic_observation, normalize_gazebo_observation
@@ -161,6 +160,17 @@ class MissionIntegrationRuntime:
         backend = self.profile.vla
         self._require_backend(backend)
         if backend == "mujoco":
+            try:
+                from .mujoco_vla_backend import MuJoCoVLABackend, observation_ref
+            except ModuleNotFoundError as exc:
+                if exc.name != "mujoco":
+                    raise
+                return self._vla_failure(
+                    request,
+                    "MUJOCO_UNAVAILABLE",
+                    "accepted MuJoCo component backend is not installed",
+                )
+
             request = dict(request)
             request.update({"task_id": "mujoco-place-nominal", "policy_version": "sim005-scripted-policy-v1", "workspace_profile_id": "sim005-workspace-v1", "observation_refs": [observation_ref()]})
             return MuJoCoVLABackend().execute(request)
