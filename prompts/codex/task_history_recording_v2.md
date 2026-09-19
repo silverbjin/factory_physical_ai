@@ -11,6 +11,7 @@ Implementation
 Read-only Review
 Fix
 Re-review
+Diagnosis
 ```
 
 History is an **event log**, not a duplicate of TASK specifications, Evidence, or full workflow reports.
@@ -37,13 +38,20 @@ docs/task_history/<TASK_ID>/
 <SEQ>_implementation.md
 <SEQ>_review.md
 <SEQ>_fix.md
+<SEQ>_diagnosis.md
 ```
 
 5. Re-review uses the same `review` type.
 
-6. Use Korean for concise explanatory prose.
+6. `diagnosis` is an auxiliary read-only lifecycle stage. It may occur before
+   Implementation, after a blocked/rejected Implementation/Review/Fix stage, or
+   before resuming Implementation/Fix. Do not require a fixed global ordering
+   between `diagnosis` and the existing lifecycle stages. Its `SEQ` uses the
+   same next-valid-sequence rule as every other event.
 
-7. Preserve exact technical identifiers, including:
+7. Use Korean for concise explanatory prose.
+
+8. Preserve exact technical identifiers, including:
 
 ```text
 TASK IDs
@@ -61,11 +69,11 @@ ACCEPT / REJECT
 BLOCKER / HIGH / MEDIUM / LOW
 ```
 
-8. TASK History is not technical Evidence unless a frozen contract explicitly defines otherwise.
+9. TASK History is not technical Evidence unless a frozen contract explicitly defines otherwise.
 
-9. Do not duplicate large TASK, Evidence, Review, or test contents.
+10. Do not duplicate large TASK, Evidence, Review, or test contents.
 
-10. Record the workflow only after its technical result has been determined.
+11. Record the workflow only after its technical result has been determined.
 
 ---
 
@@ -123,6 +131,10 @@ Review result
 
 Fix result
 → finding status, root cause, correction, regression proof
+
+Diagnosis result
+→ read-only root-cause/contract-boundary resolution, authoritative sources,
+  modification scope, verification plan, and next action
 ```
 
 History should reference these results rather than reproducing them in full.
@@ -270,6 +282,105 @@ for each relevant Finding.
 
 ---
 
+### 4.4 Diagnosis Event
+
+Create:
+
+```text
+docs/task_history/<TASK_ID>/<SEQ>_diagnosis.md
+```
+
+`diagnosis` is an auxiliary read-only event. It does not replace, rerun, or
+change the semantics of Implementation, Review, Fix, Re-review, or Acceptance.
+
+Use only these statuses:
+
+```text
+RESOLVED
+UNRESOLVED
+```
+
+Definitions:
+
+```text
+RESOLVED
+→ root cause, contract boundary, authoritative source, modification scope, and
+  verification plan are sufficiently established to proceed.
+
+UNRESOLVED
+→ an architectural or contract decision remains unresolved; implementation
+  must not proceed speculatively.
+```
+
+Record only facts established by the diagnosis. Omit an optional field when it
+was not supplied or established; do not invent missing facts.
+
+```markdown
+# Diagnosis — <TASK_ID>
+
+- Stage: diagnosis
+- Status: RESOLVED | UNRESOLVED
+- Read-only mode: YES
+- Trigger: <concise trigger>
+- Triggering lifecycle status: <status when supplied/applicable>
+- Blocking finding IDs: <IDs when supplied/applicable>
+- Diagnosis tier/model: <value when supplied>
+
+## Root Cause
+
+<concise established cause>
+
+## Violated or Missing Contract
+
+<concise established contract boundary or gap>
+
+## Authoritative Sources
+
+<paths, accepted artifacts, or contract sources actually used>
+
+## Resolution
+
+<established resolution, or the remaining decision for UNRESOLVED>
+
+## Modification Scope
+
+<files/symbols that may change, when established>
+
+## Protected Scope
+
+<accepted predecessors, contracts, or surfaces that must not change>
+
+## Verification Plan
+
+<focused commands/tests/evidence required before implementation is accepted>
+
+## Handoff / Next Action
+
+- Next action: <valid action>
+```
+
+Valid next actions for `RESOLVED` are:
+
+```text
+IMPLEMENTATION
+IMPLEMENT_RESOLVED_FIX
+RESUME_IMPLEMENTATION
+RESUME_FIX
+```
+
+Valid next actions for `UNRESOLVED` are:
+
+```text
+ESCALATION_REQUIRED
+MANUAL_ARCHITECTURE_DECISION
+```
+
+Preserve an explicitly supplied valid next action exactly. A `RESOLVED`
+diagnosis is not Implementation completion, Review acceptance, Re-review
+acceptance, or TASK acceptance.
+
+---
+
 ## 5. TASK README
 
 Maintain:
@@ -293,6 +404,7 @@ Current status: <STATE>
 | 02 | Review | REJECT | `02_review.md` |
 | 03 | Fix | READY FOR RE-REVIEW | `03_fix.md` |
 | 04 | Review | ACCEPT | `04_review.md` |
+| 05 | Diagnosis | RESOLVED | `05_diagnosis.md` |
 ```
 
 For each workflow:
@@ -330,6 +442,13 @@ Review ACCEPT
 failed/incomplete workflow
 → INCOMPLETE when no more specific valid state applies
 ```
+
+Diagnosis events must appear as rows in the TASK README event index. A
+`diagnosis RESOLVED` or `diagnosis UNRESOLVED` does not change the TASK-level
+status: retain the status established by the preceding lifecycle event. In
+particular, diagnosis never changes the TASK status to `ACCEPTED`; the TASK
+remains in progress until the normal Review/Re-review and Acceptance lifecycle
+succeeds.
 
 ---
 
@@ -380,6 +499,10 @@ Update it only when:
 - the user/repository explicitly requires an intermediate global status update.
 ```
 
+When an intermediate global index update is required, include a Diagnosis
+event as the `Last Event` when it is the latest recorded event. Diagnosis does
+not alter the TASK `Status` or `Final Result` to ACCEPTED.
+
 When updating it:
 
 1. read the existing index only;
@@ -421,6 +544,26 @@ docs/task_history/README.md
 
 No source, test, Evidence, TASK specification, contract, schema, architecture, Git index, or Git history may be modified by the Review history step.
 
+### 8.1 Diagnosis Audit-write Boundary
+
+Diagnosis remains read-only for implementation and source-of-truth surfaces.
+After a diagnosis result is fixed, History recording may modify only:
+
+```text
+docs/task_history/<TASK_ID>/<SEQ>_diagnosis.md
+docs/task_history/<TASK_ID>/README.md
+```
+
+and, only when Section 7 requires it:
+
+```text
+docs/task_history/README.md
+```
+
+No source, test, Evidence, TASK specification, contract, schema, architecture,
+Git index, Git history, acceptance JSON, or `acceptance_handoff` may be
+created, inferred, or modified by the Diagnosis history step.
+
 ---
 
 ## 9. History Verification
@@ -430,7 +573,7 @@ Use minimal verification.
 Confirm:
 
 1. the expected event file exists;
-2. the correct `TASK_ID` and workflow result are recorded;
+2. the correct `TASK_ID`, stage, and workflow result are recorded;
 3. `SEQ` does not overwrite an existing event;
 4. the TASK README contains the new event row;
 5. the TASK-level state matches the workflow result.
@@ -521,6 +664,25 @@ over:
 ```text
 full snapshot duplication
 ```
+
+---
+
+## 11.1 Diagnosis Acceptance Separation
+
+For `stage=diagnosis`:
+
+```text
+DO NOT require acceptance_handoff.
+DO NOT create acceptance_handoff.
+DO NOT infer acceptance_handoff.
+DO NOT create an acceptance JSON.
+DO NOT infer ACCEPT.
+RESOLVED does not mean TASK acceptance.
+```
+
+Acceptance-specific requirements remain scoped to the lifecycle stages where
+repository policy requires them. Do not weaken existing Review, Re-review, or
+Acceptance fail-closed rules.
 
 ---
 
