@@ -98,6 +98,39 @@ class ModelConfig:
     reasoning_effort: str
 
 
+@dataclass(frozen=True)
+class TaskClassConfig:
+    diagnosis_required: bool
+    allow_high_escalation: bool
+    review_reasoning_effort: str
+    rereview_reasoning_effort: str
+
+
+@dataclass(frozen=True)
+class ClassificationConfig:
+    green_max_score: int
+    yellow_max_score: int
+    explicit_override_keys: tuple[str, ...]
+
+
+@dataclass(frozen=True)
+class ModelPolicy:
+    roles: dict[str, ModelConfig]
+    task_classes: dict[str, TaskClassConfig]
+    classification: ClassificationConfig
+    acceptance_mode: str
+
+
+@dataclass(frozen=True)
+class TaskAssessment:
+    task_id: str
+    task_class: str
+    score: int
+    reasons: tuple[str, ...]
+    task_path: str
+    explicit_override: bool = False
+
+
 @dataclass
 class StageResult:
     task_id: str
@@ -297,7 +330,19 @@ def ensure_clean_worktree(repo: Path) -> None:
         raise OrchestratorError("AUTO_COMMIT_BLOCKED: worktree is not clean.\n" + status)
 
 
-def load_model_policy(repo: Path, policy_path: Path) -> dict[str, ModelConfig]:
+def _load_model_config(item: Any, *, label: str) -> ModelConfig:
+    if not isinstance(item, dict):
+        raise OrchestratorError(f"Missing/invalid model policy entry: {label}")
+    model = item.get("model")
+    effort = item.get("reasoning_effort")
+    if not isinstance(model, str) or not model:
+        raise OrchestratorError(f"Invalid model for policy entry: {label}")
+    if not isinstance(effort, str) or not effort:
+        raise OrchestratorError(f"Invalid reasoning effort for policy entry: {label}")
+    return ModelConfig(model=model, reasoning_effort=effort)
+
+
+def load_model_policy(repo: Path, policy_path: Path) -> ModelPolicy:
     resolved = policy_path if policy_path.is_absolute() else repo / policy_path
     try:
         raw = json.loads(resolved.read_text(encoding="utf-8"))
@@ -306,20 +351,289 @@ def load_model_policy(repo: Path, policy_path: Path) -> dict[str, ModelConfig]:
     except json.JSONDecodeError as exc:
         raise OrchestratorError(f"Invalid model policy JSON: {resolved}") from exc
 
-    required_roles = {"implementation", "review", "fix", "rereview", "acceptance"}
-    policy: dict[str, ModelConfig] = {}
-    for role in required_roles:
-        item = raw.get(role)
+    if raw.get("schema_version") != 2:
+        raise OrchestratorError(
+            "codex_model_policy.json schema_version=2 is required for TASK-class routing. "
+            f"Got: {raw.get('schema_version')!r}"
+        )
+
+    roles_raw = raw.get("roles")
+    if not isinstance(roles_raw, dict):
+        raise OrchestratorError("Model policy must contain a roles object.")
+    required_roles = {
+        "implementation",
+        "review",
+        "fix",
+        "rereview",
+        "diagnosis",
+        "diagnosis_escalated",
+    }
+    roles = {
+        role: _load_model_config(roles_raw.get(role), label=f"roles.{role}")
+        for role in required_roles
+    }
+
+    task_classes_raw = raw.get("task_classes")
+    if not isinstance(task_classes_raw, dict):
+        raise OrchestratorError("Model policy must contain task_classes.")
+    task_classes: dict[str, TaskClassConfig] = {}
+    for task_class in ("GREEN", "YELLOW", "RED"):
+        item = task_classes_raw.get(task_class)
         if not isinstance(item, dict):
-            raise OrchestratorError(f"Missing model policy role: {role}")
-        model = item.get("model")
-        effort = item.get("reasoning_effort")
-        if not isinstance(model, str) or not model:
-            raise OrchestratorError(f"Invalid model for role: {role}")
-        if not isinstance(effort, str) or not effort:
-            raise OrchestratorError(f"Invalid reasoning effort for role: {role}")
-        policy[role] = ModelConfig(model=model, reasoning_effort=effort)
-    return policy
+            raise OrchestratorError(f"Missing task class policy: {task_class}")
+        diagnosis_required = item.get("diagnosis_required")
+        allow_high = item.get("allow_high_escalation")
+        review_effort = item.get("review_reasoning_effort")
+        rereview_effort = item.get("rereview_reasoning_effort")
+        if not isinstance(diagnosis_required, bool) or not isinstance(allow_high, bool):
+            raise OrchestratorError(f"Invalid diagnosis flags for task class: {task_class}")
+        if not isinstance(review_effort, str) or not isinstance(rereview_effort, str):
+            raise OrchestratorError(f"Invalid review effort override for task class: {task_class}")
+        task_classes[task_class] = TaskClassConfig(
+            diagnosis_required=diagnosis_required,
+            allow_high_escalation=allow_high,
+            review_reasoning_effort=review_effort,
+            rereview_reasoning_effort=rereview_effort,
+        )
+
+    classification_raw = raw.get("classification")
+    if not isinstance(classification_raw, dict):
+        raise OrchestratorError("Model policy must contain classification.")
+    green_max = classification_raw.get("green_max_score")
+    yellow_max = classification_raw.get("yellow_max_score")
+    keys = classification_raw.get("explicit_override_keys")
+    if not isinstance(green_max, int) or not isinstance(yellow_max, int) or green_max < 0 or yellow_max < green_max:
+        raise OrchestratorError("Invalid classification score thresholds.")
+    if not isinstance(keys, list) or not keys or not all(isinstance(x, str) and x for x in keys):
+        raise OrchestratorError("classification.explicit_override_keys must be a non-empty string list.")
+
+    acceptance_raw = raw.get("acceptance")
+    if not isinstance(acceptance_raw, dict) or acceptance_raw.get("mode") != "deterministic":
+        raise OrchestratorError("Only acceptance.mode=deterministic is supported by policy schema v2.")
+
+    return ModelPolicy(
+        roles=roles,
+        task_classes=task_classes,
+        classification=ClassificationConfig(
+            green_max_score=green_max,
+            yellow_max_score=yellow_max,
+            explicit_override_keys=tuple(keys),
+        ),
+        acceptance_mode="deterministic",
+    )
+
+
+def policy_summary(policy: ModelPolicy) -> dict[str, Any]:
+    return {
+        "schema_version": 2,
+        "roles": {
+            role: {"model": cfg.model, "reasoning_effort": cfg.reasoning_effort}
+            for role, cfg in sorted(policy.roles.items())
+        },
+        "task_classes": {
+            name: asdict(cfg) for name, cfg in sorted(policy.task_classes.items())
+        },
+        "classification": asdict(policy.classification),
+        "acceptance": {"mode": policy.acceptance_mode},
+    }
+
+
+def resolve_model_config(policy: ModelPolicy, task_class: str, role: str) -> ModelConfig:
+    if role not in policy.roles:
+        raise OrchestratorError(f"Unknown model role: {role}")
+    if task_class not in policy.task_classes:
+        raise OrchestratorError(f"Unknown TASK class: {task_class}")
+    base = policy.roles[role]
+    class_cfg = policy.task_classes[task_class]
+    if role == "review":
+        return ModelConfig(base.model, class_cfg.review_reasoning_effort)
+    if role == "rereview":
+        return ModelConfig(base.model, class_cfg.rereview_reasoning_effort)
+    return base
+
+
+def locate_task_spec(repo: Path, task_id: str) -> Path:
+    candidates = [
+        repo / "tasks" / f"{task_id}.md",
+        repo / "Tasks" / f"{task_id}.md",
+        repo / f"{task_id}.md",
+    ]
+    for candidate in candidates:
+        if candidate.is_file():
+            return candidate
+
+    ignored = {".git", ".venv", "venv", "build", "install", "log", "node_modules"}
+    matches = [
+        path
+        for path in repo.rglob(f"{task_id}.md")
+        if not any(part in ignored for part in path.relative_to(repo).parts)
+    ]
+    if len(matches) == 1:
+        return matches[0]
+    if not matches:
+        raise OrchestratorError(
+            f"TASK_CLASSIFICATION_FAILED: specification for {task_id} was not found. "
+            "Expected tasks/<TASK_ID>.md or one unique matching Markdown file."
+        )
+    rendered = ", ".join(str(path.relative_to(repo)) for path in matches[:10])
+    raise OrchestratorError(
+        f"TASK_CLASSIFICATION_FAILED: multiple specifications found for {task_id}: {rendered}"
+    )
+
+
+_HARD_RED_RULES: tuple[tuple[str, re.Pattern[str]], ...] = (
+    (
+        "authoritative_or_root_cause_unproven",
+        re.compile(
+            r"(?:authoritative(?: source)?|source of truth|root cause).{0,60}"
+            r"(?:unproven|unknown|undefined|unclear|not defined|cannot be proven)",
+            re.IGNORECASE | re.DOTALL,
+        ),
+    ),
+    (
+        "cannot_prove_source_of_truth",
+        re.compile(
+            r"(?:cannot|unable to|fails? to).{0,60}(?:prove|determine|identify).{0,60}"
+            r"(?:authoritative|source of truth|root cause)",
+            re.IGNORECASE | re.DOTALL,
+        ),
+    ),
+    (
+        "conflicting_contract",
+        re.compile(
+            r"(?:conflicting|inconsistent).{0,40}(?:contract|requirement|source of truth)",
+            re.IGNORECASE | re.DOTALL,
+        ),
+    ),
+    (
+        "repeated_blocker",
+        re.compile(
+            r"(?:repeated|same|recurring).{0,40}(?:blocker|reject|failure)",
+            re.IGNORECASE | re.DOTALL,
+        ),
+    ),
+)
+
+_SCORE_RULES: tuple[tuple[str, int, re.Pattern[str]], ...] = (
+    (
+        "architecture_or_contract_choice",
+        2,
+        re.compile(
+            r"(?:architect(?:ure|ural).{0,40}(?:decision|choice|change|boundary)|"
+            r"contract.{0,30}(?:choice|decision|change))",
+            re.IGNORECASE | re.DOTALL,
+        ),
+    ),
+    (
+        "authoritative_source",
+        2,
+        re.compile(r"authoritative|source of truth|single source of truth", re.IGNORECASE),
+    ),
+    (
+        "live_runtime",
+        1,
+        re.compile(
+            r"\b(?:gazebo|ros\s*2|nav2|dds|hardware|world state)\b|live runtime|unrestricted runtime",
+            re.IGNORECASE,
+        ),
+    ),
+    (
+        "end_to_end",
+        1,
+        re.compile(r"\be2e\b|end[- ]to[- ]end", re.IGNORECASE),
+    ),
+    (
+        "integration_boundary",
+        1,
+        re.compile(r"\b(?:integration|backend|bridge|adapter)\b", re.IGNORECASE),
+    ),
+    (
+        "observation_or_evidence",
+        1,
+        re.compile(r"\b(?:observation|observable|verification|evidence)\b", re.IGNORECASE),
+    ),
+)
+
+
+def _explicit_task_class(text: str, keys: tuple[str, ...]) -> str | None:
+    for key in keys:
+        parts = [re.escape(part) for part in re.split(r"[_ -]+", key) if part]
+        flexible = r"[_ -]?".join(parts)
+        pattern = re.compile(
+            rf"(?im)^\s*(?:[-*]\s*)?{flexible}\s*:\s*(GREEN|YELLOW|RED)\s*$"
+        )
+        match = pattern.search(text)
+        if match:
+            return match.group(1).upper()
+    return None
+
+
+def classify_task(repo: Path, task_id: str, policy: ModelPolicy) -> TaskAssessment:
+    path = locate_task_spec(repo, task_id)
+    text = path.read_text(encoding="utf-8", errors="replace")
+    explicit = _explicit_task_class(text, policy.classification.explicit_override_keys)
+    rel = path.relative_to(repo).as_posix()
+    if explicit:
+        return TaskAssessment(
+            task_id=task_id,
+            task_class=explicit,
+            score=0,
+            reasons=(f"explicit override in {rel}",),
+            task_path=rel,
+            explicit_override=True,
+        )
+
+    hard_reasons = [name for name, pattern in _HARD_RED_RULES if pattern.search(text)]
+    if hard_reasons:
+        return TaskAssessment(
+            task_id=task_id,
+            task_class="RED",
+            score=policy.classification.yellow_max_score + 1,
+            reasons=tuple(f"hard-red:{name}" for name in hard_reasons),
+            task_path=rel,
+        )
+
+    score = 0
+    reasons: list[str] = []
+    for name, weight, pattern in _SCORE_RULES:
+        if pattern.search(text):
+            score += weight
+            reasons.append(f"+{weight}:{name}")
+
+    if score <= policy.classification.green_max_score:
+        task_class = "GREEN"
+    elif score <= policy.classification.yellow_max_score:
+        task_class = "YELLOW"
+    else:
+        task_class = "RED"
+    if not reasons:
+        reasons.append("no complexity signals")
+    return TaskAssessment(
+        task_id=task_id,
+        task_class=task_class,
+        score=score,
+        reasons=tuple(reasons),
+        task_path=rel,
+    )
+
+
+def text_requires_diagnosis(text: str) -> bool:
+    return any(pattern.search(text) for _, pattern in _HARD_RED_RULES)
+
+
+def latest_stage_record(ctx: RunContext, task_id: str, role: str) -> StageRunRecord | None:
+    return next(
+        (record for record in reversed(ctx.stage_records) if record.task_id == task_id and record.role == role),
+        None,
+    )
+
+
+def latest_stage_final_text(ctx: RunContext, task_id: str, role: str) -> str:
+    record = latest_stage_record(ctx, task_id, role)
+    if not record or not record.final_path:
+        return ""
+    path = Path(record.final_path)
+    return path.read_text(encoding="utf-8", errors="replace") if path.is_file() else ""
 
 
 def tail_text(path: Path, max_bytes: int = 65536) -> str:
@@ -496,6 +810,8 @@ CHILD_ROLE_PROMPTS = {
     "review": "prompts/codex/read_only_review_v2.md",
     "rereview": "prompts/codex/read_only_review_v2.md",
     "fix": "prompts/codex/fix_review_findings_v2.md",
+    "diagnosis": "prompts/codex/diagnose_task_v1.md",
+    "diagnosis_escalated": "prompts/codex/diagnose_task_v1.md",
     "acceptance": "prompts/codex/record_task_acceptance_v2.md",
 }
 
@@ -509,6 +825,8 @@ def child_prompt(
     resume_from_stage: str | None = None,
     previous_run_dir: str | None = None,
     resume_reason: str | None = None,
+    diagnosis_path: str | None = None,
+    diagnosis_reason: str | None = None,
 ) -> str:
     """Build an explicit child-worker envelope so Codex cannot confuse the worker
     with the host-side `Run ...` entry point.
@@ -529,6 +847,12 @@ def child_prompt(
 
     if worker_role == "acceptance":
         lines.append(f"acceptance_path={expected_acceptance_path(task_id).as_posix()}")
+
+    if diagnosis_path:
+        lines.append(f"upstream_diagnosis_path={diagnosis_path}")
+        lines.append("Read that bounded diagnosis before editing or re-reviewing.")
+    if diagnosis_reason:
+        lines.append(f"diagnosis_reason={diagnosis_reason}")
 
     if resume:
         lines.append("resume=true")
@@ -574,6 +898,8 @@ def child_prompt(
 
 
 RESUMABLE_PHASES = {
+    "diagnosis",
+    "diagnosis_escalated",
     "implementation",
     "review",
     "commit_implementation_review",
@@ -607,7 +933,7 @@ def save_resume_checkpoint(
     state: dict[str, Any],
 ) -> Path:
     path = ctx.run_dir.parent / f"resume_{safe_name(task_id)}.json"
-    state["schema_version"] = 1
+    state["schema_version"] = 2
     state["task_id"] = task_id
     state["repo"] = str(ctx.repo)
     state["current_run_dir"] = str(ctx.run_dir)
@@ -661,7 +987,7 @@ def create_manual_resume_state(
     head = run_git(repo, "rev-parse", "HEAD").stdout.strip()
     accepted_commit = head if phase in {"acceptance", "commit_acceptance"} else None
     return {
-        "schema_version": 1,
+        "schema_version": 2,
         "task_id": task_id,
         "repo": str(repo),
         "branch": branch,
@@ -759,11 +1085,12 @@ def validate_resume_state(
 
 def resumable_worker_role(phase: str) -> str | None:
     return {
+        "diagnosis": "diagnosis",
+        "diagnosis_escalated": "diagnosis_escalated",
         "implementation": "implementation",
         "review": "review",
         "fix": "fix",
         "rereview": "rereview",
-        "acceptance": "acceptance",
     }.get(phase)
 
 
@@ -786,6 +1113,8 @@ def write_manual_resume_prompt(
         or state.get("current_run_dir"),
         resume_reason=state.get("last_error")
         or state.get("status"),
+        diagnosis_path=state.get("diagnosis_path"),
+        diagnosis_reason=state.get("diagnosis_reason"),
     )
     path = ctx.run_dir / "resume_prompt.txt"
     path.write_text(prompt, encoding="utf-8")
@@ -1218,6 +1547,53 @@ def validate_acceptance_write(repo: Path, result: AcceptanceResult, *, task_id: 
     return rel_path
 
 
+def write_deterministic_acceptance(
+    repo: Path,
+    *,
+    task_id: str,
+    accepted_commit: str,
+) -> str:
+    """Record canonical acceptance without spending a Codex/LLM call."""
+    ensure_clean_worktree(repo)
+    head = run_git(repo, "rev-parse", "HEAD").stdout.strip()
+    if head != accepted_commit:
+        raise OrchestratorError(
+            "Acceptance recording requires HEAD to equal accepted_commit. "
+            f"HEAD={head}, accepted_commit={accepted_commit}"
+        )
+
+    rel_path = expected_acceptance_path(task_id)
+    abs_path = repo / rel_path
+    abs_path.parent.mkdir(parents=True, exist_ok=True)
+    artifact = {
+        "schema_version": 1,
+        "task_id": task_id,
+        "status": "ACCEPT",
+        "accepted_commit": accepted_commit,
+        "recorded_at": iso_now(),
+        "recorded_by": "codex-task-orchestrator",
+        "recording_mode": "deterministic",
+        "workflow_complete": True,
+    }
+    abs_path.write_text(
+        json.dumps(artifact, ensure_ascii=False, indent=2) + "\n",
+        encoding="utf-8",
+    )
+
+    paths = changed_paths(repo)
+    if paths != [rel_path.as_posix()]:
+        raise OrchestratorError(
+            "Deterministic acceptance changed unexpected files. "
+            f"Expected only {rel_path.as_posix()}, got {paths}"
+        )
+    reread = json.loads(abs_path.read_text(encoding="utf-8"))
+    if reread.get("task_id") != task_id or reread.get("status") != "ACCEPT":
+        raise OrchestratorError("Deterministic acceptance artifact identity/status mismatch.")
+    if reread.get("accepted_commit") != accepted_commit:
+        raise OrchestratorError("Deterministic acceptance artifact accepted_commit mismatch.")
+    return rel_path.as_posix()
+
+
 def run_acceptance_record(
     repo: Path,
     *,
@@ -1299,7 +1675,6 @@ def acceptance_event(
     accepted_commit: str,
     acceptance_path: str,
     acceptance_commit: str,
-    config: ModelConfig,
 ) -> dict[str, Any]:
     return {
         "task_id": task_id,
@@ -1309,8 +1684,8 @@ def acceptance_event(
         "acceptance_path": acceptance_path,
         "acceptance_commit": acceptance_commit,
         "model_role": "acceptance",
-        "model": config.model,
-        "reasoning_effort": config.reasoning_effort,
+        "model": "deterministic",
+        "reasoning_effort": "none",
         "workflow_complete": True,
     }
 
@@ -1331,34 +1706,39 @@ def record_technical_stop(ctx: RunContext, task_id: str, role: str, message: str
 def run_task(
     task_id: str,
     repo: Path,
-    policy: dict[str, ModelConfig],
+    policy: ModelPolicy,
     *,
     ctx: RunContext,
     max_fix_cycles: int = 1,
     resume_state: dict[str, Any] | None = None,
     resume_force: bool = False,
 ) -> dict[str, Any]:
-    """Run or resume one TASK lifecycle.
-
-    The checkpoint is written outside the repository before every lifecycle stage.
-    If a child is interrupted by token/context/runtime limits, `resume` re-enters
-    exactly that phase with a fresh bounded Codex context and preserves the
-    existing target-task worktree.
-    """
+    """Run or resume one TASK lifecycle with class-aware bounded model routing."""
     events: list[dict[str, Any]] = []
 
     if resume_state is None:
         ensure_clean_worktree(repo)
         initial_head = run_git(repo, "rev-parse", "HEAD").stdout.strip()
+        assessment = classify_task(repo, task_id, policy)
+        class_cfg = policy.task_classes[assessment.task_class]
+        initial_phase = "diagnosis" if class_cfg.diagnosis_required else "implementation"
         state: dict[str, Any] = {
-            "schema_version": 1,
+            "schema_version": 2,
             "task_id": task_id,
             "repo": str(repo),
             "branch": current_branch(repo),
             "initial_head": initial_head,
             "current_head": initial_head,
-            "phase": "implementation",
+            "phase": initial_phase,
             "status": "RUNNING",
+            "task_assessment": asdict(assessment),
+            "effective_task_class": assessment.task_class,
+            "diagnosis_return_phase": "implementation",
+            "diagnosis_reason": "initial_red_classification" if class_cfg.diagnosis_required else None,
+            "diagnosis_path": None,
+            "implementation_escalated": False,
+            "implementation_resume_after_diagnosis": False,
+            "fix_resume_after_diagnosis": False,
             "review_status": None,
             "accepted_commit": None,
             "acceptance_path": None,
@@ -1374,14 +1754,34 @@ def run_task(
         resuming = False
         resume_source_dir: str | None = None
         resume_reason: str | None = None
+        ctx.progress(
+            "CLASS",
+            f"{task_id}={assessment.task_class} score={assessment.score} "
+            f"({'; '.join(assessment.reasons)})",
+        )
     else:
         state = dict(resume_state)
-        validate_resume_state(
-            repo,
-            task_id,
-            state,
-            force=resume_force,
-        )
+        validate_resume_state(repo, task_id, state, force=resume_force)
+        if not isinstance(state.get("task_assessment"), dict):
+            assessment = classify_task(repo, task_id, policy)
+            state["task_assessment"] = asdict(assessment)
+            state.setdefault("effective_task_class", assessment.task_class)
+        else:
+            raw_assessment = state["task_assessment"]
+            assessment = TaskAssessment(
+                task_id=str(raw_assessment.get("task_id", task_id)),
+                task_class=str(raw_assessment.get("task_class", "GREEN")),
+                score=int(raw_assessment.get("score", 0)),
+                reasons=tuple(raw_assessment.get("reasons") or ()),
+                task_path=str(raw_assessment.get("task_path", "")),
+                explicit_override=bool(raw_assessment.get("explicit_override", False)),
+            )
+        state.setdefault("diagnosis_return_phase", "implementation")
+        state.setdefault("diagnosis_reason", None)
+        state.setdefault("diagnosis_path", None)
+        state.setdefault("implementation_escalated", False)
+        state.setdefault("implementation_resume_after_diagnosis", False)
+        state.setdefault("fix_resume_after_diagnosis", False)
         resume_source_dir = state.get("current_run_dir") or state.get("previous_run_dir")
         resume_reason = state.get("last_error") or state.get("status")
         state["previous_run_dir"] = resume_source_dir
@@ -1390,7 +1790,10 @@ def run_task(
         state["status"] = "RESUMING"
         save_resume_checkpoint(ctx, task_id, state)
         resuming = True
-        ctx.progress("RESUME", f"{task_id} from phase={state['phase']}")
+        ctx.progress(
+            "RESUME",
+            f"{task_id} from phase={state['phase']} class={state.get('effective_task_class')}",
+        )
 
     commits: list[str] = list(state.get("commits") or [])
     phase = str(state["phase"])
@@ -1398,6 +1801,18 @@ def run_task(
 
     def is_resumed_stage(name: str) -> bool:
         return bool(resuming and resume_phase == name)
+
+    def effective_class() -> str:
+        value = str(state.get("effective_task_class") or assessment.task_class)
+        if value not in policy.task_classes:
+            raise OrchestratorError(f"Invalid effective TASK class in checkpoint: {value}")
+        return value
+
+    def promote_to_red(reason: str, return_phase: str) -> None:
+        state["effective_task_class"] = "RED"
+        state["diagnosis_reason"] = reason
+        state["diagnosis_return_phase"] = return_phase
+        state["diagnosis_path"] = None
 
     while True:
         transition_checkpoint(
@@ -1408,18 +1823,108 @@ def run_task(
             commits=commits,
         )
 
+        if phase in {"diagnosis", "diagnosis_escalated"}:
+            role = phase
+            config = resolve_model_config(policy, effective_class(), role)
+            diagnosis = run_stage(
+                child_prompt(
+                    task_id=task_id,
+                    worker_role=role,
+                    resume=is_resumed_stage(phase),
+                    resume_from_stage=phase if is_resumed_stage(phase) else None,
+                    previous_run_dir=resume_source_dir if is_resumed_stage(phase) else None,
+                    resume_reason=resume_reason if is_resumed_stage(phase) else None,
+                    diagnosis_path=state.get("diagnosis_path") if phase == "diagnosis_escalated" else None,
+                    diagnosis_reason=str(state.get("diagnosis_reason") or "task_classification"),
+                ),
+                repo,
+                config,
+                ctx=ctx,
+                task_id=task_id,
+                role=role,
+            )
+            require_result(
+                diagnosis,
+                task_id=task_id,
+                stage="diagnosis",
+                allowed={"RESOLVED", "UNRESOLVED"},
+            )
+            events.append(stage_event(diagnosis, config, role=role))
+            if not workflow_is_complete(diagnosis):
+                transition_checkpoint(
+                    ctx,
+                    state,
+                    phase=phase,
+                    status="BLOCKED",
+                    last_error="Diagnosis workflow bookkeeping incomplete.",
+                )
+                return {
+                    "task_id": task_id,
+                    "status": "DIAGNOSIS_WORKFLOW_INCOMPLETE",
+                    "task_assessment": state["task_assessment"],
+                    "effective_task_class": effective_class(),
+                    "commits": commits,
+                    "events": events,
+                }
+
+            record = latest_stage_record(ctx, task_id, role)
+            if record and record.final_path:
+                state["diagnosis_path"] = record.final_path
+
+            if diagnosis.status == "RESOLVED":
+                phase = str(state.get("diagnosis_return_phase") or "implementation")
+                resuming = False
+                continue
+
+            class_cfg = policy.task_classes[effective_class()]
+            if phase == "diagnosis" and class_cfg.allow_high_escalation:
+                phase = "diagnosis_escalated"
+                resuming = False
+                continue
+
+            transition_checkpoint(
+                ctx,
+                state,
+                phase=phase,
+                status="ESCALATION_REQUIRED",
+                last_error="Diagnosis could not prove a safe implementation/fix path.",
+            )
+            return {
+                "task_id": task_id,
+                "status": "ESCALATION_REQUIRED",
+                "task_assessment": state["task_assessment"],
+                "effective_task_class": effective_class(),
+                "diagnosis_path": state.get("diagnosis_path"),
+                "commits": commits,
+                "events": events,
+            }
+
         if phase == "implementation":
+            config = resolve_model_config(policy, effective_class(), "implementation")
+            internal_resume = bool(state.get("implementation_resume_after_diagnosis"))
             implementation = run_stage(
                 child_prompt(
                     task_id=task_id,
                     worker_role="implementation",
-                    resume=is_resumed_stage("implementation"),
-                    resume_from_stage="implementation" if is_resumed_stage("implementation") else None,
-                    previous_run_dir=resume_source_dir if is_resumed_stage("implementation") else None,
-                    resume_reason=resume_reason if is_resumed_stage("implementation") else None,
+                    resume=is_resumed_stage("implementation") or internal_resume,
+                    resume_from_stage="implementation"
+                    if is_resumed_stage("implementation") or internal_resume
+                    else None,
+                    previous_run_dir=(
+                        resume_source_dir
+                        if is_resumed_stage("implementation")
+                        else (str(ctx.run_dir) if internal_resume else None)
+                    ),
+                    resume_reason=(
+                        resume_reason
+                        if is_resumed_stage("implementation")
+                        else (str(state.get("diagnosis_reason") or "diagnosis_resolved") if internal_resume else None)
+                    ),
+                    diagnosis_path=state.get("diagnosis_path"),
+                    diagnosis_reason=state.get("diagnosis_reason"),
                 ),
                 repo,
-                policy["implementation"],
+                config,
                 ctx=ctx,
                 task_id=task_id,
                 role="implementation",
@@ -1430,20 +1935,9 @@ def run_task(
                 stage="implementation",
                 allowed={"COMPLETE", "INCOMPLETE"},
             )
-            events.append(
-                stage_event(
-                    implementation,
-                    policy["implementation"],
-                    role="implementation",
-                )
-            )
+            events.append(stage_event(implementation, config, role="implementation"))
             if not workflow_is_complete(implementation):
-                record_technical_stop(
-                    ctx,
-                    task_id,
-                    "implementation",
-                    "Implementation workflow bookkeeping incomplete.",
-                )
+                record_technical_stop(ctx, task_id, "implementation", "Implementation workflow bookkeeping incomplete.")
                 transition_checkpoint(
                     ctx,
                     state,
@@ -1454,16 +1948,21 @@ def run_task(
                 return {
                     "task_id": task_id,
                     "status": "IMPLEMENTATION_WORKFLOW_INCOMPLETE",
+                    "task_assessment": state["task_assessment"],
+                    "effective_task_class": effective_class(),
                     "commits": commits,
                     "events": events,
                 }
             if implementation.status != "COMPLETE":
-                record_technical_stop(
-                    ctx,
-                    task_id,
-                    "implementation",
-                    "Implementation technical result is INCOMPLETE/BLOCKED.",
-                )
+                if effective_class() != "RED" and not bool(state.get("implementation_escalated")):
+                    state["implementation_escalated"] = True
+                    state["implementation_resume_after_diagnosis"] = True
+                    promote_to_red("implementation_incomplete", "implementation")
+                    phase = "diagnosis"
+                    resuming = False
+                    ctx.progress("ESCALATE", f"{task_id} implementation incomplete → RED diagnosis")
+                    continue
+                record_technical_stop(ctx, task_id, "implementation", "Implementation technical result is INCOMPLETE/BLOCKED.")
                 transition_checkpoint(
                     ctx,
                     state,
@@ -1474,14 +1973,18 @@ def run_task(
                 return {
                     "task_id": task_id,
                     "status": "INCOMPLETE",
+                    "task_assessment": state["task_assessment"],
+                    "effective_task_class": effective_class(),
                     "commits": commits,
                     "events": events,
                 }
+            state["implementation_resume_after_diagnosis"] = False
             phase = "review"
             resuming = False
             continue
 
         if phase == "review":
+            config = resolve_model_config(policy, effective_class(), "review")
             review = run_stage(
                 child_prompt(
                     task_id=task_id,
@@ -1490,27 +1993,19 @@ def run_task(
                     resume_from_stage="review" if is_resumed_stage("review") else None,
                     previous_run_dir=resume_source_dir if is_resumed_stage("review") else None,
                     resume_reason=resume_reason if is_resumed_stage("review") else None,
+                    diagnosis_path=state.get("diagnosis_path"),
+                    diagnosis_reason=state.get("diagnosis_reason"),
                 ),
                 repo,
-                policy["review"],
+                config,
                 ctx=ctx,
                 task_id=task_id,
                 role="review",
             )
-            require_result(
-                review,
-                task_id=task_id,
-                stage="review",
-                allowed={"ACCEPT", "REJECT"},
-            )
-            events.append(stage_event(review, policy["review"], role="review"))
+            require_result(review, task_id=task_id, stage="review", allowed={"ACCEPT", "REJECT"})
+            events.append(stage_event(review, config, role="review"))
             if not workflow_is_complete(review):
-                record_technical_stop(
-                    ctx,
-                    task_id,
-                    "review",
-                    "Review workflow bookkeeping incomplete.",
-                )
+                record_technical_stop(ctx, task_id, "review", "Review workflow bookkeeping incomplete.")
                 transition_checkpoint(
                     ctx,
                     state,
@@ -1521,10 +2016,15 @@ def run_task(
                 return {
                     "task_id": task_id,
                     "status": "REVIEW_WORKFLOW_INCOMPLETE",
+                    "task_assessment": state["task_assessment"],
+                    "effective_task_class": effective_class(),
                     "commits": commits,
                     "events": events,
                 }
             state["review_status"] = review.status
+            state["review_requires_diagnosis"] = (
+                review.status == "REJECT" and text_requires_diagnosis(latest_stage_final_text(ctx, task_id, "review"))
+            )
             phase = "commit_implementation_review"
             resuming = False
             continue
@@ -1532,9 +2032,7 @@ def run_task(
         if phase == "commit_implementation_review":
             review_status = state.get("review_status")
             if review_status not in {"ACCEPT", "REJECT"}:
-                raise OrchestratorError(
-                    "Cannot resume implementation-review commit without review_status."
-                )
+                raise OrchestratorError("Cannot resume implementation-review commit without review_status.")
             first_commit = commit_all_changes(
                 repo,
                 task_id=task_id,
@@ -1557,20 +2055,20 @@ def run_task(
                 phase = "acceptance"
             else:
                 if max_fix_cycles == 0:
-                    transition_checkpoint(
-                        ctx,
-                        state,
-                        phase="fix",
-                        status="REJECTED_NO_FIX",
-                        commits=commits,
-                    )
+                    transition_checkpoint(ctx, state, phase="fix", status="REJECTED_NO_FIX", commits=commits)
                     return {
                         "task_id": task_id,
                         "status": "REJECTED_NO_FIX",
+                        "task_assessment": state["task_assessment"],
+                        "effective_task_class": effective_class(),
                         "commits": commits,
                         "events": events,
                     }
-                phase = "fix"
+                if bool(state.get("review_requires_diagnosis")):
+                    promote_to_red("review_unproven_or_conflicting_finding", "fix")
+                    phase = "diagnosis"
+                else:
+                    phase = "fix"
 
             transition_checkpoint(
                 ctx,
@@ -1585,31 +2083,35 @@ def run_task(
         if phase == "fix":
             used = int(state.get("fix_cycles_used") or 0)
             if used >= max_fix_cycles:
-                transition_checkpoint(
-                    ctx,
-                    state,
-                    phase="fix",
-                    status="REJECTED_AFTER_REVIEW",
-                    commits=commits,
-                )
+                transition_checkpoint(ctx, state, phase="fix", status="REJECTED_AFTER_REVIEW", commits=commits)
                 return {
                     "task_id": task_id,
                     "status": "REJECTED_AFTER_REVIEW",
+                    "task_assessment": state["task_assessment"],
+                    "effective_task_class": effective_class(),
                     "commits": commits,
                     "events": events,
                 }
 
+            config = resolve_model_config(policy, effective_class(), "fix")
+            internal_resume = bool(state.get("fix_resume_after_diagnosis"))
             fix = run_stage(
                 child_prompt(
                     task_id=task_id,
                     worker_role="fix",
-                    resume=is_resumed_stage("fix"),
-                    resume_from_stage="fix" if is_resumed_stage("fix") else None,
-                    previous_run_dir=resume_source_dir if is_resumed_stage("fix") else None,
-                    resume_reason=resume_reason if is_resumed_stage("fix") else None,
+                    resume=is_resumed_stage("fix") or internal_resume,
+                    resume_from_stage="fix" if is_resumed_stage("fix") or internal_resume else None,
+                    previous_run_dir=(
+                        resume_source_dir if is_resumed_stage("fix") else (str(ctx.run_dir) if internal_resume else None)
+                    ),
+                    resume_reason=(
+                        resume_reason if is_resumed_stage("fix") else (str(state.get("diagnosis_reason") or "diagnosis_resolved") if internal_resume else None)
+                    ),
+                    diagnosis_path=state.get("diagnosis_path"),
+                    diagnosis_reason=state.get("diagnosis_reason"),
                 ),
                 repo,
-                policy["fix"],
+                config,
                 ctx=ctx,
                 task_id=task_id,
                 role="fix",
@@ -1620,14 +2122,9 @@ def run_task(
                 stage="fix",
                 allowed={"READY_FOR_RE_REVIEW", "NOT_READY_FOR_RE_REVIEW"},
             )
-            events.append(stage_event(fix, policy["fix"], role="fix"))
+            events.append(stage_event(fix, config, role="fix"))
             if not workflow_is_complete(fix):
-                record_technical_stop(
-                    ctx,
-                    task_id,
-                    "fix",
-                    "Fix workflow bookkeeping incomplete.",
-                )
+                record_technical_stop(ctx, task_id, "fix", "Fix workflow bookkeeping incomplete.")
                 transition_checkpoint(
                     ctx,
                     state,
@@ -1638,36 +2135,38 @@ def run_task(
                 return {
                     "task_id": task_id,
                     "status": "FIX_WORKFLOW_INCOMPLETE",
+                    "task_assessment": state["task_assessment"],
+                    "effective_task_class": effective_class(),
                     "commits": commits,
                     "events": events,
                 }
             if fix.status != "READY_FOR_RE_REVIEW":
-                record_technical_stop(
-                    ctx,
-                    task_id,
-                    "fix",
-                    "Fix is NOT_READY_FOR_RE_REVIEW.",
-                )
-                transition_checkpoint(
-                    ctx,
-                    state,
-                    phase="fix",
-                    status="BLOCKED",
-                    last_error="Fix is NOT_READY_FOR_RE_REVIEW.",
-                )
+                if effective_class() != "RED" and not bool(state.get("fix_resume_after_diagnosis")):
+                    state["fix_resume_after_diagnosis"] = True
+                    promote_to_red("fix_not_ready", "fix")
+                    phase = "diagnosis"
+                    resuming = False
+                    ctx.progress("ESCALATE", f"{task_id} fix not ready → RED diagnosis")
+                    continue
+                record_technical_stop(ctx, task_id, "fix", "Fix is NOT_READY_FOR_RE_REVIEW.")
+                transition_checkpoint(ctx, state, phase="fix", status="BLOCKED", last_error="Fix is NOT_READY_FOR_RE_REVIEW.")
                 return {
                     "task_id": task_id,
                     "status": "FIX_NOT_READY",
+                    "task_assessment": state["task_assessment"],
+                    "effective_task_class": effective_class(),
                     "commits": commits,
                     "events": events,
                 }
 
+            state["fix_resume_after_diagnosis"] = False
             state["fix_cycles_used"] = used + 1
             phase = "rereview"
             resuming = False
             continue
 
         if phase == "rereview":
+            config = resolve_model_config(policy, effective_class(), "rereview")
             rereview = run_stage(
                 child_prompt(
                     task_id=task_id,
@@ -1676,33 +2175,19 @@ def run_task(
                     resume_from_stage="rereview" if is_resumed_stage("rereview") else None,
                     previous_run_dir=resume_source_dir if is_resumed_stage("rereview") else None,
                     resume_reason=resume_reason if is_resumed_stage("rereview") else None,
+                    diagnosis_path=state.get("diagnosis_path"),
+                    diagnosis_reason=state.get("diagnosis_reason"),
                 ),
                 repo,
-                policy["rereview"],
+                config,
                 ctx=ctx,
                 task_id=task_id,
                 role="rereview",
             )
-            require_result(
-                rereview,
-                task_id=task_id,
-                stage="review",
-                allowed={"ACCEPT", "REJECT"},
-            )
-            events.append(
-                stage_event(
-                    rereview,
-                    policy["rereview"],
-                    role="rereview",
-                )
-            )
+            require_result(rereview, task_id=task_id, stage="review", allowed={"ACCEPT", "REJECT"})
+            events.append(stage_event(rereview, config, role="rereview"))
             if not workflow_is_complete(rereview):
-                record_technical_stop(
-                    ctx,
-                    task_id,
-                    "rereview",
-                    "Re-review workflow bookkeeping incomplete.",
-                )
+                record_technical_stop(ctx, task_id, "rereview", "Re-review workflow bookkeeping incomplete.")
                 transition_checkpoint(
                     ctx,
                     state,
@@ -1713,6 +2198,8 @@ def run_task(
                 return {
                     "task_id": task_id,
                     "status": "REVIEW_WORKFLOW_INCOMPLETE",
+                    "task_assessment": state["task_assessment"],
+                    "effective_task_class": effective_class(),
                     "commits": commits,
                     "events": events,
                 }
@@ -1724,9 +2211,7 @@ def run_task(
         if phase == "commit_fix_rereview":
             review_status = state.get("review_status")
             if review_status not in {"ACCEPT", "REJECT"}:
-                raise OrchestratorError(
-                    "Cannot resume fix-rereview commit without review_status."
-                )
+                raise OrchestratorError("Cannot resume fix-rereview commit without review_status.")
             fix_commit = commit_all_changes(
                 repo,
                 task_id=task_id,
@@ -1749,18 +2234,15 @@ def run_task(
                 phase = "acceptance"
             else:
                 if int(state.get("fix_cycles_used") or 0) < max_fix_cycles:
-                    phase = "fix"
+                    promote_to_red("repeated_reject_after_fix", "fix")
+                    phase = "diagnosis"
                 else:
-                    transition_checkpoint(
-                        ctx,
-                        state,
-                        phase="fix",
-                        status="REJECTED_AFTER_REVIEW",
-                        commits=commits,
-                    )
+                    transition_checkpoint(ctx, state, phase="fix", status="REJECTED_AFTER_REVIEW", commits=commits)
                     return {
                         "task_id": task_id,
                         "status": "REJECTED_AFTER_REVIEW",
+                        "task_assessment": state["task_assessment"],
+                        "effective_task_class": effective_class(),
                         "commits": commits,
                         "events": events,
                     }
@@ -1780,16 +2262,12 @@ def run_task(
             if not accepted_commit:
                 accepted_commit = run_git(repo, "rev-parse", "HEAD").stdout.strip()
                 state["accepted_commit"] = accepted_commit
-            acceptance_path = run_acceptance_record(
+            acceptance_path = write_deterministic_acceptance(
                 repo,
                 task_id=task_id,
                 accepted_commit=str(accepted_commit),
-                config=policy["acceptance"],
-                ctx=ctx,
-                resume=is_resumed_stage("acceptance"),
-                previous_run_dir=resume_source_dir if is_resumed_stage("acceptance") else None,
-                resume_reason=resume_reason if is_resumed_stage("acceptance") else None,
             )
+            ctx.progress("PASS", f"{task_id} ACCEPTANCE — deterministic record created")
             state["acceptance_path"] = acceptance_path
             phase = "commit_acceptance"
             resuming = False
@@ -1807,15 +2285,8 @@ def run_task(
         if phase == "commit_acceptance":
             acceptance_path = state.get("acceptance_path")
             if not acceptance_path:
-                raise OrchestratorError(
-                    "Cannot commit acceptance without acceptance_path."
-                )
-            acceptance_commit = commit_all_changes(
-                repo,
-                task_id=task_id,
-                boundary="acceptance",
-                ctx=ctx,
-            )
+                raise OrchestratorError("Cannot commit acceptance without acceptance_path.")
+            acceptance_commit = commit_all_changes(repo, task_id=task_id, boundary="acceptance", ctx=ctx)
             if acceptance_commit not in commits:
                 commits.append(acceptance_commit)
             state["acceptance_commit"] = acceptance_commit
@@ -1825,7 +2296,6 @@ def run_task(
                     accepted_commit=str(state["accepted_commit"]),
                     acceptance_path=str(acceptance_path),
                     acceptance_commit=acceptance_commit,
-                    config=policy["acceptance"],
                 )
             )
             transition_checkpoint(
@@ -1839,6 +2309,8 @@ def run_task(
             return {
                 "task_id": task_id,
                 "status": "ACCEPTED",
+                "task_assessment": state["task_assessment"],
+                "effective_task_class": effective_class(),
                 "accepted_commit": state["accepted_commit"],
                 "acceptance_path": acceptance_path,
                 "acceptance_commit": acceptance_commit,
@@ -1847,7 +2319,6 @@ def run_task(
             }
 
         raise OrchestratorError(f"Unsupported lifecycle phase: {phase}")
-
 
 
 def expand_range(start: str, end: str) -> list[str]:
@@ -1870,7 +2341,7 @@ def run_range(
     start: str,
     end: str,
     repo: Path,
-    policy: dict[str, ModelConfig],
+    policy: ModelPolicy,
     *,
     ctx: RunContext,
     max_fix_cycles: int = 1,
@@ -1915,6 +2386,12 @@ def derive_next_action(result: dict[str, Any], errors: list[ErrorRecord]) -> tup
     status = str(result.get("status", "ERROR"))
     if status in {"ACCEPTED", "COMPLETE"}:
         return "NONE", ["No TASK lifecycle action is required."]
+    if status in {"ESCALATION_REQUIRED", "DIAGNOSIS_WORKFLOW_INCOMPLETE"}:
+        return "RESOLVE_DIAGNOSIS_BEFORE_IMPLEMENTATION", [
+            "Inspect the bounded Diagnosis final response and evidence.",
+            "Do not continue implementation speculatively while the authoritative contract/root cause is unresolved.",
+            "Resolve the missing evidence or contract, then resume with: scripts/codex/resume-task <TASK_ID>",
+        ]
     if status in {"INCOMPLETE", "IMPLEMENTATION_WORKFLOW_INCOMPLETE"}:
         return "RESOLVE_IMPLEMENTATION_BLOCKER_THEN_RESUME", [
             "Inspect the failing Implementation final response and full log listed below.",
@@ -1994,8 +2471,23 @@ def write_reports(
     next_action, next_steps = derive_next_action(result, ctx.errors)
     ended_at = iso_now()
     duration = round(time.monotonic() - ctx.started_monotonic, 3)
+    reported_stages = [r for r in ctx.stage_records if r.tokens_reported is not None]
+    token_summary = {
+        "total_reported_tokens": sum(int(r.tokens_reported or 0) for r in reported_stages),
+        "sol_reported_tokens": sum(
+            int(r.tokens_reported or 0) for r in reported_stages if "sol" in r.model.lower()
+        ),
+        "terra_reported_tokens": sum(
+            int(r.tokens_reported or 0) for r in reported_stages if "terra" in r.model.lower()
+        ),
+        "codex_calls": len(ctx.stage_records),
+        "deterministic_acceptance_calls_saved": 1
+        if result.get("status") in {"ACCEPTED", "COMPLETE"}
+        or result.get("acceptance_path")
+        else 0,
+    }
     report = {
-        "schema_version": 1,
+        "schema_version": 2,
         "target": ctx.target,
         "repo": str(ctx.repo),
         "branch": branch,
@@ -2009,6 +2501,7 @@ def write_reports(
         "worktree_status": repo_status,
         "stages": [asdict(r) for r in ctx.stage_records],
         "errors": [asdict(e) for e in ctx.errors],
+        "token_summary": token_summary,
         "resume_checkpoint": None,
         "resume_command": None,
         "manual_resume_prompt": None,
@@ -2046,6 +2539,13 @@ def write_reports(
     terminal_task = result_terminal_task(result)
     if terminal_task:
         lines.append(f"- Terminal TASK: `{terminal_task}`")
+    assessment_view = result.get("task_assessment")
+    if isinstance(assessment_view, dict):
+        lines.append(
+            f"- TASK class: `{assessment_view.get('task_class')}` "
+            f"(effective: `{result.get('effective_task_class', assessment_view.get('task_class'))}`, "
+            f"score: `{assessment_view.get('score')}`)"
+        )
     if result.get("accepted_commit"):
         lines.append(f"- Accepted commit: `{result['accepted_commit']}`")
     if result.get("acceptance_commit"):
@@ -2064,7 +2564,19 @@ def write_reports(
     else:
         lines.append("| - | - | NOT STARTED | - | - |")
 
-    lines += ["", "## Errors", ""]
+    lines += [
+        "",
+        "## Token Summary",
+        "",
+        f"- Reported total: `{token_summary['total_reported_tokens']:,}`",
+        f"- Sol: `{token_summary['sol_reported_tokens']:,}`",
+        f"- Terra: `{token_summary['terra_reported_tokens']:,}`",
+        f"- Codex child calls: `{token_summary['codex_calls']}`",
+        f"- Deterministic acceptance calls saved: `{token_summary['deterministic_acceptance_calls_saved']}`",
+        "",
+        "## Errors",
+        "",
+    ]
     if not ctx.errors:
         lines.append("None.")
     else:
@@ -2173,6 +2685,8 @@ def main() -> int:
     resume_parser.add_argument(
         "--from-stage",
         choices=[
+            "diagnosis",
+            "diagnosis_escalated",
             "implementation",
             "review",
             "fix",
@@ -2285,10 +2799,7 @@ def main() -> int:
                 max_fix_cycles=args.max_fix_cycles,
             )
         result["branch"] = branch
-        result["model_policy"] = {
-            role: {"model": cfg.model, "reasoning_effort": cfg.reasoning_effort}
-            for role, cfg in policy.items()
-        }
+        result["model_policy"] = policy_summary(policy)
     except ChildInterruptedError as exc:
         mark_checkpoint_interrupted(
             args.report_dir,

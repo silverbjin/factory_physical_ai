@@ -1,28 +1,67 @@
 {
-  "schema_version": 1,
-  "implementation": {
-    "model": "gpt-5.6-terra",
-    "reasoning_effort": "medium",
-    "rationale": "balanced default for normal implementation"
+  "schema_version": 2,
+  "roles": {
+    "implementation": {
+      "model": "gpt-5.6-terra",
+      "reasoning_effort": "medium",
+      "rationale": "default executor for bounded implementation work"
+    },
+    "review": {
+      "model": "gpt-5.6-sol",
+      "reasoning_effort": "low",
+      "rationale": "cost-efficient independent gate for GREEN tasks; elevated by task class when needed"
+    },
+    "fix": {
+      "model": "gpt-5.6-terra",
+      "reasoning_effort": "medium",
+      "rationale": "targeted correction after findings narrow the scope"
+    },
+    "rereview": {
+      "model": "gpt-5.6-sol",
+      "reasoning_effort": "low",
+      "rationale": "cost-efficient narrow gate for GREEN tasks; elevated by task class when needed"
+    },
+    "diagnosis": {
+      "model": "gpt-5.6-sol",
+      "reasoning_effort": "medium",
+      "rationale": "read-only root-cause and contract resolution for RED or dynamically escalated tasks"
+    },
+    "diagnosis_escalated": {
+      "model": "gpt-5.6-sol",
+      "reasoning_effort": "high",
+      "rationale": "exception-only read-only escalation when medium diagnosis remains unresolved"
+    }
   },
-  "review": {
-    "model": "gpt-5.6-sol",
-    "reasoning_effort": "low",
-    "rationale": "independent quality gate; preserve stronger judgment"
+  "task_classes": {
+    "GREEN": {
+      "diagnosis_required": false,
+      "allow_high_escalation": false,
+      "review_reasoning_effort": "low",
+      "rereview_reasoning_effort": "low"
+    },
+    "YELLOW": {
+      "diagnosis_required": false,
+      "allow_high_escalation": false,
+      "review_reasoning_effort": "medium",
+      "rereview_reasoning_effort": "medium"
+    },
+    "RED": {
+      "diagnosis_required": true,
+      "allow_high_escalation": true,
+      "review_reasoning_effort": "medium",
+      "rereview_reasoning_effort": "medium"
+    }
   },
-  "fix": {
-    "model": "gpt-5.6-terra",
-    "reasoning_effort": "medium",
-    "rationale": "targeted correction after findings narrow the scope"
-  },
-  "rereview": {
-    "model": "gpt-5.6-sol",
-    "reasoning_effort": "low",
-    "rationale": "narrow but independent quality gate"
+  "classification": {
+    "green_max_score": 2,
+    "yellow_max_score": 6,
+    "explicit_override_keys": [
+      "task_class",
+      "orchestration_class"
+    ]
   },
   "acceptance": {
-    "model": "gpt-5.6-luna",
-    "reasoning_effort": "low",
-    "rationale": "structured post-ACCEPT provenance recording"
+    "mode": "deterministic",
+    "rationale": "acceptance is provenance recording after an independent ACCEPT, so no LLM reasoning is required"
   }
 }
