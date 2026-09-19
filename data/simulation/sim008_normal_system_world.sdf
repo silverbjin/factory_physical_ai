@@ -1,10 +1,32 @@
 <?xml version="1.0"?>
-<sdf version="1.9">
+<sdf version="1.6" xmlns:xacro="http://www.ros.org/wiki/xacro" xmlns:experimental="http://sdformat.org/schemas/experimental">
   <!-- TASK-SIM-008: task-owned semantic regions and Brake ECU proxy asset. -->
+  <xacro:arg name="headless" default="true"/>
   <world name="sim008_normal_system_world">
+    <scene><grid>false</grid></scene>
+    <physics name="1ms" type="ode">
+      <max_step_size>0.003</max_step_size>
+      <real_time_update_rate>1000.0</real_time_update_rate>
+      <real_time_factor>1.0</real_time_factor>
+    </physics>
     <plugin filename="gz-sim-physics-system" name="gz::sim::systems::Physics"/>
+    <plugin filename="gz-sim-user-commands-system" name="gz::sim::systems::UserCommands"/>
+    <xacro:unless value="$(arg headless)">
+      <plugin filename="gz-sim-scene-broadcaster-system" name="gz::sim::systems::SceneBroadcaster"/>
+    </xacro:unless>
+    <plugin filename="gz-sim-sensors-system" name="gz::sim::systems::Sensors"><render_engine>ogre2</render_engine></plugin>
+    <plugin filename="gz-sim-imu-system" name="gz::sim::systems::Imu"/>
+    <include>
+      <uri>https://fuel.gazebosim.org/1.0/OpenRobotics/models/Depot</uri>
+      <experimental:params>
+        <visual element_id="Fan1::visual" action="remove"/>
+        <visual element_id="Fan2::visual" action="remove"/>
+        <visual element_id="main::ROOF_visual" action="remove"/>
+        <visual element_id="main::FANS_visual" action="remove"/>
+      </experimental:params>
+    </include>
     <model name="brake_ecu_type_b_001"><static>true</static><pose>-6.5 0 0.2 0 0 0</pose>
-      <link name="body"><collision name="collision"><geometry><box><size>0.2 0.15 0.1</size></box></geometry></collision><visual name="visual"><geometry><box><size>0.2 0.15 0.1</size></box></geometry></visual></link>
+      <link name="body"><visual name="visual"><geometry><box><size>0.2 0.15 0.1</size></box></geometry></visual></link>
     </model>
   </world>
 </sdf>
