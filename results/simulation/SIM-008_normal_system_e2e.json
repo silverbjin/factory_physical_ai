@@ -30,7 +30,7 @@
     }
   },
   "execution": {
-    "duration_ms": 83400.181,
+    "duration_ms": 62178.386,
     "lifecycle": {
       "cleanup_complete": true,
       "startup_attempted": true
@@ -39,20 +39,20 @@
       "checkpoint_revision": 6,
       "component_version": "sim008-normal-system-e2e-v1",
       "message_type": "result",
-      "mission_id": "4ce48cb4-5083-4473-9583-a04f5fa8e534",
+      "mission_id": "289e48e4-079f-4a24-8af0-acc59488eeb2",
       "operation": "mission.execute",
       "outcome": "completed",
-      "request_id": "c677b254-418c-4003-956a-e0f433b2c2ae",
+      "request_id": "dd6d57e3-b32c-46aa-9f9a-4c9c73e03ac2",
       "result": "success",
       "schema_version": "1.0",
       "source_kind": "mock",
       "status": "completed",
-      "timestamp": "2026-09-18T06:37:59.450Z",
-      "trace_id": "d20f0899-e884-445f-84da-bc94815eb857"
+      "timestamp": "2026-09-18T08:08:20.657Z",
+      "trace_id": "b056f07b-06c1-4a90-9621-d08978a5236c"
     },
     "mission_request": {
       "component_version": "sim008-normal-system-e2e-v1",
-      "deadline_at": "2026-09-18T06:37:03.954Z",
+      "deadline_at": "2026-09-18T08:08:35.898Z",
       "goal": {
         "approval_context": {
           "approved": true,
@@ -69,38 +69,38 @@
       },
       "idempotency_key": "SIM_NORMAL_BRAKE_ECU_LINE_B:mission",
       "message_type": "request",
-      "mission_id": "4ce48cb4-5083-4473-9583-a04f5fa8e534",
+      "mission_id": "289e48e4-079f-4a24-8af0-acc59488eeb2",
       "operation": "mission.execute",
-      "request_id": "c677b254-418c-4003-956a-e0f433b2c2ae",
+      "request_id": "dd6d57e3-b32c-46aa-9f9a-4c9c73e03ac2",
       "schema_version": "1.0",
       "timeout_ms": 30000,
-      "timestamp": "2026-09-18T06:36:33.954Z",
-      "trace_id": "d20f0899-e884-445f-84da-bc94815eb857"
+      "timestamp": "2026-09-18T08:08:05.898Z",
+      "trace_id": "b056f07b-06c1-4a90-9621-d08978a5236c"
     },
     "steps": [
       {
         "name": "source_navigation",
         "request": {
-          "action_id": "8eaeef85-5c83-4994-adfb-862ab78a3151",
+          "action_id": "11041bae-f344-459f-83af-1a001bf42850",
           "attempt": 1,
           "component_version": "sim008-normal-system-e2e-v1",
-          "deadline_at": "2026-09-18T06:38:15.636Z",
+          "deadline_at": "2026-09-18T08:08:35.907Z",
           "destination_id": "warehouse-a",
-          "idempotency_key": "SIM_NORMAL_BRAKE_ECU_LINE_B:navigation.execute:8eaeef85-5c83-4994-adfb-862ab78a3151",
+          "idempotency_key": "SIM_NORMAL_BRAKE_ECU_LINE_B:navigation.execute:11041bae-f344-459f-83af-1a001bf42850",
           "message_type": "request",
-          "mission_id": "4ce48cb4-5083-4473-9583-a04f5fa8e534",
+          "mission_id": "289e48e4-079f-4a24-8af0-acc59488eeb2",
           "operation": "navigation.execute",
-          "request_id": "78a728e9-127c-4c06-98c9-685754805d0f",
+          "request_id": "400a2a6d-8edd-4469-b6e9-31167f8ae953",
           "retry_budget_remaining": 0,
           "robot_id": "amr-sim-001",
           "schema_version": "1.0",
           "speed_profile_id": "sim-safe-v1",
           "timeout_ms": 30000,
-          "timestamp": "2026-09-18T06:37:45.636Z",
-          "trace_id": "d20f0899-e884-445f-84da-bc94815eb857"
+          "timestamp": "2026-09-18T08:08:05.907Z",
+          "trace_id": "b056f07b-06c1-4a90-9621-d08978a5236c"
         },
         "result": {
-          "action_id": "8eaeef85-5c83-4994-adfb-862ab78a3151",
+          "action_id": "11041bae-f344-459f-83af-1a001bf42850",
           "arrival": {
             "destination_id": "warehouse-a",
             "verified": true
@@ -108,20 +108,20 @@
           "component_version": "sim004-navigation-backend-v2",
           "evidence_refs": [
             {
-              "sha256": "154e0445b8546a7f0bfeb64bbae11fadc73706c9c8653b7be40b31dcef895207",
-              "uri": "urn:factory-evidence:sim-004:8eaeef85-5c83-4994-adfb-862ab78a3151"
+              "sha256": "b2b120987dbb65544032895216fa4d65e84a66b8840f79a21729b964dfa29453",
+              "uri": "urn:factory-evidence:sim-004:11041bae-f344-459f-83af-1a001bf42850"
             }
           ],
           "message_type": "result",
-          "mission_id": "4ce48cb4-5083-4473-9583-a04f5fa8e534",
+          "mission_id": "289e48e4-079f-4a24-8af0-acc59488eeb2",
           "operation": "navigation.execute",
-          "request_id": "78a728e9-127c-4c06-98c9-685754805d0f",
+          "request_id": "400a2a6d-8edd-4469-b6e9-31167f8ae953",
           "result": "success",
           "schema_version": "1.0",
           "source_kind": "mock",
           "status": "succeeded",
-          "timestamp": "2026-09-18T06:37:49.567Z",
-          "trace_id": "d20f0899-e884-445f-84da-bc94815eb857"
+          "timestamp": "2026-09-18T08:08:10.695Z",
+          "trace_id": "b056f07b-06c1-4a90-9621-d08978a5236c"
         }
       },
       {
@@ -134,7 +134,7 @@
           "entity_id": "brake-ecu-type-b-001",
           "entity_name": "brake_ecu_type_b_001",
           "observation_source": "/world/sim008_normal_system_world/generate_world_sdf",
-          "observed_at": "2026-09-18T06:37:50.763Z",
+          "observed_at": "2026-09-18T08:08:11.559Z",
           "pose": {
             "x": -6.5,
             "y": 0.0,
@@ -146,32 +146,32 @@
             "part_id": "brake-ecu-b"
           },
           "simulation_time": {
-            "nsec": 605000000,
-            "sec": 37
+            "nsec": 479000000,
+            "sec": 28
           },
           "snapshot_sha256": "03d5890769f6d948fa2152e4188269a86230dbd1d6990c56e3b1c3ab56477713",
           "world_name": "sim008_normal_system_world"
         },
         "result": {
-          "action_id": "8eaeef85-5c83-4994-adfb-862ab78a3151",
+          "action_id": "11041bae-f344-459f-83af-1a001bf42850",
           "component_version": "sim006-verification-backend-v1",
           "confidence": 1.0,
           "evidence_refs": [
             {
               "sha256": "c8f30eab1652c164ecd6eb55f043e235451345e4dde35386f35f075382318153",
-              "uri": "urn:factory-evidence:sim-006:gazebo_system:sim008-gazebo-8eaeef85-5c83-4994-adfb-862ab78a3151"
+              "uri": "urn:factory-evidence:sim-006:gazebo_system:sim008-gazebo-11041bae-f344-459f-83af-1a001bf42850"
             }
           ],
           "message_type": "result",
-          "mission_id": "4ce48cb4-5083-4473-9583-a04f5fa8e534",
+          "mission_id": "289e48e4-079f-4a24-8af0-acc59488eeb2",
           "operation": "verification.verify",
-          "request_id": "cf09f1bf-140b-4b9f-9538-8ec08ab85031",
+          "request_id": "b3cc1cc8-12fd-48c0-9e72-ee3df7811ac1",
           "result": "success",
           "schema_version": "1.0",
           "source_kind": "mock",
           "status": "succeeded",
-          "timestamp": "2026-09-18T06:37:50.778Z",
-          "trace_id": "d20f0899-e884-445f-84da-bc94815eb857",
+          "timestamp": "2026-09-18T08:08:11.568Z",
+          "trace_id": "b056f07b-06c1-4a90-9621-d08978a5236c",
           "verdict": "pass",
           "verification_profile_version": "sim-exact-match-v1"
         }
@@ -179,26 +179,26 @@
       {
         "name": "destination_navigation",
         "request": {
-          "action_id": "3db59eb8-d6ed-4262-877f-c6397a3b1a69",
+          "action_id": "f0fdf8f4-cf33-4163-b7b4-b39d5c083817",
           "attempt": 1,
           "component_version": "sim008-normal-system-e2e-v1",
-          "deadline_at": "2026-09-18T06:38:20.784Z",
+          "deadline_at": "2026-09-18T08:08:41.576Z",
           "destination_id": "line-b-drop",
-          "idempotency_key": "SIM_NORMAL_BRAKE_ECU_LINE_B:navigation.execute:3db59eb8-d6ed-4262-877f-c6397a3b1a69",
+          "idempotency_key": "SIM_NORMAL_BRAKE_ECU_LINE_B:navigation.execute:f0fdf8f4-cf33-4163-b7b4-b39d5c083817",
           "message_type": "request",
-          "mission_id": "4ce48cb4-5083-4473-9583-a04f5fa8e534",
+          "mission_id": "289e48e4-079f-4a24-8af0-acc59488eeb2",
           "operation": "navigation.execute",
-          "request_id": "a96462f8-b3ef-4553-b4ab-0a51b0241f23",
+          "request_id": "d158df4e-872d-4016-aa96-657412aac587",
           "retry_budget_remaining": 0,
           "robot_id": "amr-sim-001",
           "schema_version": "1.0",
           "speed_profile_id": "sim-safe-v1",
           "timeout_ms": 30000,
-          "timestamp": "2026-09-18T06:37:50.784Z",
-          "trace_id": "d20f0899-e884-445f-84da-bc94815eb857"
+          "timestamp": "2026-09-18T08:08:11.576Z",
+          "trace_id": "b056f07b-06c1-4a90-9621-d08978a5236c"
         },
         "result": {
-          "action_id": "3db59eb8-d6ed-4262-877f-c6397a3b1a69",
+          "action_id": "f0fdf8f4-cf33-4163-b7b4-b39d5c083817",
           "arrival": {
             "destination_id": "line-b-drop",
             "verified": true
@@ -206,73 +206,73 @@
           "component_version": "sim004-navigation-backend-v2",
           "evidence_refs": [
             {
-              "sha256": "1523c4b60ec433409c00858a52430caf613c63e8f08fe149c668a219f8a06636",
-              "uri": "urn:factory-evidence:sim-004:3db59eb8-d6ed-4262-877f-c6397a3b1a69"
+              "sha256": "25c4496148225a12e1c6397083e0c727212fc393dedc96a1be0678ab793d3539",
+              "uri": "urn:factory-evidence:sim-004:f0fdf8f4-cf33-4163-b7b4-b39d5c083817"
             }
           ],
           "message_type": "result",
-          "mission_id": "4ce48cb4-5083-4473-9583-a04f5fa8e534",
+          "mission_id": "289e48e4-079f-4a24-8af0-acc59488eeb2",
           "operation": "navigation.execute",
-          "request_id": "a96462f8-b3ef-4553-b4ab-0a51b0241f23",
+          "request_id": "d158df4e-872d-4016-aa96-657412aac587",
           "result": "success",
           "schema_version": "1.0",
           "source_kind": "mock",
           "status": "succeeded",
-          "timestamp": "2026-09-18T06:37:56.068Z",
-          "trace_id": "d20f0899-e884-445f-84da-bc94815eb857"
+          "timestamp": "2026-09-18T08:08:18.260Z",
+          "trace_id": "b056f07b-06c1-4a90-9621-d08978a5236c"
         }
       },
       {
         "name": "vla.execute",
         "request": {
-          "action_id": "bad48a09-82c8-435b-a40e-a887d3c0d752",
+          "action_id": "c16115d9-0199-421e-94d7-7582a7f97ced",
           "attempt": 1,
           "component_version": "sim008-normal-system-e2e-v1",
-          "deadline_at": "2026-09-18T06:38:26.070Z",
-          "idempotency_key": "SIM_NORMAL_BRAKE_ECU_LINE_B:vla.execute:bad48a09-82c8-435b-a40e-a887d3c0d752",
+          "deadline_at": "2026-09-18T08:08:48.262Z",
+          "idempotency_key": "SIM_NORMAL_BRAKE_ECU_LINE_B:vla.execute:c16115d9-0199-421e-94d7-7582a7f97ced",
           "message_type": "request",
-          "mission_id": "4ce48cb4-5083-4473-9583-a04f5fa8e534",
+          "mission_id": "289e48e4-079f-4a24-8af0-acc59488eeb2",
           "observation_refs": [
             {
               "content_sha256": "c8f30eab1652c164ecd6eb55f043e235451345e4dde35386f35f075382318153",
-              "fixture_id": "sim008-gazebo-8eaeef85-5c83-4994-adfb-862ab78a3151",
+              "fixture_id": "sim008-gazebo-11041bae-f344-459f-83af-1a001bf42850",
               "fixture_set_id": "SIM_FIXTURE_SET_V1",
               "fixture_version": "1.0",
               "source_kind": "mock",
-              "timestamp": "2026-09-18T06:37:50.763Z"
+              "timestamp": "2026-09-18T08:08:11.559Z"
             }
           ],
           "operation": "vla.execute",
           "policy_version": "sim008-gazebo-surrogate-v1",
-          "request_id": "dd878507-565f-44ce-a7c5-e90f035d65fe",
+          "request_id": "2f1ce7e9-57fb-47e4-8c90-077fd5c4ccaa",
           "retry_budget_remaining": 0,
           "robot_id": "manipulator-sim-001",
           "schema_version": "1.0",
           "task_id": "place-brake-ecu",
           "timeout_ms": 30000,
-          "timestamp": "2026-09-18T06:37:56.070Z",
-          "trace_id": "d20f0899-e884-445f-84da-bc94815eb857",
+          "timestamp": "2026-09-18T08:08:18.262Z",
+          "trace_id": "b056f07b-06c1-4a90-9621-d08978a5236c",
           "workspace_profile_id": "sim008-workspace-v1"
         },
         "result": {
-          "action_id": "bad48a09-82c8-435b-a40e-a887d3c0d752",
+          "action_id": "c16115d9-0199-421e-94d7-7582a7f97ced",
           "component_version": "sim008-normal-system-e2e-v1",
           "latency_ms": 1,
           "message_type": "result",
-          "mission_id": "4ce48cb4-5083-4473-9583-a04f5fa8e534",
+          "mission_id": "289e48e4-079f-4a24-8af0-acc59488eeb2",
           "operation": "vla.execute",
-          "request_id": "dd878507-565f-44ce-a7c5-e90f035d65fe",
+          "request_id": "2f1ce7e9-57fb-47e4-8c90-077fd5c4ccaa",
           "result": "success",
           "schema_version": "1.0",
           "skill_outcome": "succeeded",
           "source_kind": "mock",
           "status": "succeeded",
-          "timestamp": "2026-09-18T06:37:57.869Z",
-          "trace_id": "d20f0899-e884-445f-84da-bc94815eb857",
+          "timestamp": "2026-09-18T08:08:19.711Z",
+          "trace_id": "b056f07b-06c1-4a90-9621-d08978a5236c",
           "verifier_input_refs": [
             {
-              "sha256": "68f2b06660b9eda2b4109cec0d46f9f3447ff00badb66f4f3d87dc37f9843582",
-              "uri": "urn:factory-evidence:sim008:bad48a09-82c8-435b-a40e-a887d3c0d752"
+              "sha256": "efb931007cdd273fae643b3bbe82bb948bbfd0ed0bf0cad7c95f003f07f7d10e",
+              "uri": "urn:factory-evidence:sim008:c16115d9-0199-421e-94d7-7582a7f97ced"
             }
           ]
         }
@@ -287,7 +287,7 @@
           "entity_id": "brake-ecu-type-b-001",
           "entity_name": "brake_ecu_type_b_001",
           "observation_source": "/world/sim008_normal_system_world/generate_world_sdf",
-          "observed_at": "2026-09-18T06:37:59.419Z",
+          "observed_at": "2026-09-18T08:08:20.638Z",
           "pose": {
             "x": -6.0,
             "y": 0.0,
@@ -299,32 +299,32 @@
             "part_id": "brake-ecu-b"
           },
           "simulation_time": {
-            "nsec": 105000000,
-            "sec": 42
+            "nsec": 103000000,
+            "sec": 35
           },
-          "snapshot_sha256": "328835dbab6b931deded10d00600634a0c95ed6150c66785d129c57a33951a4b",
+          "snapshot_sha256": "881b92d72950a61c86ab589d359df14d21aa02cd6c83260df5ac085a93a062ab",
           "world_name": "sim008_normal_system_world"
         },
         "result": {
-          "action_id": "bad48a09-82c8-435b-a40e-a887d3c0d752",
+          "action_id": "c16115d9-0199-421e-94d7-7582a7f97ced",
           "component_version": "sim006-verification-backend-v1",
           "confidence": 1.0,
           "evidence_refs": [
             {
               "sha256": "e55cc90c72ac74a4b7717606b2d07f0a666401e7fa5be7c768ca38481a9e0f26",
-              "uri": "urn:factory-evidence:sim-006:gazebo_system:sim008-gazebo-bad48a09-82c8-435b-a40e-a887d3c0d752"
+              "uri": "urn:factory-evidence:sim-006:gazebo_system:sim008-gazebo-c16115d9-0199-421e-94d7-7582a7f97ced"
             }
           ],
           "message_type": "result",
-          "mission_id": "4ce48cb4-5083-4473-9583-a04f5fa8e534",
+          "mission_id": "289e48e4-079f-4a24-8af0-acc59488eeb2",
           "operation": "verification.verify",
-          "request_id": "57d47315-2e97-4bf5-b23b-b0dcbae0984d",
+          "request_id": "1c7a008b-7824-4f9a-973a-68e794afc9db",
           "result": "success",
           "schema_version": "1.0",
           "source_kind": "mock",
           "status": "succeeded",
-          "timestamp": "2026-09-18T06:37:59.443Z",
-          "trace_id": "d20f0899-e884-445f-84da-bc94815eb857",
+          "timestamp": "2026-09-18T08:08:20.650Z",
+          "trace_id": "b056f07b-06c1-4a90-9621-d08978a5236c",
           "verdict": "pass",
           "verification_profile_version": "sim-exact-match-v1"
         }
@@ -345,7 +345,7 @@
       }
     ]
   },
-  "generated_at": "2026-09-18T06:37:59.553Z",
+  "generated_at": "2026-09-18T08:08:20.760Z",
   "mujoco_component_evidence": {
     "acceptance": {
       "acceptance": {
@@ -403,7 +403,7 @@
     "world_sha256": "fff98b8a19feb8874a65c9dd66f029145ff0be46990dcfd668376df2b30b8ee1"
   },
   "schema_version": "1.0",
-  "source_git_sha": "eb84d32643a41d34b0e6a2855d08dc5a2ff4f1bc",
+  "source_git_sha": "a7702ea07150ead743d1402793f5c4a446668166",
   "system_profile": {
     "dual_world": false,
     "integrated_world": "gazebo_harmonic",
