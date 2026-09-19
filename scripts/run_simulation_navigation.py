@@ -37,6 +37,7 @@ LOCALIZATION_SECONDS = 30
 CANONICAL_START = {"frame_id": "map", "x": -6.5, "y": 0.0, "yaw": 0.0,
                    "source": "depot.yaml free cell at (-6.5, 0.0), verified against map origin/resolution"}
 GOALS = {
+    "warehouse-a": "{pose: {header: {frame_id: map}, pose: {position: {x: -6.5, y: 0.0, z: 0.0}, orientation: {w: 1.0}}}}",
     "line-b-drop": "{pose: {header: {frame_id: map}, pose: {position: {x: -6.0, y: 0.0, z: 0.0}, orientation: {w: 1.0}}}}",
     "blocked-bay": "{pose: {header: {frame_id: map}, pose: {position: {x: 100.0, y: 100.0, z: 0.0}, orientation: {w: 1.0}}}}",
 }

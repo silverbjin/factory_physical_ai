@@ -1,0 +1,14 @@
+{
+  "scenario_id": "SIM_NORMAL_BRAKE_ECU_LINE_B",
+  "scenario_version": "1.0",
+  "profile": "system",
+  "world": "data/simulation/sim008_normal_system_world.sdf",
+  "model": "factory_parts_supply_proxy_v1",
+  "object": {"id": "brake-ecu-type-b-001", "part_id": "brake-ecu-b"},
+  "regions": {
+    "source": {"id": "warehouse-a", "x": -6.5, "y": 0.0, "z": 0.2},
+    "destination": {"id": "line-b-drop", "x": -6.0, "y": 0.0, "z": 0.2}
+  },
+  "initial_state": {"part_id": "brake-ecu-b", "location_id": "warehouse-a"},
+  "process_bounds_ms": {"startup": 20000, "execution": 20000, "cleanup": 5000}
+}

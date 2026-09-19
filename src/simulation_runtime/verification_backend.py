@@ -16,11 +16,12 @@ from .smoke import ContractViolation, canonical_sha256, validate_contract_messag
 
 COMPONENT_VERSION = "sim006-verification-backend-v1"
 VALIDITY_WINDOW = timedelta(minutes=5)
-_SOURCES = frozenset({"deterministic", "gazebo", "mujoco"})
+_SOURCES = frozenset({"deterministic", "gazebo", "gazebo_system", "mujoco"})
 _PAYLOAD_FIELDS = frozenset({"quality", "part_id", "location_id"})
 _ACCEPTED_PROVENANCE = {
     "deterministic": {"backend_id": "sim006-deterministic-adapter-v1", "accepted_task_id": "TASK-SIM-006", "accepted_commit": "local-fixture", "evidence_path": "deterministic-fixture", "evidence_sha256": "local-fixture"},
     "gazebo": {"backend_id": "sim004-gazebo-navigation-backend-v2", "accepted_task_id": "TASK-SIM-004", "accepted_commit": "b7e8266abd17f48c18cca94d9433db50fd55464d", "evidence_path": "results/simulation/SIM-004_navigation_backend.json", "evidence_sha256": "b4c0ce91dde6c2f92c57ea6a227149362279993dee0dec4fd1ab12877e73f1d9"},
+    "gazebo_system": {"backend_id": "sim008-gazebo-system-observation-adapter-v1", "accepted_task_id": "TASK-SIM-008", "accepted_commit": "task-owned-runtime", "evidence_path": "results/simulation/SIM-008_normal_system_e2e.json", "evidence_sha256": "task-owned-runtime"},
     "mujoco": {"backend_id": "sim005-mujoco-vla-backend-v1", "accepted_task_id": "TASK-SIM-005", "accepted_commit": "542514a4d10bc03087834e8a5f672d53afe6aa21", "evidence_path": "results/simulation/SIM-005_mujoco_vla_backend.json", "evidence_sha256": "f4d41fdb1f13978e1b1e5c91b95e31b38a69825a0d432a8284ff7731a3beb84f"},
 }
 _ROOT = Path(__file__).resolve().parents[2]
@@ -134,6 +135,22 @@ def _normalized_material_from_record(source: str, trusted: Mapping[str, Any]) ->
 
 def _validate_simulator_record_binding(observation: NormalizedObservation) -> None:
     """Verify record hash, source identity, payload, and reference as one binding."""
+    if observation.source == "gazebo_system":
+        encoded = observation.provenance.get("runtime_record")
+        try:
+            record = json.loads(encoded) if isinstance(encoded, str) else None
+        except json.JSONDecodeError:
+            record = None
+        if not isinstance(record, Mapping):
+            raise ContractViolation("Gazebo system runtime record is missing")
+        identity = record.get("observation_identity")
+        if (record.get("integrated_world") != "gazebo_harmonic" or
+                record.get("mujoco_live_world") is not False or
+                not isinstance(identity, Mapping) or
+                dict(identity) != dict(observation.source_identity) or
+                dict(record.get("observation", {})) != dict(observation.payload)):
+            raise ContractViolation("Gazebo system runtime record is malformed")
+        return
     record_sha256 = observation.provenance.get("record_sha256")
     if not isinstance(record_sha256, str):
         raise ContractViolation("upstream record hash is missing")
@@ -199,6 +216,14 @@ def _normalized(
         if trusted_record is not None:
             raise ValueError("deterministic observations cannot carry simulator provenance")
         source_identity = reference
+    elif source == "gazebo_system":
+        if not isinstance(trusted_record, Mapping):
+            raise ValueError("Gazebo system observations require a runtime record")
+        identity = trusted_record.get("observation_identity")
+        if not isinstance(identity, Mapping):
+            raise ValueError("Gazebo system observation identity is malformed")
+        provenance["runtime_record"] = json.dumps(dict(trusted_record), sort_keys=True, separators=(",", ":"))
+        source_identity = identity
     else:
         if trusted_record is None:
             raise ValueError("simulator observations require a trusted accepted record")
@@ -228,6 +253,25 @@ def normalize_gazebo_observation(navigation_result: Mapping[str, Any]) -> Normal
     # therefore cannot establish the complete expected state for a pass.
     trusted_record = _match_accepted_record("gazebo", navigation_result)
     return _normalized("gazebo", {"quality": "insufficient"}, fixture_id=f"gazebo-navigation-{action_id}", fixture_version="sim004-navigation-backend-v2", timestamp=timestamp, trusted_record=trusted_record)
+
+
+def normalize_gazebo_system_observation(record: Mapping[str, Any]) -> NormalizedObservation:
+    """Adapt one task-owned Gazebo system-world observation for SIM-008.
+
+    The adapter deliberately accepts a tiny, immutable semantic record rather
+    than Gazebo transport messages or hidden simulator state.  It is not a
+    MuJoCo adapter and cannot make a dual-world claim.
+    """
+    observation = record.get("observation")
+    identity = record.get("observation_identity")
+    if not isinstance(observation, Mapping) or not isinstance(identity, Mapping):
+        raise ValueError("Gazebo system observation record is malformed")
+    required = {"fixture_set_id", "fixture_id", "fixture_version", "content_sha256", "timestamp", "source_kind"}
+    if set(identity) != required or identity.get("source_kind") != "mock":
+        raise ValueError("Gazebo system observation identity is malformed")
+    if identity.get("content_sha256") != canonical_sha256(dict(observation)):
+        raise ValueError("Gazebo system observation hash mismatch")
+    return _normalized("gazebo_system", observation, fixture_id=str(identity["fixture_id"]), fixture_version=str(identity["fixture_version"]), timestamp=str(identity["timestamp"]), trusted_record=record)
 
 
 def normalize_mujoco_observation(scenario: Mapping[str, Any]) -> NormalizedObservation:
@@ -280,6 +324,7 @@ class VerificationBackend:
                 raise ContractViolation("unaccepted backend provenance")
             provenance = dict(observation.provenance)
             record_sha256 = provenance.pop("record_sha256", None)
+            runtime_record = provenance.pop("runtime_record", None)
             if provenance != {"source": observation.source, **_ACCEPTED_PROVENANCE[observation.source]}:
                 raise ContractViolation("unaccepted backend provenance")
             if canonical_sha256(dict(observation.payload)) != observation.reference["content_sha256"]:
@@ -290,8 +335,10 @@ class VerificationBackend:
                 if dict(observation.reference) != dict(observation.source_identity):
                     raise ContractViolation("normalized reference does not preserve source identity")
             else:
-                if not isinstance(record_sha256, str):
+                if observation.source != "gazebo_system" and not isinstance(record_sha256, str):
                     raise ContractViolation("upstream record hash is missing")
+                if observation.source == "gazebo_system" and not isinstance(runtime_record, str):
+                    raise ContractViolation("Gazebo system runtime record is missing")
                 _validate_simulator_record_binding(observation)
             age = request_time - _timestamp(observation.reference["timestamp"])
             if age < timedelta(0) or age > VALIDITY_WINDOW:
