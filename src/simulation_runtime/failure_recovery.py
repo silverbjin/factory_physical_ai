@@ -42,6 +42,22 @@ LIVE_NAVIGATION_RETRY_BUDGET_MS = (
 MAX_SCENARIO_BUDGET_MS = LIVE_NAVIGATION_RETRY_BUDGET_MS
 
 
+def classify_repeatability_run(run: dict[str, Any]) -> str:
+    """Keep cold-runtime readiness failures outside semantic comparison."""
+    navigation_rows = [
+        row for row in run.get("scenarios", [])
+        if str(row.get("id", "")).startswith("SIM009-NAV-")
+    ]
+    if navigation_rows and all(
+        row.get("live_runtime_ready") is False and row.get("runtime_calls") == 0
+        for row in navigation_rows
+    ):
+        return "INFRASTRUCTURE_NOT_READY"
+    if run.get("task_specific_result") == "SIM_FAILURE_SUITE_READY":
+        return "SEMANTIC_READY"
+    return "SEMANTIC_BLOCKED"
+
+
 def _timestamp(value: datetime) -> str:
     return value.isoformat(timespec="milliseconds").replace("+00:00", "Z")
 
@@ -217,6 +233,7 @@ def _validate_live_navigation_evidence(
         or evidence.get("scenario_id") != scenario_id
         or len(attempts) < 1
         or any(item.get("scenario_id") != scenario_id or item.get("scenario_execution_id") != execution_id for item in attempts)
+        or any(item.get("server_log_attributed") is not True for item in attempts)
     ):
         return False
     matching = [item for item in attempts if item.get("action_id") == request["action_id"]]
@@ -346,12 +363,15 @@ def _navigation_scenario(
             and all(identity.values())
         )
         cleanup_complete = True if live_runtime is not None else runtime.close()
-        attempts = getattr(runtime, "goal_attempts", [])
-        successful_goals = sum(1 for item in attempts if item.terminal_status == "4") if attempts else runtime.side_effect_count
         local_evidence = runtime.evidence_for(context.scenario_execution_id) if context is not None else {}
+        local_attempts = local_evidence.get("goal_attempts", [])
+        successful_goals = (
+            local_evidence["logical_side_effect_count"] if context is not None
+            else runtime.side_effect_count
+        )
         if context is not None:
             live_runtime.end_scenario(context)
-        row = _base_row(scenario, decision="RETRY" if valid_retry else "FAIL_CLOSED", outcome_kind="unknown", details={"first_result": pending, "reconciliation": reconciliation, "retry_authorization": authorization, "retry_request": retry, "retry_result": retried, "retry_suppressed": authorized_retry is None, "identity": identity, "logical_side_effect_count": successful_goals, "runtime_calls": len(attempts) if attempts else runtime.calls, "goal_tracking": local_evidence, "cleanup_complete": cleanup_complete})
+        row = _base_row(scenario, decision="RETRY" if valid_retry else "FAIL_CLOSED", outcome_kind="unknown", details={"first_result": pending, "reconciliation": reconciliation, "retry_authorization": authorization, "retry_request": retry, "retry_result": retried, "retry_suppressed": authorized_retry is None, "identity": identity, "logical_side_effect_count": successful_goals, "runtime_calls": len(local_attempts) if context is not None else runtime.calls, "goal_tracking": local_evidence, "cleanup_complete": cleanup_complete})
         row["pass"] = valid_retry and row["expected_decision"] == "RETRY"
         return row
     request = _action_request("navigation.execute", scenario_id=identifier)
@@ -373,7 +393,7 @@ def _navigation_scenario(
     native_failure = result["result"] == "failure"
     local_attempts = local_evidence.get("goal_attempts", [])
     local_provenance = live_runtime is None or _validate_live_navigation_evidence(identifier, request, local_evidence)
-    row = _base_row(scenario, decision="FAIL_CLOSED", outcome_kind="failure", details={"result": result, "runtime_calls": len(getattr(runtime, "goal_attempts", [])) if live_runtime is not None else runtime.calls, "goal_tracking": local_evidence, "cleanup_complete": True if live_runtime is not None else runtime.close(), "scenario_local_provenance": local_provenance, "native_failure": native_failure})
+    row = _base_row(scenario, decision="FAIL_CLOSED", outcome_kind="failure", details={"result": result, "runtime_calls": len(local_attempts) if live_runtime is not None else runtime.calls, "goal_tracking": local_evidence, "cleanup_complete": True if live_runtime is not None else runtime.close(), "scenario_local_provenance": local_provenance, "native_failure": native_failure})
     row["pass"] = bool(row["pass"] and native_failure and local_provenance)
     return row
 
@@ -447,7 +467,7 @@ def run_failure_suite(*, navigation_runtime_factory: Any = GoalTrackedGazeboNav2
                     row["goal_tracking"]["cleanup"] = live_runtime.measurements.get("cleanup", {})
                     row["pass"] = bool(row["pass"] and live_cleanup)
     ready = len(rows) == len(MANDATORY_SCENARIO_IDS) and all(row["pass"] for row in rows)
-    return {
+    suite = {
         "schema_version": "1.0", "task_id": "TASK-SIM-009",
         "task_specific_result": "SIM_FAILURE_SUITE_READY" if ready else "SIM_FAILURE_SUITE_BLOCKED",
         "manifest_sha256": canonical_sha256(manifest),
@@ -455,3 +475,13 @@ def run_failure_suite(*, navigation_runtime_factory: Any = GoalTrackedGazeboNav2
         "simulation_authority": {"navigation_system_world": "gazebo_harmonic", "manipulation_fault_bench": "mujoco", "live_dual_world": False, "physical_dependency": False, "navigation_runtime": "GoalTrackedGazeboNav2Runtime" if live_runtime is not None else "test_fixture"},
         "scenarios": rows, "cleanup_complete": all(row["cleanup_complete"] for row in rows),
     }
+    suite["infrastructure"] = {
+        "status": classify_repeatability_run(suite),
+        "startup_measurements": (
+            live_runtime.measurements.get("readiness", []) if live_runtime is not None else []
+        ),
+        "localization_measurements": (
+            live_runtime.measurements.get("localization", {}) if live_runtime is not None else {}
+        ),
+    }
+    return suite

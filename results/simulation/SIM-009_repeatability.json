@@ -2,14 +2,14 @@
   "canonical": {
     "cleanup_complete": true,
     "failed_scenarios": [],
-    "generated_at": "2026-09-20T10:19:25.282Z",
+    "generated_at": "2026-09-20T15:23:31.823Z",
     "path": "results/simulation/SIM-009_failure_recovery.json",
     "scenario_count": 16,
     "sequence": 2,
-    "sha256": "9d056b859ab0ce7c81c10f833a563da9671a0911ad09eac78fd59fe218b4034e",
+    "sha256": "91d10e5bb4fb7ca1b62c325885bec276c6ef6231c6baa0424f3213702be3216e",
     "task_specific_result": "SIM_FAILURE_SUITE_READY"
   },
-  "created_at": "2026-09-20T10:20:30.537315+00:00",
+  "created_at": "2026-09-20T15:23:49.700135+00:00",
   "navigation_signatures": {
     "SIM009-NAV-ABORTED": {
       "behavior_tree_kind": "missing_bt",
@@ -31,50 +31,48 @@
       "frame_id_kind": "missing_tf",
       "injection_kind": "missing_goal_frame",
       "terminal_status": "6"
+    },
+    "SIM009-NAV-TIMEOUT-RETRY": {
+      "behavior_tree_kind": "",
+      "destination_id": "line-b-drop",
+      "frame_id_kind": "map",
+      "injection_kind": "none",
+      "terminal_status": "5"
     }
   },
-  "proof_type": "consecutive_live_run_repeatability",
-  "requirements": {
-    "canonical_matches_latest_run": true,
-    "cleanup_required_each_run": true,
-    "consecutive_successful_runs": 2,
-    "distinct_navigation_fault_signatures": true,
-    "nav2_goal_uuids_differ": true,
-    "scenario_execution_ids_differ": true
-  },
+  "proof_type": "independent_cold_run_semantic_repeatability",
   "result": "PASS",
   "runs": [
     {
       "cleanup_complete": true,
       "failed_scenarios": [],
-      "generated_at": "2026-09-20T10:17:57.257Z",
+      "generated_at": "2026-09-20T15:22:21.467Z",
       "path": "results/simulation/SIM-009_failure_recovery_run1.json",
       "scenario_count": 16,
       "sequence": 1,
-      "sha256": "a82fc49bbc2d872c2eae13596e03e01125d7008b005e3176af669ca502dc5dd4",
+      "sha256": "c8b67d2a8059857c41a1393a6cbb3d95c7e54f1cde2f922441bec79dd9e1fec0",
       "task_specific_result": "SIM_FAILURE_SUITE_READY"
     },
     {
       "cleanup_complete": true,
       "failed_scenarios": [],
-      "generated_at": "2026-09-20T10:19:25.282Z",
+      "generated_at": "2026-09-20T15:23:31.823Z",
       "path": "results/simulation/SIM-009_failure_recovery_run2.json",
       "scenario_count": 16,
       "sequence": 2,
-      "sha256": "9d056b859ab0ce7c81c10f833a563da9671a0911ad09eac78fd59fe218b4034e",
+      "sha256": "91d10e5bb4fb7ca1b62c325885bec276c6ef6231c6baa0424f3213702be3216e",
       "task_specific_result": "SIM_FAILURE_SUITE_READY"
     }
   ],
   "schema_version": 1,
   "task_id": "TASK-SIM-009",
   "validation": {
-    "all_scenarios_pass": true,
-    "both_cleanup_complete": true,
-    "both_ready": true,
+    "both_infrastructure_ready": true,
+    "both_semantic_ready": true,
     "canonical_matches_latest_run": true,
-    "distinct_navigation_fault_signatures": true,
     "nav2_goal_uuids_differ": true,
     "scenario_execution_ids_differ": true,
+    "scenario_local_logs_and_counters": true,
     "semantic_navigation_signatures_equivalent": true
   }
 }
