@@ -1,0 +1,678 @@
+{
+  "cleanup_complete": true,
+  "generated_at": "2026-09-19T08:48:47.525Z",
+  "manifest_sha256": "2de824ead76f9ee76a243d8abd84ede4a8b9497a0f492cc11850870c680ca6bb",
+  "scenarios": [
+    {
+      "backend": "contract",
+      "cleanup_complete": true,
+      "decision": "FAIL_CLOSED",
+      "duration_ms": 3.303,
+      "expected_decision": "FAIL_CLOSED",
+      "id": "SIM009-L0-MALFORMED",
+      "injection": "timeout_ms=0 malformed request",
+      "layer": "L0",
+      "outcome_kind": "malformed",
+      "pass": true,
+      "result": {
+        "action_id": "1e63ca73-c029-4153-be79-b32e275369ec",
+        "component_version": "sim004-navigation-backend-v2",
+        "error": {
+          "category": "VALIDATION",
+          "code": "INVALID_NAVIGATION_REQUEST",
+          "message": "{'operation': 'navigation.execute', 'message_type': 'request', 'schema_version': '1.0', 'mission_id': 'd6537c7f-2ce2-467f-a692-ef6d118074ac', 'request_id': '6c979158-bbcf-41ba-8c2a-edaf1b57a38c', 'trace_id': 'bc7ef98a-4195-4416-9b54-9967d2241a99', 'timestamp': '2026-09-19T08:48:47.473Z', 'deadline_at': '2026-09-19T08:48:49.473Z', 'timeout_ms': 0, 'component_version': 'sim009-failure-suite-v1', 'action_id': '1e63ca73-c029-4153-be79-b32e275369ec', 'idempotency_key': 'sim009-navigation', 'attempt': 1, 'retry_budget_remaining': 1, 'robot_id': 'simulation-proxy-mobile-base', 'destination_id': 'blocked-bay', 'speed_profile_id': 'sim-safe-v1'} is not valid under any of the given schemas",
+          "retryable": false
+        },
+        "evidence_refs": [
+          {
+            "sha256": "3295735ce6621a0b1db36c9c7d43d201d4dbdf1149064523f90f1f919b5c4f0a",
+            "uri": "urn:factory-evidence:sim-004:1e63ca73-c029-4153-be79-b32e275369ec"
+          }
+        ],
+        "message_type": "result",
+        "mission_id": "d6537c7f-2ce2-467f-a692-ef6d118074ac",
+        "operation": "navigation.execute",
+        "request_id": "6c979158-bbcf-41ba-8c2a-edaf1b57a38c",
+        "result": "failure",
+        "schema_version": "1.0",
+        "source_kind": "mock",
+        "status": "failed",
+        "timestamp": "2026-09-19T08:48:47.476Z",
+        "trace_id": "bc7ef98a-4195-4416-9b54-9967d2241a99"
+      },
+      "within_budget": true
+    },
+    {
+      "backend": "navigation",
+      "cleanup_complete": true,
+      "decision": "FAIL_CLOSED",
+      "duration_ms": 1.293,
+      "expected_decision": "FAIL_CLOSED",
+      "id": "SIM009-L0-UNAVAILABLE",
+      "injection": "runtime unavailable",
+      "layer": "L0",
+      "outcome_kind": "unavailable",
+      "pass": true,
+      "result": {
+        "action_id": "ac252d50-8690-4da9-b66b-d12dfa6fc3ae",
+        "component_version": "sim004-navigation-backend-v2",
+        "error": {
+          "category": "RESOURCE_UNAVAILABLE",
+          "code": "NAVIGATION_UNAVAILABLE",
+          "message": "Nav2 lifecycle is not ready",
+          "retryable": false
+        },
+        "evidence_refs": [
+          {
+            "sha256": "7bf4bd97b8bc54b2944c089fd6e46be7930d6740f331a2bb3707cc4bf69cb6a9",
+            "uri": "urn:factory-evidence:sim-004:ac252d50-8690-4da9-b66b-d12dfa6fc3ae"
+          }
+        ],
+        "message_type": "result",
+        "mission_id": "d335cf3b-795b-4bbd-9a53-b1f4c1b752e1",
+        "operation": "navigation.execute",
+        "request_id": "2cb3d61d-dfb0-4915-b5e6-9c1052f9d8d5",
+        "result": "failure",
+        "schema_version": "1.0",
+        "source_kind": "mock",
+        "status": "failed",
+        "timestamp": "2026-09-19T08:48:47.478Z",
+        "trace_id": "d1a9e68c-281f-4a89-acf5-011db67f9b15"
+      },
+      "within_budget": true
+    },
+    {
+      "backend": "contract",
+      "cleanup_complete": true,
+      "decision": "FAIL_CLOSED",
+      "duration_ms": 2.454,
+      "expected_decision": "FAIL_CLOSED",
+      "id": "SIM009-L0-CONTRADICTORY",
+      "injection": "success result with failed status",
+      "layer": "L0",
+      "outcome_kind": "contradictory",
+      "pass": true,
+      "validation_error": "{'operation': 'navigation.execute', 'message_type': 'result', 'schema_version': '1.0', 'mission_id': 'f3c498e1-e3bc-4f47-9641-ed28a852150a', 'request_id': '7d46f2b7-4323-4ab6-9fb3-b749878ec5e9', 'trace_id': 'a257f860-0e90-4c41-a40f-965d9f4fb9b0', 'action_id': 'd6f3697e-d91e-40bd-a8b8-89848c2c7374', 'timestamp': '2026-09-19T08:48:47.478Z', 'component_version': 'sim009', 'source_kind': 'mock', 'status': 'failed', 'result': 'success'} is not valid under any of the given schemas",
+      "within_budget": true
+    },
+    {
+      "backend": "gazebo_navigation",
+      "cleanup_complete": true,
+      "decision": "FAIL_CLOSED",
+      "duration_ms": 1.869,
+      "expected_decision": "FAIL_CLOSED",
+      "id": "SIM009-NAV-BLOCKED",
+      "injection": "blocked path",
+      "layer": "L1-NAV",
+      "outcome_kind": "failure",
+      "pass": true,
+      "result": {
+        "action_id": "cf20bc89-d82c-42f2-998a-d6a3f192df65",
+        "component_version": "sim004-navigation-backend-v2",
+        "error": {
+          "category": "EXECUTION_FAILED",
+          "code": "PATH_BLOCKED",
+          "message": "injected navigation failure",
+          "retryable": false
+        },
+        "evidence_refs": [
+          {
+            "sha256": "39c7b215a05f1078037fe893d23134495f3bc4559457833210e1f8080b5c12dc",
+            "uri": "urn:factory-evidence:sim-004:cf20bc89-d82c-42f2-998a-d6a3f192df65"
+          }
+        ],
+        "message_type": "result",
+        "mission_id": "b0a4fccf-5801-4b57-996a-29b88b9ad74c",
+        "operation": "navigation.execute",
+        "request_id": "1621215d-e650-4552-900c-c1b32653754f",
+        "result": "failure",
+        "schema_version": "1.0",
+        "source_kind": "mock",
+        "status": "failed",
+        "timestamp": "2026-09-19T08:48:47.481Z",
+        "trace_id": "d8fd184a-578d-456d-b4fa-333c63896d87"
+      },
+      "within_budget": true
+    },
+    {
+      "backend": "gazebo_navigation",
+      "cleanup_complete": true,
+      "decision": "FAIL_CLOSED",
+      "duration_ms": 1.38,
+      "expected_decision": "FAIL_CLOSED",
+      "id": "SIM009-NAV-ABORTED",
+      "injection": "navigation abort",
+      "layer": "L1-NAV",
+      "outcome_kind": "failure",
+      "pass": true,
+      "result": {
+        "action_id": "06c34a10-3a6a-40ab-8ad5-73765e71c712",
+        "component_version": "sim004-navigation-backend-v2",
+        "error": {
+          "category": "EXECUTION_FAILED",
+          "code": "NAV_ABORTED",
+          "message": "injected navigation failure",
+          "retryable": false
+        },
+        "evidence_refs": [
+          {
+            "sha256": "59fd525d709d0812a9723077345cd701b08cd7d1e5b8f4a2c9af44a767a62665",
+            "uri": "urn:factory-evidence:sim-004:06c34a10-3a6a-40ab-8ad5-73765e71c712"
+          }
+        ],
+        "message_type": "result",
+        "mission_id": "86e28926-6c3f-4f28-926d-4024159439e6",
+        "operation": "navigation.execute",
+        "request_id": "f446da16-c596-4182-a5f9-0c89e04e5b33",
+        "result": "failure",
+        "schema_version": "1.0",
+        "source_kind": "mock",
+        "status": "failed",
+        "timestamp": "2026-09-19T08:48:47.483Z",
+        "trace_id": "c3410b06-12b9-4acb-8cf3-f8fc8410404e"
+      },
+      "within_budget": true
+    },
+    {
+      "backend": "gazebo_navigation",
+      "cleanup_complete": true,
+      "decision": "RETRY",
+      "duration_ms": 4.352,
+      "expected_decision": "RETRY",
+      "first_result": {
+        "action_id": "a4b1c89d-dc30-449c-8c79-a9136a6cfee1",
+        "component_version": "sim004-navigation-backend-v2",
+        "error": {
+          "category": "DEPENDENCY_TIMEOUT",
+          "code": "NAV_TIMEOUT",
+          "message": "bounded timeout",
+          "retryable": true
+        },
+        "evidence_refs": [
+          {
+            "sha256": "d08c6b32b3a6f1f4860816b7da20e67e3fa22af9f5394533ce9bca02915b247f",
+            "uri": "urn:factory-evidence:sim-004:a4b1c89d-dc30-449c-8c79-a9136a6cfee1"
+          }
+        ],
+        "message_type": "result",
+        "mission_id": "51149d53-d906-4883-8ced-214af03b864c",
+        "operation": "navigation.execute",
+        "request_id": "e4d91a61-9928-4e54-83d0-a170fb42d833",
+        "result": "pending",
+        "schema_version": "1.0",
+        "source_kind": "mock",
+        "status": "unknown",
+        "timestamp": "2026-09-19T08:48:47.484Z",
+        "trace_id": "56b0d4e6-2c1e-4fc6-a1de-b01654f147f7"
+      },
+      "id": "SIM009-NAV-TIMEOUT-RETRY",
+      "identity": {
+        "action_id_stable": true,
+        "attempt_incremented": true,
+        "idempotency_key_stable": true,
+        "mission_id_stable": true,
+        "retry_request_id_new": true
+      },
+      "injection": "bounded timeout then authoritative retryable failure",
+      "layer": "L1-NAV",
+      "logical_side_effect_count": 1,
+      "outcome_kind": "unknown",
+      "pass": true,
+      "reconciliation": {
+        "action_id": "a4b1c89d-dc30-449c-8c79-a9136a6cfee1",
+        "component_version": "sim004-navigation-backend-v2",
+        "evidence_refs": [
+          {
+            "sha256": "d08c6b32b3a6f1f4860816b7da20e67e3fa22af9f5394533ce9bca02915b247f",
+            "uri": "urn:factory-evidence:sim-004:a4b1c89d-dc30-449c-8c79-a9136a6cfee1"
+          }
+        ],
+        "message_type": "result",
+        "mission_id": "51149d53-d906-4883-8ced-214af03b864c",
+        "observed_at": "2026-09-19T08:48:47.486Z",
+        "observed_status": "failed",
+        "operation": "action_status.get",
+        "request_id": "a81cd53d-cae8-4cba-854d-a8a0818ec022",
+        "result": "success",
+        "schema_version": "1.0",
+        "source_kind": "mock",
+        "status": "succeeded",
+        "timestamp": "2026-09-19T08:48:47.486Z",
+        "trace_id": "56b0d4e6-2c1e-4fc6-a1de-b01654f147f7"
+      },
+      "retry_result": {
+        "action_id": "a4b1c89d-dc30-449c-8c79-a9136a6cfee1",
+        "arrival": {
+          "destination_id": "line-b-drop",
+          "verified": true
+        },
+        "component_version": "sim004-navigation-backend-v2",
+        "evidence_refs": [
+          {
+            "sha256": "d08c6b32b3a6f1f4860816b7da20e67e3fa22af9f5394533ce9bca02915b247f",
+            "uri": "urn:factory-evidence:sim-004:a4b1c89d-dc30-449c-8c79-a9136a6cfee1"
+          }
+        ],
+        "message_type": "result",
+        "mission_id": "51149d53-d906-4883-8ced-214af03b864c",
+        "operation": "navigation.execute",
+        "request_id": "8d9924df-3fbf-48a8-badf-1290b9de3cb0",
+        "result": "success",
+        "schema_version": "1.0",
+        "source_kind": "mock",
+        "status": "succeeded",
+        "timestamp": "2026-09-19T08:48:47.487Z",
+        "trace_id": "56b0d4e6-2c1e-4fc6-a1de-b01654f147f7"
+      },
+      "within_budget": true
+    },
+    {
+      "backend": "gazebo_navigation",
+      "cleanup_complete": true,
+      "decision": "FAIL_CLOSED",
+      "duration_ms": 0.571,
+      "expected_decision": "FAIL_CLOSED",
+      "id": "SIM009-NAV-TF-UNAVAILABLE",
+      "injection": "TF/sensor runtime unavailable",
+      "layer": "L1-NAV",
+      "outcome_kind": "unavailable",
+      "pass": true,
+      "result": {
+        "action_id": "9304333b-8f32-408e-ba6f-8d5f800f9101",
+        "component_version": "sim004-navigation-backend-v2",
+        "error": {
+          "category": "RESOURCE_UNAVAILABLE",
+          "code": "NAVIGATION_UNAVAILABLE",
+          "message": "Nav2 lifecycle is not ready",
+          "retryable": false
+        },
+        "evidence_refs": [
+          {
+            "sha256": "6b0578941ae06a68d2ba1e5cb1cb05799878fee93b7feceb6ec1db34b544ddd7",
+            "uri": "urn:factory-evidence:sim-004:9304333b-8f32-408e-ba6f-8d5f800f9101"
+          }
+        ],
+        "message_type": "result",
+        "mission_id": "b4a2c29b-f99e-455f-9998-75bcac13e814",
+        "operation": "navigation.execute",
+        "request_id": "f8839b65-e4d3-4cdb-a605-53e457584ee5",
+        "result": "failure",
+        "schema_version": "1.0",
+        "source_kind": "mock",
+        "status": "failed",
+        "timestamp": "2026-09-19T08:48:47.488Z",
+        "trace_id": "163e5dc0-e380-4a91-addf-1f87e268f3ff"
+      },
+      "within_budget": true
+    },
+    {
+      "backend": "mujoco",
+      "cleanup_complete": true,
+      "decision": "FAIL_CLOSED",
+      "duration_ms": 9.676,
+      "expected_decision": "FAIL_CLOSED",
+      "id": "SIM009-VLA-GRASP-MISS",
+      "injection": "measured grasp miss",
+      "layer": "L1-VLA",
+      "outcome_kind": "failure",
+      "pass": true,
+      "result": {
+        "action_id": "ea9c65b3-81c2-4d19-8135-0ee90e66dd17",
+        "component_version": "sim005-mujoco-vla-backend-v1",
+        "error": {
+          "category": "EXECUTION_FAILED",
+          "code": "GRASP_MISS",
+          "message": "measured pusher/workpiece contact was absent",
+          "retryable": false
+        },
+        "latency_ms": 800,
+        "message_type": "result",
+        "mission_id": "91efd13e-ed45-4e0e-80c3-ea8f51617306",
+        "operation": "vla.execute",
+        "request_id": "c04275ea-e4cf-4fe6-a3bf-36b7f93a0c6e",
+        "result": "failure",
+        "schema_version": "1.0",
+        "skill_outcome": "failed",
+        "source_kind": "mock",
+        "status": "failed",
+        "timestamp": "2026-09-19T08:48:47.497Z",
+        "trace_id": "98974689-cf53-4e07-aaf6-70ab0fecf77d"
+      },
+      "within_budget": true
+    },
+    {
+      "backend": "mujoco",
+      "cleanup_complete": true,
+      "decision": "FAIL_CLOSED",
+      "duration_ms": 5.304,
+      "expected_decision": "FAIL_CLOSED",
+      "id": "SIM009-VLA-CONTACT-LOSS",
+      "injection": "measured contact loss",
+      "layer": "L1-VLA",
+      "outcome_kind": "failure",
+      "pass": true,
+      "result": {
+        "action_id": "944870e8-2080-4dd6-9006-f18e5f5014a4",
+        "component_version": "sim005-mujoco-vla-backend-v1",
+        "error": {
+          "category": "EXECUTION_FAILED",
+          "code": "CONTACT_LOSS",
+          "message": "measured pusher/workpiece contact was lost after transfer",
+          "retryable": false
+        },
+        "latency_ms": 800,
+        "message_type": "result",
+        "mission_id": "c70da41a-ee21-4c27-b3c0-fae767747344",
+        "operation": "vla.execute",
+        "request_id": "5dff78c0-d532-4f0c-9908-4a35a58da5c6",
+        "result": "failure",
+        "schema_version": "1.0",
+        "skill_outcome": "failed",
+        "source_kind": "mock",
+        "status": "failed",
+        "timestamp": "2026-09-19T08:48:47.502Z",
+        "trace_id": "71dd144d-e35c-41f3-a25a-7d767ed5f6d3"
+      },
+      "within_budget": true
+    },
+    {
+      "backend": "mujoco",
+      "cleanup_complete": true,
+      "decision": "FAIL_CLOSED",
+      "duration_ms": 2.123,
+      "expected_decision": "FAIL_CLOSED",
+      "id": "SIM009-VLA-WORKSPACE-LIMIT",
+      "injection": "workspace limit",
+      "layer": "L1-VLA",
+      "outcome_kind": "failure",
+      "pass": true,
+      "result": {
+        "action_id": "c96474bf-8527-492f-9aeb-31edf0db591c",
+        "component_version": "sim005-mujoco-vla-backend-v1",
+        "error": {
+          "category": "SAFETY_POLICY",
+          "code": "WORKSPACE_LIMIT",
+          "message": "scripted command exceeds bounded workspace",
+          "retryable": false
+        },
+        "latency_ms": 800,
+        "message_type": "result",
+        "mission_id": "bba73b6a-076c-4e34-96c1-780684dab412",
+        "operation": "vla.execute",
+        "request_id": "d6878185-604a-4b3d-b000-d4a65705758f",
+        "result": "failure",
+        "schema_version": "1.0",
+        "skill_outcome": "failed",
+        "source_kind": "mock",
+        "status": "failed",
+        "timestamp": "2026-09-19T08:48:47.504Z",
+        "trace_id": "72421690-c811-43fa-88ff-b67a841c945c"
+      },
+      "within_budget": true
+    },
+    {
+      "backend": "mujoco",
+      "cleanup_complete": true,
+      "decision": "RECONCILE",
+      "duration_ms": 3.477,
+      "expected_decision": "RECONCILE",
+      "id": "SIM009-VLA-TIMEOUT",
+      "injection": "bounded model timeout",
+      "layer": "L1-VLA",
+      "outcome_kind": "unknown",
+      "pass": true,
+      "reconciliation": {
+        "action_id": "7b94a411-b8f8-4c74-9e70-2a1d423fe55d",
+        "component_version": "sim005-mujoco-vla-backend-v1",
+        "evidence_refs": [
+          {
+            "sha256": "172aef8bb56f7ecf966151df03b00d7def82710251c16104c14a23a20d31c0c2",
+            "uri": "urn:factory-evidence:sim-005:28d3d153-cd26-403a-95be-566b6e4579b2:7b94a411-b8f8-4c74-9e70-2a1d423fe55d"
+          }
+        ],
+        "message_type": "result",
+        "mission_id": "28d3d153-cd26-403a-95be-566b6e4579b2",
+        "observed_at": "2026-09-19T08:48:47.507Z",
+        "observed_status": "unknown",
+        "operation": "action_status.get",
+        "request_id": "011f2237-91cf-4ead-9f17-69e3fd13e001",
+        "result": "success",
+        "schema_version": "1.0",
+        "source_kind": "mock",
+        "status": "succeeded",
+        "timestamp": "2026-09-19T08:48:47.509Z",
+        "trace_id": "5eff612c-0b0c-478d-b6ed-1af88d03b88e"
+      },
+      "result": {
+        "action_id": "7b94a411-b8f8-4c74-9e70-2a1d423fe55d",
+        "component_version": "sim005-mujoco-vla-backend-v1",
+        "error": {
+          "category": "MODEL_TIMEOUT",
+          "code": "MUJOCO_TIMEOUT",
+          "message": "bounded physics budget expired",
+          "retryable": true
+        },
+        "latency_ms": 800,
+        "message_type": "result",
+        "mission_id": "28d3d153-cd26-403a-95be-566b6e4579b2",
+        "operation": "vla.execute",
+        "request_id": "94dccf1d-51b5-4e90-bf89-82c41d4019f6",
+        "result": "pending",
+        "schema_version": "1.0",
+        "skill_outcome": "uncertain",
+        "source_kind": "mock",
+        "status": "unknown",
+        "timestamp": "2026-09-19T08:48:47.507Z",
+        "trace_id": "5eff612c-0b0c-478d-b6ed-1af88d03b88e"
+      },
+      "within_budget": true
+    },
+    {
+      "backend": "mujoco",
+      "cleanup_complete": true,
+      "decision": "FAIL_CLOSED",
+      "duration_ms": 2.12,
+      "expected_decision": "FAIL_CLOSED",
+      "id": "SIM009-VLA-AMBIGUOUS",
+      "injection": "ambiguous observation reference",
+      "layer": "L1-VLA",
+      "outcome_kind": "uncertain",
+      "pass": true,
+      "result": {
+        "action_id": "5be1208f-a0d5-4752-a122-a5d478eed93c",
+        "component_version": "sim005-mujoco-vla-backend-v1",
+        "error": {
+          "category": "VALIDATION",
+          "code": "INVALID_OBSERVATION",
+          "message": "observation identity is missing, stale, or ambiguous",
+          "retryable": false
+        },
+        "latency_ms": 800,
+        "message_type": "result",
+        "mission_id": "fa42f7f6-e95b-4730-9f41-402e78cbc4cd",
+        "operation": "vla.execute",
+        "request_id": "06d30480-fdb2-437c-b52c-ec560ad5638b",
+        "result": "failure",
+        "schema_version": "1.0",
+        "skill_outcome": "failed",
+        "source_kind": "mock",
+        "status": "failed",
+        "timestamp": "2026-09-19T08:48:47.510Z",
+        "trace_id": "3d81b84b-bb28-4fd5-8d9d-f29020f85bc8"
+      },
+      "within_budget": true
+    },
+    {
+      "backend": "mujoco",
+      "cleanup_complete": true,
+      "decision": "RECONCILE",
+      "duration_ms": 3.441,
+      "expected_decision": "RECONCILE",
+      "id": "SIM009-VLA-UNKNOWN",
+      "injection": "unknown outcome with status lookup",
+      "layer": "L1-VLA",
+      "outcome_kind": "unknown",
+      "pass": true,
+      "reconciliation": {
+        "action_id": "c7d4fc37-7256-4d96-b786-ad51dee69521",
+        "component_version": "sim005-mujoco-vla-backend-v1",
+        "evidence_refs": [
+          {
+            "sha256": "a95303f151eb3301b1d9b0feeb61bd903864f73c9d7da8b1054f80d3e26e1748",
+            "uri": "urn:factory-evidence:sim-005:760134bb-7268-48d0-a689-140d60416236:c7d4fc37-7256-4d96-b786-ad51dee69521"
+          }
+        ],
+        "message_type": "result",
+        "mission_id": "760134bb-7268-48d0-a689-140d60416236",
+        "observed_at": "2026-09-19T08:48:47.512Z",
+        "observed_status": "succeeded",
+        "operation": "action_status.get",
+        "request_id": "05a0959f-6bf8-4487-8ec3-87b836356d34",
+        "result": "success",
+        "schema_version": "1.0",
+        "source_kind": "mock",
+        "status": "succeeded",
+        "timestamp": "2026-09-19T08:48:47.515Z",
+        "trace_id": "b6869bbf-29fc-4e69-9cdb-c4b75b69a999"
+      },
+      "result": {
+        "action_id": "c7d4fc37-7256-4d96-b786-ad51dee69521",
+        "component_version": "sim005-mujoco-vla-backend-v1",
+        "error": {
+          "category": "DEPENDENCY_TIMEOUT",
+          "code": "MUJOCO_OUTCOME_UNKNOWN",
+          "message": "result requires authoritative reconciliation",
+          "retryable": true
+        },
+        "latency_ms": 800,
+        "message_type": "result",
+        "mission_id": "760134bb-7268-48d0-a689-140d60416236",
+        "operation": "vla.execute",
+        "request_id": "d9eef416-83f5-4952-95f5-e304188098a8",
+        "result": "pending",
+        "schema_version": "1.0",
+        "skill_outcome": "uncertain",
+        "source_kind": "mock",
+        "status": "unknown",
+        "timestamp": "2026-09-19T08:48:47.512Z",
+        "trace_id": "b6869bbf-29fc-4e69-9cdb-c4b75b69a999"
+      },
+      "within_budget": true
+    },
+    {
+      "backend": "verification",
+      "cleanup_complete": true,
+      "decision": "RECOVERY",
+      "duration_ms": 3.634,
+      "expected_decision": "RECOVERY",
+      "id": "SIM009-VERIFY-MISMATCH",
+      "injection": "skill success with observed-state mismatch",
+      "layer": "L2",
+      "outcome_kind": "failure",
+      "pass": true,
+      "route": "RECOVERY",
+      "skill_reported_success": true,
+      "verification": {
+        "action_id": "8defc533-3074-41d7-b0ac-482a2be56da2",
+        "component_version": "sim006-verification-backend-v1",
+        "confidence": 0.0,
+        "evidence_refs": [
+          {
+            "sha256": "23c636b2a31e28ca8550847f608d029cfcf98aa7b118ec97ceaacfbfb1e28884",
+            "uri": "urn:factory-evidence:sim-006:deterministic:sim009-verify-mismatch-observation"
+          }
+        ],
+        "message_type": "result",
+        "mismatch_code": "EXPECTED_STATE_MISMATCH",
+        "mission_id": "9704eefd-1377-4479-b6a0-ad628b54c2d1",
+        "operation": "verification.verify",
+        "request_id": "a436aaf7-425c-4131-a08a-4379c156a4bc",
+        "result": "success",
+        "schema_version": "1.0",
+        "source_kind": "mock",
+        "status": "succeeded",
+        "timestamp": "2026-09-19T08:48:47.516Z",
+        "trace_id": "837bb1b2-9bf7-458c-96fc-f97691fd39c5",
+        "verdict": "fail",
+        "verification_profile_version": "sim-exact-match-v1"
+      },
+      "within_budget": true
+    },
+    {
+      "backend": "verification",
+      "cleanup_complete": true,
+      "decision": "HITL",
+      "duration_ms": 3.668,
+      "expected_decision": "HITL",
+      "id": "SIM009-VERIFY-STALE",
+      "injection": "stale observation",
+      "layer": "L2",
+      "outcome_kind": "failure",
+      "pass": true,
+      "route": "HITL",
+      "verification": {
+        "action_id": "11fc59de-96c3-4435-86df-73edb8595ea4",
+        "component_version": "sim006-verification-backend-v1",
+        "error": {
+          "category": "DEPENDENCY_MALFORMED",
+          "code": "INVALID_VERIFICATION_EVIDENCE",
+          "message": "observation is stale or from the future",
+          "retryable": false
+        },
+        "message_type": "result",
+        "mission_id": "69f3c966-6edc-4b65-aae8-44f60348698c",
+        "operation": "verification.verify",
+        "request_id": "c782c9e1-7bc9-46c5-8d35-04a39cb834ed",
+        "result": "failure",
+        "schema_version": "1.0",
+        "source_kind": "mock",
+        "status": "failed",
+        "timestamp": "2026-09-19T08:48:47.520Z",
+        "trace_id": "8885cef0-f3a5-4052-95e7-25292ff7213a",
+        "verification_profile_version": "sim-exact-match-v1"
+      },
+      "within_budget": true
+    },
+    {
+      "backend": "verification",
+      "cleanup_complete": true,
+      "decision": "RECONCILE",
+      "duration_ms": 2.729,
+      "expected_decision": "RECONCILE",
+      "id": "SIM009-VERIFY-UNCERTAIN",
+      "injection": "ambiguous normalized observation",
+      "layer": "L2",
+      "outcome_kind": "uncertain",
+      "pass": true,
+      "route": "RECONCILE",
+      "verification": {
+        "action_id": "a2e74c9d-aa0b-4d7b-9557-af798817a620",
+        "component_version": "sim006-verification-backend-v1",
+        "confidence": 0.0,
+        "evidence_refs": [
+          {
+            "sha256": "40f24ab7d9fe2cc1b24acc48861e9067147d2674b36ee952a94384060c4bc98f",
+            "uri": "urn:factory-evidence:sim-006:deterministic:sim009-verify-uncertain-observation"
+          }
+        ],
+        "message_type": "result",
+        "mismatch_code": "INSUFFICIENT_OR_AMBIGUOUS_EVIDENCE",
+        "mission_id": "2e95d43e-5ccc-4092-a5bc-0ec886c17753",
+        "operation": "verification.verify",
+        "request_id": "bb75992c-0176-4818-a8f7-9805c827d045",
+        "result": "success",
+        "schema_version": "1.0",
+        "source_kind": "mock",
+        "status": "succeeded",
+        "timestamp": "2026-09-19T08:48:47.523Z",
+        "trace_id": "d8876156-a573-4958-8a16-acd62909bf32",
+        "verdict": "uncertain",
+        "verification_profile_version": "sim-exact-match-v1"
+      },
+      "within_budget": true
+    }
+  ],
+  "schema_version": "1.0",
+  "task_id": "TASK-SIM-009",
+  "task_specific_result": "SIM_FAILURE_SUITE_READY"
+}
