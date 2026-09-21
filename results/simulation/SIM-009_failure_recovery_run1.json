@@ -58,14 +58,14 @@
     }
   },
   "cleanup_complete": true,
-  "generated_at": "2026-09-19T15:43:08.160Z",
+  "generated_at": "2026-09-19T15:41:59.843Z",
   "manifest_sha256": "1dcce96e89b25ef6f1dc28e84f9599b0ee6d7dcddf868cc8443ebbeff49100eb",
   "scenarios": [
     {
       "backend": "contract",
       "cleanup_complete": true,
       "decision": "FAIL_CLOSED",
-      "duration_ms": 11.375,
+      "duration_ms": 11.603,
       "expected_decision": "FAIL_CLOSED",
       "id": "SIM009-L0-MALFORMED",
       "injection": "timeout_ms=0 malformed request",
@@ -73,30 +73,30 @@
       "outcome_kind": "malformed",
       "pass": true,
       "result": {
-        "action_id": "af7bd58b-8012-4aa9-8110-43e8457dd3c1",
+        "action_id": "76447018-fff4-4834-a487-bc0ab847b45e",
         "component_version": "sim004-navigation-backend-v2",
         "error": {
           "category": "VALIDATION",
           "code": "INVALID_NAVIGATION_REQUEST",
-          "message": "{'operation': 'navigation.execute', 'message_type': 'request', 'schema_version': '1.0', 'mission_id': '3a20ab88-a6a6-4da0-a60a-fcb768eff2e0', 'request_id': '913c104c-eacd-44e3-bc80-63186c0c46c9', 'trace_id': '5c5ea696-f178-4741-9245-92233eb3772e', 'timestamp': '2026-09-19T15:43:03.980Z', 'deadline_at': '2026-09-19T15:43:05.980Z', 'timeout_ms': 0, 'component_version': 'sim009-failure-suite-v1', 'action_id': 'af7bd58b-8012-4aa9-8110-43e8457dd3c1', 'idempotency_key': 'sim009-navigation', 'attempt': 1, 'retry_budget_remaining': 1, 'robot_id': 'simulation-proxy-mobile-base', 'destination_id': 'blocked-bay', 'speed_profile_id': 'sim-safe-v1'} is not valid under any of the given schemas",
+          "message": "{'operation': 'navigation.execute', 'message_type': 'request', 'schema_version': '1.0', 'mission_id': '8f5bdb6a-599d-47af-86f5-b31d5d9656b6', 'request_id': 'b2d4c89b-5790-460d-815a-b7fb9a644d62', 'trace_id': '7554974a-c554-4e16-b2a7-04cf659ac2a1', 'timestamp': '2026-09-19T15:41:55.901Z', 'deadline_at': '2026-09-19T15:41:57.901Z', 'timeout_ms': 0, 'component_version': 'sim009-failure-suite-v1', 'action_id': '76447018-fff4-4834-a487-bc0ab847b45e', 'idempotency_key': 'sim009-navigation', 'attempt': 1, 'retry_budget_remaining': 1, 'robot_id': 'simulation-proxy-mobile-base', 'destination_id': 'blocked-bay', 'speed_profile_id': 'sim-safe-v1'} is not valid under any of the given schemas",
           "retryable": false
         },
         "evidence_refs": [
           {
-            "sha256": "434adadd029eda4e0d3ae520a2b3db2801558f943a275c52e0566cd82e432937",
-            "uri": "urn:factory-evidence:sim-004:af7bd58b-8012-4aa9-8110-43e8457dd3c1"
+            "sha256": "2fad598822be7ca4cddf9bfdaa5daead9e745f5d41e51895f21467fba2036c4c",
+            "uri": "urn:factory-evidence:sim-004:76447018-fff4-4834-a487-bc0ab847b45e"
           }
         ],
         "message_type": "result",
-        "mission_id": "3a20ab88-a6a6-4da0-a60a-fcb768eff2e0",
+        "mission_id": "8f5bdb6a-599d-47af-86f5-b31d5d9656b6",
         "operation": "navigation.execute",
-        "request_id": "913c104c-eacd-44e3-bc80-63186c0c46c9",
+        "request_id": "b2d4c89b-5790-460d-815a-b7fb9a644d62",
         "result": "failure",
         "schema_version": "1.0",
         "source_kind": "mock",
         "status": "failed",
-        "timestamp": "2026-09-19T15:43:03.991Z",
-        "trace_id": "5c5ea696-f178-4741-9245-92233eb3772e"
+        "timestamp": "2026-09-19T15:41:55.913Z",
+        "trace_id": "7554974a-c554-4e16-b2a7-04cf659ac2a1"
       },
       "within_budget": true
     },
@@ -104,7 +104,7 @@
       "backend": "navigation",
       "cleanup_complete": true,
       "decision": "FAIL_CLOSED",
-      "duration_ms": 1.218,
+      "duration_ms": 2.603,
       "expected_decision": "FAIL_CLOSED",
       "id": "SIM009-L0-UNAVAILABLE",
       "injection": "runtime unavailable",
@@ -112,7 +112,7 @@
       "outcome_kind": "unavailable",
       "pass": true,
       "result": {
-        "action_id": "b3b7500d-d9e3-4703-a26b-5733bf0aee33",
+        "action_id": "4f953a00-667b-4ca6-b6ed-1a7ded14b3ba",
         "component_version": "sim004-navigation-backend-v2",
         "error": {
           "category": "RESOURCE_UNAVAILABLE",
@@ -122,20 +122,20 @@
         },
         "evidence_refs": [
           {
-            "sha256": "66b1bdc9e906c1abd6bcef7eeedbff317711df739eacdfbf8a1647edd5847213",
-            "uri": "urn:factory-evidence:sim-004:b3b7500d-d9e3-4703-a26b-5733bf0aee33"
+            "sha256": "8ee38b58989227843362643548fd2d05fbc0fb70706aa549e098aa1bebcd1ff3",
+            "uri": "urn:factory-evidence:sim-004:4f953a00-667b-4ca6-b6ed-1a7ded14b3ba"
           }
         ],
         "message_type": "result",
-        "mission_id": "33d8bd41-f39e-495c-8dbf-f8b9aaae0276",
+        "mission_id": "2f09be88-3a61-4e16-9ba6-0bfd4f4c55da",
         "operation": "navigation.execute",
-        "request_id": "a0311bcb-2ea0-4bbc-b8a9-0ab97bd195d4",
+        "request_id": "0ce6dfbf-ee69-4d78-993f-f1941717b9f5",
         "result": "failure",
         "schema_version": "1.0",
         "source_kind": "mock",
         "status": "failed",
-        "timestamp": "2026-09-19T15:43:03.993Z",
-        "trace_id": "f0880bb8-2fdc-4d66-bcb8-1f8c7dd2f3e4"
+        "timestamp": "2026-09-19T15:41:55.916Z",
+        "trace_id": "d26857b2-7d9c-4455-8e0c-ed056d31fc9f"
       },
       "runtime_calls": 0,
       "within_budget": true
@@ -144,21 +144,21 @@
       "backend": "contract",
       "cleanup_complete": true,
       "decision": "FAIL_CLOSED",
-      "duration_ms": 6.464,
+      "duration_ms": 8.272,
       "expected_decision": "FAIL_CLOSED",
       "id": "SIM009-L0-CONTRADICTORY",
       "injection": "success result with failed status",
       "layer": "L0",
       "outcome_kind": "contradictory",
       "pass": true,
-      "validation_error": "{'operation': 'navigation.execute', 'message_type': 'result', 'schema_version': '1.0', 'mission_id': 'ff12e3e2-0d45-489d-8504-0e571e45d7ce', 'request_id': 'd66e1058-28c4-4952-9cba-f9b2db6e2e2a', 'trace_id': 'fb747cc6-9209-4dc8-a728-a7790dd1d476', 'action_id': '552b37f7-b171-43cd-b4a4-cc06e8aefa4e', 'timestamp': '2026-09-19T15:43:03.993Z', 'component_version': 'sim009', 'source_kind': 'mock', 'status': 'failed', 'result': 'success'} is not valid under any of the given schemas",
+      "validation_error": "{'operation': 'navigation.execute', 'message_type': 'result', 'schema_version': '1.0', 'mission_id': '120548fc-a58b-463a-bfa7-794561254d6e', 'request_id': '9cc865e9-9680-4a64-9eb3-d091963b4f35', 'trace_id': '6f9b0f04-590d-4a8b-8784-c5757f8197c2', 'action_id': 'dde9cb51-ac19-4fe8-b417-59af3d3be9b4', 'timestamp': '2026-09-19T15:41:55.916Z', 'component_version': 'sim009', 'source_kind': 'mock', 'status': 'failed', 'result': 'success'} is not valid under any of the given schemas",
       "within_budget": true
     },
     {
       "backend": "gazebo_navigation",
       "cleanup_complete": true,
       "decision": "FAIL_CLOSED",
-      "duration_ms": 2584.848,
+      "duration_ms": 2420.273,
       "expected_decision": "FAIL_CLOSED",
       "goal_tracking": {
         "cleanup": {
@@ -166,57 +166,57 @@
           "complete": true,
           "processes": [
             {
-              "pid": 144317,
+              "pid": 143476,
               "returncode": -15
             }
           ]
         },
         "goal_attempts": [
           {
-            "action_id": "6a2b4a23-dc0e-4bc3-8027-58cb3dce659f",
+            "action_id": "957968cb-1dcf-4609-ba26-6f2c44438f68",
             "cancellation_requested": false,
             "destination_id": "blocked-bay",
             "idempotency_key": "sim009-navigation",
-            "mission_id": "c3db0c09-3b2b-4801-9d85-1af8fd704f68",
-            "nav2_goal_uuid": "4173849b-a26d-41f5-a004-450de296065d",
+            "mission_id": "124f3484-1704-4db2-b539-0c0edf40b7f5",
+            "nav2_goal_uuid": "5c59ac46-496f-4dd4-b0a3-315a020b338a",
             "retryable_terminal_failure": false,
-            "terminal_goal_uuid": "4173849b-a26d-41f5-a004-450de296065d",
+            "terminal_goal_uuid": "5c59ac46-496f-4dd4-b0a3-315a020b338a",
             "terminal_status": "6",
             "timeout_fault": false
           },
           {
-            "action_id": "37ca8c5d-62fa-46c7-8f23-714e476927de",
+            "action_id": "a5fe8ddd-7486-46cf-aef7-f3718bf6085a",
             "cancellation_requested": false,
             "destination_id": "blocked-bay",
             "idempotency_key": "sim009-navigation",
-            "mission_id": "c307d941-d9bf-46d3-bbf7-2908bbe4ce2c",
-            "nav2_goal_uuid": "0a1e569d-90ab-493f-8a37-bb83573d9947",
+            "mission_id": "d06a2be4-7f10-49f0-9cb3-6b03a5787428",
+            "nav2_goal_uuid": "aef35cf1-eac9-4e75-8d57-765532332eb0",
             "retryable_terminal_failure": false,
-            "terminal_goal_uuid": "0a1e569d-90ab-493f-8a37-bb83573d9947",
+            "terminal_goal_uuid": "aef35cf1-eac9-4e75-8d57-765532332eb0",
             "terminal_status": "6",
             "timeout_fault": false
           },
           {
-            "action_id": "6d874ec4-4793-4de8-a316-b350f064b15c",
+            "action_id": "716033a1-5836-4241-8ba7-4255048ca067",
             "cancellation_requested": true,
             "destination_id": "line-b-drop",
             "idempotency_key": "sim009-navigation",
-            "mission_id": "87697461-a75e-4755-99ba-8e6b18c11dcb",
-            "nav2_goal_uuid": "bd84874c-4106-45f5-8cfe-ca4dd93b6f27",
+            "mission_id": "9f48e158-957d-47e4-9d57-9e96c1bc29e6",
+            "nav2_goal_uuid": "8e760e31-d782-4a41-a233-695a0db44cec",
             "retryable_terminal_failure": true,
-            "terminal_goal_uuid": "bd84874c-4106-45f5-8cfe-ca4dd93b6f27",
+            "terminal_goal_uuid": "8e760e31-d782-4a41-a233-695a0db44cec",
             "terminal_status": "5",
             "timeout_fault": true
           },
           {
-            "action_id": "6d874ec4-4793-4de8-a316-b350f064b15c",
+            "action_id": "716033a1-5836-4241-8ba7-4255048ca067",
             "cancellation_requested": false,
             "destination_id": "line-b-drop",
             "idempotency_key": "sim009-navigation",
-            "mission_id": "87697461-a75e-4755-99ba-8e6b18c11dcb",
-            "nav2_goal_uuid": "29003ecf-c893-480a-a611-7053fe3bdd29",
+            "mission_id": "9f48e158-957d-47e4-9d57-9e96c1bc29e6",
+            "nav2_goal_uuid": "8d8462f7-58bf-48fc-99e7-aff419b4eb84",
             "retryable_terminal_failure": false,
-            "terminal_goal_uuid": "29003ecf-c893-480a-a611-7053fe3bdd29",
+            "terminal_goal_uuid": "8d8462f7-58bf-48fc-99e7-aff419b4eb84",
             "terminal_status": "4",
             "timeout_fault": false
           }
@@ -229,7 +229,7 @@
       "outcome_kind": "failure",
       "pass": true,
       "result": {
-        "action_id": "6a2b4a23-dc0e-4bc3-8027-58cb3dce659f",
+        "action_id": "957968cb-1dcf-4609-ba26-6f2c44438f68",
         "component_version": "sim004-navigation-backend-v2",
         "error": {
           "category": "EXECUTION_FAILED",
@@ -239,20 +239,20 @@
         },
         "evidence_refs": [
           {
-            "sha256": "1d3fcee44d2ea16ad1f4dc937196b9631f11a450b75f733f6adcac61fc4c560f",
-            "uri": "urn:factory-evidence:sim-004:6a2b4a23-dc0e-4bc3-8027-58cb3dce659f"
+            "sha256": "8791ede7abb3eb9598077418c62aebb2bc6bc7762855e18a6af9f3d49b16b507",
+            "uri": "urn:factory-evidence:sim-004:957968cb-1dcf-4609-ba26-6f2c44438f68"
           }
         ],
         "message_type": "result",
-        "mission_id": "c3db0c09-3b2b-4801-9d85-1af8fd704f68",
+        "mission_id": "124f3484-1704-4db2-b539-0c0edf40b7f5",
         "operation": "navigation.execute",
-        "request_id": "44e15930-7dc6-41db-9af3-ff9cff4c95dc",
+        "request_id": "04b3c6b4-1b1e-4b27-b22a-cd5228a59314",
         "result": "failure",
         "schema_version": "1.0",
         "source_kind": "mock",
         "status": "failed",
-        "timestamp": "2026-09-19T15:43:06.581Z",
-        "trace_id": "365910c4-3447-4654-9b30-505fd0645143"
+        "timestamp": "2026-09-19T15:41:58.341Z",
+        "trace_id": "7d715e1b-9e6c-409d-b0bc-bdedf4bc7ee8"
       },
       "runtime_calls": 1,
       "within_budget": true
@@ -261,7 +261,7 @@
       "backend": "gazebo_navigation",
       "cleanup_complete": true,
       "decision": "FAIL_CLOSED",
-      "duration_ms": 25.454,
+      "duration_ms": 16.066,
       "expected_decision": "FAIL_CLOSED",
       "goal_tracking": {
         "cleanup": {
@@ -269,57 +269,57 @@
           "complete": true,
           "processes": [
             {
-              "pid": 144317,
+              "pid": 143476,
               "returncode": -15
             }
           ]
         },
         "goal_attempts": [
           {
-            "action_id": "6a2b4a23-dc0e-4bc3-8027-58cb3dce659f",
+            "action_id": "957968cb-1dcf-4609-ba26-6f2c44438f68",
             "cancellation_requested": false,
             "destination_id": "blocked-bay",
             "idempotency_key": "sim009-navigation",
-            "mission_id": "c3db0c09-3b2b-4801-9d85-1af8fd704f68",
-            "nav2_goal_uuid": "4173849b-a26d-41f5-a004-450de296065d",
+            "mission_id": "124f3484-1704-4db2-b539-0c0edf40b7f5",
+            "nav2_goal_uuid": "5c59ac46-496f-4dd4-b0a3-315a020b338a",
             "retryable_terminal_failure": false,
-            "terminal_goal_uuid": "4173849b-a26d-41f5-a004-450de296065d",
+            "terminal_goal_uuid": "5c59ac46-496f-4dd4-b0a3-315a020b338a",
             "terminal_status": "6",
             "timeout_fault": false
           },
           {
-            "action_id": "37ca8c5d-62fa-46c7-8f23-714e476927de",
+            "action_id": "a5fe8ddd-7486-46cf-aef7-f3718bf6085a",
             "cancellation_requested": false,
             "destination_id": "blocked-bay",
             "idempotency_key": "sim009-navigation",
-            "mission_id": "c307d941-d9bf-46d3-bbf7-2908bbe4ce2c",
-            "nav2_goal_uuid": "0a1e569d-90ab-493f-8a37-bb83573d9947",
+            "mission_id": "d06a2be4-7f10-49f0-9cb3-6b03a5787428",
+            "nav2_goal_uuid": "aef35cf1-eac9-4e75-8d57-765532332eb0",
             "retryable_terminal_failure": false,
-            "terminal_goal_uuid": "0a1e569d-90ab-493f-8a37-bb83573d9947",
+            "terminal_goal_uuid": "aef35cf1-eac9-4e75-8d57-765532332eb0",
             "terminal_status": "6",
             "timeout_fault": false
           },
           {
-            "action_id": "6d874ec4-4793-4de8-a316-b350f064b15c",
+            "action_id": "716033a1-5836-4241-8ba7-4255048ca067",
             "cancellation_requested": true,
             "destination_id": "line-b-drop",
             "idempotency_key": "sim009-navigation",
-            "mission_id": "87697461-a75e-4755-99ba-8e6b18c11dcb",
-            "nav2_goal_uuid": "bd84874c-4106-45f5-8cfe-ca4dd93b6f27",
+            "mission_id": "9f48e158-957d-47e4-9d57-9e96c1bc29e6",
+            "nav2_goal_uuid": "8e760e31-d782-4a41-a233-695a0db44cec",
             "retryable_terminal_failure": true,
-            "terminal_goal_uuid": "bd84874c-4106-45f5-8cfe-ca4dd93b6f27",
+            "terminal_goal_uuid": "8e760e31-d782-4a41-a233-695a0db44cec",
             "terminal_status": "5",
             "timeout_fault": true
           },
           {
-            "action_id": "6d874ec4-4793-4de8-a316-b350f064b15c",
+            "action_id": "716033a1-5836-4241-8ba7-4255048ca067",
             "cancellation_requested": false,
             "destination_id": "line-b-drop",
             "idempotency_key": "sim009-navigation",
-            "mission_id": "87697461-a75e-4755-99ba-8e6b18c11dcb",
-            "nav2_goal_uuid": "29003ecf-c893-480a-a611-7053fe3bdd29",
+            "mission_id": "9f48e158-957d-47e4-9d57-9e96c1bc29e6",
+            "nav2_goal_uuid": "8d8462f7-58bf-48fc-99e7-aff419b4eb84",
             "retryable_terminal_failure": false,
-            "terminal_goal_uuid": "29003ecf-c893-480a-a611-7053fe3bdd29",
+            "terminal_goal_uuid": "8d8462f7-58bf-48fc-99e7-aff419b4eb84",
             "terminal_status": "4",
             "timeout_fault": false
           }
@@ -332,7 +332,7 @@
       "outcome_kind": "failure",
       "pass": true,
       "result": {
-        "action_id": "37ca8c5d-62fa-46c7-8f23-714e476927de",
+        "action_id": "a5fe8ddd-7486-46cf-aef7-f3718bf6085a",
         "component_version": "sim004-navigation-backend-v2",
         "error": {
           "category": "EXECUTION_FAILED",
@@ -342,20 +342,20 @@
         },
         "evidence_refs": [
           {
-            "sha256": "55d3733bfd4937eb408174ca352739a781427a3d4158a3446cfc2d07fc53b78c",
-            "uri": "urn:factory-evidence:sim-004:37ca8c5d-62fa-46c7-8f23-714e476927de"
+            "sha256": "f2d9da7d21acf535700f87441435e58817a7de0b6030f1b8acbae106cfce6ab7",
+            "uri": "urn:factory-evidence:sim-004:a5fe8ddd-7486-46cf-aef7-f3718bf6085a"
           }
         ],
         "message_type": "result",
-        "mission_id": "c307d941-d9bf-46d3-bbf7-2908bbe4ce2c",
+        "mission_id": "d06a2be4-7f10-49f0-9cb3-6b03a5787428",
         "operation": "navigation.execute",
-        "request_id": "c3f3e325-15f0-48ae-bf0b-be25cdc0779b",
+        "request_id": "72e9db49-399e-495f-95bb-a900b14f6cc4",
         "result": "failure",
         "schema_version": "1.0",
         "source_kind": "mock",
         "status": "failed",
-        "timestamp": "2026-09-19T15:43:06.608Z",
-        "trace_id": "136a234e-7c26-4ac7-aa0b-eb860c221dc7"
+        "timestamp": "2026-09-19T15:41:58.358Z",
+        "trace_id": "ba63f38b-7cf6-4d95-8d45-42928f6f0290"
       },
       "runtime_calls": 2,
       "within_budget": true
@@ -364,10 +364,10 @@
       "backend": "gazebo_navigation",
       "cleanup_complete": true,
       "decision": "RETRY",
-      "duration_ms": 1336.453,
+      "duration_ms": 1276.942,
       "expected_decision": "RETRY",
       "first_result": {
-        "action_id": "6d874ec4-4793-4de8-a316-b350f064b15c",
+        "action_id": "716033a1-5836-4241-8ba7-4255048ca067",
         "component_version": "sim004-navigation-backend-v2",
         "error": {
           "category": "DEPENDENCY_TIMEOUT",
@@ -377,20 +377,20 @@
         },
         "evidence_refs": [
           {
-            "sha256": "9b89dd6afbaa0120e0cf9d92a39ba06efb97083061f5a540e36e915db91802c5",
-            "uri": "urn:factory-evidence:sim-004:6d874ec4-4793-4de8-a316-b350f064b15c"
+            "sha256": "26edb8fd010f28812332dacb2a731b69016fae7202e03e9214e556a0a8769a0c",
+            "uri": "urn:factory-evidence:sim-004:716033a1-5836-4241-8ba7-4255048ca067"
           }
         ],
         "message_type": "result",
-        "mission_id": "87697461-a75e-4755-99ba-8e6b18c11dcb",
+        "mission_id": "9f48e158-957d-47e4-9d57-9e96c1bc29e6",
         "operation": "navigation.execute",
-        "request_id": "24dc4d07-5c0a-4fff-91ab-e9898b06719a",
+        "request_id": "8f63d53f-33b5-441c-9357-01609cfb5dd1",
         "result": "pending",
         "schema_version": "1.0",
         "source_kind": "mock",
         "status": "unknown",
-        "timestamp": "2026-09-19T15:43:06.614Z",
-        "trace_id": "db3a5d26-92d6-4395-84f5-c126f9f87915"
+        "timestamp": "2026-09-19T15:41:58.364Z",
+        "trace_id": "4176478d-0217-4e62-99c4-2873b3390b6c"
       },
       "goal_tracking": {
         "cleanup": {
@@ -398,57 +398,57 @@
           "complete": true,
           "processes": [
             {
-              "pid": 144317,
+              "pid": 143476,
               "returncode": -15
             }
           ]
         },
         "goal_attempts": [
           {
-            "action_id": "6a2b4a23-dc0e-4bc3-8027-58cb3dce659f",
+            "action_id": "957968cb-1dcf-4609-ba26-6f2c44438f68",
             "cancellation_requested": false,
             "destination_id": "blocked-bay",
             "idempotency_key": "sim009-navigation",
-            "mission_id": "c3db0c09-3b2b-4801-9d85-1af8fd704f68",
-            "nav2_goal_uuid": "4173849b-a26d-41f5-a004-450de296065d",
+            "mission_id": "124f3484-1704-4db2-b539-0c0edf40b7f5",
+            "nav2_goal_uuid": "5c59ac46-496f-4dd4-b0a3-315a020b338a",
             "retryable_terminal_failure": false,
-            "terminal_goal_uuid": "4173849b-a26d-41f5-a004-450de296065d",
+            "terminal_goal_uuid": "5c59ac46-496f-4dd4-b0a3-315a020b338a",
             "terminal_status": "6",
             "timeout_fault": false
           },
           {
-            "action_id": "37ca8c5d-62fa-46c7-8f23-714e476927de",
+            "action_id": "a5fe8ddd-7486-46cf-aef7-f3718bf6085a",
             "cancellation_requested": false,
             "destination_id": "blocked-bay",
             "idempotency_key": "sim009-navigation",
-            "mission_id": "c307d941-d9bf-46d3-bbf7-2908bbe4ce2c",
-            "nav2_goal_uuid": "0a1e569d-90ab-493f-8a37-bb83573d9947",
+            "mission_id": "d06a2be4-7f10-49f0-9cb3-6b03a5787428",
+            "nav2_goal_uuid": "aef35cf1-eac9-4e75-8d57-765532332eb0",
             "retryable_terminal_failure": false,
-            "terminal_goal_uuid": "0a1e569d-90ab-493f-8a37-bb83573d9947",
+            "terminal_goal_uuid": "aef35cf1-eac9-4e75-8d57-765532332eb0",
             "terminal_status": "6",
             "timeout_fault": false
           },
           {
-            "action_id": "6d874ec4-4793-4de8-a316-b350f064b15c",
+            "action_id": "716033a1-5836-4241-8ba7-4255048ca067",
             "cancellation_requested": true,
             "destination_id": "line-b-drop",
             "idempotency_key": "sim009-navigation",
-            "mission_id": "87697461-a75e-4755-99ba-8e6b18c11dcb",
-            "nav2_goal_uuid": "bd84874c-4106-45f5-8cfe-ca4dd93b6f27",
+            "mission_id": "9f48e158-957d-47e4-9d57-9e96c1bc29e6",
+            "nav2_goal_uuid": "8e760e31-d782-4a41-a233-695a0db44cec",
             "retryable_terminal_failure": true,
-            "terminal_goal_uuid": "bd84874c-4106-45f5-8cfe-ca4dd93b6f27",
+            "terminal_goal_uuid": "8e760e31-d782-4a41-a233-695a0db44cec",
             "terminal_status": "5",
             "timeout_fault": true
           },
           {
-            "action_id": "6d874ec4-4793-4de8-a316-b350f064b15c",
+            "action_id": "716033a1-5836-4241-8ba7-4255048ca067",
             "cancellation_requested": false,
             "destination_id": "line-b-drop",
             "idempotency_key": "sim009-navigation",
-            "mission_id": "87697461-a75e-4755-99ba-8e6b18c11dcb",
-            "nav2_goal_uuid": "29003ecf-c893-480a-a611-7053fe3bdd29",
+            "mission_id": "9f48e158-957d-47e4-9d57-9e96c1bc29e6",
+            "nav2_goal_uuid": "8d8462f7-58bf-48fc-99e7-aff419b4eb84",
             "retryable_terminal_failure": false,
-            "terminal_goal_uuid": "29003ecf-c893-480a-a611-7053fe3bdd29",
+            "terminal_goal_uuid": "8d8462f7-58bf-48fc-99e7-aff419b4eb84",
             "terminal_status": "4",
             "timeout_fault": false
           }
@@ -469,29 +469,29 @@
       "outcome_kind": "unknown",
       "pass": true,
       "reconciliation": {
-        "action_id": "6d874ec4-4793-4de8-a316-b350f064b15c",
+        "action_id": "716033a1-5836-4241-8ba7-4255048ca067",
         "component_version": "sim004-navigation-backend-v2",
         "evidence_refs": [
           {
-            "sha256": "9b89dd6afbaa0120e0cf9d92a39ba06efb97083061f5a540e36e915db91802c5",
-            "uri": "urn:factory-evidence:sim-004:6d874ec4-4793-4de8-a316-b350f064b15c"
+            "sha256": "26edb8fd010f28812332dacb2a731b69016fae7202e03e9214e556a0a8769a0c",
+            "uri": "urn:factory-evidence:sim-004:716033a1-5836-4241-8ba7-4255048ca067"
           }
         ],
         "message_type": "result",
-        "mission_id": "87697461-a75e-4755-99ba-8e6b18c11dcb",
-        "observed_at": "2026-09-19T15:43:06.623Z",
+        "mission_id": "9f48e158-957d-47e4-9d57-9e96c1bc29e6",
+        "observed_at": "2026-09-19T15:41:58.374Z",
         "observed_status": "failed",
         "operation": "action_status.get",
-        "request_id": "0ca9cef1-c4b7-423a-9bb1-a36f235dc427",
+        "request_id": "06d11b24-a50a-4a9c-b451-e6a98168fcc8",
         "result": "success",
         "schema_version": "1.0",
         "source_kind": "mock",
         "status": "succeeded",
-        "timestamp": "2026-09-19T15:43:06.623Z",
-        "trace_id": "db3a5d26-92d6-4395-84f5-c126f9f87915"
+        "timestamp": "2026-09-19T15:41:58.374Z",
+        "trace_id": "4176478d-0217-4e62-99c4-2873b3390b6c"
       },
       "retry_authorization": {
-        "action_id": "6d874ec4-4793-4de8-a316-b350f064b15c",
+        "action_id": "716033a1-5836-4241-8ba7-4255048ca067",
         "error": {
           "category": "EXECUTION_FAILED",
           "code": "NAVIGATION_ABORTED",
@@ -499,37 +499,37 @@
           "retryable": true
         },
         "idempotency_key": "sim009-navigation",
-        "mission_id": "87697461-a75e-4755-99ba-8e6b18c11dcb",
-        "new_request_id": "13bf1f41-20c4-49bc-9f8d-dfd6110e2dcc",
+        "mission_id": "9f48e158-957d-47e4-9d57-9e96c1bc29e6",
+        "new_request_id": "c3cfefc3-854d-43c4-b280-d0a4d4026ad9",
         "next_attempt": 2,
         "previous_attempt": 1,
-        "previous_request_id": "24dc4d07-5c0a-4fff-91ab-e9898b06719a",
+        "previous_request_id": "8f63d53f-33b5-441c-9357-01609cfb5dd1",
         "reconciliation_completed": true,
         "record_type": "retry_authorization",
         "resolved_status": "failed",
         "retry_budget_remaining": 1
       },
       "retry_request": {
-        "action_id": "6d874ec4-4793-4de8-a316-b350f064b15c",
+        "action_id": "716033a1-5836-4241-8ba7-4255048ca067",
         "attempt": 2,
         "component_version": "sim009-failure-suite-v1",
-        "deadline_at": "2026-09-19T15:43:36.623Z",
+        "deadline_at": "2026-09-19T15:42:28.374Z",
         "destination_id": "line-b-drop",
         "idempotency_key": "sim009-navigation",
         "message_type": "request",
-        "mission_id": "87697461-a75e-4755-99ba-8e6b18c11dcb",
+        "mission_id": "9f48e158-957d-47e4-9d57-9e96c1bc29e6",
         "operation": "navigation.execute",
-        "request_id": "13bf1f41-20c4-49bc-9f8d-dfd6110e2dcc",
+        "request_id": "c3cfefc3-854d-43c4-b280-d0a4d4026ad9",
         "retry_budget_remaining": 0,
         "robot_id": "simulation-proxy-mobile-base",
         "schema_version": "1.0",
         "speed_profile_id": "sim-safe-v1",
         "timeout_ms": 30000,
-        "timestamp": "2026-09-19T15:43:06.623Z",
-        "trace_id": "db3a5d26-92d6-4395-84f5-c126f9f87915"
+        "timestamp": "2026-09-19T15:41:58.374Z",
+        "trace_id": "4176478d-0217-4e62-99c4-2873b3390b6c"
       },
       "retry_result": {
-        "action_id": "6d874ec4-4793-4de8-a316-b350f064b15c",
+        "action_id": "716033a1-5836-4241-8ba7-4255048ca067",
         "arrival": {
           "destination_id": "line-b-drop",
           "verified": true
@@ -537,20 +537,20 @@
         "component_version": "sim004-navigation-backend-v2",
         "evidence_refs": [
           {
-            "sha256": "9b89dd6afbaa0120e0cf9d92a39ba06efb97083061f5a540e36e915db91802c5",
-            "uri": "urn:factory-evidence:sim-004:6d874ec4-4793-4de8-a316-b350f064b15c"
+            "sha256": "26edb8fd010f28812332dacb2a731b69016fae7202e03e9214e556a0a8769a0c",
+            "uri": "urn:factory-evidence:sim-004:716033a1-5836-4241-8ba7-4255048ca067"
           }
         ],
         "message_type": "result",
-        "mission_id": "87697461-a75e-4755-99ba-8e6b18c11dcb",
+        "mission_id": "9f48e158-957d-47e4-9d57-9e96c1bc29e6",
         "operation": "navigation.execute",
-        "request_id": "13bf1f41-20c4-49bc-9f8d-dfd6110e2dcc",
+        "request_id": "c3cfefc3-854d-43c4-b280-d0a4d4026ad9",
         "result": "success",
         "schema_version": "1.0",
         "source_kind": "mock",
         "status": "succeeded",
-        "timestamp": "2026-09-19T15:43:07.944Z",
-        "trace_id": "db3a5d26-92d6-4395-84f5-c126f9f87915"
+        "timestamp": "2026-09-19T15:41:59.634Z",
+        "trace_id": "4176478d-0217-4e62-99c4-2873b3390b6c"
       },
       "retry_suppressed": false,
       "runtime_calls": 4,
@@ -560,7 +560,7 @@
       "backend": "gazebo_navigation",
       "cleanup_complete": true,
       "decision": "FAIL_CLOSED",
-      "duration_ms": 1.466,
+      "duration_ms": 1.764,
       "expected_decision": "FAIL_CLOSED",
       "goal_tracking": {
         "cleanup": {
@@ -568,57 +568,57 @@
           "complete": true,
           "processes": [
             {
-              "pid": 144317,
+              "pid": 143476,
               "returncode": -15
             }
           ]
         },
         "goal_attempts": [
           {
-            "action_id": "6a2b4a23-dc0e-4bc3-8027-58cb3dce659f",
+            "action_id": "957968cb-1dcf-4609-ba26-6f2c44438f68",
             "cancellation_requested": false,
             "destination_id": "blocked-bay",
             "idempotency_key": "sim009-navigation",
-            "mission_id": "c3db0c09-3b2b-4801-9d85-1af8fd704f68",
-            "nav2_goal_uuid": "4173849b-a26d-41f5-a004-450de296065d",
+            "mission_id": "124f3484-1704-4db2-b539-0c0edf40b7f5",
+            "nav2_goal_uuid": "5c59ac46-496f-4dd4-b0a3-315a020b338a",
             "retryable_terminal_failure": false,
-            "terminal_goal_uuid": "4173849b-a26d-41f5-a004-450de296065d",
+            "terminal_goal_uuid": "5c59ac46-496f-4dd4-b0a3-315a020b338a",
             "terminal_status": "6",
             "timeout_fault": false
           },
           {
-            "action_id": "37ca8c5d-62fa-46c7-8f23-714e476927de",
+            "action_id": "a5fe8ddd-7486-46cf-aef7-f3718bf6085a",
             "cancellation_requested": false,
             "destination_id": "blocked-bay",
             "idempotency_key": "sim009-navigation",
-            "mission_id": "c307d941-d9bf-46d3-bbf7-2908bbe4ce2c",
-            "nav2_goal_uuid": "0a1e569d-90ab-493f-8a37-bb83573d9947",
+            "mission_id": "d06a2be4-7f10-49f0-9cb3-6b03a5787428",
+            "nav2_goal_uuid": "aef35cf1-eac9-4e75-8d57-765532332eb0",
             "retryable_terminal_failure": false,
-            "terminal_goal_uuid": "0a1e569d-90ab-493f-8a37-bb83573d9947",
+            "terminal_goal_uuid": "aef35cf1-eac9-4e75-8d57-765532332eb0",
             "terminal_status": "6",
             "timeout_fault": false
           },
           {
-            "action_id": "6d874ec4-4793-4de8-a316-b350f064b15c",
+            "action_id": "716033a1-5836-4241-8ba7-4255048ca067",
             "cancellation_requested": true,
             "destination_id": "line-b-drop",
             "idempotency_key": "sim009-navigation",
-            "mission_id": "87697461-a75e-4755-99ba-8e6b18c11dcb",
-            "nav2_goal_uuid": "bd84874c-4106-45f5-8cfe-ca4dd93b6f27",
+            "mission_id": "9f48e158-957d-47e4-9d57-9e96c1bc29e6",
+            "nav2_goal_uuid": "8e760e31-d782-4a41-a233-695a0db44cec",
             "retryable_terminal_failure": true,
-            "terminal_goal_uuid": "bd84874c-4106-45f5-8cfe-ca4dd93b6f27",
+            "terminal_goal_uuid": "8e760e31-d782-4a41-a233-695a0db44cec",
             "terminal_status": "5",
             "timeout_fault": true
           },
           {
-            "action_id": "6d874ec4-4793-4de8-a316-b350f064b15c",
+            "action_id": "716033a1-5836-4241-8ba7-4255048ca067",
             "cancellation_requested": false,
             "destination_id": "line-b-drop",
             "idempotency_key": "sim009-navigation",
-            "mission_id": "87697461-a75e-4755-99ba-8e6b18c11dcb",
-            "nav2_goal_uuid": "29003ecf-c893-480a-a611-7053fe3bdd29",
+            "mission_id": "9f48e158-957d-47e4-9d57-9e96c1bc29e6",
+            "nav2_goal_uuid": "8d8462f7-58bf-48fc-99e7-aff419b4eb84",
             "retryable_terminal_failure": false,
-            "terminal_goal_uuid": "29003ecf-c893-480a-a611-7053fe3bdd29",
+            "terminal_goal_uuid": "8d8462f7-58bf-48fc-99e7-aff419b4eb84",
             "terminal_status": "4",
             "timeout_fault": false
           }
@@ -631,7 +631,7 @@
       "outcome_kind": "unavailable",
       "pass": true,
       "result": {
-        "action_id": "dc0cc3af-80f7-455d-b257-b501a7b1327c",
+        "action_id": "91bb6ee5-753e-437e-9c0d-9e25da065b43",
         "component_version": "sim004-navigation-backend-v2",
         "error": {
           "category": "RESOURCE_UNAVAILABLE",
@@ -641,20 +641,20 @@
         },
         "evidence_refs": [
           {
-            "sha256": "1799234207cdc218b05e2f40499fc90071adf279ac1c297d4d1ebf57a5359bc4",
-            "uri": "urn:factory-evidence:sim-004:dc0cc3af-80f7-455d-b257-b501a7b1327c"
+            "sha256": "2ca13df90ff758eaf6d04b4181bcc39f5df8b1ad782aaf55ecf91f5053b6e702",
+            "uri": "urn:factory-evidence:sim-004:91bb6ee5-753e-437e-9c0d-9e25da065b43"
           }
         ],
         "message_type": "result",
-        "mission_id": "2061cebe-79d3-4449-91da-fbdeabc9fe48",
+        "mission_id": "b6e2975e-198b-486f-906c-25cb2eae897e",
         "operation": "navigation.execute",
-        "request_id": "86e6918a-1194-40fa-991c-91970e68d18d",
+        "request_id": "388f7bf6-a435-429a-b2ec-edc9c952e291",
         "result": "failure",
         "schema_version": "1.0",
         "source_kind": "mock",
         "status": "failed",
-        "timestamp": "2026-09-19T15:43:07.947Z",
-        "trace_id": "5c0d810a-d29e-4e45-b859-80e2a9d1cad5"
+        "timestamp": "2026-09-19T15:41:59.639Z",
+        "trace_id": "ec755a26-c55d-4ea2-a289-aa1bb33a9891"
       },
       "runtime_calls": 0,
       "within_budget": true
@@ -663,7 +663,7 @@
       "backend": "mujoco",
       "cleanup_complete": true,
       "decision": "FAIL_CLOSED",
-      "duration_ms": 23.871,
+      "duration_ms": 25.731,
       "expected_decision": "FAIL_CLOSED",
       "id": "SIM009-VLA-GRASP-MISS",
       "injection": "measured grasp miss",
@@ -671,7 +671,7 @@
       "outcome_kind": "failure",
       "pass": true,
       "result": {
-        "action_id": "27869e44-d46b-4a3b-a234-e07cf1f7422b",
+        "action_id": "cac4dfe3-638d-4244-931e-d461942ffd4e",
         "component_version": "sim005-mujoco-vla-backend-v1",
         "error": {
           "category": "EXECUTION_FAILED",
@@ -681,16 +681,16 @@
         },
         "latency_ms": 800,
         "message_type": "result",
-        "mission_id": "38bb0e3d-253e-4be2-9a7e-fdaaf90e5f2c",
+        "mission_id": "dc4eaf47-535b-4d77-b712-345ac8f3a68b",
         "operation": "vla.execute",
-        "request_id": "19f37ae7-e89c-4696-a3d5-429a1056892b",
+        "request_id": "92383d40-2c0f-48c4-aa72-331b11455d95",
         "result": "failure",
         "schema_version": "1.0",
         "skill_outcome": "failed",
         "source_kind": "mock",
         "status": "failed",
-        "timestamp": "2026-09-19T15:43:07.968Z",
-        "trace_id": "2c44fed0-401b-4174-8509-befb32cefa21"
+        "timestamp": "2026-09-19T15:41:59.662Z",
+        "trace_id": "d743629a-3b89-4439-8694-f93b1c01d8ff"
       },
       "within_budget": true
     },
@@ -698,7 +698,7 @@
       "backend": "mujoco",
       "cleanup_complete": true,
       "decision": "FAIL_CLOSED",
-      "duration_ms": 15.547,
+      "duration_ms": 11.167,
       "expected_decision": "FAIL_CLOSED",
       "id": "SIM009-VLA-CONTACT-LOSS",
       "injection": "measured contact loss",
@@ -706,7 +706,7 @@
       "outcome_kind": "failure",
       "pass": true,
       "result": {
-        "action_id": "2ab995e0-83d2-4626-944a-0ccb8b0e45c9",
+        "action_id": "b8be598a-ac3c-400c-a6a3-114fb3fbc1a6",
         "component_version": "sim005-mujoco-vla-backend-v1",
         "error": {
           "category": "EXECUTION_FAILED",
@@ -716,16 +716,16 @@
         },
         "latency_ms": 800,
         "message_type": "result",
-        "mission_id": "4a830a37-f31e-43b1-8a36-92cf129a2bd8",
+        "mission_id": "46f97c13-f8a7-48f1-866f-2136238647b0",
         "operation": "vla.execute",
-        "request_id": "e7462327-3f62-4fe1-836b-95779667aa5e",
+        "request_id": "565d8835-1a0c-4e74-8ff1-c270891f008a",
         "result": "failure",
         "schema_version": "1.0",
         "skill_outcome": "failed",
         "source_kind": "mock",
         "status": "failed",
-        "timestamp": "2026-09-19T15:43:07.984Z",
-        "trace_id": "c6f95582-537d-401d-a79d-ed081421e2ee"
+        "timestamp": "2026-09-19T15:41:59.674Z",
+        "trace_id": "c6243530-68cd-4252-8fb5-b14e1413114c"
       },
       "within_budget": true
     },
@@ -733,7 +733,7 @@
       "backend": "mujoco",
       "cleanup_complete": true,
       "decision": "FAIL_CLOSED",
-      "duration_ms": 6.407,
+      "duration_ms": 5.048,
       "expected_decision": "FAIL_CLOSED",
       "id": "SIM009-VLA-WORKSPACE-LIMIT",
       "injection": "workspace limit",
@@ -741,7 +741,7 @@
       "outcome_kind": "failure",
       "pass": true,
       "result": {
-        "action_id": "d2757b0a-7890-4554-bda0-3de034977a4a",
+        "action_id": "10099483-dada-4942-892e-6c7f067388ea",
         "component_version": "sim005-mujoco-vla-backend-v1",
         "error": {
           "category": "SAFETY_POLICY",
@@ -751,16 +751,16 @@
         },
         "latency_ms": 800,
         "message_type": "result",
-        "mission_id": "26cbc4ac-07bb-44e0-8ad4-84c90630f695",
+        "mission_id": "75370708-4b05-4028-9aab-c0a0f6472e66",
         "operation": "vla.execute",
-        "request_id": "cf5081f0-4af6-4cb0-830d-40cf48c74f71",
+        "request_id": "a93c3733-8df5-4b70-8c4c-6a9abaf0b52c",
         "result": "failure",
         "schema_version": "1.0",
         "skill_outcome": "failed",
         "source_kind": "mock",
         "status": "failed",
-        "timestamp": "2026-09-19T15:43:07.990Z",
-        "trace_id": "b4eaadc3-f7f5-447d-adad-c78820b31fc3"
+        "timestamp": "2026-09-19T15:41:59.678Z",
+        "trace_id": "2be445ce-c1c2-4a43-8e9c-5ae7d32569d4"
       },
       "within_budget": true
     },
@@ -768,7 +768,7 @@
       "backend": "mujoco",
       "cleanup_complete": true,
       "decision": "RECONCILE",
-      "duration_ms": 8.531,
+      "duration_ms": 8.686,
       "expected_decision": "RECONCILE",
       "id": "SIM009-VLA-TIMEOUT",
       "injection": "bounded model timeout",
@@ -776,29 +776,29 @@
       "outcome_kind": "unknown",
       "pass": true,
       "reconciliation": {
-        "action_id": "d9ec9685-51a6-4d9b-a497-8c4496c16d55",
+        "action_id": "b5c45581-e347-454e-a6fc-cf254f99d28b",
         "component_version": "sim005-mujoco-vla-backend-v1",
         "evidence_refs": [
           {
-            "sha256": "115f2278f422a5b4ad49c8dded087376ecabd261424e42eabfdadd9b53eed7ba",
-            "uri": "urn:factory-evidence:sim-005:28b3da3c-0ca1-447a-8fdb-bf28e7113c13:d9ec9685-51a6-4d9b-a497-8c4496c16d55"
+            "sha256": "c82b5fc868bfb3b78fe458dd3a7aea89437c8c26ad686ba900202bc3fb950197",
+            "uri": "urn:factory-evidence:sim-005:9eb57749-ac5b-4da6-a729-cbce4433eb87:b5c45581-e347-454e-a6fc-cf254f99d28b"
           }
         ],
         "message_type": "result",
-        "mission_id": "28b3da3c-0ca1-447a-8fdb-bf28e7113c13",
-        "observed_at": "2026-09-19T15:43:07.996Z",
+        "mission_id": "9eb57749-ac5b-4da6-a729-cbce4433eb87",
+        "observed_at": "2026-09-19T15:41:59.684Z",
         "observed_status": "unknown",
         "operation": "action_status.get",
-        "request_id": "e38be4c3-8510-4d3f-8fd4-ffcbae17d08c",
+        "request_id": "1a9eb121-63a1-4e4e-aefe-694593d34955",
         "result": "success",
         "schema_version": "1.0",
         "source_kind": "mock",
         "status": "succeeded",
-        "timestamp": "2026-09-19T15:43:08.002Z",
-        "trace_id": "b02a13a4-ea75-4158-bbb2-99b354762c03"
+        "timestamp": "2026-09-19T15:41:59.690Z",
+        "trace_id": "8f8a2313-37b9-41d4-ae66-4d52707d7534"
       },
       "result": {
-        "action_id": "d9ec9685-51a6-4d9b-a497-8c4496c16d55",
+        "action_id": "b5c45581-e347-454e-a6fc-cf254f99d28b",
         "component_version": "sim005-mujoco-vla-backend-v1",
         "error": {
           "category": "MODEL_TIMEOUT",
@@ -808,16 +808,16 @@
         },
         "latency_ms": 800,
         "message_type": "result",
-        "mission_id": "28b3da3c-0ca1-447a-8fdb-bf28e7113c13",
+        "mission_id": "9eb57749-ac5b-4da6-a729-cbce4433eb87",
         "operation": "vla.execute",
-        "request_id": "a4807072-8286-47ba-a5d0-44c55efd975c",
+        "request_id": "0cbacd85-0eb4-45c8-a0b7-6d331ceb4f83",
         "result": "pending",
         "schema_version": "1.0",
         "skill_outcome": "uncertain",
         "source_kind": "mock",
         "status": "unknown",
-        "timestamp": "2026-09-19T15:43:07.996Z",
-        "trace_id": "b02a13a4-ea75-4158-bbb2-99b354762c03"
+        "timestamp": "2026-09-19T15:41:59.684Z",
+        "trace_id": "8f8a2313-37b9-41d4-ae66-4d52707d7534"
       },
       "within_budget": true
     },
@@ -825,7 +825,7 @@
       "backend": "mujoco",
       "cleanup_complete": true,
       "decision": "FAIL_CLOSED",
-      "duration_ms": 5.626,
+      "duration_ms": 6.924,
       "expected_decision": "FAIL_CLOSED",
       "id": "SIM009-VLA-AMBIGUOUS",
       "injection": "ambiguous observation reference",
@@ -833,7 +833,7 @@
       "outcome_kind": "uncertain",
       "pass": true,
       "result": {
-        "action_id": "ca14f707-0c3e-43fa-a935-d338c40dd4e8",
+        "action_id": "16a08da2-7826-485a-a865-df2960ba7b11",
         "component_version": "sim005-mujoco-vla-backend-v1",
         "error": {
           "category": "VALIDATION",
@@ -843,16 +843,16 @@
         },
         "latency_ms": 800,
         "message_type": "result",
-        "mission_id": "2aad292c-86f9-4496-ba53-dbf7a3ad938f",
+        "mission_id": "d17e91c8-831d-4394-9eba-4a5e49e3a7ec",
         "operation": "vla.execute",
-        "request_id": "82680c5d-a7bf-43ae-83b5-ab5378754a9c",
+        "request_id": "e687da6a-4009-40f5-b10f-210ee76be8d7",
         "result": "failure",
         "schema_version": "1.0",
         "skill_outcome": "failed",
         "source_kind": "mock",
         "status": "failed",
-        "timestamp": "2026-09-19T15:43:08.005Z",
-        "trace_id": "06c663da-60dd-41b9-8f08-e0bb9431fa26"
+        "timestamp": "2026-09-19T15:41:59.693Z",
+        "trace_id": "03d9456c-9aff-4ad0-8b38-3effaf329243"
       },
       "within_budget": true
     },
@@ -860,7 +860,7 @@
       "backend": "mujoco",
       "cleanup_complete": true,
       "decision": "RECONCILE",
-      "duration_ms": 10.997,
+      "duration_ms": 7.918,
       "expected_decision": "RECONCILE",
       "id": "SIM009-VLA-UNKNOWN",
       "injection": "unknown outcome with status lookup",
@@ -868,29 +868,29 @@
       "outcome_kind": "unknown",
       "pass": true,
       "reconciliation": {
-        "action_id": "3777b5ee-e9d3-4eae-8f46-cf8c0ea93ab0",
+        "action_id": "98a221e9-d0a3-4b3e-81ea-ae9a0b4b51ca",
         "component_version": "sim005-mujoco-vla-backend-v1",
         "evidence_refs": [
           {
-            "sha256": "c5081da03568e9a20fb4c23a9897dd28fc89fd09d8486e8cd0eaeff46339fda7",
-            "uri": "urn:factory-evidence:sim-005:eb41bb33-3c33-4821-8218-414c54d012c4:3777b5ee-e9d3-4eae-8f46-cf8c0ea93ab0"
+            "sha256": "922442cc4af91e0193c5e3fd86f4d2eb059cf8f9ee87e7469ad65b4d2cdbf7b4",
+            "uri": "urn:factory-evidence:sim-005:1106a9b2-f2de-4ace-b219-ecdf46a096da:98a221e9-d0a3-4b3e-81ea-ae9a0b4b51ca"
           }
         ],
         "message_type": "result",
-        "mission_id": "eb41bb33-3c33-4821-8218-414c54d012c4",
-        "observed_at": "2026-09-19T15:43:08.011Z",
+        "mission_id": "1106a9b2-f2de-4ace-b219-ecdf46a096da",
+        "observed_at": "2026-09-19T15:41:59.699Z",
         "observed_status": "succeeded",
         "operation": "action_status.get",
-        "request_id": "12a20075-0b24-4614-8cae-c6f2cc909b14",
+        "request_id": "e33e0cdf-c725-49f1-8529-489fa0098a6c",
         "result": "success",
         "schema_version": "1.0",
         "source_kind": "mock",
         "status": "succeeded",
-        "timestamp": "2026-09-19T15:43:08.018Z",
-        "trace_id": "fffa3984-360c-4044-a9c3-0bb5eaf01cc0"
+        "timestamp": "2026-09-19T15:41:59.704Z",
+        "trace_id": "02a89f90-e614-47db-8578-5f4e4ce3738a"
       },
       "result": {
-        "action_id": "3777b5ee-e9d3-4eae-8f46-cf8c0ea93ab0",
+        "action_id": "98a221e9-d0a3-4b3e-81ea-ae9a0b4b51ca",
         "component_version": "sim005-mujoco-vla-backend-v1",
         "error": {
           "category": "DEPENDENCY_TIMEOUT",
@@ -900,16 +900,16 @@
         },
         "latency_ms": 800,
         "message_type": "result",
-        "mission_id": "eb41bb33-3c33-4821-8218-414c54d012c4",
+        "mission_id": "1106a9b2-f2de-4ace-b219-ecdf46a096da",
         "operation": "vla.execute",
-        "request_id": "cf444ea9-b1c0-4d86-a1cc-cdc379597689",
+        "request_id": "bec5f9d6-eb4c-4812-89b2-b9f3f535b761",
         "result": "pending",
         "schema_version": "1.0",
         "skill_outcome": "uncertain",
         "source_kind": "mock",
         "status": "unknown",
-        "timestamp": "2026-09-19T15:43:08.011Z",
-        "trace_id": "fffa3984-360c-4044-a9c3-0bb5eaf01cc0"
+        "timestamp": "2026-09-19T15:41:59.699Z",
+        "trace_id": "02a89f90-e614-47db-8578-5f4e4ce3738a"
       },
       "within_budget": true
     },
@@ -917,7 +917,7 @@
       "backend": "verification",
       "cleanup_complete": true,
       "decision": "RECOVERY",
-      "duration_ms": 9.69,
+      "duration_ms": 8.846,
       "expected_decision": "RECOVERY",
       "id": "SIM009-VERIFY-MISMATCH",
       "injection": "skill success with observed-state mismatch",
@@ -942,7 +942,7 @@
       "route": "RECOVERY",
       "skill_reported_success": true,
       "verification": {
-        "action_id": "41a06e9f-2eaf-4fdf-9a42-842a86d2c352",
+        "action_id": "dfbf3f87-1ff2-40e8-aaf1-9807f456f69c",
         "component_version": "sim006-verification-backend-v1",
         "confidence": 0.0,
         "evidence_refs": [
@@ -953,15 +953,15 @@
         ],
         "message_type": "result",
         "mismatch_code": "EXPECTED_STATE_MISMATCH",
-        "mission_id": "76da0a34-94bc-4fc9-973e-03dcba107978",
+        "mission_id": "ceaae20a-8330-44fa-a63c-eb4e39831b9b",
         "operation": "verification.verify",
-        "request_id": "c183e09b-4d3a-43a3-b0eb-dcf71814f34b",
+        "request_id": "220687fb-0899-45a6-bca9-597a8932c91d",
         "result": "success",
         "schema_version": "1.0",
         "source_kind": "mock",
         "status": "succeeded",
-        "timestamp": "2026-09-19T15:43:08.022Z",
-        "trace_id": "a047b91b-e1ec-4b06-87be-f14e2121bf54",
+        "timestamp": "2026-09-19T15:41:59.709Z",
+        "trace_id": "c43f49d8-57e1-4056-97ce-65909c7a8c4f",
         "verdict": "fail",
         "verification_profile_version": "sim-exact-match-v1"
       },
@@ -971,7 +971,7 @@
       "backend": "verification",
       "cleanup_complete": true,
       "decision": "HITL",
-      "duration_ms": 9.355,
+      "duration_ms": 7.564,
       "expected_decision": "HITL",
       "id": "SIM009-VERIFY-STALE",
       "injection": "stale observation",
@@ -994,7 +994,7 @@
       "pass": true,
       "route": "HITL",
       "verification": {
-        "action_id": "23a0d006-7449-4f13-9ce0-1d5999bd63b2",
+        "action_id": "896ab20e-6fbc-46f9-bfa7-bbdd6049db24",
         "component_version": "sim006-verification-backend-v1",
         "error": {
           "category": "DEPENDENCY_MALFORMED",
@@ -1003,15 +1003,15 @@
           "retryable": false
         },
         "message_type": "result",
-        "mission_id": "465c0d13-75fb-45df-85f3-2d5e6e3b91b2",
+        "mission_id": "5e4c9d19-edfd-4dcc-99a5-8a1c45b38b94",
         "operation": "verification.verify",
-        "request_id": "a284df1d-4bfe-4c73-af18-73ee15556065",
+        "request_id": "d2f320ee-5789-4eb7-8540-a3c7b2a024fd",
         "result": "failure",
         "schema_version": "1.0",
         "source_kind": "mock",
         "status": "failed",
-        "timestamp": "2026-09-19T15:43:08.033Z",
-        "trace_id": "139298b2-4d31-45ba-994c-2cf8ccf1a09d",
+        "timestamp": "2026-09-19T15:41:59.717Z",
+        "trace_id": "ff86a854-52c6-49f1-89d5-33637fd02bc7",
         "verification_profile_version": "sim-exact-match-v1"
       },
       "within_budget": true
@@ -1020,7 +1020,7 @@
       "backend": "verification",
       "cleanup_complete": true,
       "decision": "RECONCILE",
-      "duration_ms": 11.342,
+      "duration_ms": 12.409,
       "expected_decision": "RECONCILE",
       "id": "SIM009-VERIFY-UNCERTAIN",
       "injection": "ambiguous normalized observation",
@@ -1043,7 +1043,7 @@
       "pass": true,
       "route": "RECONCILE",
       "verification": {
-        "action_id": "c49c3361-b18e-4cf7-ad14-71392136adb6",
+        "action_id": "c9cfc23c-e1ef-41b3-b12a-f4cadb8536f4",
         "component_version": "sim006-verification-backend-v1",
         "confidence": 0.0,
         "evidence_refs": [
@@ -1054,15 +1054,15 @@
         ],
         "message_type": "result",
         "mismatch_code": "INSUFFICIENT_OR_AMBIGUOUS_EVIDENCE",
-        "mission_id": "5342673f-225e-4a3d-9bca-cd0881bec361",
+        "mission_id": "bfd3aa1c-ac7f-453d-8f11-69965fa13f3f",
         "operation": "verification.verify",
-        "request_id": "f507b20e-b98e-47f3-b72e-94974426cb3e",
+        "request_id": "5fa5297f-c2cd-46f0-ab53-f847feeb9893",
         "result": "success",
         "schema_version": "1.0",
         "source_kind": "mock",
         "status": "succeeded",
-        "timestamp": "2026-09-19T15:43:08.042Z",
-        "trace_id": "dac7edd3-3d1d-4686-8290-fc1e2e08494a",
+        "timestamp": "2026-09-19T15:41:59.726Z",
+        "trace_id": "eb7f005f-e8fe-4e06-8bf8-be5f1a8cb9ec",
         "verdict": "uncertain",
         "verification_profile_version": "sim-exact-match-v1"
       },

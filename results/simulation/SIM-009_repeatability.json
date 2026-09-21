@@ -1,0 +1,43 @@
+{
+  "schema_version": 1,
+  "task_id": "TASK-SIM-009",
+  "proof_type": "consecutive_live_run_repeatability",
+  "created_at": "2026-09-19T15:44:31.171559+00:00",
+  "result": "PASS",
+  "requirements": {
+    "consecutive_successful_runs": 2,
+    "cleanup_required_each_run": true,
+    "canonical_matches_latest_run": true
+  },
+  "runs": [
+    {
+      "sequence": 1,
+      "path": "results/simulation/SIM-009_failure_recovery_run1.json",
+      "sha256": "af8ce56b823f4f9376ac7cf96e13f395fa923efb059d4458eea10c925bea9922",
+      "generated_at": "2026-09-19T15:41:59.843Z",
+      "task_specific_result": "SIM_FAILURE_SUITE_READY",
+      "cleanup_complete": true,
+      "scenario_count": 16,
+      "failed_scenarios": []
+    },
+    {
+      "sequence": 2,
+      "path": "results/simulation/SIM-009_failure_recovery_run2.json",
+      "sha256": "f1257e5616add50243b9d9fb1df8fcadb53fa7a3070a45f462ede2bf182351f2",
+      "generated_at": "2026-09-19T15:43:08.160Z",
+      "task_specific_result": "SIM_FAILURE_SUITE_READY",
+      "cleanup_complete": true,
+      "scenario_count": 16,
+      "failed_scenarios": []
+    }
+  ],
+  "canonical": {
+    "path": "results/simulation/SIM-009_failure_recovery.json",
+    "sha256": "f1257e5616add50243b9d9fb1df8fcadb53fa7a3070a45f462ede2bf182351f2",
+    "generated_at": "2026-09-19T15:43:08.160Z",
+    "task_specific_result": "SIM_FAILURE_SUITE_READY",
+    "cleanup_complete": true,
+    "scenario_count": 16,
+    "failed_scenarios": []
+  }
+}
