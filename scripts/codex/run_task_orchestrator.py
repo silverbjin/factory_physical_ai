@@ -14,6 +14,7 @@ Key properties:
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import os
 import queue
@@ -129,6 +130,13 @@ class TaskAssessment:
     reasons: tuple[str, ...]
     task_path: str
     explicit_override: bool = False
+
+
+@dataclass(frozen=True)
+class DiagnosisHistoryRecord:
+    path: Path
+    sequence: int
+    status: str
 
 
 @dataclass
@@ -621,6 +629,233 @@ def text_requires_diagnosis(text: str) -> bool:
     return any(pattern.search(text) for _, pattern in _HARD_RED_RULES)
 
 
+_DIAGNOSIS_FINAL_STATUS_RE = re.compile(
+    r"^\s*(?:[-*]\s*)?final\s+diagnosis\s+(?:status|result)\s*:\s*(RESOLVED|UNRESOLVED)\s*$",
+    re.IGNORECASE,
+)
+_DIAGNOSIS_GENERIC_STATUS_RE = re.compile(
+    r"^\s*(?:[-*]\s*)?(?:diagnosis\s+)?(?:status|result)\s*:\s*(RESOLVED|UNRESOLVED)\s*$",
+    re.IGNORECASE,
+)
+_DIAGNOSIS_HISTORY_NAME_RE = re.compile(r"^(?P<seq>\d+)_diagnosis\.md$", re.IGNORECASE)
+_REVIEW_HISTORY_NAME_RE = re.compile(r"^(?P<seq>\d+)_(?:re)?review\.md$", re.IGNORECASE)
+
+
+def parse_diagnosis_history_status(text: str) -> str | None:
+    """Parse the final diagnosis status without substring ambiguity.
+
+    Explicit `Final diagnosis status/result` wins. Otherwise a generic exact
+    `Status/Result: RESOLVED|UNRESOLVED` form is accepted only when all such
+    generic declarations agree. This intentionally prevents UNRESOLVED from
+    matching RESOLVED by substring.
+    """
+    final_statuses: list[str] = []
+    generic_statuses: list[str] = []
+    for line in text.splitlines():
+        match = _DIAGNOSIS_FINAL_STATUS_RE.match(line)
+        if match:
+            final_statuses.append(match.group(1).upper())
+            continue
+        match = _DIAGNOSIS_GENERIC_STATUS_RE.match(line)
+        if match:
+            generic_statuses.append(match.group(1).upper())
+
+    if final_statuses:
+        return final_statuses[-1]
+    if generic_statuses and len(set(generic_statuses)) == 1:
+        return generic_statuses[-1]
+    return None
+
+
+def diagnosis_history_sequence(path: Path) -> int | None:
+    match = _DIAGNOSIS_HISTORY_NAME_RE.fullmatch(path.name)
+    return int(match.group("seq")) if match else None
+
+
+def latest_resolved_diagnosis(repo: Path, task_id: str) -> DiagnosisHistoryRecord | None:
+    history_dir = repo / "docs" / "task_history" / task_id
+    if not history_dir.is_dir():
+        return None
+    candidates: list[tuple[int, Path]] = []
+    for path in history_dir.iterdir():
+        if not path.is_file():
+            continue
+        sequence = diagnosis_history_sequence(path)
+        if sequence is not None:
+            candidates.append((sequence, path))
+    for sequence, path in sorted(candidates, key=lambda item: item[0], reverse=True):
+        try:
+            status = parse_diagnosis_history_status(path.read_text(encoding="utf-8", errors="replace"))
+        except OSError:
+            continue
+        if status == "RESOLVED":
+            return DiagnosisHistoryRecord(path=path.resolve(), sequence=sequence, status=status)
+    return None
+
+
+def latest_review_history_sequence(repo: Path, task_id: str) -> int | None:
+    history_dir = repo / "docs" / "task_history" / task_id
+    if not history_dir.is_dir():
+        return None
+    sequences: list[int] = []
+    for path in history_dir.iterdir():
+        if not path.is_file():
+            continue
+        match = _REVIEW_HISTORY_NAME_RE.fullmatch(path.name)
+        if match:
+            sequences.append(int(match.group("seq")))
+    return max(sequences) if sequences else None
+
+
+def _clear_bound_diagnosis_state(state: dict[str, Any]) -> None:
+    state["diagnosis_path"] = None
+    state["diagnosis_sequence"] = None
+    state["diagnosis_binding_source"] = None
+    state["diagnosis_bound_at"] = None
+
+
+def _diagnosis_path_exists(repo: Path, state: dict[str, Any]) -> bool:
+    raw = state.get("diagnosis_path")
+    if not raw:
+        return False
+    path = Path(str(raw)).expanduser()
+    if not path.is_absolute():
+        path = repo / path
+    return path.is_file()
+
+
+def _checkpoint_diagnosis_record(state: dict[str, Any]) -> DiagnosisHistoryRecord | None:
+    raw = state.get("diagnosis_path")
+    if not raw:
+        return None
+    path = Path(str(raw)).expanduser()
+    if not path.is_absolute():
+        repo_raw = state.get("repo")
+        if repo_raw:
+            path = Path(str(repo_raw)) / path
+    if not path.is_file():
+        return None
+    sequence = diagnosis_history_sequence(path)
+    if sequence is None:
+        return None
+    try:
+        status = parse_diagnosis_history_status(path.read_text(encoding="utf-8", errors="replace"))
+    except OSError:
+        return None
+    if status != "RESOLVED":
+        return None
+    return DiagnosisHistoryRecord(path=path.resolve(), sequence=sequence, status=status)
+
+
+def bind_latest_resolved_diagnosis(
+    repo: Path,
+    task_id: str,
+    state: dict[str, Any],
+    *,
+    ctx: RunContext | None = None,
+) -> bool:
+    """Bind the newest durable RESOLVED task-history diagnosis into checkpoint state."""
+    latest = latest_resolved_diagnosis(repo, task_id)
+    latest_review_sequence = latest_review_history_sequence(repo, task_id)
+    current = _checkpoint_diagnosis_record(state)
+    current_raw = str(state.get("diagnosis_path") or "")
+
+    def stale_after_review(record: DiagnosisHistoryRecord | None) -> bool:
+        return bool(
+            record is not None
+            and latest_review_sequence is not None
+            and record.sequence < latest_review_sequence
+        )
+
+    # A repository diagnosis older than a newer Review/Re-review generation is
+    # stale for RED Fix resume. Never silently reuse it for the new finding.
+    if latest is not None and stale_after_review(latest):
+        latest = None
+    if current is not None and stale_after_review(current):
+        old_name = Path(current_raw).name if current_raw else None
+        _clear_bound_diagnosis_state(state)
+        if ctx is not None:
+            ctx.progress(
+                "BIND",
+                f"{task_id} stale diagnosis cleared old={old_name or '-'} "
+                f"latest_review_seq={latest_review_sequence}",
+            )
+        current = None
+        current_raw = ""
+        if latest is None:
+            return True
+
+    if latest is None:
+        return False
+
+    should_bind = current is None or latest.sequence > current.sequence
+
+    # A transient Codex final output is intentionally superseded once durable
+    # task history contains a current RESOLVED diagnosis.
+    if not should_bind and state.get("diagnosis_binding_source") != "task_history":
+        should_bind = True
+
+    if not should_bind:
+        return False
+
+    old_name = Path(current_raw).name if current_raw else None
+    state["diagnosis_path"] = str(latest.path)
+    state["diagnosis_sequence"] = latest.sequence
+    state["diagnosis_binding_source"] = "task_history"
+    state["diagnosis_bound_at"] = iso_now()
+    if ctx is not None:
+        if old_name and old_name != latest.path.name:
+            ctx.progress(
+                "BIND",
+                f"{task_id} diagnosis refreshed old={old_name} new={latest.path.name} "
+                f"source=task_history seq={latest.sequence}",
+            )
+        else:
+            ctx.progress(
+                "BIND",
+                f"{task_id} diagnosis {latest.path.relative_to(repo).as_posix()} "
+                f"source=task_history seq={latest.sequence} status=RESOLVED",
+            )
+    return True
+
+
+def diagnosis_trigger_signature(text: str) -> str:
+    normalized = "\n".join(line.rstrip() for line in text.strip().splitlines())
+    return hashlib.sha256(normalized.encode("utf-8")).hexdigest()
+
+
+def review_reject_next_phase(task_class: str, review_text: str) -> str:
+    if task_class == "RED" or text_requires_diagnosis(review_text):
+        return "diagnosis"
+    return "fix"
+
+
+def fix_not_ready_next_phase(
+    task_class: str,
+    fix_text: str,
+    *,
+    diagnosed_trigger_signature: str | None,
+) -> str:
+    del task_class  # class is retained in the interface for policy evolution.
+    if not text_requires_diagnosis(fix_text):
+        return "stop"
+    signature = diagnosis_trigger_signature(fix_text)
+    if diagnosed_trigger_signature == signature:
+        return "stop"
+    return "diagnosis"
+
+
+def rereview_reject_next_phase(
+    task_class: str,
+    rereview_text: str,
+    *,
+    fix_budget_available: bool,
+) -> str:
+    if task_class == "RED" or text_requires_diagnosis(rereview_text):
+        return "diagnosis"
+    return "fix" if fix_budget_available else "stop"
+
+
 def latest_stage_record(ctx: RunContext, task_id: str, role: str) -> StageRunRecord | None:
     return next(
         (record for record in reversed(ctx.stage_records) if record.task_id == task_id and record.role == role),
@@ -827,6 +1062,8 @@ def child_prompt(
     resume_reason: str | None = None,
     diagnosis_path: str | None = None,
     diagnosis_reason: str | None = None,
+    diagnosis_binding_source: str | None = None,
+    diagnosis_sequence: int | None = None,
 ) -> str:
     """Build an explicit child-worker envelope so Codex cannot confuse the worker
     with the host-side `Run ...` entry point.
@@ -853,6 +1090,10 @@ def child_prompt(
         lines.append("Read that bounded diagnosis before editing or re-reviewing.")
     if diagnosis_reason:
         lines.append(f"diagnosis_reason={diagnosis_reason}")
+    if diagnosis_binding_source:
+        lines.append(f"diagnosis_binding_source={diagnosis_binding_source}")
+    if diagnosis_sequence is not None:
+        lines.append(f"diagnosis_sequence={diagnosis_sequence}")
 
     if resume:
         lines.append("resume=true")
@@ -1115,6 +1356,8 @@ def write_manual_resume_prompt(
         or state.get("status"),
         diagnosis_path=state.get("diagnosis_path"),
         diagnosis_reason=state.get("diagnosis_reason"),
+        diagnosis_binding_source=state.get("diagnosis_binding_source"),
+        diagnosis_sequence=state.get("diagnosis_sequence"),
     )
     path = ctx.run_dir / "resume_prompt.txt"
     path.write_text(prompt, encoding="utf-8")
@@ -1736,6 +1979,12 @@ def run_task(
             "diagnosis_return_phase": "implementation",
             "diagnosis_reason": "initial_red_classification" if class_cfg.diagnosis_required else None,
             "diagnosis_path": None,
+            "diagnosis_sequence": None,
+            "diagnosis_binding_source": None,
+            "diagnosis_bound_at": None,
+            "diagnosis_trigger_stage": "classification" if class_cfg.diagnosis_required else None,
+            "diagnosis_trigger_path": None,
+            "diagnosis_trigger_signature": None,
             "implementation_escalated": False,
             "implementation_resume_after_diagnosis": False,
             "fix_resume_after_diagnosis": False,
@@ -1779,9 +2028,27 @@ def run_task(
         state.setdefault("diagnosis_return_phase", "implementation")
         state.setdefault("diagnosis_reason", None)
         state.setdefault("diagnosis_path", None)
+        state.setdefault("diagnosis_sequence", None)
+        state.setdefault("diagnosis_binding_source", None)
+        state.setdefault("diagnosis_bound_at", None)
+        state.setdefault("diagnosis_trigger_stage", None)
+        state.setdefault("diagnosis_trigger_path", None)
+        state.setdefault("diagnosis_trigger_signature", None)
         state.setdefault("implementation_escalated", False)
         state.setdefault("implementation_resume_after_diagnosis", False)
         state.setdefault("fix_resume_after_diagnosis", False)
+        if str(state.get("phase") or "") == "fix":
+            bind_latest_resolved_diagnosis(repo, task_id, state, ctx=ctx)
+            effective_resume_class = str(state.get("effective_task_class") or assessment.task_class)
+            if effective_resume_class == "RED" and not _diagnosis_path_exists(repo, state):
+                state["phase"] = "diagnosis"
+                state["diagnosis_return_phase"] = "fix"
+                state["diagnosis_reason"] = "fix_resume_missing_current_resolved_diagnosis"
+                state["diagnosis_trigger_stage"] = "resume_fix"
+                state["diagnosis_trigger_path"] = None
+                state["diagnosis_trigger_signature"] = None
+                state["fix_resume_after_diagnosis"] = True
+                ctx.progress("ESCALATE", f"{task_id} fix resume lacks current diagnosis → RED diagnosis")
         resume_source_dir = state.get("current_run_dir") or state.get("previous_run_dir")
         resume_reason = state.get("last_error") or state.get("status")
         state["previous_run_dir"] = resume_source_dir
@@ -1808,11 +2075,44 @@ def run_task(
             raise OrchestratorError(f"Invalid effective TASK class in checkpoint: {value}")
         return value
 
-    def promote_to_red(reason: str, return_phase: str) -> None:
+    def clear_diagnosis_binding() -> None:
+        state["diagnosis_path"] = None
+        state["diagnosis_sequence"] = None
+        state["diagnosis_binding_source"] = None
+        state["diagnosis_bound_at"] = None
+
+    def schedule_diagnosis(
+        reason: str,
+        return_phase: str,
+        *,
+        trigger_stage: str,
+        trigger_text: str = "",
+        trigger_path: str | None = None,
+    ) -> None:
         state["effective_task_class"] = "RED"
         state["diagnosis_reason"] = reason
         state["diagnosis_return_phase"] = return_phase
-        state["diagnosis_path"] = None
+        state["diagnosis_trigger_stage"] = trigger_stage
+        state["diagnosis_trigger_path"] = trigger_path
+        state["diagnosis_trigger_signature"] = (
+            diagnosis_trigger_signature(trigger_text) if trigger_text else None
+        )
+        clear_diagnosis_binding()
+
+    def promote_to_red(reason: str, return_phase: str) -> None:
+        schedule_diagnosis(
+            reason,
+            return_phase,
+            trigger_stage=return_phase,
+        )
+
+    def diagnosis_prompt_metadata() -> dict[str, Any]:
+        return {
+            "diagnosis_path": state.get("diagnosis_path"),
+            "diagnosis_reason": state.get("diagnosis_reason"),
+            "diagnosis_binding_source": state.get("diagnosis_binding_source"),
+            "diagnosis_sequence": state.get("diagnosis_sequence"),
+        }
 
     while True:
         transition_checkpoint(
@@ -1836,6 +2136,10 @@ def run_task(
                     resume_reason=resume_reason if is_resumed_stage(phase) else None,
                     diagnosis_path=state.get("diagnosis_path") if phase == "diagnosis_escalated" else None,
                     diagnosis_reason=str(state.get("diagnosis_reason") or "task_classification"),
+                    diagnosis_binding_source=(
+                        state.get("diagnosis_binding_source") if phase == "diagnosis_escalated" else None
+                    ),
+                    diagnosis_sequence=(state.get("diagnosis_sequence") if phase == "diagnosis_escalated" else None),
                 ),
                 repo,
                 config,
@@ -1870,9 +2174,31 @@ def run_task(
             record = latest_stage_record(ctx, task_id, role)
             if record and record.final_path:
                 state["diagnosis_path"] = record.final_path
+                state["diagnosis_sequence"] = None
+                state["diagnosis_binding_source"] = "worker_output"
+                state["diagnosis_bound_at"] = iso_now()
 
             if diagnosis.status == "RESOLVED":
-                phase = str(state.get("diagnosis_return_phase") or "implementation")
+                return_phase = str(state.get("diagnosis_return_phase") or "implementation")
+                if return_phase == "fix" and int(state.get("fix_cycles_used") or 0) >= max_fix_cycles:
+                    transition_checkpoint(
+                        ctx,
+                        state,
+                        phase="fix",
+                        status="DIAGNOSIS_RESOLVED_FIX_BUDGET_EXHAUSTED",
+                        last_error="Diagnosis resolved the new blocker, but no Fix cycle remains.",
+                        commits=commits,
+                    )
+                    return {
+                        "task_id": task_id,
+                        "status": "DIAGNOSIS_RESOLVED_FIX_BUDGET_EXHAUSTED",
+                        "task_assessment": state["task_assessment"],
+                        "effective_task_class": effective_class(),
+                        "diagnosis_path": state.get("diagnosis_path"),
+                        "commits": commits,
+                        "events": events,
+                    }
+                phase = return_phase
                 resuming = False
                 continue
 
@@ -1920,8 +2246,7 @@ def run_task(
                         if is_resumed_stage("implementation")
                         else (str(state.get("diagnosis_reason") or "diagnosis_resolved") if internal_resume else None)
                     ),
-                    diagnosis_path=state.get("diagnosis_path"),
-                    diagnosis_reason=state.get("diagnosis_reason"),
+                    **diagnosis_prompt_metadata(),
                 ),
                 repo,
                 config,
@@ -1993,8 +2318,7 @@ def run_task(
                     resume_from_stage="review" if is_resumed_stage("review") else None,
                     previous_run_dir=resume_source_dir if is_resumed_stage("review") else None,
                     resume_reason=resume_reason if is_resumed_stage("review") else None,
-                    diagnosis_path=state.get("diagnosis_path"),
-                    diagnosis_reason=state.get("diagnosis_reason"),
+                    **diagnosis_prompt_metadata(),
                 ),
                 repo,
                 config,
@@ -2021,10 +2345,16 @@ def run_task(
                     "commits": commits,
                     "events": events,
                 }
+            review_text = latest_stage_final_text(ctx, task_id, "review")
+            review_record = latest_stage_record(ctx, task_id, "review")
             state["review_status"] = review.status
             state["review_requires_diagnosis"] = (
-                review.status == "REJECT" and text_requires_diagnosis(latest_stage_final_text(ctx, task_id, "review"))
+                review.status == "REJECT" and text_requires_diagnosis(review_text)
             )
+            state["review_trigger_signature"] = (
+                diagnosis_trigger_signature(review_text) if review.status == "REJECT" else None
+            )
+            state["review_final_path"] = review_record.final_path if review_record else None
             phase = "commit_implementation_review"
             resuming = False
             continue
@@ -2064,11 +2394,22 @@ def run_task(
                         "commits": commits,
                         "events": events,
                     }
-                if bool(state.get("review_requires_diagnosis")):
-                    promote_to_red("review_unproven_or_conflicting_finding", "fix")
-                    phase = "diagnosis"
-                else:
-                    phase = "fix"
+                review_path = state.get("review_final_path")
+                review_text = (
+                    Path(str(review_path)).read_text(encoding="utf-8", errors="replace")
+                    if review_path and Path(str(review_path)).is_file()
+                    else ""
+                )
+                next_phase = review_reject_next_phase(effective_class(), review_text)
+                if next_phase == "diagnosis":
+                    schedule_diagnosis(
+                        "review_reject_requires_formal_diagnosis",
+                        "fix",
+                        trigger_stage="review",
+                        trigger_text=review_text,
+                        trigger_path=review_path,
+                    )
+                phase = next_phase
 
             transition_checkpoint(
                 ctx,
@@ -2107,8 +2448,7 @@ def run_task(
                     resume_reason=(
                         resume_reason if is_resumed_stage("fix") else (str(state.get("diagnosis_reason") or "diagnosis_resolved") if internal_resume else None)
                     ),
-                    diagnosis_path=state.get("diagnosis_path"),
-                    diagnosis_reason=state.get("diagnosis_reason"),
+                    **diagnosis_prompt_metadata(),
                 ),
                 repo,
                 config,
@@ -2141,9 +2481,25 @@ def run_task(
                     "events": events,
                 }
             if fix.status != "READY_FOR_RE_REVIEW":
-                if effective_class() != "RED" and not bool(state.get("fix_resume_after_diagnosis")):
+                fix_text = latest_stage_final_text(ctx, task_id, "fix")
+                fix_record = latest_stage_record(ctx, task_id, "fix")
+                if bool(state.get("fix_resume_after_diagnosis")) and state.get("diagnosis_trigger_stage") == "fix":
+                    next_phase = "stop"
+                else:
+                    next_phase = fix_not_ready_next_phase(
+                        effective_class(),
+                        fix_text,
+                        diagnosed_trigger_signature=state.get("diagnosis_trigger_signature"),
+                    )
+                if next_phase == "diagnosis":
                     state["fix_resume_after_diagnosis"] = True
-                    promote_to_red("fix_not_ready", "fix")
+                    schedule_diagnosis(
+                        "fix_not_ready_requires_formal_diagnosis",
+                        "fix",
+                        trigger_stage="fix",
+                        trigger_text=fix_text,
+                        trigger_path=fix_record.final_path if fix_record else None,
+                    )
                     phase = "diagnosis"
                     resuming = False
                     ctx.progress("ESCALATE", f"{task_id} fix not ready → RED diagnosis")
@@ -2175,8 +2531,7 @@ def run_task(
                     resume_from_stage="rereview" if is_resumed_stage("rereview") else None,
                     previous_run_dir=resume_source_dir if is_resumed_stage("rereview") else None,
                     resume_reason=resume_reason if is_resumed_stage("rereview") else None,
-                    diagnosis_path=state.get("diagnosis_path"),
-                    diagnosis_reason=state.get("diagnosis_reason"),
+                    **diagnosis_prompt_metadata(),
                 ),
                 repo,
                 config,
@@ -2203,7 +2558,16 @@ def run_task(
                     "commits": commits,
                     "events": events,
                 }
+            rereview_text = latest_stage_final_text(ctx, task_id, "rereview")
+            rereview_record = latest_stage_record(ctx, task_id, "rereview")
             state["review_status"] = rereview.status
+            state["rereview_requires_diagnosis"] = (
+                rereview.status == "REJECT" and text_requires_diagnosis(rereview_text)
+            )
+            state["rereview_trigger_signature"] = (
+                diagnosis_trigger_signature(rereview_text) if rereview.status == "REJECT" else None
+            )
+            state["rereview_final_path"] = rereview_record.final_path if rereview_record else None
             phase = "commit_fix_rereview"
             resuming = False
             continue
@@ -2233,9 +2597,29 @@ def run_task(
                 state["accepted_commit"] = fix_commit
                 phase = "acceptance"
             else:
-                if int(state.get("fix_cycles_used") or 0) < max_fix_cycles:
-                    promote_to_red("repeated_reject_after_fix", "fix")
+                budget_available = int(state.get("fix_cycles_used") or 0) < max_fix_cycles
+                rereview_path = state.get("rereview_final_path")
+                rereview_text = (
+                    Path(str(rereview_path)).read_text(encoding="utf-8", errors="replace")
+                    if rereview_path and Path(str(rereview_path)).is_file()
+                    else ""
+                )
+                next_phase = rereview_reject_next_phase(
+                    effective_class(),
+                    rereview_text,
+                    fix_budget_available=budget_available,
+                )
+                if next_phase == "diagnosis":
+                    schedule_diagnosis(
+                        "rereview_reject_requires_formal_diagnosis",
+                        "fix",
+                        trigger_stage="rereview",
+                        trigger_text=rereview_text,
+                        trigger_path=rereview_path,
+                    )
                     phase = "diagnosis"
+                elif next_phase == "fix":
+                    phase = "fix"
                 else:
                     transition_checkpoint(ctx, state, phase="fix", status="REJECTED_AFTER_REVIEW", commits=commits)
                     return {
@@ -2409,6 +2793,12 @@ def derive_next_action(result: dict[str, Any], errors: list[ErrorRecord]) -> tup
             "Inspect the Fix final response/log and remaining Findings.",
             "Resolve the blocker without discarding target-task work.",
             "Then resume with: scripts/codex/resume-task <TASK_ID>",
+        ]
+    if status == "DIAGNOSIS_RESOLVED_FIX_BUDGET_EXHAUSTED":
+        return "AUTHORIZE_ADDITIONAL_FIX_CYCLE_OR_STOP", [
+            "The new Review/Re-review blocker was formally diagnosed and resolved.",
+            "No Fix cycle remains under the current --max-fix-cycles budget.",
+            "If another Fix is authorized, resume with a larger --max-fix-cycles value and --from-stage fix.",
         ]
     if status in {"REJECTED_AFTER_REVIEW", "REJECTED_NO_FIX"}:
         return "MANUAL_REVIEW_REQUIRED", [

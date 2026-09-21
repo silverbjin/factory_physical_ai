@@ -76,6 +76,8 @@ Resume rules:
 - do not repeat lifecycle stages that the host checkpoint has already completed;
 - prior incomplete history records are audit context, not proof of completion;
 - complete the current `fix` stage and re-run its required validation;
+- when required live/canonical Evidence has already been generated externally in the preserved worktree because the child worker cannot complete that command within its execution ceiling, validate that persisted Evidence instead of automatically re-running the same long command;
+- never accept external Evidence from user assertion alone; the persisted artifact and repository/runtime provenance must independently support the claim;
 - end with the normal mandatory `WORKFLOW_RESULT_JSON` marker.
 
 If the supplied worktree cannot be reconciled safely with the active TASK, stop
@@ -230,6 +232,7 @@ TEST_GAP
 VALIDATION_FAILURE
 REGRESSION_FAILURE
 EVIDENCE_FAILURE
+EXTERNAL_LIVE_EVIDENCE
 UNEXPECTED_REPOSITORY_CHANGE
 GIT_HISTORY_ISSUE
 ```
@@ -472,6 +475,80 @@ activate EVIDENCE_FAILURE
 
 ---
 
+### 9.1 Externally Generated Live Evidence on Resume
+
+Use this exception only when all of the following are true:
+
+- the Fix is running under an orchestrated `resume=true` flow or an equivalent preserved-worktree continuation;
+- the TASK requires a live/canonical runtime command;
+- the same command previously exceeded the child worker's execution ceiling or cannot be completed safely inside the bounded Codex worker;
+- the live command was subsequently executed outside the child worker against the same preserved worktree;
+- the declared Evidence artifact now exists and is intended to represent that external live execution.
+
+When these conditions apply:
+
+```text
+activate EXTERNAL_LIVE_EVIDENCE
+```
+
+Do **not** fail the Fix merely because the child worker cannot itself re-run the same long live command.
+
+Do **not** re-run a known-over-ceiling live command solely to reproduce already-generated Evidence.
+
+Instead, independently validate the persisted Evidence.
+
+At minimum verify:
+
+1. the Evidence file is the TASK-declared canonical Evidence path;
+2. the Evidence parses and matches the required schema/contract;
+3. `task_id` and task-specific terminal result are correct;
+4. the Evidence binds to the expected accepted predecessor artifacts/commits when required;
+5. runtime-derived fields required by the blocking Review findings are present and internally consistent;
+6. no required field is merely a locally assigned success boolean when the contract requires authoritative runtime observation;
+7. cleanup/process evidence is complete when required;
+8. retry/reconciliation/idempotency evidence is complete when required;
+9. the Evidence does not claim a result that contradicts the current source/config/test state;
+10. focused validation and required regression still pass in the current preserved worktree;
+11. `git diff --check` passes;
+12. no stale or unrelated Evidence artifact is being substituted for the current TASK.
+
+For live retry/idempotency Evidence, verify the contract-required relationships rather than only checking a top-level READY field. Examples include, when applicable:
+
+- request identity → runtime goal identity binding;
+- reconciliation against the same authoritative runtime goal;
+- retry authorization only after an authoritative retryable failure;
+- retry suppression after authoritative success or unresolved unknown status;
+- exactly one completed logical side effect;
+- no task-started runtime process or goal remains active after cleanup.
+
+If the TASK explicitly requires multiple consecutive live runs to prove cleanup or stale-state isolation, a single persisted Evidence artifact is not by itself proof that multiple runs occurred unless the artifact records that fact.
+
+In that case, accept the multiple-run requirement only when one of these is available:
+
+- the Evidence schema itself records both run identities/results;
+- a TASK-declared runtime-validation artifact records both runs;
+- preserved TASK history records the commands and results with enough detail to verify them;
+- another repository-controlled artifact required by the TASK provides equivalent proof.
+
+If multiple-run proof is required but none of those repository-verifiable records exist:
+
+```text
+activate EVIDENCE_FAILURE
+```
+
+Do not infer multiple successful executions from user prose alone.
+
+When externally generated Evidence is independently valid, report:
+
+```text
+Evidence: PASS — externally generated live Evidence independently validated
+```
+
+This exception does not weaken any Review finding, frozen contract, validation requirement, or Evidence Gate. It only separates **Evidence generation** from **Evidence verification** when the worker execution ceiling prevents the live generator from completing inside Codex.
+
+
+---
+
 ## 10. Git History
 
 Default rule:
@@ -609,7 +686,7 @@ Findings:
 Validation:
 - focused: PASS
 - regression: PASS | NOT REQUIRED
-- Evidence: PASS | NOT APPLICABLE
+- Evidence: PASS | PASS — externally generated live Evidence independently validated | NOT APPLICABLE
 
 Git history:
 - NO HISTORY ACTION REQUIRED
@@ -718,6 +795,8 @@ Do not default to:
 ```text
 full regression
 ```
+
+Do not default to re-running a known-over-ceiling live/canonical Evidence generator during resume when a current externally generated canonical Evidence artifact can be independently validated under Section 9.1.
 
 Do not default to:
 
