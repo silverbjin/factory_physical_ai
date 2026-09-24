@@ -791,8 +791,13 @@ def bind_latest_resolved_diagnosis(
     should_bind = current is None or latest.sequence > current.sequence
 
     # A transient Codex final output is intentionally superseded once durable
-    # task history contains a current RESOLVED diagnosis.
-    if not should_bind and state.get("diagnosis_binding_source") != "task_history":
+    # task history contains a current RESOLVED diagnosis. Rebind if any
+    # checkpoint metadata disagrees with the durable record.
+    if not should_bind and (
+        state.get("diagnosis_binding_source") != "task_history"
+        or state.get("diagnosis_sequence") != latest.sequence
+        or current.path != latest.path
+    ):
         should_bind = True
 
     if not should_bind:
@@ -2037,9 +2042,10 @@ def run_task(
         state.setdefault("implementation_escalated", False)
         state.setdefault("implementation_resume_after_diagnosis", False)
         state.setdefault("fix_resume_after_diagnosis", False)
-        if str(state.get("phase") or "") == "fix":
+        resume_phase_name = str(state.get("phase") or "")
+        effective_resume_class = str(state.get("effective_task_class") or assessment.task_class)
+        if resume_phase_name == "fix":
             bind_latest_resolved_diagnosis(repo, task_id, state, ctx=ctx)
-            effective_resume_class = str(state.get("effective_task_class") or assessment.task_class)
             if effective_resume_class == "RED" and not _diagnosis_path_exists(repo, state):
                 state["phase"] = "diagnosis"
                 state["diagnosis_return_phase"] = "fix"
@@ -2049,6 +2055,29 @@ def run_task(
                 state["diagnosis_trigger_signature"] = None
                 state["fix_resume_after_diagnosis"] = True
                 ctx.progress("ESCALATE", f"{task_id} fix resume lacks current diagnosis → RED diagnosis")
+        if (
+            resume_phase_name == "implementation"
+            and effective_resume_class == "RED"
+            and bool(state.get("implementation_resume_after_diagnosis"))
+        ):
+            bind_latest_resolved_diagnosis(repo, task_id, state, ctx=ctx)
+            durable_diagnosis = _checkpoint_diagnosis_record(state)
+            if (
+                state.get("diagnosis_binding_source") != "task_history"
+                or durable_diagnosis is None
+            ):
+                _clear_bound_diagnosis_state(state)
+                state["phase"] = "diagnosis"
+                state["diagnosis_return_phase"] = "implementation"
+                state["diagnosis_reason"] = "implementation_resume_missing_current_resolved_diagnosis"
+                state["diagnosis_trigger_stage"] = "resume_implementation"
+                state["diagnosis_trigger_path"] = None
+                state["diagnosis_trigger_signature"] = None
+                state["implementation_resume_after_diagnosis"] = True
+                ctx.progress(
+                    "ESCALATE",
+                    f"{task_id} implementation resume lacks current diagnosis → RED diagnosis",
+                )
         resume_source_dir = state.get("current_run_dir") or state.get("previous_run_dir")
         resume_reason = state.get("last_error") or state.get("status")
         state["previous_run_dir"] = resume_source_dir

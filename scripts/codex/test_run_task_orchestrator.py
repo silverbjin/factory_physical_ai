@@ -4,12 +4,15 @@ import subprocess
 import tempfile
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
 from run_task_orchestrator import (
     AcceptanceResult,
     ErrorRecord,
     ModelConfig,
     OrchestratorError,
+    StageResult,
+    bind_latest_resolved_diagnosis,
     terminate_child_process,
     RunContext,
     child_prompt,
@@ -30,12 +33,177 @@ from run_task_orchestrator import (
     parse_acceptance_result,
     parse_workflow_result,
     task_scope,
+    run_task,
     validate_acceptance_write,
     write_reports,
 )
 
 
 class OrchestratorUnitTests(unittest.TestCase):
+    def _init_resume_repo(self, repo: Path) -> str:
+        subprocess.run(["git", "init", "-q"], cwd=repo, check=True)
+        subprocess.run(["git", "config", "user.name", "Test User"], cwd=repo, check=True)
+        subprocess.run(["git", "config", "user.email", "test@example.com"], cwd=repo, check=True)
+        (repo / "seed.txt").write_text("seed\n", encoding="utf-8")
+        subprocess.run(["git", "add", "-A"], cwd=repo, check=True)
+        subprocess.run(["git", "commit", "-qm", "initial"], cwd=repo, check=True)
+        return subprocess.run(
+            ["git", "rev-parse", "HEAD"], cwd=repo, text=True, stdout=subprocess.PIPE, check=True
+        ).stdout.strip()
+
+    def _red_implementation_resume_state(self, repo: Path, head: str) -> dict[str, object]:
+        branch = subprocess.run(
+            ["git", "branch", "--show-current"], cwd=repo, text=True, stdout=subprocess.PIPE, check=True
+        ).stdout.strip()
+        return {
+            "schema_version": 2,
+            "task_id": "TASK-SIM-010",
+            "repo": str(repo),
+            "branch": branch,
+            "initial_head": head,
+            "current_head": head,
+            "phase": "implementation",
+            "status": "BLOCKED",
+            "task_assessment": {
+                "task_id": "TASK-SIM-010",
+                "task_class": "RED",
+                "score": 7,
+                "reasons": ["test"],
+                "task_path": "tasks/TASK-SIM-010.md",
+                "explicit_override": False,
+            },
+            "effective_task_class": "RED",
+            "diagnosis_return_phase": "implementation",
+            "diagnosis_reason": "implementation_incomplete",
+            "diagnosis_path": "/tmp/transient-worker-output_diagnosis_final.txt",
+            "diagnosis_sequence": None,
+            "diagnosis_binding_source": "worker_output",
+            "diagnosis_bound_at": "2026-09-25T00:00:00Z",
+            "diagnosis_trigger_stage": "implementation",
+            "diagnosis_trigger_path": None,
+            "diagnosis_trigger_signature": None,
+            "implementation_escalated": True,
+            "implementation_resume_after_diagnosis": True,
+            "fix_resume_after_diagnosis": False,
+            "review_status": None,
+            "accepted_commit": None,
+            "acceptance_path": None,
+            "acceptance_commit": None,
+            "fix_cycles_used": 0,
+            "max_fix_cycles": 1,
+            "commits": [],
+            "previous_run_dir": "/tmp/prior-run",
+            "current_run_dir": "/tmp/prior-run",
+        }
+
+    def _policy(self):
+        project = Path(__file__).resolve().parents[2]
+        return load_model_policy(project, Path("config/codex_model_policy.json"))
+
+    def test_red_implementation_resume_rebinds_durable_diagnosis_in_child_prompt(self):
+        """Fails if implementation resume preserves transient worker-output binding."""
+        with tempfile.TemporaryDirectory() as td, tempfile.TemporaryDirectory() as state_td:
+            repo = Path(td)
+            head = self._init_resume_repo(repo)
+            history = repo / "docs/task_history/TASK-SIM-010"
+            history.mkdir(parents=True)
+            diagnosis = history / "03_diagnosis.md"
+            diagnosis.write_text("# Diagnosis\n\nFinal diagnosis status: RESOLVED\n", encoding="utf-8")
+            ctx = RunContext(
+                repo=repo, target="TASK-SIM-010", report_base=Path(state_td),
+                verbose=False, show_tail=0, heartbeat_seconds=0,
+            )
+            prompts: list[str] = []
+
+            def stop_after_implementation(prompt, repo_arg, config, *, ctx, task_id, role):
+                prompts.append(prompt)
+                return StageResult(task_id=task_id, stage="implementation", status="INCOMPLETE", payload={"workflow_complete": True})
+
+            with patch("run_task_orchestrator.run_stage", side_effect=stop_after_implementation):
+                result = run_task(
+                    "TASK-SIM-010", repo, self._policy(), ctx=ctx,
+                    resume_state=self._red_implementation_resume_state(repo, head),
+                )
+
+            self.assertEqual(result["status"], "INCOMPLETE")
+            self.assertEqual(len(prompts), 1)
+            self.assertIn(f"upstream_diagnosis_path={diagnosis.resolve()}", prompts[0])
+            self.assertIn("diagnosis_binding_source=task_history", prompts[0])
+            self.assertIn("diagnosis_sequence=3", prompts[0])
+            self.assertNotIn("transient-worker-output", prompts[0])
+
+    def test_red_implementation_resume_does_not_trust_unresolved_or_invalid_diagnosis(self):
+        """Fails if non-RESOLVED durable history permits implementation to resume."""
+        for label, content in (
+            ("unresolved", "# Diagnosis\n\nFinal diagnosis status: UNRESOLVED\n"),
+            ("invalid", "# Diagnosis\n\nstatus: unknown\n"),
+        ):
+            with self.subTest(label=label), tempfile.TemporaryDirectory() as td, tempfile.TemporaryDirectory() as state_td:
+                repo = Path(td)
+                head = self._init_resume_repo(repo)
+                history = repo / "docs/task_history/TASK-SIM-010"
+                history.mkdir(parents=True)
+                (history / "03_diagnosis.md").write_text(content, encoding="utf-8")
+                ctx = RunContext(
+                    repo=repo, target="TASK-SIM-010", report_base=Path(state_td),
+                    verbose=False, show_tail=0, heartbeat_seconds=0,
+                )
+                prompts: list[str] = []
+
+                def unresolved_diagnosis(prompt, repo_arg, config, *, ctx, task_id, role):
+                    prompts.append(prompt)
+                    return StageResult(task_id=task_id, stage="diagnosis", status="UNRESOLVED", payload={"workflow_complete": True})
+
+                with patch("run_task_orchestrator.run_stage", side_effect=unresolved_diagnosis):
+                    run_task(
+                        "TASK-SIM-010", repo, self._policy(), ctx=ctx,
+                        resume_state=self._red_implementation_resume_state(repo, head),
+                    )
+
+                self.assertTrue(prompts)
+                self.assertIn("worker_role=diagnosis", prompts[0])
+                self.assertNotIn("worker_role=implementation", prompts[0])
+
+    def test_fix_diagnosis_binding_still_prefers_durable_history(self):
+        """Fails if Fix resume stops refreshing transient diagnosis metadata."""
+        with tempfile.TemporaryDirectory() as td:
+            repo = Path(td)
+            self._init_resume_repo(repo)
+            history = repo / "docs/task_history/TASK-SIM-010"
+            history.mkdir(parents=True)
+            diagnosis = history / "03_diagnosis.md"
+            diagnosis.write_text("Final diagnosis status: RESOLVED\n", encoding="utf-8")
+            state: dict[str, object] = {
+                "diagnosis_path": "/tmp/transient-worker-output_diagnosis_final.txt",
+                "diagnosis_sequence": None,
+                "diagnosis_binding_source": "worker_output",
+                "diagnosis_bound_at": None,
+            }
+
+            self.assertTrue(bind_latest_resolved_diagnosis(repo, "TASK-SIM-010", state))
+            self.assertEqual(state["diagnosis_path"], str(diagnosis.resolve()))
+            self.assertEqual(state["diagnosis_sequence"], 3)
+            self.assertEqual(state["diagnosis_binding_source"], "task_history")
+
+    def test_diagnosis_binding_repairs_inconsistent_history_sequence(self):
+        """Fails if a task-history checkpoint can retain a stale sequence."""
+        with tempfile.TemporaryDirectory() as td:
+            repo = Path(td)
+            self._init_resume_repo(repo)
+            history = repo / "docs/task_history/TASK-SIM-010"
+            history.mkdir(parents=True)
+            diagnosis = history / "03_diagnosis.md"
+            diagnosis.write_text("Final diagnosis status: RESOLVED\n", encoding="utf-8")
+            state: dict[str, object] = {
+                "diagnosis_path": str(diagnosis.resolve()),
+                "diagnosis_sequence": 2,
+                "diagnosis_binding_source": "task_history",
+                "diagnosis_bound_at": None,
+            }
+
+            self.assertTrue(bind_latest_resolved_diagnosis(repo, "TASK-SIM-010", state))
+            self.assertEqual(state["diagnosis_sequence"], 3)
+
     def test_parse_workflow_result(self):
         text = (
             'hello\nWORKFLOW_RESULT_JSON: '
