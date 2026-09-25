@@ -13,6 +13,7 @@ sys.path.insert(0, str(ROOT))
 
 from simulation_runtime.provenance_qualification import QualificationSubject, aggregate_qualification_evidence, read_gazebo_simulation_time, render_qualification_report, write_qualification_artifacts, collect_sim009_scenario_qualifications, collect_sim008_configuration_qualification, collect_sim007_profile_qualifications, build_mujoco_subject, build_gazebo_subject, resolve_predecessor_binding, validate_subject
 from scripts.q01_execution_adapters import gazebo_clock, run_sim005_qualification, run_sim008_qualification, run_sim009_qualification
+from scripts.run_simulation_provenance_qualification import required_subject_manifest
 
 
 def _operation(**changes: object) -> QualificationSubject:
@@ -200,3 +201,16 @@ def test_sim009_wrapper_binds_rows_by_explicit_scenario_id_and_preserves_failure
     assert records["SIM009-VLA-GRASP-MISS"]["semantic_outcome"]["outcome_kind"] == "failure"
     with pytest.raises(ValueError, match="DUPLICATE_SCENARIO_ID"):
         run_sim009_qualification(lambda: {"scenarios": suite["scenarios"] * 2})
+
+
+def test_canonical_manifest_derives_all_sim005_and_applicable_sim009_subjects() -> None:
+    bindings = {}
+    for short in ("SIM-005", "SIM-009"):
+        acceptance = json.loads((ROOT / f"results/reviews/{short}_acceptance.json").read_text())
+        bindings[f"TASK-{short}"] = resolve_predecessor_binding(ROOT, f"TASK-{short}", acceptance, f"results/simulation/{short}_{'mujoco_vla_backend' if short == 'SIM-005' else 'failure_recovery'}.json")
+    bindings["TASK-SIM-007"] = bindings["TASK-SIM-005"]
+    manifest = required_subject_manifest(bindings)
+    assert "q01-sim005-mujoco-place-nominal" in manifest
+    assert "q01-sim009-SIM009-NAV-BLOCKED" in manifest
+    assert "q01-sim009-SIM009-VERIFY-MISMATCH" not in manifest
+    assert manifest == tuple(sorted(manifest))

@@ -32,6 +32,20 @@ REQUIRED_SUBJECT_IDS = frozenset({
 })
 
 
+def required_subject_manifest(bindings: dict[str, object]) -> tuple[str, ...]:
+    """Derive Q01's explicit deterministic subject manifest from frozen Evidence."""
+    required = set(REQUIRED_SUBJECT_IDS)
+    sim005 = getattr(bindings["TASK-SIM-005"], "evidence")["scenarios"]
+    for row in sim005:
+        if isinstance(row, dict) and isinstance(row.get("scenario"), str):
+            required.add(f"q01-sim005-{row['scenario']}")
+    sim009 = getattr(bindings["TASK-SIM-009"], "evidence")["scenarios"]
+    for row in sim009:
+        if isinstance(row, dict) and row.get("backend") in {"gazebo_navigation", "mujoco"} and isinstance(row.get("id"), str):
+            required.add(f"q01-sim009-{row['id']}")
+    return tuple(sorted(required))
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--output", type=Path, default=ROOT / "results/simulation/SIM-Q01_provenance_qualification.json")
@@ -43,7 +57,7 @@ def main() -> int:
         bindings[task_id] = resolve_predecessor_binding(ROOT, task_id, acceptance, evidence_path)
     subjects = collect_sim007_profile_qualifications(ROOT, bindings["TASK-SIM-007"])
     source_git_sha = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=ROOT, text=True).strip()
-    evidence = aggregate_qualification_evidence(subjects, source_git_sha, required_subject_ids=set(REQUIRED_SUBJECT_IDS))
+    evidence = aggregate_qualification_evidence(subjects, source_git_sha, required_subject_ids=set(required_subject_manifest(bindings)))
     write_qualification_artifacts(evidence, args.output, args.report)
     print(json.dumps(evidence, sort_keys=True))
     return 0 if evidence["task_specific_result"] == "SIM_PROVENANCE_QUALIFICATION_READY" else 1
