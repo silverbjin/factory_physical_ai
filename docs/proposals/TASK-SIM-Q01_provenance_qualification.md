@@ -1,9 +1,15 @@
 # TASK-SIM-Q01 — Simulation Provenance Qualification Proposal
 
 ```yaml
-STATUS: DRAFT
+STATUS: PROMOTED TO FORMAL SPECIFICATION
 IMPLEMENTATION AUTHORIZED: NO
 ```
+
+This proposal is preserved as the approval provenance for the formal task
+specification at `tasks/TASK-SIM-Q01.md` and implementation plan at
+`docs/plans/TASK-SIM-Q01_implementation_plan.md`.  Promotion does not
+authorize implementation, qualification runs, Evidence generation, or
+downstream TASK-SIM-010 consumption.
 
 ## Objective
 
