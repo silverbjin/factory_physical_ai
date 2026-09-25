@@ -78,6 +78,29 @@ def build_gazebo_subject(template: QualificationSubject, measurement: Mapping[st
     return subject
 
 
+def collect_sim004_execution_result(template: QualificationSubject, result: Mapping[str, Any]) -> QualificationSubject:
+    """Convert one new sidecar-observed SIM-004 run without historical backfill."""
+    clock = result.get("simulation_time")
+    if not isinstance(clock, Mapping) or clock.get("source") != "gz_stats" or not isinstance(clock.get("seconds"), (int, float)):
+        raise ValueError("MISSING_STRUCTURED_SIMULATION_TIME")
+    for field in ("world_sha256", "bridge_sha256", "launch_sha256"):
+        if not isinstance(result.get(field), str) or len(result[field]) != 64:
+            raise ValueError("MISSING_EXECUTION_ASSET_BINDING")
+    if result.get("scenario_id") != template.scenario_id or result.get("qualification_run_id") != template.qualification_run_id:
+        raise ValueError("CROSS_SCENARIO_ASSOCIATION")
+    outcome = result.get("semantic_outcome")
+    if not isinstance(outcome, Mapping) or result.get("cleanup_complete") is not True:
+        raise ValueError("INVALID_EXECUTION_RESULT")
+    subject = QualificationSubject(**{**template.__dict__,
+        "configuration_provenance": {"bridge": result["bridge_sha256"], "launch": result["launch_sha256"]},
+        "world_model_provenance": {"world": result["world_sha256"]},
+        "timing": {"simulation_time": clock["seconds"], "simulation_time_source": clock["source"], "wall_time_ms": result.get("wall_time_ms"), "bounded_execution": True},
+        "semantic_outcome": outcome,
+    })
+    validate_subject(subject)
+    return subject
+
+
 def build_mujoco_subject(template: QualificationSubject, run: Mapping[str, Any]) -> QualificationSubject:
     """Attach correlation only to a newly created Q01 MuJoCo qualification run."""
     if run.get("new_run") is not True:

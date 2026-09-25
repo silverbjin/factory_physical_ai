@@ -11,7 +11,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 sys.path.insert(0, str(ROOT))
 
-from simulation_runtime.provenance_qualification import QualificationSubject, aggregate_qualification_evidence, read_gazebo_simulation_time, render_qualification_report, write_qualification_artifacts, collect_sim009_scenario_qualifications, collect_sim008_configuration_qualification, collect_sim007_profile_qualifications, build_mujoco_subject, build_gazebo_subject, resolve_predecessor_binding, validate_subject
+from simulation_runtime.provenance_qualification import QualificationSubject, collect_sim004_execution_result, aggregate_qualification_evidence, read_gazebo_simulation_time, render_qualification_report, write_qualification_artifacts, collect_sim009_scenario_qualifications, collect_sim008_configuration_qualification, collect_sim007_profile_qualifications, build_mujoco_subject, build_gazebo_subject, resolve_predecessor_binding, validate_subject
 from scripts.q01_execution_adapters import gazebo_clock, run_sim005_qualification, run_sim008_qualification, run_sim009_qualification
 from scripts.run_simulation_provenance_qualification import required_subject_manifest
 
@@ -175,6 +175,24 @@ def test_sim004_sidecar_uses_accepted_runtime_transport_partition(monkeypatch: p
     assert gazebo_clock(runtime, "sim004_navigation_proxy_world") == {"simTime": {"sec": 2, "nsec": 3}}
     assert captured["command"][-1] == "/world/sim004_navigation_proxy_world/stats"
     assert captured["env"] == {"GZ_PARTITION": "q01-test"}
+
+
+def test_sim004_actual_result_converts_to_subject_without_historical_time_backfill() -> None:
+    template = _operation(qualification_run_id="q01-sim004-success-time")
+    subject = collect_sim004_execution_result(template, {
+        "qualification_run_id": "q01-sim004-success-time",
+        "scenario_id": "success",
+        "simulation_time": {"source": "gz_stats", "seconds": 2.0},
+        "wall_time_ms": 12.0,
+        "world_sha256": "e" * 64,
+        "bridge_sha256": "c" * 64,
+        "launch_sha256": "d" * 64,
+        "cleanup_complete": True,
+        "semantic_outcome": {"result": "success"},
+    })
+    assert subject.timing == {"simulation_time": 2.0, "simulation_time_source": "gz_stats", "wall_time_ms": 12.0, "bounded_execution": True}
+    with pytest.raises(ValueError, match="MISSING_STRUCTURED_SIMULATION_TIME"):
+        collect_sim004_execution_result(template, {"wall_time_ms": 12.0})
 
 
 def test_sim005_wrapper_creates_new_identity_and_extracts_same_run_measurement() -> None:
