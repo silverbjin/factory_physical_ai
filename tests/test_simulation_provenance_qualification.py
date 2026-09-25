@@ -10,7 +10,7 @@ import pytest
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
-from simulation_runtime.provenance_qualification import QualificationSubject, collect_sim007_profile_qualifications, build_mujoco_subject, build_gazebo_subject, resolve_predecessor_binding, validate_subject
+from simulation_runtime.provenance_qualification import QualificationSubject, collect_sim008_configuration_qualification, collect_sim007_profile_qualifications, build_mujoco_subject, build_gazebo_subject, resolve_predecessor_binding, validate_subject
 
 
 def _operation(**changes: object) -> QualificationSubject:
@@ -117,3 +117,13 @@ def test_sim007_collector_uses_accepted_blob_for_profile_local_aggregate_qualifi
         "mission_result": "failure",
         "failure_code": "PROFILE_UNAVAILABLE",
     }
+
+
+def test_sim008_qualifier_rejects_generic_or_misbound_configuration_authority() -> None:
+    acceptance = json.loads((ROOT / "results/reviews/SIM-008_acceptance.json").read_text())
+    binding = resolve_predecessor_binding(ROOT, "TASK-SIM-008", acceptance, "results/simulation/SIM-008_normal_system_e2e.json")
+    subject = collect_sim008_configuration_qualification(ROOT, binding)
+    assert subject.configuration_provenance.keys() == {"bridge_configuration", "launch_run_configuration"}
+    assert subject.configuration_provenance["bridge_configuration"] != subject.configuration_provenance["launch_run_configuration"]
+    with pytest.raises(ValueError, match="SEMANTIC_HASH_ALIAS"):
+        validate_subject(QualificationSubject(**{**subject.__dict__, "configuration_provenance": {"bridge_configuration": "a" * 64, "launch_run_configuration": "a" * 64}}))
