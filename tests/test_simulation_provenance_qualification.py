@@ -12,7 +12,7 @@ sys.path.insert(0, str(ROOT / "src"))
 sys.path.insert(0, str(ROOT))
 
 from simulation_runtime.provenance_qualification import QualificationSubject, aggregate_qualification_evidence, read_gazebo_simulation_time, render_qualification_report, write_qualification_artifacts, collect_sim009_scenario_qualifications, collect_sim008_configuration_qualification, collect_sim007_profile_qualifications, build_mujoco_subject, build_gazebo_subject, resolve_predecessor_binding, validate_subject
-from scripts.q01_execution_adapters import gazebo_clock
+from scripts.q01_execution_adapters import gazebo_clock, run_sim005_qualification
 
 
 def _operation(**changes: object) -> QualificationSubject:
@@ -174,3 +174,11 @@ def test_sim004_sidecar_uses_accepted_runtime_transport_partition(monkeypatch: p
     assert gazebo_clock(runtime, "sim004_navigation_proxy_world") == {"simTime": {"sec": 2, "nsec": 3}}
     assert captured["command"][-1] == "/world/sim004_navigation_proxy_world/stats"
     assert captured["env"] == {"GZ_PARTITION": "q01-test"}
+
+
+def test_sim005_wrapper_creates_new_identity_and_extracts_same_run_measurement() -> None:
+    record = run_sim005_qualification("mujoco-place-nominal")
+    assert record["qualification_run_id"].startswith("q01-sim005-")
+    assert set(record["correlation_identity"]) == {"mission_id", "request_id", "trace_id", "action_id"}
+    assert record["measurement"]["scenario"] == "mujoco-place-nominal"
+    assert record["provenance"]["mujoco_version"] == "3.13.0"
