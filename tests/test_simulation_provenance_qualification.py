@@ -122,7 +122,9 @@ def test_sim007_collector_uses_accepted_blob_for_profile_local_aggregate_qualifi
 def test_sim008_qualifier_rejects_generic_or_misbound_configuration_authority() -> None:
     acceptance = json.loads((ROOT / "results/reviews/SIM-008_acceptance.json").read_text())
     binding = resolve_predecessor_binding(ROOT, "TASK-SIM-008", acceptance, "results/simulation/SIM-008_normal_system_e2e.json")
-    subject = collect_sim008_configuration_qualification(ROOT, binding)
+    with pytest.raises(ValueError, match="MISSING_STRUCTURED_SIMULATION_TIME"):
+        collect_sim008_configuration_qualification(ROOT, binding, {})
+    subject = collect_sim008_configuration_qualification(ROOT, binding, {"simulation_time": 1.0, "bounded_execution": True})
     assert subject.configuration_provenance.keys() == {"bridge_configuration", "launch_run_configuration"}
     assert subject.configuration_provenance["bridge_configuration"] != subject.configuration_provenance["launch_run_configuration"]
     with pytest.raises(ValueError, match="SEMANTIC_HASH_ALIAS"):

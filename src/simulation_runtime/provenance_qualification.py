@@ -167,7 +167,7 @@ def collect_sim007_profile_qualifications(
     return subjects
 
 
-def collect_sim008_configuration_qualification(root: Path, binding: VerifiedPredecessorBinding) -> QualificationSubject:
+def collect_sim008_configuration_qualification(root: Path, binding: VerifiedPredecessorBinding, measurement: Mapping[str, Any]) -> QualificationSubject:
     """Bind SIM-008 bridge and launch/run authorities as distinct frozen assets."""
     if binding.task_id != "TASK-SIM-008":
         raise ValueError("PREDECESSOR_TASK_MISMATCH")
@@ -184,13 +184,16 @@ def collect_sim008_configuration_qualification(root: Path, binding: VerifiedPred
     component = execution.get("mission", {}).get("component_version") if isinstance(execution.get("mission"), Mapping) else None
     if not isinstance(component, str):
         raise ValueError("MISSING_SIM008_COMPONENT_VERSION")
+    simulation_time = measurement.get("simulation_time")
+    if not isinstance(simulation_time, (int, float)):
+        raise ValueError("MISSING_STRUCTURED_SIMULATION_TIME")
     subject = QualificationSubject(
         subject_id="q01-sim008-normal-system-authority", record_kind="operation_run", claim_scope="run_local",
         predecessor_binding={"task_id": binding.task_id, "accepted_commit": binding.accepted_commit, "evidence_path": binding.evidence_path, "evidence_sha256": binding.evidence_sha256},
         qualification_run_id="q01-sim008-normal-system-authority", scenario_id=str(scenario.get("scenario_id")), backend_id="gazebo", component_version=component,
         configuration_provenance={"bridge_configuration": bridge_hash, "launch_run_configuration": launch_hash},
         world_model_provenance={"world": str(scenario.get("world_sha256"))},
-        timing={"simulation_time": 0.0, "bounded_execution": True}, semantic_outcome={"result": execution.get("mission", {}).get("result")},
+        timing={"simulation_time": simulation_time, "bounded_execution": measurement.get("bounded_execution") is True}, semantic_outcome={"result": execution.get("mission", {}).get("result")},
         authority_paths={"bridge_configuration": f"{binding.accepted_commit}:{bridge_path}", "launch_run_configuration": f"{binding.accepted_commit}:{launch_path}"},
     )
     validate_subject(subject)
