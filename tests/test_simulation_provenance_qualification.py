@@ -12,7 +12,7 @@ sys.path.insert(0, str(ROOT / "src"))
 sys.path.insert(0, str(ROOT))
 
 from simulation_runtime.provenance_qualification import QualificationSubject, aggregate_qualification_evidence, read_gazebo_simulation_time, render_qualification_report, write_qualification_artifacts, collect_sim009_scenario_qualifications, collect_sim008_configuration_qualification, collect_sim007_profile_qualifications, build_mujoco_subject, build_gazebo_subject, resolve_predecessor_binding, validate_subject
-from scripts.q01_execution_adapters import gazebo_clock, run_sim005_qualification, run_sim008_qualification
+from scripts.q01_execution_adapters import gazebo_clock, run_sim005_qualification, run_sim008_qualification, run_sim009_qualification
 
 
 def _operation(**changes: object) -> QualificationSubject:
@@ -191,3 +191,12 @@ def test_sim008_wrapper_preserves_execution_and_structured_world_time() -> None:
     assert record["semantic_outcome"] == {"result": "failure"}
     assert record["cleanup_complete"] is False
     assert record["simulation_time"] == {"sec": 4, "nsec": 0}
+
+
+def test_sim009_wrapper_binds_rows_by_explicit_scenario_id_and_preserves_failure() -> None:
+    suite = {"scenarios": [{"id": "SIM009-VLA-GRASP-MISS", "backend": "mujoco", "decision": "FAIL_CLOSED", "outcome_kind": "failure", "cleanup_complete": True}]}
+    records = run_sim009_qualification(lambda: suite)
+    assert records["SIM009-VLA-GRASP-MISS"]["qualification_run_id"] == "q01-sim009-SIM009-VLA-GRASP-MISS"
+    assert records["SIM009-VLA-GRASP-MISS"]["semantic_outcome"]["outcome_kind"] == "failure"
+    with pytest.raises(ValueError, match="DUPLICATE_SCENARIO_ID"):
+        run_sim009_qualification(lambda: {"scenarios": suite["scenarios"] * 2})

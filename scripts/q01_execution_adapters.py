@@ -82,3 +82,29 @@ def run_sim008_qualification(executor: Callable[[], Mapping[str, Any]] | None = 
         "cleanup_complete": lifecycle.get("cleanup_complete"),
         "semantic_outcome": {"result": mission.get("result")},
     }
+
+
+def run_sim009_qualification(executor: Callable[[], Mapping[str, Any]] | None = None) -> dict[str, dict[str, Any]]:
+    """Wrap the accepted failure suite and retain its exact scenario identities."""
+    if executor is None:
+        from simulation_runtime.failure_recovery import run_failure_suite
+        executor = run_failure_suite
+    suite = executor()
+    rows = suite.get("scenarios")
+    if not isinstance(rows, list):
+        raise ValueError("MISSING_SIM009_SCENARIOS")
+    records: dict[str, dict[str, Any]] = {}
+    for row in rows:
+        if not isinstance(row, Mapping) or not isinstance(row.get("id"), str):
+            raise ValueError("INVALID_SCENARIO_ID")
+        scenario_id = row["id"]
+        if scenario_id in records:
+            raise ValueError("DUPLICATE_SCENARIO_ID")
+        records[scenario_id] = {
+            "qualification_run_id": f"q01-sim009-{scenario_id}",
+            "backend_id": row.get("backend"),
+            "cleanup_complete": row.get("cleanup_complete"),
+            "semantic_outcome": {"decision": row.get("decision"), "outcome_kind": row.get("outcome_kind")},
+            "raw_result": row.get("result") or row.get("verification") or row.get("first_result"),
+        }
+    return records
