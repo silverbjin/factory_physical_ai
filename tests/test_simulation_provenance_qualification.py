@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import json
+import subprocess
 import sys
 from pathlib import Path
 
@@ -8,7 +10,7 @@ import pytest
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
-from simulation_runtime.provenance_qualification import QualificationSubject, validate_subject
+from simulation_runtime.provenance_qualification import QualificationSubject, resolve_predecessor_binding, validate_subject
 
 
 def _operation(**changes: object) -> QualificationSubject:
@@ -46,3 +48,19 @@ def test_minimal_valid_subjects_cover_all_record_kinds() -> None:
     assert validate_subject(aggregate) is None
     version = _operation(subject_id="q01-version", record_kind="version_qualification", claim_scope="version", qualification_run_id=None, scenario_id=None, timing=None)
     assert validate_subject(version) is None
+
+
+def test_resolver_reads_accepted_git_blob_not_mutated_worktree(tmp_path: Path) -> None:
+    subprocess.run(["git", "init", "-q"], cwd=tmp_path, check=True)
+    subprocess.run(["git", "config", "user.email", "q01@example.invalid"], cwd=tmp_path, check=True)
+    subprocess.run(["git", "config", "user.name", "Q01"], cwd=tmp_path, check=True)
+    path = tmp_path / "results/simulation/SIM-004_navigation_backend.json"
+    path.parent.mkdir(parents=True)
+    accepted = {"task_id": "TASK-SIM-004", "task_specific_result": "SIM_NAVIGATION_BACKEND_READY"}
+    path.write_text(json.dumps(accepted))
+    subprocess.run(["git", "add", "results"], cwd=tmp_path, check=True)
+    subprocess.run(["git", "commit", "-qm", "accepted"], cwd=tmp_path, check=True)
+    commit = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=tmp_path, text=True).strip()
+    path.write_text(json.dumps({"task_id": "TASK-SIM-004", "task_specific_result": "WRONG"}))
+    binding = resolve_predecessor_binding(tmp_path, "TASK-SIM-004", {"task_id": "TASK-SIM-004", "status": "ACCEPT", "accepted_commit": commit}, "results/simulation/SIM-004_navigation_backend.json")
+    assert binding.evidence["task_specific_result"] == "SIM_NAVIGATION_BACKEND_READY"

@@ -2,6 +2,10 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+import hashlib
+import json
+from pathlib import Path
+import subprocess
 from typing import Any, Mapping
 
 RECORD_KINDS = frozenset({"operation_run", "profile_aggregate", "version_qualification"})
@@ -24,6 +28,38 @@ class QualificationSubject:
     semantic_outcome: Mapping[str, Any] | None
     profile_id: str | None = None
     correlation_identity: Mapping[str, str] | None = None
+
+
+@dataclass(frozen=True)
+class VerifiedPredecessorBinding:
+    task_id: str
+    accepted_commit: str
+    evidence_path: str
+    evidence_sha256: str
+    evidence: Mapping[str, Any]
+
+
+def resolve_predecessor_binding(root: Path, task_id: str, acceptance: Mapping[str, Any], evidence_path: str) -> VerifiedPredecessorBinding:
+    """Resolve a canonical Evidence object from its immutable accepted tree."""
+    if acceptance.get("task_id") != task_id or acceptance.get("status") != "ACCEPT":
+        raise ValueError("ACCEPTANCE_IDENTITY_MISMATCH")
+    commit = acceptance.get("accepted_commit")
+    if not isinstance(commit, str) or len(commit) != 40:
+        raise ValueError("INVALID_ACCEPTED_COMMIT")
+    exists = subprocess.run(["git", "cat-file", "-e", f"{commit}^{{commit}}"], cwd=root, capture_output=True)
+    if exists.returncode:
+        raise ValueError("INVALID_ACCEPTED_COMMIT")
+    blob = subprocess.run(["git", "show", f"{commit}:{evidence_path}"], cwd=root, capture_output=True)
+    if blob.returncode:
+        raise ValueError("MISSING_ACCEPTED_EVIDENCE")
+    digest = hashlib.sha256(blob.stdout).hexdigest()
+    try:
+        evidence = json.loads(blob.stdout)
+    except json.JSONDecodeError as exc:
+        raise ValueError("MALFORMED_ACCEPTED_EVIDENCE") from exc
+    if not isinstance(evidence, dict) or evidence.get("task_id") != task_id:
+        raise ValueError("TASK_ID_MISMATCH")
+    return VerifiedPredecessorBinding(task_id, commit, evidence_path, digest, evidence)
 
 
 def _require(value: Any, reason: str) -> None:
