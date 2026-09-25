@@ -76,6 +76,20 @@ def build_gazebo_subject(template: QualificationSubject, measurement: Mapping[st
     return subject
 
 
+def build_mujoco_subject(template: QualificationSubject, run: Mapping[str, Any]) -> QualificationSubject:
+    """Attach correlation only to a newly created Q01 MuJoCo qualification run."""
+    if run.get("new_run") is not True:
+        raise ValueError("HISTORICAL_TRACE_INJECTION")
+    trace_id = run.get("trace_id")
+    if not isinstance(trace_id, str) or trace_id in _FAKE:
+        raise ValueError("MISSING_TRACE_ID")
+    for field in ("mission_id", "request_id"):
+        if not isinstance(run.get(field), str) or run[field] in _FAKE:
+            raise ValueError(f"MISSING_{field.upper()}")
+    subject = QualificationSubject(**{**template.__dict__, "correlation_identity": {key: value for key, value in run.items() if key in {"mission_id", "request_id", "trace_id", "action_id"}}})
+    return subject
+
+
 def _require(value: Any, reason: str) -> None:
     if value in _FAKE:
         raise ValueError("FAKE_NOT_APPLICABLE")

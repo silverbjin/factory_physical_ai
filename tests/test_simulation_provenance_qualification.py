@@ -10,7 +10,7 @@ import pytest
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
-from simulation_runtime.provenance_qualification import QualificationSubject, build_gazebo_subject, resolve_predecessor_binding, validate_subject
+from simulation_runtime.provenance_qualification import QualificationSubject, build_mujoco_subject, build_gazebo_subject, resolve_predecessor_binding, validate_subject
 
 
 def _operation(**changes: object) -> QualificationSubject:
@@ -69,3 +69,10 @@ def test_resolver_reads_accepted_git_blob_not_mutated_worktree(tmp_path: Path) -
 def test_gazebo_collector_requires_structured_simulator_time() -> None:
     with pytest.raises(ValueError, match="MISSING_STRUCTURED_SIMULATION_TIME"):
         build_gazebo_subject(_operation(), {"wall_time_ms": 2.0, "stdout": "time=1"})
+
+
+def test_mujoco_new_run_requires_trace_and_rejects_historical_injection() -> None:
+    with pytest.raises(ValueError, match="MISSING_TRACE_ID"):
+        build_mujoco_subject(_operation(backend_id="mujoco"), {"new_run": True})
+    with pytest.raises(ValueError, match="HISTORICAL_TRACE_INJECTION"):
+        build_mujoco_subject(_operation(backend_id="mujoco"), {"new_run": False, "trace_id": "trace"})
