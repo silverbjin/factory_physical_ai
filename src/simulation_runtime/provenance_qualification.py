@@ -5,6 +5,7 @@ from dataclasses import dataclass
 import hashlib
 import json
 from pathlib import Path
+import re
 import subprocess
 from typing import Any, Mapping
 
@@ -28,6 +29,7 @@ class QualificationSubject:
     semantic_outcome: Mapping[str, Any] | None
     profile_id: str | None = None
     correlation_identity: Mapping[str, str] | None = None
+    authority_paths: Mapping[str, str] | None = None
 
 
 @dataclass(frozen=True)
@@ -88,6 +90,81 @@ def build_mujoco_subject(template: QualificationSubject, run: Mapping[str, Any])
             raise ValueError(f"MISSING_{field.upper()}")
     subject = QualificationSubject(**{**template.__dict__, "correlation_identity": {key: value for key, value in run.items() if key in {"mission_id", "request_id", "trace_id", "action_id"}}})
     return subject
+
+
+def _canonical_sha256(value: Any) -> str:
+    return hashlib.sha256(json.dumps(value, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
+
+
+def _accepted_blob(root: Path, commit: str, path: str) -> bytes:
+    blob = subprocess.run(["git", "show", f"{commit}:{path}"], cwd=root, capture_output=True)
+    if blob.returncode:
+        raise ValueError("MISSING_ACCEPTED_SOURCE")
+    return blob.stdout
+
+
+def collect_sim007_profile_qualifications(
+    root: Path, binding: VerifiedPredecessorBinding,
+) -> list[QualificationSubject]:
+    """Qualify frozen SIM-007 aggregate profiles without inventing operation IDs."""
+    if binding.task_id != "TASK-SIM-007":
+        raise ValueError("PREDECESSOR_TASK_MISMATCH")
+    evidence = binding.evidence
+    profiles = evidence.get("profiles")
+    smoke = evidence.get("profile_smoke")
+    if not isinstance(profiles, Mapping) or not isinstance(smoke, list):
+        raise ValueError("MALFORMED_SIM007_ACCEPTED_EVIDENCE")
+    source_path = "src/simulation_runtime/mission_integration.py"
+    source = _accepted_blob(root, binding.accepted_commit, source_path).decode()
+    version_match = re.search(r'^COMPONENT_VERSION = "([^"]+)"$', source, re.MULTILINE)
+    if version_match is None:
+        raise ValueError("MISSING_SIM007_COMPONENT_VERSION")
+    rows = {row.get("profile"): row for row in smoke if isinstance(row, Mapping)}
+    expected = ("deterministic", "navigation_physics", "manipulation_physics", "system")
+    if set(rows) != set(expected) or any(not isinstance(profiles.get(profile), Mapping) for profile in expected):
+        raise ValueError("SIM007_PROFILE_SET_MISMATCH")
+    predecessor_binding = {
+        "task_id": binding.task_id,
+        "accepted_commit": binding.accepted_commit,
+        "evidence_path": binding.evidence_path,
+        "evidence_sha256": binding.evidence_sha256,
+    }
+    subjects: list[QualificationSubject] = []
+    for profile in expected:
+        row = rows[profile]
+        result = row.get("mission_result")
+        failure_code = row.get("failure_code")
+        if result not in {"success", "failure"} or (failure_code is not None and not isinstance(failure_code, str)):
+            raise ValueError("INVALID_SIM007_AGGREGATE_OUTCOME")
+        profile_source = profiles[profile]
+        runtime_context = {
+            "system_world": row.get("system_world"),
+            "mujoco_live_world": row.get("mujoco_live_world"),
+            "profile": profile,
+        }
+        subject = QualificationSubject(
+            subject_id=f"q01-sim007-{profile}",
+            record_kind="profile_aggregate",
+            claim_scope="profile",
+            predecessor_binding=predecessor_binding,
+            qualification_run_id=None,
+            scenario_id=None,
+            backend_id=profile,
+            component_version=version_match.group(1),
+            configuration_provenance={"profile_source": _canonical_sha256({"profile": profile, "source": profile_source})},
+            world_model_provenance={"profile_runtime_context": _canonical_sha256(runtime_context)},
+            timing=None,
+            semantic_outcome={"mission_result": result, "failure_code": failure_code},
+            profile_id=profile,
+            authority_paths={
+                "profile_source": f"{binding.accepted_commit}:{binding.evidence_path}#/profiles/{profile}",
+                "profile_runtime_context": f"{binding.accepted_commit}:{binding.evidence_path}#/profile_smoke/{expected.index(profile)}",
+                "component_version": f"{binding.accepted_commit}:{source_path}",
+            },
+        )
+        validate_subject(subject)
+        subjects.append(subject)
+    return subjects
 
 
 def _require(value: Any, reason: str) -> None:

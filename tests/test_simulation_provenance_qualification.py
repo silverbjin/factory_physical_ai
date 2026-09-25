@@ -10,7 +10,7 @@ import pytest
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
-from simulation_runtime.provenance_qualification import QualificationSubject, build_mujoco_subject, build_gazebo_subject, resolve_predecessor_binding, validate_subject
+from simulation_runtime.provenance_qualification import QualificationSubject, collect_sim007_profile_qualifications, build_mujoco_subject, build_gazebo_subject, resolve_predecessor_binding, validate_subject
 
 
 def _operation(**changes: object) -> QualificationSubject:
@@ -76,3 +76,44 @@ def test_mujoco_new_run_requires_trace_and_rejects_historical_injection() -> Non
         build_mujoco_subject(_operation(backend_id="mujoco"), {"new_run": True})
     with pytest.raises(ValueError, match="HISTORICAL_TRACE_INJECTION"):
         build_mujoco_subject(_operation(backend_id="mujoco"), {"new_run": False, "trace_id": "trace"})
+
+
+def test_sim007_collector_uses_accepted_blob_for_profile_local_aggregate_qualification() -> None:
+    """Removing the collector or its frozen-blob binding must fail this test."""
+    acceptance = json.loads((ROOT / "results/reviews/SIM-007_acceptance.json").read_text())
+    binding = resolve_predecessor_binding(
+        ROOT,
+        "TASK-SIM-007",
+        acceptance,
+        "results/simulation/SIM-007_mission_integration.json",
+    )
+
+    subjects = collect_sim007_profile_qualifications(ROOT, binding)
+
+    assert [subject.profile_id for subject in subjects] == [
+        "deterministic",
+        "navigation_physics",
+        "manipulation_physics",
+        "system",
+    ]
+    assert all(subject.record_kind == "profile_aggregate" for subject in subjects)
+    assert all(subject.qualification_run_id is None for subject in subjects)
+    assert all(subject.scenario_id is None for subject in subjects)
+    assert all(subject.predecessor_binding == {
+        "task_id": binding.task_id,
+        "accepted_commit": binding.accepted_commit,
+        "evidence_path": binding.evidence_path,
+        "evidence_sha256": binding.evidence_sha256,
+    } for subject in subjects)
+    assert all(set(subject.configuration_provenance) == {"profile_source"} for subject in subjects)
+    assert len({next(iter(subject.configuration_provenance.values())) for subject in subjects}) == 4
+    assert all(subject.authority_paths == {
+        "profile_source": f"{binding.accepted_commit}:{binding.evidence_path}#/profiles/{subject.profile_id}",
+        "profile_runtime_context": f"{binding.accepted_commit}:{binding.evidence_path}#/profile_smoke/{index}",
+        "component_version": f"{binding.accepted_commit}:src/simulation_runtime/mission_integration.py",
+    } for index, subject in enumerate(subjects))
+    assert all(subject.semantic_outcome is not None for subject in subjects)
+    assert next(subject for subject in subjects if subject.profile_id == "system").semantic_outcome == {
+        "mission_result": "failure",
+        "failure_code": "PROFILE_UNAVAILABLE",
+    }
