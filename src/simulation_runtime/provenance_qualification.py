@@ -200,6 +200,43 @@ def collect_sim008_configuration_qualification(root: Path, binding: VerifiedPred
     return subject
 
 
+def collect_sim009_scenario_qualifications(binding: VerifiedPredecessorBinding, measurements: Mapping[str, Mapping[str, Any]]) -> list[QualificationSubject]:
+    """Require a distinct new measurement for every applicable SIM-009 physics scenario."""
+    if binding.task_id != "TASK-SIM-009":
+        raise ValueError("PREDECESSOR_TASK_MISMATCH")
+    scenarios = binding.evidence.get("scenarios")
+    if not isinstance(scenarios, list):
+        raise ValueError("MALFORMED_SIM009_ACCEPTED_EVIDENCE")
+    applicable = [row for row in scenarios if isinstance(row, Mapping) and row.get("backend") in {"gazebo_navigation", "mujoco"}]
+    expected = {str(row.get("id")) for row in applicable}
+    if set(measurements) != expected:
+        raise ValueError("MISSING_SCENARIO_MEASUREMENT")
+    subjects: list[QualificationSubject] = []
+    for row in applicable:
+        scenario_id = str(row["id"])
+        measured = measurements[scenario_id]
+        if measured.get("scenario_id") != scenario_id or measured.get("backend") != row.get("backend"):
+            raise ValueError("CROSS_SCENARIO_ASSOCIATION")
+        if not isinstance(measured.get("simulation_time"), (int, float)):
+            raise ValueError("MISSING_STRUCTURED_SIMULATION_TIME")
+        config, world = measured.get("configuration_sha256"), measured.get("world_model_sha256")
+        if not all(isinstance(value, str) and len(value) == 64 for value in (config, world)):
+            raise ValueError("MISSING_RUN_LOCAL_PROVENANCE")
+        result = row.get("result") or row.get("first_result") or row.get("verification")
+        subjects.append(QualificationSubject(
+            subject_id=f"q01-sim009-{scenario_id}", record_kind="operation_run", claim_scope="run_local",
+            predecessor_binding={"task_id": binding.task_id, "accepted_commit": binding.accepted_commit, "evidence_path": binding.evidence_path, "evidence_sha256": binding.evidence_sha256},
+            qualification_run_id=str(measured.get("qualification_run_id") or f"q01-sim009-{scenario_id}"), scenario_id=scenario_id, backend_id=str(row["backend"]),
+            component_version=str(result.get("component_version")) if isinstance(result, Mapping) else "sim009-scenario-v1",
+            configuration_provenance={"run_local_configuration": config}, world_model_provenance={"world_model": world},
+            timing={"simulation_time": measured["simulation_time"], "bounded_execution": measured.get("bounded_execution") is True},
+            semantic_outcome={"accepted_outcome_kind": row.get("outcome_kind"), "accepted_decision": row.get("decision")},
+        ))
+    for subject in subjects:
+        validate_subject(subject)
+    return subjects
+
+
 def _require(value: Any, reason: str) -> None:
     if value in _FAKE:
         raise ValueError("FAKE_NOT_APPLICABLE")

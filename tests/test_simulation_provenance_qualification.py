@@ -10,7 +10,7 @@ import pytest
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
-from simulation_runtime.provenance_qualification import QualificationSubject, collect_sim008_configuration_qualification, collect_sim007_profile_qualifications, build_mujoco_subject, build_gazebo_subject, resolve_predecessor_binding, validate_subject
+from simulation_runtime.provenance_qualification import QualificationSubject, collect_sim009_scenario_qualifications, collect_sim008_configuration_qualification, collect_sim007_profile_qualifications, build_mujoco_subject, build_gazebo_subject, resolve_predecessor_binding, validate_subject
 
 
 def _operation(**changes: object) -> QualificationSubject:
@@ -129,3 +129,10 @@ def test_sim008_qualifier_rejects_generic_or_misbound_configuration_authority() 
     assert subject.configuration_provenance["bridge_configuration"] != subject.configuration_provenance["launch_run_configuration"]
     with pytest.raises(ValueError, match="SEMANTIC_HASH_ALIAS"):
         validate_subject(QualificationSubject(**{**subject.__dict__, "configuration_provenance": {"bridge_configuration": "a" * 64, "launch_run_configuration": "a" * 64}}))
+
+
+def test_sim009_collector_requires_per_scenario_run_local_measurement() -> None:
+    acceptance = json.loads((ROOT / "results/reviews/SIM-009_acceptance.json").read_text())
+    binding = resolve_predecessor_binding(ROOT, "TASK-SIM-009", acceptance, "results/simulation/SIM-009_failure_recovery.json")
+    with pytest.raises(ValueError, match="MISSING_SCENARIO_MEASUREMENT"):
+        collect_sim009_scenario_qualifications(binding, {})
