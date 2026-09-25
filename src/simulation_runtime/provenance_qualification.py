@@ -1,7 +1,7 @@
 """Fail-closed models for additive simulation provenance qualification."""
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass
 import hashlib
 import json
 from pathlib import Path
@@ -235,6 +235,26 @@ def collect_sim009_scenario_qualifications(binding: VerifiedPredecessorBinding, 
     for subject in subjects:
         validate_subject(subject)
     return subjects
+
+
+def aggregate_qualification_evidence(subjects: list[QualificationSubject], source_git_sha: str) -> dict[str, Any]:
+    """Produce fail-closed Q01 Evidence from already-qualified additive subjects."""
+    if not isinstance(source_git_sha, str) or len(source_git_sha) != 40:
+        raise ValueError("INVALID_SOURCE_GIT_SHA")
+    if not subjects:
+        raise ValueError("MISSING_QUALIFICATION_SUBJECT")
+    identities = [subject.subject_id for subject in subjects]
+    if len(set(identities)) != len(identities):
+        raise ValueError("DUPLICATE_QUALIFICATION_SUBJECT")
+    for subject in subjects:
+        validate_subject(subject)
+    return {
+        "schema_version": "1.0", "task_id": "TASK-SIM-Q01",
+        "task_specific_result": "SIM_PROVENANCE_QUALIFICATION_READY",
+        "source_git_sha": source_git_sha, "simulation_only": True,
+        "qualification_subjects": [asdict(subject) for subject in subjects],
+        "validation": {"status": "PASS", "subject_count": len(subjects)},
+    }
 
 
 def _require(value: Any, reason: str) -> None:

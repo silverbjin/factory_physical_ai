@@ -10,7 +10,7 @@ import pytest
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
-from simulation_runtime.provenance_qualification import QualificationSubject, collect_sim009_scenario_qualifications, collect_sim008_configuration_qualification, collect_sim007_profile_qualifications, build_mujoco_subject, build_gazebo_subject, resolve_predecessor_binding, validate_subject
+from simulation_runtime.provenance_qualification import QualificationSubject, aggregate_qualification_evidence, collect_sim009_scenario_qualifications, collect_sim008_configuration_qualification, collect_sim007_profile_qualifications, build_mujoco_subject, build_gazebo_subject, resolve_predecessor_binding, validate_subject
 
 
 def _operation(**changes: object) -> QualificationSubject:
@@ -136,3 +136,8 @@ def test_sim009_collector_requires_per_scenario_run_local_measurement() -> None:
     binding = resolve_predecessor_binding(ROOT, "TASK-SIM-009", acceptance, "results/simulation/SIM-009_failure_recovery.json")
     with pytest.raises(ValueError, match="MISSING_SCENARIO_MEASUREMENT"):
         collect_sim009_scenario_qualifications(binding, {})
+
+
+def test_aggregator_rejects_duplicate_subject_identity() -> None:
+    with pytest.raises(ValueError, match="DUPLICATE_QUALIFICATION_SUBJECT"):
+        aggregate_qualification_evidence([_operation(), _operation()], "a" * 40)
