@@ -237,7 +237,9 @@ def collect_sim009_scenario_qualifications(binding: VerifiedPredecessorBinding, 
     return subjects
 
 
-def aggregate_qualification_evidence(subjects: list[QualificationSubject], source_git_sha: str) -> dict[str, Any]:
+def aggregate_qualification_evidence(
+    subjects: list[QualificationSubject], source_git_sha: str, *, required_subject_ids: set[str] | None = None,
+) -> dict[str, Any]:
     """Produce fail-closed Q01 Evidence from already-qualified additive subjects."""
     if not isinstance(source_git_sha, str) or len(source_git_sha) != 40:
         raise ValueError("INVALID_SOURCE_GIT_SHA")
@@ -248,13 +250,41 @@ def aggregate_qualification_evidence(subjects: list[QualificationSubject], sourc
         raise ValueError("DUPLICATE_QUALIFICATION_SUBJECT")
     for subject in subjects:
         validate_subject(subject)
+    missing = sorted((required_subject_ids or set()) - set(identities))
+    result = "SIM_PROVENANCE_QUALIFICATION_READY" if not missing else "SIM_PROVENANCE_QUALIFICATION_BLOCKED"
     return {
         "schema_version": "1.0", "task_id": "TASK-SIM-Q01",
-        "task_specific_result": "SIM_PROVENANCE_QUALIFICATION_READY",
+        "task_specific_result": result,
         "source_git_sha": source_git_sha, "simulation_only": True,
         "qualification_subjects": [asdict(subject) for subject in subjects],
-        "validation": {"status": "PASS", "subject_count": len(subjects)},
+        "validation": {"status": "PASS" if not missing else "BLOCKED", "subject_count": len(subjects), "missing_subject_ids": missing},
     }
+
+
+def render_qualification_report(evidence: Mapping[str, Any]) -> str:
+    """Render a non-authoritative report from canonical Evidence only."""
+    validation = evidence.get("validation") if isinstance(evidence.get("validation"), Mapping) else {}
+    lines = [
+        "# SIM-Q01 Provenance Qualification",
+        "",
+        f"- Source revision: `{evidence.get('source_git_sha')}`",
+        f"- Result: `{evidence.get('task_specific_result')}`",
+        f"- Subject count: {validation.get('subject_count')}",
+        f"- Validation: `{validation.get('status')}`",
+    ]
+    missing = validation.get("missing_subject_ids")
+    if missing:
+        lines.extend(["", "## Missing required subjects", *[f"- `{item}`" for item in missing]])
+    return "\n".join(lines) + "\n"
+
+
+def write_qualification_artifacts(evidence: Mapping[str, Any], evidence_path: Path, report_path: Path) -> tuple[Path, Path]:
+    """Write canonical JSON and its derived Markdown companion atomically enough for task use."""
+    evidence_path.parent.mkdir(parents=True, exist_ok=True)
+    report_path.parent.mkdir(parents=True, exist_ok=True)
+    evidence_path.write_text(json.dumps(evidence, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    report_path.write_text(render_qualification_report(evidence), encoding="utf-8")
+    return evidence_path, report_path
 
 
 def _require(value: Any, reason: str) -> None:

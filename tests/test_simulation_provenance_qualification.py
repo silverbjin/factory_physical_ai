@@ -10,7 +10,7 @@ import pytest
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
-from simulation_runtime.provenance_qualification import QualificationSubject, aggregate_qualification_evidence, collect_sim009_scenario_qualifications, collect_sim008_configuration_qualification, collect_sim007_profile_qualifications, build_mujoco_subject, build_gazebo_subject, resolve_predecessor_binding, validate_subject
+from simulation_runtime.provenance_qualification import QualificationSubject, aggregate_qualification_evidence, render_qualification_report, write_qualification_artifacts, collect_sim009_scenario_qualifications, collect_sim008_configuration_qualification, collect_sim007_profile_qualifications, build_mujoco_subject, build_gazebo_subject, resolve_predecessor_binding, validate_subject
 
 
 def _operation(**changes: object) -> QualificationSubject:
@@ -141,3 +141,12 @@ def test_sim009_collector_requires_per_scenario_run_local_measurement() -> None:
 def test_aggregator_rejects_duplicate_subject_identity() -> None:
     with pytest.raises(ValueError, match="DUPLICATE_QUALIFICATION_SUBJECT"):
         aggregate_qualification_evidence([_operation(), _operation()], "a" * 40)
+
+
+def test_artifact_writer_derives_json_and_report_from_blocked_evidence(tmp_path: Path) -> None:
+    evidence = aggregate_qualification_evidence([_operation()], "a" * 40, required_subject_ids={"q01-sim004-success-time", "q01-sim004-blocked-time"})
+    assert evidence["task_specific_result"] == "SIM_PROVENANCE_QUALIFICATION_BLOCKED"
+    json_path, report_path = write_qualification_artifacts(evidence, tmp_path / "evidence.json", tmp_path / "report.md")
+    assert json.loads(json_path.read_text()) == evidence
+    assert "SIM_PROVENANCE_QUALIFICATION_BLOCKED" in report_path.read_text()
+    assert render_qualification_report(evidence) == report_path.read_text()
