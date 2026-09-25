@@ -12,7 +12,7 @@ sys.path.insert(0, str(ROOT / "src"))
 sys.path.insert(0, str(ROOT))
 
 from simulation_runtime.provenance_qualification import QualificationSubject, aggregate_qualification_evidence, read_gazebo_simulation_time, render_qualification_report, write_qualification_artifacts, collect_sim009_scenario_qualifications, collect_sim008_configuration_qualification, collect_sim007_profile_qualifications, build_mujoco_subject, build_gazebo_subject, resolve_predecessor_binding, validate_subject
-from scripts.q01_execution_adapters import gazebo_clock, run_sim005_qualification
+from scripts.q01_execution_adapters import gazebo_clock, run_sim005_qualification, run_sim008_qualification
 
 
 def _operation(**changes: object) -> QualificationSubject:
@@ -182,3 +182,12 @@ def test_sim005_wrapper_creates_new_identity_and_extracts_same_run_measurement()
     assert set(record["correlation_identity"]) == {"mission_id", "request_id", "trace_id", "action_id"}
     assert record["measurement"]["scenario"] == "mujoco-place-nominal"
     assert record["provenance"]["mujoco_version"] == "3.13.0"
+
+
+def test_sim008_wrapper_preserves_execution_and_structured_world_time() -> None:
+    outcome = {"mission": {"result": "failure"}, "lifecycle": {"cleanup_complete": False}, "steps": [{"result": {"simulation_time": {"sec": 4, "nsec": 0}}}]}
+    record = run_sim008_qualification(lambda: outcome)
+    assert record["qualification_run_id"] == "q01-sim008-normal-system-authority"
+    assert record["semantic_outcome"] == {"result": "failure"}
+    assert record["cleanup_complete"] is False
+    assert record["simulation_time"] == {"sec": 4, "nsec": 0}
