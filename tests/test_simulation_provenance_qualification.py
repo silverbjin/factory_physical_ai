@@ -10,7 +10,7 @@ import pytest
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
-from simulation_runtime.provenance_qualification import QualificationSubject, resolve_predecessor_binding, validate_subject
+from simulation_runtime.provenance_qualification import QualificationSubject, build_gazebo_subject, resolve_predecessor_binding, validate_subject
 
 
 def _operation(**changes: object) -> QualificationSubject:
@@ -64,3 +64,8 @@ def test_resolver_reads_accepted_git_blob_not_mutated_worktree(tmp_path: Path) -
     path.write_text(json.dumps({"task_id": "TASK-SIM-004", "task_specific_result": "WRONG"}))
     binding = resolve_predecessor_binding(tmp_path, "TASK-SIM-004", {"task_id": "TASK-SIM-004", "status": "ACCEPT", "accepted_commit": commit}, "results/simulation/SIM-004_navigation_backend.json")
     assert binding.evidence["task_specific_result"] == "SIM_NAVIGATION_BACKEND_READY"
+
+
+def test_gazebo_collector_requires_structured_simulator_time() -> None:
+    with pytest.raises(ValueError, match="MISSING_STRUCTURED_SIMULATION_TIME"):
+        build_gazebo_subject(_operation(), {"wall_time_ms": 2.0, "stdout": "time=1"})

@@ -62,6 +62,20 @@ def resolve_predecessor_binding(root: Path, task_id: str, acceptance: Mapping[st
     return VerifiedPredecessorBinding(task_id, commit, evidence_path, digest, evidence)
 
 
+def build_gazebo_subject(template: QualificationSubject, measurement: Mapping[str, Any]) -> QualificationSubject:
+    """Bind only a structured simulator measurement; logs never supply time."""
+    simulation_time = measurement.get("simulation_time")
+    if not isinstance(simulation_time, (int, float)):
+        raise ValueError("MISSING_STRUCTURED_SIMULATION_TIME")
+    timing = dict(template.timing or {})
+    timing["simulation_time"] = simulation_time
+    if "wall_time_ms" in measurement:
+        timing["wall_time_ms"] = measurement["wall_time_ms"]
+    subject = QualificationSubject(**{**template.__dict__, "timing": timing})
+    validate_subject(subject)
+    return subject
+
+
 def _require(value: Any, reason: str) -> None:
     if value in _FAKE:
         raise ValueError("FAKE_NOT_APPLICABLE")
