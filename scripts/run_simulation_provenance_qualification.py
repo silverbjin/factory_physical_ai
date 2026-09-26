@@ -42,6 +42,7 @@ def live_adapters(
     *,
     sim004_supplier: Callable[[str], Any] | None = None,
     sim005_supplier: Callable[[str], Any] | None = None,
+    sim008_supplier: Callable[[], Any] | None = None,
 ) -> dict[str, Callable[..., Any]]:
     """Return canonical live suppliers; absent task paths are never fabricated."""
     if sim004_supplier is None:
@@ -50,9 +51,13 @@ def live_adapters(
     if sim005_supplier is None:
         from scripts.q01_execution_adapters import run_sim005_qualification
         sim005_supplier = run_sim005_qualification
+    if sim008_supplier is None:
+        from scripts.q01_execution_adapters import run_sim008_qualification
+        sim008_supplier = run_sim008_qualification
     return {
         "TASK-SIM-004": sim004_supplier,
         "TASK-SIM-005": sim005_supplier,
+        "TASK-SIM-008": sim008_supplier,
     }
 
 
