@@ -301,6 +301,57 @@ def collect_sim008_configuration_qualification(root: Path, binding: VerifiedPred
     return subject
 
 
+def collect_sim008_execution_result(template: QualificationSubject, result: Mapping[str, Any]) -> QualificationSubject:
+    """Normalize one new normal-E2E execution from its explicit execution bindings."""
+    if template.predecessor_binding.get("task_id") != "TASK-SIM-008":
+        raise ValueError("PREDECESSOR_TASK_MISMATCH")
+    if result.get("qualification_run_id") != "q01-sim008-normal-system-authority" or result.get("qualification_run_id") != template.qualification_run_id:
+        raise ValueError("INVALID_QUALIFICATION_RUN_ID")
+    if result.get("scenario_id") != template.scenario_id or result.get("backend_id") != template.backend_id:
+        raise ValueError("CROSS_SCENARIO_ASSOCIATION")
+    authority = result.get("execution_authority")
+    correlation = result.get("correlation_identity")
+    timing = result.get("simulation_time")
+    outcome = result.get("semantic_outcome")
+    if not all(isinstance(value, Mapping) for value in (authority, correlation, timing, outcome)):
+        raise ValueError("MISSING_RUN_LOCAL_PROVENANCE")
+    if not all(isinstance(correlation.get(field), str) and correlation[field] for field in ("mission_id", "request_id", "trace_id")):
+        raise ValueError("MISSING_RUN_LOCAL_CORRELATION")
+    if timing.get("source") not in {"gazebo_authoritative_observation", "gz_stats"} or not isinstance(timing.get("seconds"), (int, float)):
+        raise ValueError("MISSING_STRUCTURED_SIMULATION_TIME")
+    hashes = {field: authority.get(field) for field in ("world_sha256", "system_sha256", "bridge_sha256", "launch_sha256")}
+    if not all(isinstance(value, str) and len(value) == 64 for value in hashes.values()):
+        raise ValueError("MISSING_RUN_LOCAL_PROVENANCE")
+    if hashes["bridge_sha256"] == hashes["launch_sha256"]:
+        raise ValueError("SEMANTIC_HASH_ALIAS")
+    paths = authority.get("source_paths")
+    if not isinstance(paths, Mapping) or not all(isinstance(paths.get(field), str) and paths[field] for field in ("world", "bridge_configuration", "launch_run_configuration")):
+        raise ValueError("MISSING_EXECUTION_ASSET_BINDING")
+    if not isinstance(result.get("component_version"), str) or not isinstance(result.get("startup_attempted"), bool) or not isinstance(result.get("cleanup_complete"), bool):
+        raise ValueError("INVALID_EXECUTION_RESULT")
+    subject = QualificationSubject(**{**template.__dict__,
+        "component_version": result["component_version"],
+        "configuration_provenance": {"bridge_configuration": hashes["bridge_sha256"], "launch_run_configuration": hashes["launch_sha256"]},
+        "world_model_provenance": {"world": hashes["world_sha256"], "system": hashes["system_sha256"]},
+        "timing": {
+            "simulation_time": timing["seconds"],
+            "simulation_time_source": timing["source"],
+            "startup_attempted": result["startup_attempted"],
+            "cleanup_complete": result["cleanup_complete"],
+            "bounded_execution": True,
+        },
+        "semantic_outcome": dict(outcome),
+        "correlation_identity": dict(correlation),
+        "authority_paths": {
+            "world": paths["world"],
+            "bridge_configuration": paths["bridge_configuration"],
+            "launch_run_configuration": paths["launch_run_configuration"],
+        },
+    })
+    validate_subject(subject)
+    return subject
+
+
 def collect_sim009_scenario_qualifications(binding: VerifiedPredecessorBinding, measurements: Mapping[str, Mapping[str, Any]]) -> list[QualificationSubject]:
     """Require a distinct new measurement for every applicable SIM-009 physics scenario."""
     if binding.task_id != "TASK-SIM-009":

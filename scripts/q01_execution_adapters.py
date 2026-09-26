@@ -66,10 +66,12 @@ def _find_simulation_time(value: Any) -> Mapping[str, int] | None:
 
 def run_sim008_qualification(executor: Callable[[], Mapping[str, Any]] | None = None) -> dict[str, Any]:
     """Wrap the accepted normal E2E execution without changing its semantics."""
+    from simulation_runtime.normal_system_e2e import COMPONENT_VERSION, SCENARIO_PATH, load_scenario, scenario_identity
+
+    scenario = load_scenario()
     if executor is None:
         from scripts.run_simulation_normal_system_e2e import GazeboSystemWorld
-        from simulation_runtime.normal_system_e2e import NormalSystemE2E, load_scenario
-        scenario = load_scenario()
+        from simulation_runtime.normal_system_e2e import NormalSystemE2E
         executor = lambda: NormalSystemE2E(GazeboSystemWorld(scenario), scenario).execute()
     outcome = executor()
     simulation_time = _find_simulation_time(outcome)
@@ -77,11 +79,37 @@ def run_sim008_qualification(executor: Callable[[], Mapping[str, Any]] | None = 
         raise ValueError("MISSING_STRUCTURED_SIMULATION_TIME")
     mission = outcome.get("mission") if isinstance(outcome.get("mission"), Mapping) else {}
     lifecycle = outcome.get("lifecycle") if isinstance(outcome.get("lifecycle"), Mapping) else {}
+    correlation = {field: mission.get(field) for field in ("mission_id", "request_id", "trace_id")}
+    if not all(isinstance(value, str) and value for value in correlation.values()):
+        raise ValueError("MISSING_RUN_LOCAL_CORRELATION")
+    identity = scenario_identity(scenario)
+    bridge_path = ROOT / "src/simulation_runtime/normal_system_e2e.py"
+    system_identity = hashlib.sha256(json.dumps({"profile": scenario["profile"], "model": scenario["model"]}, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
     return {
         "qualification_run_id": "q01-sim008-normal-system-authority",
-        "simulation_time": dict(simulation_time),
+        "scenario_id": scenario["scenario_id"],
+        "backend_id": "gazebo",
+        "component_version": mission.get("component_version", COMPONENT_VERSION),
+        "correlation_identity": correlation,
+        "execution_authority": {
+            "world_sha256": identity["world_sha256"],
+            "system_sha256": system_identity,
+            "bridge_sha256": sha256(bridge_path),
+            "launch_sha256": identity["config_sha256"],
+            "source_paths": {
+                "world": identity["world"],
+                "bridge_configuration": str(bridge_path.relative_to(ROOT)),
+                "launch_run_configuration": str(SCENARIO_PATH.relative_to(ROOT)),
+            },
+        },
+        "simulation_time": {
+            "source": "gazebo_authoritative_observation",
+            "seconds": simulation_time["sec"] + simulation_time["nsec"] / 1_000_000_000,
+            "raw": dict(simulation_time),
+        },
+        "startup_attempted": lifecycle.get("startup_attempted"),
         "cleanup_complete": lifecycle.get("cleanup_complete"),
-        "semantic_outcome": {"result": mission.get("result")},
+        "semantic_outcome": {field: mission[field] for field in ("result", "status", "error") if field in mission},
     }
 
 

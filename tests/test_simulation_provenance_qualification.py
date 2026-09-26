@@ -11,7 +11,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 sys.path.insert(0, str(ROOT))
 
-from simulation_runtime.provenance_qualification import QualificationSubject, collect_sim005_execution_result, collect_sim004_execution_result, aggregate_qualification_evidence, read_gazebo_simulation_time, render_qualification_report, write_qualification_artifacts, collect_sim009_scenario_qualifications, collect_sim008_configuration_qualification, collect_sim007_profile_qualifications, build_mujoco_subject, build_gazebo_subject, resolve_predecessor_binding, validate_subject
+from simulation_runtime.provenance_qualification import QualificationSubject, collect_sim008_execution_result, collect_sim005_execution_result, collect_sim004_execution_result, aggregate_qualification_evidence, read_gazebo_simulation_time, render_qualification_report, write_qualification_artifacts, collect_sim009_scenario_qualifications, collect_sim008_configuration_qualification, collect_sim007_profile_qualifications, build_mujoco_subject, build_gazebo_subject, resolve_predecessor_binding, validate_subject
 from scripts.q01_execution_adapters import gazebo_clock, run_sim005_qualification, run_sim008_qualification, run_sim009_qualification
 from scripts.run_simulation_provenance_qualification import required_subject_manifest
 
@@ -232,12 +232,39 @@ def test_sim005_actual_result_converts_to_subject_with_same_run_provenance() -> 
 
 
 def test_sim008_wrapper_preserves_execution_and_structured_world_time() -> None:
-    outcome = {"mission": {"result": "failure"}, "lifecycle": {"cleanup_complete": False}, "steps": [{"result": {"simulation_time": {"sec": 4, "nsec": 0}}}]}
+    outcome = {"mission": {"mission_id": "m-1", "request_id": "r-1", "trace_id": "t-1", "component_version": "sim008-normal-system-e2e-v1", "result": "failure"}, "lifecycle": {"startup_attempted": True, "cleanup_complete": False}, "steps": [{"result": {"simulation_time": {"sec": 4, "nsec": 0}}}]}
     record = run_sim008_qualification(lambda: outcome)
     assert record["qualification_run_id"] == "q01-sim008-normal-system-authority"
     assert record["semantic_outcome"] == {"result": "failure"}
     assert record["cleanup_complete"] is False
-    assert record["simulation_time"] == {"sec": 4, "nsec": 0}
+    assert record["simulation_time"] == {"source": "gazebo_authoritative_observation", "seconds": 4.0, "raw": {"sec": 4, "nsec": 0}}
+    assert record["correlation_identity"] == {"mission_id": "m-1", "request_id": "r-1", "trace_id": "t-1"}
+    assert record["execution_authority"]["bridge_sha256"] != record["execution_authority"]["launch_sha256"]
+
+
+def test_sim008_actual_result_converts_to_subject_with_execution_bound_authority() -> None:
+    raw = run_sim008_qualification(lambda: {
+        "mission": {"mission_id": "m-1", "request_id": "r-1", "trace_id": "t-1", "component_version": "sim008-normal-system-e2e-v1", "result": "failure"},
+        "lifecycle": {"startup_attempted": True, "cleanup_complete": False},
+        "steps": [{"result": {"simulation_time": {"sec": 4, "nsec": 0}}}],
+    })
+    template = _operation(
+        subject_id="q01-sim008-normal-system-authority",
+        predecessor_binding={"task_id": "TASK-SIM-008", "accepted_commit": "a" * 40, "evidence_path": "results/simulation/SIM-008_normal_system_e2e.json", "evidence_sha256": "b" * 64},
+        qualification_run_id="q01-sim008-normal-system-authority",
+        scenario_id=raw["scenario_id"],
+        backend_id="gazebo",
+    )
+    subject = collect_sim008_execution_result(template, raw)
+    assert subject.correlation_identity == raw["correlation_identity"]
+    assert subject.semantic_outcome == raw["semantic_outcome"]
+    assert subject.configuration_provenance["bridge_configuration"] != subject.configuration_provenance["launch_run_configuration"]
+    assert subject.world_model_provenance["world"] == raw["execution_authority"]["world_sha256"]
+    assert subject.timing["simulation_time_source"] == "gazebo_authoritative_observation"
+    with pytest.raises(ValueError, match="MISSING_RUN_LOCAL_PROVENANCE"):
+        collect_sim008_execution_result(template, {**raw, "execution_authority": {}})
+    with pytest.raises(ValueError, match="MISSING_STRUCTURED_SIMULATION_TIME"):
+        collect_sim008_execution_result(template, {**raw, "simulation_time": {"source": "wall", "seconds": 4.0}})
 
 
 def test_sim009_wrapper_binds_rows_by_explicit_scenario_id_and_preserves_failure() -> None:
