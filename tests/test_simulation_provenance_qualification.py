@@ -260,7 +260,7 @@ def test_sim004_live_supplier_reuses_sidecar_execution_for_every_required_scenar
         assert raw["semantic_outcome"]["result"] in {"success", "failure", "pending"}
 
 
-def test_live_adapter_map_dispatches_sim004_sim005_and_sim008_by_explicit_task_identity() -> None:
+def test_live_adapter_map_dispatches_all_wired_tasks_by_explicit_task_identity() -> None:
     def sim004_supplier(scenario_id: str) -> dict[str, object]:
         return {"scenario_id": scenario_id}
 
@@ -270,23 +270,29 @@ def test_live_adapter_map_dispatches_sim004_sim005_and_sim008_by_explicit_task_i
     def sim008_supplier() -> dict[str, object]:
         return {"qualification_run_id": "q01-sim008-normal-system-authority"}
 
+    def sim009_supplier() -> dict[str, object]:
+        return {"SIM009-VLA-GRASP-MISS": {"scenario_id": "SIM009-VLA-GRASP-MISS"}}
+
     adapter_factory = getattr(run_simulation_provenance_qualification, "live_adapters", None)
     assert callable(adapter_factory), "canonical runner must expose its live adapter dispatcher"
     adapters = adapter_factory(
         sim004_supplier=sim004_supplier,
         sim005_supplier=sim005_supplier,
         sim008_supplier=sim008_supplier,
+        sim009_supplier=sim009_supplier,
     )
     assert adapters == {
         "TASK-SIM-004": sim004_supplier,
         "TASK-SIM-005": sim005_supplier,
         "TASK-SIM-008": sim008_supplier,
+        "TASK-SIM-009": sim009_supplier,
     }
     assert adapters["TASK-SIM-004"]("blocked") == {"scenario_id": "blocked"}
     assert adapters["TASK-SIM-005"]("mujoco-place-nominal") == {
         "scenario_id": "mujoco-place-nominal", "new_run": True,
     }
     assert adapters["TASK-SIM-008"]() == {"qualification_run_id": "q01-sim008-normal-system-authority"}
+    assert adapters["TASK-SIM-009"]()["SIM009-VLA-GRASP-MISS"] == {"scenario_id": "SIM009-VLA-GRASP-MISS"}
 
 
 def test_canonical_routing_collects_sim004_from_its_live_supplier() -> None:
@@ -316,6 +322,7 @@ def test_canonical_routing_collects_sim004_from_its_live_supplier() -> None:
             sim004_supplier=supplier,
             sim005_supplier=lambda _scenario: None,
             sim008_supplier=lambda: None,
+            sim009_supplier=lambda: None,
         ),
     )
     assert calls == ["blocked", "success", "timeout_reconciliation"]
@@ -340,6 +347,7 @@ def test_canonical_routing_collects_sim005_from_its_live_supplier_without_backfi
             sim004_supplier=lambda _scenario: None,
             sim005_supplier=supplier,
             sim008_supplier=lambda: None,
+            sim009_supplier=lambda: None,
         ),
     )
     qualified = next(subject for subject in subjects if subject.subject_id == "q01-sim005-mujoco-place-nominal")
@@ -366,6 +374,7 @@ def test_canonical_routing_collects_sim008_from_its_live_supplier_without_author
             sim004_supplier=lambda _scenario: None,
             sim005_supplier=lambda _scenario: None,
             sim008_supplier=lambda: raw,
+            sim009_supplier=lambda: None,
         ),
     )
     subject = next(item for item in subjects if item.subject_id == "q01-sim008-normal-system-authority")
@@ -377,6 +386,32 @@ def test_canonical_routing_collects_sim008_from_its_live_supplier_without_author
     }
     assert subject.world_model_provenance["world"] == raw["execution_authority"]["world_sha256"]
     assert subject.timing["simulation_time_source"] == "gazebo_authoritative_observation"
+
+
+def test_canonical_routing_collects_sim009_by_explicit_scenario_without_backfill() -> None:
+    bindings = {}
+    for short, evidence in (("SIM-004", "navigation_backend"), ("SIM-005", "mujoco_vla_backend"), ("SIM-007", "mission_integration"), ("SIM-008", "normal_system_e2e"), ("SIM-009", "failure_recovery")):
+        acceptance = json.loads((ROOT / f"results/reviews/{short}_acceptance.json").read_text())
+        bindings[f"TASK-{short}"] = resolve_predecessor_binding(ROOT, f"TASK-{short}", acceptance, f"results/simulation/{short}_{evidence}.json")
+    records = run_sim009_qualification(lambda: {"scenarios": [{
+        "id": "SIM009-VLA-GRASP-MISS", "backend": "mujoco", "decision": "FAIL_CLOSED", "outcome_kind": "failure", "cleanup_complete": True,
+        "result": {"mission_id": "m-009", "request_id": "r-009", "trace_id": "t-009", "action_id": "a-009", "component_version": "sim005-mujoco-vla-backend-v1", "result": "failure", "status": "failed"},
+        "qualification_observation": {"simulation_time": {"source": "mujoco_steps_times_timestep", "seconds": 0.8}, "configuration_sha256": "a" * 64, "world_model_sha256": "b" * 64, "source_paths": {"configuration": "configs/simulation/sim005_mujoco_manipulation.yaml", "world_model": "data/simulation/sim005_mujoco_manipulation.xml"}},
+    }]})
+    subjects = collect_qualification_subjects(
+        bindings,
+        run_simulation_provenance_qualification.live_adapters(
+            sim004_supplier=lambda _scenario: None,
+            sim005_supplier=lambda _scenario: None,
+            sim008_supplier=lambda: None,
+            sim009_supplier=lambda: records,
+        ),
+    )
+    subject = next(item for item in subjects if item.subject_id == "q01-sim009-SIM009-VLA-GRASP-MISS")
+    assert subject.qualification_run_id == records["SIM009-VLA-GRASP-MISS"]["qualification_run_id"]
+    assert subject.correlation_identity == records["SIM009-VLA-GRASP-MISS"]["correlation_identity"]
+    assert subject.semantic_outcome["outcome_kind"] == "failure"
+    assert subject.timing["simulation_time_source"] == "mujoco_steps_times_timestep"
 
 
 def test_sim005_wrapper_creates_new_identity_and_extracts_same_run_measurement() -> None:
