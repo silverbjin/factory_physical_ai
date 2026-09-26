@@ -13,7 +13,7 @@ sys.path.insert(0, str(ROOT))
 
 from simulation_runtime.provenance_qualification import QualificationSubject, collect_sim009_execution_result, collect_sim008_execution_result, collect_sim005_execution_result, collect_sim004_execution_result, aggregate_qualification_evidence, read_gazebo_simulation_time, render_qualification_report, write_qualification_artifacts, collect_sim009_scenario_qualifications, collect_sim008_configuration_qualification, collect_sim007_profile_qualifications, build_mujoco_subject, build_gazebo_subject, resolve_predecessor_binding, validate_subject
 from scripts.q01_execution_adapters import gazebo_clock, run_sim005_qualification, run_sim008_qualification, run_sim009_qualification
-from scripts.run_simulation_provenance_qualification import required_subject_manifest
+from scripts.run_simulation_provenance_qualification import collect_qualification_subjects, required_subject_manifest
 
 
 def _operation(**changes: object) -> QualificationSubject:
@@ -310,3 +310,17 @@ def test_canonical_manifest_derives_all_sim005_and_applicable_sim009_subjects() 
     assert "q01-sim009-SIM009-NAV-BLOCKED" in manifest
     assert "q01-sim009-SIM009-VERIFY-MISMATCH" not in manifest
     assert manifest == tuple(sorted(manifest))
+
+
+def test_canonical_routing_uses_task_specific_collector_for_controlled_sim005_result() -> None:
+    bindings = {}
+    for short, evidence in (("SIM-004", "navigation_backend"), ("SIM-005", "mujoco_vla_backend"), ("SIM-007", "mission_integration"), ("SIM-008", "normal_system_e2e"), ("SIM-009", "failure_recovery")):
+        acceptance = json.loads((ROOT / f"results/reviews/{short}_acceptance.json").read_text())
+        bindings[f"TASK-{short}"] = resolve_predecessor_binding(ROOT, f"TASK-{short}", acceptance, f"results/simulation/{short}_{evidence}.json")
+    raw = run_sim005_qualification("mujoco-place-nominal")
+    subjects = collect_qualification_subjects(bindings, {"TASK-SIM-005": lambda scenario_id: raw if scenario_id == "mujoco-place-nominal" else None})
+    qualified = next(subject for subject in subjects if subject.subject_id == "q01-sim005-mujoco-place-nominal")
+    assert qualified.correlation_identity == raw["correlation_identity"]
+    assert {subject.subject_id for subject in subjects if subject.record_kind == "profile_aggregate"} == {
+        "q01-sim007-deterministic", "q01-sim007-navigation_physics", "q01-sim007-manipulation_physics", "q01-sim007-system",
+    }
