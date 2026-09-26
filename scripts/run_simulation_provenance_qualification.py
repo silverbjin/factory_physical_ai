@@ -38,6 +38,14 @@ REQUIRED_SUBJECT_IDS = frozenset({
 })
 
 
+def live_adapters(*, sim004_supplier: Callable[[str], Any] | None = None) -> dict[str, Callable[..., Any]]:
+    """Return canonical live suppliers; absent task paths are never fabricated."""
+    if sim004_supplier is None:
+        from scripts.q01_execution_adapters import run_sim004_qualification
+        sim004_supplier = run_sim004_qualification
+    return {"TASK-SIM-004": sim004_supplier}
+
+
 def required_subject_manifest(bindings: dict[str, object]) -> tuple[str, ...]:
     """Derive Q01's explicit deterministic subject manifest from frozen Evidence."""
     required = set(REQUIRED_SUBJECT_IDS)
@@ -128,7 +136,7 @@ def main() -> int:
     for task_id, evidence_path in FROZEN.items():
         acceptance = json.loads((ROOT / f"results/reviews/{task_id.removeprefix('TASK-')}_acceptance.json").read_text())
         bindings[task_id] = resolve_predecessor_binding(ROOT, task_id, acceptance, evidence_path)
-    subjects = collect_qualification_subjects(bindings, {})
+    subjects = collect_qualification_subjects(bindings, live_adapters())
     source_git_sha = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=ROOT, text=True).strip()
     evidence = aggregate_qualification_evidence(subjects, source_git_sha, required_subject_ids=set(required_subject_manifest(bindings)))
     write_qualification_artifacts(evidence, args.output, args.report)

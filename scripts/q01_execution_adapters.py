@@ -4,12 +4,19 @@ from __future__ import annotations
 import hashlib
 import json
 import subprocess
+import time
 import uuid
 from pathlib import Path
 from typing import Any
 from collections.abc import Callable, Mapping
 
 ROOT = Path(__file__).resolve().parents[1]
+
+_SIM004_SCENARIOS: Mapping[str, Mapping[str, object]] = {
+    "success": {"qualification_run_id": "q01-sim004-success-time", "destination": "line-b-drop", "timeout_ms": 30_000},
+    "blocked": {"qualification_run_id": "q01-sim004-blocked-time", "destination": "blocked-bay", "timeout_ms": 30_000},
+    "timeout_reconciliation": {"qualification_run_id": "q01-sim004-timeout-reconciliation-time", "destination": "line-b-drop", "timeout_ms": 1},
+}
 
 
 def gazebo_clock(runtime: Any, world_name: str) -> dict[str, Any]:
@@ -25,6 +32,72 @@ def gazebo_clock(runtime: Any, world_name: str) -> dict[str, Any]:
 
 def sha256(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def run_sim004_qualification(
+    scenario_id: str,
+    *,
+    runtime_factory: Callable[[], Any] | None = None,
+    clock_probe: Callable[[Any, str], Mapping[str, Any]] = gazebo_clock,
+) -> dict[str, Any]:
+    """Run one accepted SIM-004 scenario and retain only its new-run observations.
+
+    This composes the bounded accepted Nav2 runtime with the existing Gazebo
+    sidecar.  It deliberately returns raw execution facts: the Q01 collector,
+    not this adapter, constructs the qualification subject.
+    """
+    if scenario_id not in _SIM004_SCENARIOS:
+        raise ValueError("UNKNOWN_SIM004_QUALIFICATION_SCENARIO")
+    from scripts.run_simulation_navigation import BoundedGazeboNav2Runtime, request, status_request
+    from simulation_runtime.navigation_backend import NavigationBackend, provenance
+    from simulation_runtime.provenance_qualification import read_gazebo_simulation_time
+
+    spec = _SIM004_SCENARIOS[scenario_id]
+    runtime = runtime_factory() if runtime_factory is not None else BoundedGazeboNav2Runtime()
+    started = time.monotonic()
+    outcome: dict[str, Any] = {"result": "failure", "status": "failed"}
+    reconciliation: Mapping[str, Any] | None = None
+    simulation_time: Mapping[str, Any] | None = None
+    startup_ready = False
+    execution_error: str | None = None
+    try:
+        runtime.start()
+        startup_ready = runtime.bootstrap_localization()
+        if not startup_ready:
+            outcome = {"result": "failure", "status": "failed", "error": "LOCALIZATION_NOT_READY"}
+        else:
+            backend = NavigationBackend(runtime)
+            operation = request(str(spec["destination"]), timeout_ms=int(spec["timeout_ms"]))
+            outcome = backend.execute(operation)
+            if scenario_id == "timeout_reconciliation":
+                reconciliation = backend.action_status_get(status_request(operation))
+        # This is a new runtime observation, never a value from predecessor Evidence.
+        simulation_time = read_gazebo_simulation_time(json.dumps(clock_probe(runtime, "sim004_navigation_proxy_world")))
+    except Exception as exc:  # Preserve failure for the collector/aggregator to fail closed.
+        execution_error = f"{type(exc).__name__}: {exc}"
+    finally:
+        cleanup_complete = runtime.close()
+
+    assets = {asset["path"]: asset["sha256"] for asset in provenance()["assets"]}
+    semantic_outcome = {key: outcome[key] for key in ("result", "status", "error") if key in outcome}
+    if reconciliation is not None:
+        semantic_outcome["reconciliation"] = {
+            key: reconciliation[key] for key in ("result", "status", "observed_status") if key in reconciliation
+        }
+    if execution_error is not None:
+        semantic_outcome["execution_error"] = execution_error
+    return {
+        "qualification_run_id": spec["qualification_run_id"],
+        "scenario_id": scenario_id,
+        "simulation_time": simulation_time,
+        "wall_time_ms": round((time.monotonic() - started) * 1000, 3),
+        "world_sha256": sha256(Path(runtime.world_path)),
+        "bridge_sha256": assets["configs/simulation/sim004_navigation_proxy.yaml"],
+        "launch_sha256": assets["scripts/run_simulation_navigation.py"],
+        "startup_ready": startup_ready,
+        "cleanup_complete": cleanup_complete,
+        "semantic_outcome": semantic_outcome,
+    }
 
 
 def run_sim005_qualification(task_id: str) -> dict[str, Any]:

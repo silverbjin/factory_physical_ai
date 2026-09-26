@@ -12,6 +12,8 @@ sys.path.insert(0, str(ROOT / "src"))
 sys.path.insert(0, str(ROOT))
 
 from simulation_runtime.provenance_qualification import QualificationSubject, collect_sim009_execution_result, collect_sim008_execution_result, collect_sim005_execution_result, collect_sim004_execution_result, aggregate_qualification_evidence, read_gazebo_simulation_time, render_qualification_report, write_qualification_artifacts, collect_sim009_scenario_qualifications, collect_sim008_configuration_qualification, collect_sim007_profile_qualifications, build_mujoco_subject, build_gazebo_subject, resolve_predecessor_binding, validate_subject
+from scripts import q01_execution_adapters
+from scripts import run_simulation_provenance_qualification
 from scripts.q01_execution_adapters import gazebo_clock, run_sim005_qualification, run_sim008_qualification, run_sim009_qualification
 from scripts.run_simulation_provenance_qualification import collect_qualification_subjects, required_subject_manifest
 
@@ -193,6 +195,106 @@ def test_sim004_actual_result_converts_to_subject_without_historical_time_backfi
     assert subject.timing == {"simulation_time": 2.0, "simulation_time_source": "gz_stats", "wall_time_ms": 12.0, "bounded_execution": True}
     with pytest.raises(ValueError, match="MISSING_STRUCTURED_SIMULATION_TIME"):
         collect_sim004_execution_result(template, {"wall_time_ms": 12.0})
+
+
+def test_sim004_live_supplier_reuses_sidecar_execution_for_every_required_scenario() -> None:
+    """The canonical live supplier, rather than manifest data, supplies new-run facts."""
+    from simulation_runtime.navigation_backend import RuntimeObservation
+
+    class ControlledRuntime:
+        environment = {"GZ_PARTITION": "q01-controlled"}
+        world_path = ROOT / "data/simulation/sim004_navigation_proxy_world.sdf"
+
+        def __init__(self) -> None:
+            self.started = False
+            self.closed = False
+            self.observations: dict[str, RuntimeObservation] = {}
+
+        @property
+        def ready(self) -> bool:
+            return self.started
+
+        def start(self) -> None:
+            self.started = True
+
+        def bootstrap_localization(self) -> bool:
+            return True
+
+        def navigate(self, request: dict[str, object]) -> RuntimeObservation:
+            if request["destination_id"] == "blocked-bay":
+                observation = RuntimeObservation("failed", error_code="NAVIGATION_ABORTED")
+            elif request["timeout_ms"] == 1:
+                observation = RuntimeObservation("unknown", error_code="NAVIGATION_TIMEOUT", retryable=True)
+            else:
+                observation = RuntimeObservation("succeeded", arrival_verified=True)
+            self.observations[str(request["action_id"])] = observation
+            return observation
+
+        def reconcile(self, action_id: str) -> RuntimeObservation:
+            return self.observations[action_id]
+
+        def close(self) -> bool:
+            self.closed = True
+            return True
+
+    run_ids = {
+        "success": "q01-sim004-success-time",
+        "blocked": "q01-sim004-blocked-time",
+        "timeout_reconciliation": "q01-sim004-timeout-reconciliation-time",
+    }
+    for scenario_id, run_id in run_ids.items():
+        supplier = getattr(q01_execution_adapters, "run_sim004_qualification", None)
+        assert callable(supplier), "SIM-004 live supplier must compose the accepted runtime sidecar"
+        raw = supplier(
+            scenario_id,
+            runtime_factory=ControlledRuntime,
+            clock_probe=lambda _runtime, _world: {"simTime": {"sec": 2, "nsec": 3}},
+        )
+        subject = collect_sim004_execution_result(
+            _operation(qualification_run_id=run_id, scenario_id=scenario_id), raw,
+        )
+        assert subject.qualification_run_id == run_id
+        assert subject.timing["simulation_time_source"] == "gz_stats"
+        assert raw["cleanup_complete"] is True
+        assert raw["world_sha256"] != raw["bridge_sha256"]
+        assert raw["semantic_outcome"]["result"] in {"success", "failure", "pending"}
+
+
+def test_live_adapter_map_exposes_only_the_sim004_supplier_added_by_this_transition() -> None:
+    def supplier(scenario_id: str) -> dict[str, object]:
+        return {"scenario_id": scenario_id}
+
+    adapter_factory = getattr(run_simulation_provenance_qualification, "live_adapters", None)
+    assert callable(adapter_factory), "canonical runner must expose its live adapter dispatcher"
+    adapters = adapter_factory(sim004_supplier=supplier)
+    assert adapters == {"TASK-SIM-004": supplier}
+    assert adapters["TASK-SIM-004"]("blocked") == {"scenario_id": "blocked"}
+
+
+def test_canonical_routing_collects_sim004_from_its_live_supplier() -> None:
+    bindings = {}
+    for short, evidence in (("SIM-004", "navigation_backend"), ("SIM-005", "mujoco_vla_backend"), ("SIM-007", "mission_integration"), ("SIM-008", "normal_system_e2e"), ("SIM-009", "failure_recovery")):
+        acceptance = json.loads((ROOT / f"results/reviews/{short}_acceptance.json").read_text())
+        bindings[f"TASK-{short}"] = resolve_predecessor_binding(ROOT, f"TASK-{short}", acceptance, f"results/simulation/{short}_{evidence}.json")
+    run_ids = {
+        "success": "q01-sim004-success-time",
+        "blocked": "q01-sim004-blocked-time",
+        "timeout_reconciliation": "q01-sim004-timeout-reconciliation-time",
+    }
+    calls: list[str] = []
+
+    def supplier(scenario_id: str) -> dict[str, object]:
+        calls.append(scenario_id)
+        return {
+            "qualification_run_id": run_ids[scenario_id], "scenario_id": scenario_id,
+            "simulation_time": {"source": "gz_stats", "seconds": 1.0},
+            "world_sha256": "a" * 64, "bridge_sha256": "b" * 64, "launch_sha256": "c" * 64,
+            "cleanup_complete": True, "semantic_outcome": {"result": "failure" if scenario_id == "blocked" else "success"},
+        }
+
+    subjects = collect_qualification_subjects(bindings, run_simulation_provenance_qualification.live_adapters(sim004_supplier=supplier))
+    assert calls == ["blocked", "success", "timeout_reconciliation"]
+    assert {subject.subject_id for subject in subjects if subject.subject_id.startswith("q01-sim004-")} == set(run_ids.values())
 
 
 def test_sim005_wrapper_creates_new_identity_and_extracts_same_run_measurement() -> None:
