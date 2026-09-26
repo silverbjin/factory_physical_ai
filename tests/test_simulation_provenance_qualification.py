@@ -11,7 +11,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 sys.path.insert(0, str(ROOT))
 
-from simulation_runtime.provenance_qualification import QualificationSubject, collect_sim008_execution_result, collect_sim005_execution_result, collect_sim004_execution_result, aggregate_qualification_evidence, read_gazebo_simulation_time, render_qualification_report, write_qualification_artifacts, collect_sim009_scenario_qualifications, collect_sim008_configuration_qualification, collect_sim007_profile_qualifications, build_mujoco_subject, build_gazebo_subject, resolve_predecessor_binding, validate_subject
+from simulation_runtime.provenance_qualification import QualificationSubject, collect_sim009_execution_result, collect_sim008_execution_result, collect_sim005_execution_result, collect_sim004_execution_result, aggregate_qualification_evidence, read_gazebo_simulation_time, render_qualification_report, write_qualification_artifacts, collect_sim009_scenario_qualifications, collect_sim008_configuration_qualification, collect_sim007_profile_qualifications, build_mujoco_subject, build_gazebo_subject, resolve_predecessor_binding, validate_subject
 from scripts.q01_execution_adapters import gazebo_clock, run_sim005_qualification, run_sim008_qualification, run_sim009_qualification
 from scripts.run_simulation_provenance_qualification import required_subject_manifest
 
@@ -268,12 +268,35 @@ def test_sim008_actual_result_converts_to_subject_with_execution_bound_authority
 
 
 def test_sim009_wrapper_binds_rows_by_explicit_scenario_id_and_preserves_failure() -> None:
-    suite = {"scenarios": [{"id": "SIM009-VLA-GRASP-MISS", "backend": "mujoco", "decision": "FAIL_CLOSED", "outcome_kind": "failure", "cleanup_complete": True}]}
+    suite = {"scenarios": [{"id": "SIM009-VLA-GRASP-MISS", "backend": "mujoco", "decision": "FAIL_CLOSED", "outcome_kind": "failure", "cleanup_complete": True,
+        "result": {"mission_id": "m-1", "request_id": "r-1", "trace_id": "t-1", "action_id": "a-1", "component_version": "sim005-mujoco-vla-backend-v1", "result": "failure", "status": "failed"},
+        "qualification_observation": {"simulation_time": {"source": "mujoco_steps_times_timestep", "seconds": 0.8}, "configuration_sha256": "a" * 64, "world_model_sha256": "b" * 64, "source_paths": {"configuration": "configs/simulation/sim005_mujoco_manipulation.yaml", "world_model": "data/simulation/sim005_mujoco_manipulation.xml"}}}]}
     records = run_sim009_qualification(lambda: suite)
     assert records["SIM009-VLA-GRASP-MISS"]["qualification_run_id"] == "q01-sim009-SIM009-VLA-GRASP-MISS"
     assert records["SIM009-VLA-GRASP-MISS"]["semantic_outcome"]["outcome_kind"] == "failure"
+    assert records["SIM009-VLA-GRASP-MISS"]["run_local_provenance"]["simulation_time"]["seconds"] == 0.8
     with pytest.raises(ValueError, match="DUPLICATE_SCENARIO_ID"):
         run_sim009_qualification(lambda: {"scenarios": suite["scenarios"] * 2})
+
+
+def test_sim009_actual_result_converts_to_subject_without_cross_scenario_backfill() -> None:
+    records = run_sim009_qualification(lambda: {"scenarios": [{"id": "SIM009-VLA-GRASP-MISS", "backend": "mujoco", "decision": "FAIL_CLOSED", "outcome_kind": "failure", "cleanup_complete": True,
+        "result": {"mission_id": "m-1", "request_id": "r-1", "trace_id": "t-1", "action_id": "a-1", "component_version": "sim005-mujoco-vla-backend-v1", "result": "failure", "status": "failed"},
+        "qualification_observation": {"simulation_time": {"source": "mujoco_steps_times_timestep", "seconds": 0.8}, "configuration_sha256": "a" * 64, "world_model_sha256": "b" * 64, "source_paths": {"configuration": "configs/simulation/sim005_mujoco_manipulation.yaml", "world_model": "data/simulation/sim005_mujoco_manipulation.xml"}}}]})
+    raw = records["SIM009-VLA-GRASP-MISS"]
+    template = _operation(
+        subject_id="q01-sim009-SIM009-VLA-GRASP-MISS",
+        predecessor_binding={"task_id": "TASK-SIM-009", "accepted_commit": "a" * 40, "evidence_path": "results/simulation/SIM-009_failure_recovery.json", "evidence_sha256": "b" * 64},
+        qualification_run_id=raw["qualification_run_id"], scenario_id="SIM009-VLA-GRASP-MISS", backend_id="mujoco",
+    )
+    subject = collect_sim009_execution_result(template, raw)
+    assert subject.correlation_identity == raw["correlation_identity"]
+    assert subject.semantic_outcome["outcome_kind"] == "failure"
+    assert subject.timing["simulation_time_source"] == "mujoco_steps_times_timestep"
+    with pytest.raises(ValueError, match="CROSS_SCENARIO_ASSOCIATION"):
+        collect_sim009_execution_result(template, {**raw, "scenario_id": "SIM009-VLA-CONTACT-LOSS"})
+    with pytest.raises(ValueError, match="MISSING_RUN_LOCAL_PROVENANCE"):
+        collect_sim009_execution_result(template, {**raw, "run_local_provenance": {}})
 
 
 def test_canonical_manifest_derives_all_sim005_and_applicable_sim009_subjects() -> None:

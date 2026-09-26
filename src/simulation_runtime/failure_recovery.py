@@ -7,7 +7,7 @@ import time
 import uuid
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
-from typing import Any
+from typing import Any, Callable, Mapping
 
 from mission_runtime import MissionRecord, MissionStatus
 from scripts.sim009_goal_tracked_navigation import GoalTrackedGazeboNav2Runtime
@@ -403,7 +403,11 @@ def _vla_scenario(scenario: dict[str, Any]) -> dict[str, Any]:
     request = _action_request("vla.execute", task_id=mapping.get(scenario["id"], "mujoco-place-nominal"))
     if scenario["id"] == "SIM009-VLA-AMBIGUOUS": request["observation_refs"] = [{**observation_ref(), "fixture_id": "ambiguous-observation"}]
     backend = MuJoCoVLABackend(); result = backend.execute(request)
-    details: dict[str, Any] = {"result": result}
+    try:
+        measurement = backend.measurement_for(request["mission_id"], request["action_id"])
+    except KeyError:
+        measurement = {"scenario": request["task_id"], "physics_started": False, "reason": "pre_execution_validation"}
+    details: dict[str, Any] = {"result": result, "measurement": measurement}
     if result["status"] == "unknown":
         details["reconciliation"] = backend.action_status_get(_status_request(request))
         decision, kind = "RECONCILE", "unknown"
@@ -434,7 +438,10 @@ def _verification_scenario(scenario: dict[str, Any]) -> dict[str, Any]:
     return _base_row(scenario, decision=decision.route, outcome_kind="uncertain" if identifier == "SIM009-VERIFY-UNCERTAIN" else "failure", details=details)
 
 
-def run_failure_suite(*, navigation_runtime_factory: Any = GoalTrackedGazeboNav2Runtime) -> dict[str, Any]:
+def run_failure_suite(
+    *, navigation_runtime_factory: Any = GoalTrackedGazeboNav2Runtime,
+    scenario_observer: Callable[[Mapping[str, Any], Mapping[str, Any], Any], Mapping[str, Any] | None] | None = None,
+) -> dict[str, Any]:
     manifest = load_manifest(); rows: list[dict[str, Any]] = []
     live_runtime: GoalTrackedGazeboNav2Runtime | None = None
     live_ready = False
@@ -457,6 +464,10 @@ def run_failure_suite(*, navigation_runtime_factory: Any = GoalTrackedGazeboNav2
             row["duration_ms"] = round((time.monotonic() - started) * 1000, 3)
             row["within_budget"] = row["duration_ms"] <= scenario["budget_ms"]
             row["pass"] = bool(row["pass"] and row["within_budget"] and row["cleanup_complete"] and (scenario["layer"] != "L1-NAV" or live_runtime is None or live_ready))
+            if scenario_observer is not None:
+                observation = scenario_observer(scenario, row, live_runtime)
+                if observation is not None:
+                    row["qualification_observation"] = dict(observation)
             rows.append(row)
     finally:
         if live_runtime is not None:

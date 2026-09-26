@@ -389,6 +389,45 @@ def collect_sim009_scenario_qualifications(binding: VerifiedPredecessorBinding, 
     return subjects
 
 
+def collect_sim009_execution_result(template: QualificationSubject, result: Mapping[str, Any]) -> QualificationSubject:
+    """Convert one explicit SIM-009 execution measurement without scenario reuse."""
+    if template.predecessor_binding.get("task_id") != "TASK-SIM-009":
+        raise ValueError("PREDECESSOR_TASK_MISMATCH")
+    if result.get("qualification_run_id") != f"q01-sim009-{template.scenario_id}":
+        raise ValueError("INVALID_QUALIFICATION_RUN_ID")
+    if result.get("scenario_id") != template.scenario_id or result.get("backend_id") != template.backend_id:
+        raise ValueError("CROSS_SCENARIO_ASSOCIATION")
+    provenance = result.get("run_local_provenance")
+    correlation = result.get("correlation_identity")
+    outcome = result.get("semantic_outcome")
+    if not all(isinstance(value, Mapping) for value in (provenance, correlation, outcome)) or not provenance:
+        raise ValueError("MISSING_RUN_LOCAL_PROVENANCE")
+    if not all(isinstance(correlation.get(field), str) and correlation[field] for field in ("mission_id", "request_id", "trace_id")):
+        raise ValueError("MISSING_RUN_LOCAL_CORRELATION")
+    timing = provenance.get("simulation_time")
+    if not isinstance(timing, Mapping) or timing.get("source") not in {"gz_stats", "mujoco_steps_times_timestep", "mujoco_no_physics_start"} or not isinstance(timing.get("seconds"), (int, float)):
+        raise ValueError("MISSING_STRUCTURED_SIMULATION_TIME")
+    config, world = provenance.get("configuration_sha256"), provenance.get("world_model_sha256")
+    if not all(isinstance(value, str) and len(value) == 64 for value in (config, world)):
+        raise ValueError("MISSING_RUN_LOCAL_PROVENANCE")
+    paths = provenance.get("source_paths")
+    if not isinstance(paths, Mapping) or not all(isinstance(paths.get(field), str) and paths[field] for field in ("configuration", "world_model")):
+        raise ValueError("MISSING_EXECUTION_ASSET_BINDING")
+    if not isinstance(result.get("component_version"), str) or not isinstance(result.get("cleanup_complete"), bool):
+        raise ValueError("INVALID_EXECUTION_RESULT")
+    subject = QualificationSubject(**{**template.__dict__,
+        "component_version": result["component_version"],
+        "configuration_provenance": {"run_local_configuration": config},
+        "world_model_provenance": {"world_model": world},
+        "timing": {"simulation_time": timing["seconds"], "simulation_time_source": timing["source"], "cleanup_complete": result["cleanup_complete"], "bounded_execution": True},
+        "semantic_outcome": dict(outcome),
+        "correlation_identity": dict(correlation),
+        "authority_paths": {"run_local_configuration": paths["configuration"], "world_model": paths["world_model"]},
+    })
+    validate_subject(subject)
+    return subject
+
+
 def aggregate_qualification_evidence(
     subjects: list[QualificationSubject], source_git_sha: str, *, required_subject_ids: set[str] | None = None,
 ) -> dict[str, Any]:
