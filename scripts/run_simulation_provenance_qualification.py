@@ -31,27 +31,15 @@ FROZEN = {
     "TASK-SIM-008": "results/simulation/SIM-008_normal_system_e2e.json",
     "TASK-SIM-009": "results/simulation/SIM-009_failure_recovery.json",
 }
-REQUIRED_SUBJECT_IDS = frozenset({
-    "q01-sim004-success-time", "q01-sim004-blocked-time", "q01-sim004-timeout-reconciliation-time",
-    "q01-sim007-deterministic", "q01-sim007-navigation_physics", "q01-sim007-manipulation_physics", "q01-sim007-system",
-    "q01-sim008-normal-system-authority",
-})
+MIN_SCOPE_PATH = ROOT / "configs/simulation/min_q01_scope.json"
 
 
 def live_adapters(
     *,
-    sim004_supplier: Callable[[str], Any] | None = None,
-    sim005_supplier: Callable[[str], Any] | None = None,
     sim008_supplier: Callable[[], Any] | None = None,
     sim009_supplier: Callable[[], Any] | None = None,
 ) -> dict[str, Callable[..., Any]]:
-    """Return canonical live suppliers; absent task paths are never fabricated."""
-    if sim004_supplier is None:
-        from scripts.q01_execution_adapters import run_sim004_qualification
-        sim004_supplier = run_sim004_qualification
-    if sim005_supplier is None:
-        from scripts.q01_execution_adapters import run_sim005_qualification
-        sim005_supplier = run_sim005_qualification
+    """Return the only live suppliers admitted by the frozen MIN-Q01 scope."""
     if sim008_supplier is None:
         from scripts.q01_execution_adapters import run_sim008_qualification
         sim008_supplier = run_sim008_qualification
@@ -59,40 +47,51 @@ def live_adapters(
         from scripts.q01_execution_adapters import run_sim009_qualification
         sim009_supplier = run_sim009_qualification
     return {
-        "TASK-SIM-004": sim004_supplier,
-        "TASK-SIM-005": sim005_supplier,
         "TASK-SIM-008": sim008_supplier,
         "TASK-SIM-009": sim009_supplier,
     }
 
 
-def required_subject_manifest(bindings: dict[str, object]) -> tuple[str, ...]:
-    """Derive Q01's explicit deterministic subject manifest from frozen Evidence."""
-    required = set(REQUIRED_SUBJECT_IDS)
-    sim005 = getattr(bindings["TASK-SIM-005"], "evidence")["scenarios"]
-    for row in sim005:
-        if isinstance(row, dict) and isinstance(row.get("scenario"), str):
-            required.add(f"q01-sim005-{row['scenario']}")
-    sim009 = getattr(bindings["TASK-SIM-009"], "evidence")["scenarios"]
-    for row in sim009:
-        if isinstance(row, dict) and row.get("backend") in {"gazebo_navigation", "mujoco"} and isinstance(row.get("id"), str):
-            required.add(f"q01-sim009-{row['id']}")
-    return tuple(sorted(required))
+def min_q01_scope() -> Mapping[str, Any]:
+    """Load the frozen machine-readable MIN-Q01 contract, not legacy Evidence rows."""
+    scope = json.loads(MIN_SCOPE_PATH.read_text(encoding="utf-8"))
+    subjects = scope.get("required_operation_subjects")
+    counts = scope.get("required_operation_subject_counts")
+    if (scope.get("scope_id"), scope.get("task_contract")) != ("MIN-Q01", "TASK-SIM-Q01-MIN"):
+        raise ValueError("INVALID_MIN_Q01_SCOPE")
+    if not isinstance(subjects, list) or not isinstance(counts, Mapping):
+        raise ValueError("INVALID_MIN_Q01_SCOPE")
+    identities = [row.get("subject_id") for row in subjects if isinstance(row, Mapping)]
+    if len(subjects) != 11 or len(identities) != 11 or len(set(identities)) != 11:
+        raise ValueError("INVALID_MIN_Q01_SCOPE")
+    if counts != {"TASK-SIM-008": 1, "TASK-SIM-009": 10, "total": 11}:
+        raise ValueError("INVALID_MIN_Q01_SCOPE")
+    if any(not isinstance(identity, str) or not identity.startswith(("q01-sim008-", "q01-sim009-")) for identity in identities):
+        raise ValueError("MIN_Q01_SCOPE_REOPEN_REQUIRED")
+    return scope
+
+
+def required_subject_manifest(bindings: Mapping[str, Any] | None = None) -> tuple[str, ...]:
+    """Return exactly the eleven frozen MIN-Q01 operation subjects."""
+    scope = min_q01_scope()
+    rows = scope["required_operation_subjects"]
+    if bindings is not None:
+        for row in rows:
+            assert isinstance(row, Mapping)
+            binding = bindings.get(row["predecessor_task_id"])
+            if binding is None:
+                raise ValueError("MISSING_MIN_Q01_PREDECESSOR")
+            if row["predecessor_task_id"] == "TASK-SIM-009":
+                scenarios = getattr(binding, "evidence").get("scenarios")
+                if not isinstance(scenarios, list) or not any(item.get("id") == row["scenario_id"] for item in scenarios if isinstance(item, Mapping)):
+                    raise ValueError("MIN_Q01_SCENARIO_BINDING_MISMATCH")
+    return tuple(row["subject_id"] for row in rows)
 
 
 def _operation_template(subject_id: str, binding: Any) -> QualificationSubject:
     """Create an unpublished routing template; collectors replace all run-local fields."""
     task_id = binding.task_id
-    if task_id == "TASK-SIM-004":
-        scenario_id = {
-            "q01-sim004-success-time": "success",
-            "q01-sim004-blocked-time": "blocked",
-            "q01-sim004-timeout-reconciliation-time": "timeout_reconciliation",
-        }[subject_id]
-        backend_id = "gazebo"
-    elif task_id == "TASK-SIM-005":
-        scenario_id, backend_id = subject_id.removeprefix("q01-sim005-"), "mujoco"
-    elif task_id == "TASK-SIM-008":
+    if task_id == "TASK-SIM-008":
         scenario_id, backend_id = str(binding.evidence["scenario"]["scenario_id"]), "gazebo"
     elif task_id == "TASK-SIM-009":
         scenario_id = subject_id.removeprefix("q01-sim009-")
@@ -112,23 +111,10 @@ def _operation_template(subject_id: str, binding: Any) -> QualificationSubject:
 def collect_qualification_subjects(
     bindings: Mapping[str, Any], adapters: Mapping[str, Callable[..., Any]],
 ) -> list[QualificationSubject]:
-    """Route explicit adapter output through task-owned collectors; never fill missing runs."""
-    subjects = collect_sim007_profile_qualifications(ROOT, bindings["TASK-SIM-007"])
+    """Route only MIN-Q01 run-local subjects; excluded paths never execute here."""
+    subjects: list[QualificationSubject] = []
     for subject_id in required_subject_manifest(dict(bindings)):
-        if subject_id.startswith("q01-sim007-"):
-            continue
-        if subject_id.startswith("q01-sim004-"):
-            adapter = adapters.get("TASK-SIM-004")
-            raw = adapter(_operation_template(subject_id, bindings["TASK-SIM-004"]).scenario_id) if adapter else None
-            if raw is not None:
-                subjects.append(collect_sim004_execution_result(_operation_template(subject_id, bindings["TASK-SIM-004"]), raw))
-        elif subject_id.startswith("q01-sim005-"):
-            template = _operation_template(subject_id, bindings["TASK-SIM-005"])
-            adapter = adapters.get("TASK-SIM-005")
-            raw = adapter(template.scenario_id) if adapter else None
-            if raw is not None:
-                subjects.append(collect_sim005_execution_result(template, raw))
-        elif subject_id == "q01-sim008-normal-system-authority":
+        if subject_id == "q01-sim008-normal-system-authority":
             template = _operation_template(subject_id, bindings["TASK-SIM-008"])
             adapter = adapters.get("TASK-SIM-008")
             raw = adapter() if adapter else None
@@ -147,6 +133,28 @@ def collect_qualification_subjects(
     return sorted(subjects, key=lambda subject: subject.subject_id)
 
 
+def non_execution_authority(bindings: Mapping[str, Any]) -> dict[str, Any]:
+    """Serialize supporting authority without claiming a new operation execution."""
+    scope = min_q01_scope()
+    declared = scope.get("non_execution_authority")
+    if not isinstance(declared, Mapping):
+        raise ValueError("INVALID_MIN_Q01_SCOPE")
+    result: dict[str, Any] = {}
+    for task_id, claims in declared.items():
+        binding = bindings.get(task_id)
+        if binding is None or not isinstance(claims, list):
+            raise ValueError("MISSING_MIN_Q01_PREDECESSOR")
+        result[task_id] = {
+            "predecessor_binding": {
+                "task_id": binding.task_id, "accepted_commit": binding.accepted_commit,
+                "evidence_path": binding.evidence_path, "evidence_sha256": binding.evidence_sha256,
+            },
+            "claims": claims,
+            "claim_scope": "immutable_accepted_authority",
+        }
+    return result
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--output", type=Path, default=ROOT / "results/simulation/SIM-Q01_provenance_qualification.json")
@@ -158,7 +166,14 @@ def main() -> int:
         bindings[task_id] = resolve_predecessor_binding(ROOT, task_id, acceptance, evidence_path)
     subjects = collect_qualification_subjects(bindings, live_adapters())
     source_git_sha = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=ROOT, text=True).strip()
-    evidence = aggregate_qualification_evidence(subjects, source_git_sha, required_subject_ids=set(required_subject_manifest(bindings)))
+    evidence = aggregate_qualification_evidence(
+        subjects, source_git_sha, required_subject_ids=set(required_subject_manifest(bindings)),
+        required_subject_bindings={
+            row["subject_id"]: {"task_id": row["predecessor_task_id"], "scenario_id": row["scenario_id"]}
+            for row in min_q01_scope()["required_operation_subjects"]
+        },
+        immutable_authority=non_execution_authority(bindings),
+    )
     write_qualification_artifacts(evidence, args.output, args.report)
     print(json.dumps(evidence, sort_keys=True))
     return 0 if evidence["task_specific_result"] == "SIM_PROVENANCE_QUALIFICATION_READY" else 1

@@ -30,6 +30,7 @@ class QualificationSubject:
     profile_id: str | None = None
     correlation_identity: Mapping[str, str] | None = None
     authority_paths: Mapping[str, str] | None = None
+    applicability: Mapping[str, Mapping[str, Any]] | None = None
 
 
 @dataclass(frozen=True)
@@ -296,6 +297,7 @@ def collect_sim008_configuration_qualification(root: Path, binding: VerifiedPred
         world_model_provenance={"world": str(scenario.get("world_sha256"))},
         timing={"simulation_time": simulation_time, "bounded_execution": measurement.get("bounded_execution") is True}, semantic_outcome={"result": execution.get("mission", {}).get("result")},
         authority_paths={"bridge_configuration": f"{binding.accepted_commit}:{bridge_path}", "launch_run_configuration": f"{binding.accepted_commit}:{launch_path}"},
+        applicability={"structured_simulator_time": {"state": "REQUIRED"}, "physics_measurement": {"state": "OPTIONAL"}},
     )
     validate_subject(subject)
     return subject
@@ -347,6 +349,10 @@ def collect_sim008_execution_result(template: QualificationSubject, result: Mapp
             "bridge_configuration": paths["bridge_configuration"],
             "launch_run_configuration": paths["launch_run_configuration"],
         },
+        "applicability": {
+            "structured_simulator_time": {"state": "REQUIRED"},
+            "physics_measurement": {"state": "OPTIONAL"},
+        },
     })
     validate_subject(subject)
     return subject
@@ -383,6 +389,7 @@ def collect_sim009_scenario_qualifications(binding: VerifiedPredecessorBinding, 
             configuration_provenance={"run_local_configuration": config}, world_model_provenance={"world_model": world},
             timing={"simulation_time": measured["simulation_time"], "bounded_execution": measured.get("bounded_execution") is True},
             semantic_outcome={"accepted_outcome_kind": row.get("outcome_kind"), "accepted_decision": row.get("decision")},
+            applicability={"structured_simulator_time": {"state": "REQUIRED"}, "physics_measurement": {"state": "OPTIONAL"}},
         ))
     for subject in subjects:
         validate_subject(subject)
@@ -405,8 +412,13 @@ def collect_sim009_execution_result(template: QualificationSubject, result: Mapp
     if not all(isinstance(correlation.get(field), str) and correlation[field] for field in ("mission_id", "request_id", "trace_id")):
         raise ValueError("MISSING_RUN_LOCAL_CORRELATION")
     timing = provenance.get("simulation_time")
-    if not isinstance(timing, Mapping) or timing.get("source") not in {"gz_stats", "mujoco_steps_times_timestep", "mujoco_no_physics_start"} or not isinstance(timing.get("seconds"), (int, float)):
+    if not isinstance(timing, Mapping) or timing.get("source") not in {"gz_stats", "mujoco_steps_times_timestep", "mujoco_no_physics_start"}:
         raise ValueError("MISSING_STRUCTURED_SIMULATION_TIME")
+    pre_physics = timing.get("source") == "mujoco_no_physics_start"
+    if not pre_physics and not isinstance(timing.get("seconds"), (int, float)):
+        raise ValueError("MISSING_STRUCTURED_SIMULATION_TIME")
+    if pre_physics and timing.get("execution_state") != {"simulator_started": False, "physics_started": False}:
+        raise ValueError("INVALID_NOT_APPLICABLE_EXECUTION_STATE")
     config, world = provenance.get("configuration_sha256"), provenance.get("world_model_sha256")
     if not all(isinstance(value, str) and len(value) == 64 for value in (config, world)):
         raise ValueError("MISSING_RUN_LOCAL_PROVENANCE")
@@ -419,10 +431,18 @@ def collect_sim009_execution_result(template: QualificationSubject, result: Mapp
         "component_version": result["component_version"],
         "configuration_provenance": {"run_local_configuration": config},
         "world_model_provenance": {"world_model": world},
-        "timing": {"simulation_time": timing["seconds"], "simulation_time_source": timing["source"], "cleanup_complete": result["cleanup_complete"], "bounded_execution": True},
+        "timing": ({"simulation_time": timing["seconds"], "simulation_time_source": timing["source"], "cleanup_complete": result["cleanup_complete"], "bounded_execution": True}
+                   if not pre_physics else {"simulation_time_source": timing["source"], "cleanup_complete": result["cleanup_complete"], "bounded_execution": True, "execution_state": dict(timing["execution_state"])}),
         "semantic_outcome": dict(outcome),
         "correlation_identity": dict(correlation),
         "authority_paths": {"run_local_configuration": paths["configuration"], "world_model": paths["world_model"]},
+        "applicability": ({
+            "structured_simulator_time": {"state": "NOT_APPLICABLE", "justification": "TERMINATED_BEFORE_SIMULATOR_PHYSICS", "execution_state": dict(timing["execution_state"])},
+            "physics_measurement": {"state": "NOT_APPLICABLE", "justification": "TERMINATED_BEFORE_SIMULATOR_PHYSICS", "execution_state": dict(timing["execution_state"])},
+        } if pre_physics else {
+            "structured_simulator_time": {"state": "REQUIRED"},
+            "physics_measurement": {"state": "OPTIONAL"},
+        }),
     })
     validate_subject(subject)
     return subject
@@ -430,6 +450,8 @@ def collect_sim009_execution_result(template: QualificationSubject, result: Mapp
 
 def aggregate_qualification_evidence(
     subjects: list[QualificationSubject], source_git_sha: str, *, required_subject_ids: set[str] | None = None,
+    required_subject_bindings: Mapping[str, Mapping[str, str]] | None = None,
+    immutable_authority: Mapping[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Produce fail-closed Q01 Evidence from already-qualified additive subjects."""
     if not isinstance(source_git_sha, str) or len(source_git_sha) != 40:
@@ -441,14 +463,23 @@ def aggregate_qualification_evidence(
         raise ValueError("DUPLICATE_QUALIFICATION_SUBJECT")
     for subject in subjects:
         validate_subject(subject)
-    missing = sorted((required_subject_ids or set()) - set(identities))
-    result = "SIM_PROVENANCE_QUALIFICATION_READY" if not missing else "SIM_PROVENANCE_QUALIFICATION_BLOCKED"
+    required = required_subject_ids or set()
+    actual = set(identities)
+    missing = sorted(required - actual)
+    extra = sorted(actual - required)
+    binding_errors: list[str] = []
+    for subject in subjects:
+        expected = (required_subject_bindings or {}).get(subject.subject_id)
+        if expected is not None and (subject.predecessor_binding.get("task_id") != expected.get("task_id") or subject.scenario_id != expected.get("scenario_id")):
+            binding_errors.append(subject.subject_id)
+    result = "SIM_PROVENANCE_QUALIFICATION_READY" if not missing and not extra and not binding_errors else "SIM_PROVENANCE_QUALIFICATION_BLOCKED"
     return {
         "schema_version": "1.0", "task_id": "TASK-SIM-Q01",
         "task_specific_result": result,
         "source_git_sha": source_git_sha, "simulation_only": True,
         "qualification_subjects": [asdict(subject) for subject in subjects],
-        "validation": {"status": "PASS" if not missing else "BLOCKED", "subject_count": len(subjects), "missing_subject_ids": missing},
+        "immutable_authority_bindings": dict(immutable_authority or {}),
+        "validation": {"status": "PASS" if result.endswith("READY") else "BLOCKED", "subject_count": len(subjects), "missing_subject_ids": missing, "extra_subject_ids": extra, "binding_error_subject_ids": binding_errors},
     }
 
 
@@ -514,8 +545,28 @@ def validate_subject(subject: QualificationSubject) -> None:
     if subject.record_kind == "operation_run":
         _require(subject.qualification_run_id, "MISSING_QUALIFICATION_RUN_ID")
         _require(subject.scenario_id, "MISSING_SCENARIO_ID")
-        if not isinstance(subject.timing, Mapping) or not isinstance(subject.timing.get("simulation_time"), (int, float)):
+        applicability = subject.applicability
+        if applicability is None and not subject.subject_id.startswith(("q01-sim008-", "q01-sim009-")):
+            applicability = {"structured_simulator_time": {"state": "REQUIRED"}, "physics_measurement": {"state": "OPTIONAL"}}
+        if not isinstance(applicability, Mapping) or set(applicability) != {"structured_simulator_time", "physics_measurement"}:
+            raise ValueError("MISSING_APPLICABILITY")
+        time_policy = applicability["structured_simulator_time"]
+        physics_policy = applicability["physics_measurement"]
+        for policy in (time_policy, physics_policy):
+            if not isinstance(policy, Mapping) or policy.get("state") not in {"REQUIRED", "OPTIONAL", "NOT_APPLICABLE"}:
+                raise ValueError("INVALID_APPLICABILITY")
+        if not isinstance(subject.timing, Mapping):
             raise ValueError("MISSING_STRUCTURED_SIMULATION_TIME")
+        if time_policy["state"] == "REQUIRED" and not isinstance(subject.timing.get("simulation_time"), (int, float)):
+            raise ValueError("MISSING_STRUCTURED_SIMULATION_TIME")
+        if time_policy["state"] == "NOT_APPLICABLE":
+            state = time_policy.get("execution_state")
+            if not isinstance(time_policy.get("justification"), str) or state != {"simulator_started": False, "physics_started": False} or subject.timing.get("simulation_time") is not None:
+                raise ValueError("INVALID_NOT_APPLICABLE_EXECUTION_STATE")
+        if physics_policy["state"] == "NOT_APPLICABLE":
+            state = physics_policy.get("execution_state")
+            if not isinstance(physics_policy.get("justification"), str) or state != {"simulator_started": False, "physics_started": False}:
+                raise ValueError("INVALID_NOT_APPLICABLE_EXECUTION_STATE")
         if not isinstance(subject.semantic_outcome, Mapping):
             raise ValueError("MISSING_SEMANTIC_OUTCOME")
     elif subject.record_kind == "profile_aggregate":
