@@ -39,6 +39,7 @@ def run_sim005_qualification(task_id: str) -> dict[str, Any]:
     measurement = backend.measurement_for(request_data["mission_id"], request_data["action_id"])
     return {
         "qualification_run_id": f"q01-sim005-{task_id}-{uuid.uuid4()}",
+        "new_run": True,
         "correlation_identity": correlation,
         "measurement": measurement,
         "provenance": provenance(),

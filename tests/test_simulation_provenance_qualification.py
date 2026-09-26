@@ -11,7 +11,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 sys.path.insert(0, str(ROOT))
 
-from simulation_runtime.provenance_qualification import QualificationSubject, collect_sim004_execution_result, aggregate_qualification_evidence, read_gazebo_simulation_time, render_qualification_report, write_qualification_artifacts, collect_sim009_scenario_qualifications, collect_sim008_configuration_qualification, collect_sim007_profile_qualifications, build_mujoco_subject, build_gazebo_subject, resolve_predecessor_binding, validate_subject
+from simulation_runtime.provenance_qualification import QualificationSubject, collect_sim005_execution_result, collect_sim004_execution_result, aggregate_qualification_evidence, read_gazebo_simulation_time, render_qualification_report, write_qualification_artifacts, collect_sim009_scenario_qualifications, collect_sim008_configuration_qualification, collect_sim007_profile_qualifications, build_mujoco_subject, build_gazebo_subject, resolve_predecessor_binding, validate_subject
 from scripts.q01_execution_adapters import gazebo_clock, run_sim005_qualification, run_sim008_qualification, run_sim009_qualification
 from scripts.run_simulation_provenance_qualification import required_subject_manifest
 
@@ -198,9 +198,37 @@ def test_sim004_actual_result_converts_to_subject_without_historical_time_backfi
 def test_sim005_wrapper_creates_new_identity_and_extracts_same_run_measurement() -> None:
     record = run_sim005_qualification("mujoco-place-nominal")
     assert record["qualification_run_id"].startswith("q01-sim005-")
+    assert record["new_run"] is True
     assert set(record["correlation_identity"]) == {"mission_id", "request_id", "trace_id", "action_id"}
     assert record["measurement"]["scenario"] == "mujoco-place-nominal"
     assert record["provenance"]["mujoco_version"] == "3.13.0"
+
+
+def test_sim005_actual_result_converts_to_subject_with_same_run_provenance() -> None:
+    raw = run_sim005_qualification("mujoco-place-nominal")
+    template = _operation(
+        subject_id="q01-sim005-mujoco-place-nominal",
+        predecessor_binding={"task_id": "TASK-SIM-005", "accepted_commit": "a" * 40, "evidence_path": "results/simulation/SIM-005_mujoco_vla_backend.json", "evidence_sha256": "b" * 64},
+        backend_id="mujoco",
+        scenario_id="mujoco-place-nominal",
+    )
+    subject = collect_sim005_execution_result(template, raw)
+    assert subject.correlation_identity == raw["correlation_identity"]
+    assert subject.semantic_outcome == raw["semantic_outcome"]
+    assert subject.qualification_run_id == raw["qualification_run_id"]
+    assert subject.timing["simulation_time_source"] == "mujoco_steps_times_timestep"
+    assert subject.timing["mujoco_version"] == raw["provenance"]["mujoco_version"]
+    assert subject.timing["seed"] == raw["provenance"]["seed"]
+    assert subject.timing["initial_state_id"] == raw["provenance"]["initial_state_id"]
+    assert set(subject.configuration_provenance) == {"execution_configuration", "backend_source"}
+    assert set(subject.world_model_provenance) == {"model", "initial_state"}
+    assert subject.authority_paths["model"] == "data/simulation/sim005_mujoco_manipulation.xml"
+    with pytest.raises(ValueError, match="MISSING_RUN_LOCAL_PROVENANCE"):
+        collect_sim005_execution_result(template, {**raw, "provenance": {}})
+    with pytest.raises(ValueError, match="CROSS_SCENARIO_ASSOCIATION"):
+        collect_sim005_execution_result(template, {**raw, "measurement": {**raw["measurement"], "scenario": "mujoco-grasp-miss"}})
+    with pytest.raises(ValueError, match="HISTORICAL_TRACE_INJECTION"):
+        collect_sim005_execution_result(template, {**raw, "new_run": False})
 
 
 def test_sim008_wrapper_preserves_execution_and_structured_world_time() -> None:

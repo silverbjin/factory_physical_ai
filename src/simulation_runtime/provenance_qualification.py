@@ -115,6 +115,73 @@ def build_mujoco_subject(template: QualificationSubject, run: Mapping[str, Any])
     return subject
 
 
+def collect_sim005_execution_result(template: QualificationSubject, result: Mapping[str, Any]) -> QualificationSubject:
+    """Normalize one new MuJoCo wrapper result without historical run-local backfill."""
+    if template.predecessor_binding.get("task_id") != "TASK-SIM-005":
+        raise ValueError("PREDECESSOR_TASK_MISMATCH")
+    qualification_run_id = result.get("qualification_run_id")
+    if not isinstance(qualification_run_id, str) or not qualification_run_id.startswith("q01-sim005-"):
+        raise ValueError("INVALID_QUALIFICATION_RUN_ID")
+    correlation = result.get("correlation_identity")
+    measurement = result.get("measurement")
+    provenance = result.get("provenance")
+    outcome = result.get("semantic_outcome")
+    if not all(isinstance(value, Mapping) for value in (correlation, measurement, provenance, outcome)):
+        raise ValueError("MISSING_RUN_LOCAL_PROVENANCE")
+    if measurement.get("scenario") != template.scenario_id:
+        raise ValueError("CROSS_SCENARIO_ASSOCIATION")
+    if result.get("new_run") is not True:
+        raise ValueError("HISTORICAL_TRACE_INJECTION")
+    assets = provenance.get("assets")
+    if not isinstance(assets, list):
+        raise ValueError("MISSING_RUN_LOCAL_PROVENANCE")
+    asset_hashes = {
+        str(asset.get("path")): asset.get("sha256")
+        for asset in assets
+        if isinstance(asset, Mapping) and isinstance(asset.get("path"), str) and isinstance(asset.get("sha256"), str)
+    }
+    config_hash = asset_hashes.get("configs/simulation/sim005_mujoco_manipulation.yaml")
+    model_hash = asset_hashes.get("data/simulation/sim005_mujoco_manipulation.xml")
+    backend_hash = asset_hashes.get("src/simulation_runtime/mujoco_vla_backend.py")
+    if not all(isinstance(value, str) and len(value) == 64 for value in (config_hash, model_hash, backend_hash)):
+        raise ValueError("MISSING_RUN_LOCAL_PROVENANCE")
+    if not isinstance(provenance.get("mujoco_version"), str) or not isinstance(provenance.get("backend_id"), str):
+        raise ValueError("MISSING_RUNTIME_PROVENANCE")
+    if not isinstance(provenance.get("initial_state_id"), str) or not isinstance(provenance.get("seed"), int):
+        raise ValueError("MISSING_INITIAL_STATE_PROVENANCE")
+    steps, timestep = measurement.get("steps"), measurement.get("timestep_seconds")
+    if not isinstance(steps, int) or not isinstance(timestep, (int, float)):
+        raise ValueError("MISSING_STRUCTURED_SIMULATION_TIME")
+    base = QualificationSubject(**{**template.__dict__,
+        "qualification_run_id": qualification_run_id,
+        "component_version": provenance["backend_id"],
+        "configuration_provenance": {"execution_configuration": config_hash, "backend_source": backend_hash},
+        "world_model_provenance": {
+            "model": model_hash,
+            "initial_state": _canonical_sha256({"initial_state_id": provenance["initial_state_id"], "seed": provenance["seed"]}),
+        },
+        "timing": {
+            "simulation_time": steps * timestep,
+            "simulation_time_source": "mujoco_steps_times_timestep",
+            "steps": steps,
+            "timestep_seconds": timestep,
+            "mujoco_version": provenance["mujoco_version"],
+            "seed": provenance["seed"],
+            "initial_state_id": provenance["initial_state_id"],
+            "bounded_execution": True,
+        },
+        "semantic_outcome": dict(outcome),
+        "authority_paths": {
+            "execution_configuration": "configs/simulation/sim005_mujoco_manipulation.yaml",
+            "model": "data/simulation/sim005_mujoco_manipulation.xml",
+            "backend_source": "src/simulation_runtime/mujoco_vla_backend.py",
+        },
+    })
+    subject = build_mujoco_subject(base, {"new_run": True, **correlation})
+    validate_subject(subject)
+    return subject
+
+
 def _canonical_sha256(value: Any) -> str:
     return hashlib.sha256(json.dumps(value, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
 
