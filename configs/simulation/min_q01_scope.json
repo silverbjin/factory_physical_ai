@@ -1,0 +1,137 @@
+{
+  "schema_version": "1.0",
+  "scope_id": "MIN-Q01",
+  "task_contract": "TASK-SIM-Q01-MIN",
+  "execution_evidence_task_id": "TASK-SIM-Q01",
+  "architectural_outcome": "Q01_MINIMAL_REQUIRED",
+  "downstream_consumer": "TASK-SIM-010",
+  "authority_resolution": {
+    "contract": "Acceptance -> accepted_commit -> task-declared Evidence blob -> recomputed SHA256 -> task-specific result",
+    "binding_source": "tasks/TASK-SIM-Q01.md#2",
+    "current_worktree_evidence_authoritative": false
+  },
+  "task_specific_results": {
+    "ready": "SIM_PROVENANCE_QUALIFICATION_READY",
+    "blocked": "SIM_PROVENANCE_QUALIFICATION_BLOCKED",
+    "compatibility": "Existing TASK-SIM-Q01 tokens retained; no consumer migration is authorized by this scope contract."
+  },
+  "required_operation_subjects": [
+    {
+      "subject_id": "q01-sim008-normal-system-authority",
+      "predecessor_task_id": "TASK-SIM-008",
+      "scenario_id": "SIM_NORMAL_BRAKE_ECU_LINE_B"
+    },
+    {
+      "subject_id": "q01-sim009-SIM009-NAV-BLOCKED",
+      "predecessor_task_id": "TASK-SIM-009",
+      "scenario_id": "SIM009-NAV-BLOCKED"
+    },
+    {
+      "subject_id": "q01-sim009-SIM009-NAV-ABORTED",
+      "predecessor_task_id": "TASK-SIM-009",
+      "scenario_id": "SIM009-NAV-ABORTED"
+    },
+    {
+      "subject_id": "q01-sim009-SIM009-NAV-TIMEOUT-RETRY",
+      "predecessor_task_id": "TASK-SIM-009",
+      "scenario_id": "SIM009-NAV-TIMEOUT-RETRY"
+    },
+    {
+      "subject_id": "q01-sim009-SIM009-NAV-TF-UNAVAILABLE",
+      "predecessor_task_id": "TASK-SIM-009",
+      "scenario_id": "SIM009-NAV-TF-UNAVAILABLE"
+    },
+    {
+      "subject_id": "q01-sim009-SIM009-VLA-GRASP-MISS",
+      "predecessor_task_id": "TASK-SIM-009",
+      "scenario_id": "SIM009-VLA-GRASP-MISS"
+    },
+    {
+      "subject_id": "q01-sim009-SIM009-VLA-CONTACT-LOSS",
+      "predecessor_task_id": "TASK-SIM-009",
+      "scenario_id": "SIM009-VLA-CONTACT-LOSS"
+    },
+    {
+      "subject_id": "q01-sim009-SIM009-VLA-WORKSPACE-LIMIT",
+      "predecessor_task_id": "TASK-SIM-009",
+      "scenario_id": "SIM009-VLA-WORKSPACE-LIMIT"
+    },
+    {
+      "subject_id": "q01-sim009-SIM009-VLA-TIMEOUT",
+      "predecessor_task_id": "TASK-SIM-009",
+      "scenario_id": "SIM009-VLA-TIMEOUT"
+    },
+    {
+      "subject_id": "q01-sim009-SIM009-VLA-AMBIGUOUS",
+      "predecessor_task_id": "TASK-SIM-009",
+      "scenario_id": "SIM009-VLA-AMBIGUOUS"
+    },
+    {
+      "subject_id": "q01-sim009-SIM009-VLA-UNKNOWN",
+      "predecessor_task_id": "TASK-SIM-009",
+      "scenario_id": "SIM009-VLA-UNKNOWN"
+    }
+  ],
+  "required_operation_subject_counts": {
+    "TASK-SIM-008": 1,
+    "TASK-SIM-009": 10,
+    "total": 11
+  },
+  "non_execution_authority": {
+    "TASK-SIM-004": [
+      "component_version",
+      "runtime_identity",
+      "world_authority",
+      "bridge_authority",
+      "runner_authority"
+    ],
+    "TASK-SIM-005": [
+      "mujoco_version",
+      "model_scene_authority",
+      "configuration_source_authority",
+      "version_wide_seed_timestep_authority",
+      "accepted_initial_state_authority"
+    ],
+    "TASK-SIM-007": [
+      "profile_identity",
+      "profile_source_configuration_authority",
+      "accepted_aggregate_outcome"
+    ]
+  },
+  "excluded_full_q01_subject_classes": [
+    "standalone_sim004_operation_qualifications",
+    "standalone_sim005_operation_qualifications",
+    "standalone_sim005_mujoco_invalid_observation_qualification",
+    "new_sim007_runtime_profile_qualification_sessions",
+    "full_q01_25_subject_completeness",
+    "full_q01_markdown_report_completion"
+  ],
+  "applicability_policy": {
+    "allowed_states": [
+      "REQUIRED",
+      "OPTIONAL",
+      "NOT_APPLICABLE"
+    ],
+    "structured_simulator_time": "REQUIRED when simulator execution occurred; NOT_APPLICABLE only when structured execution state proves termination before simulator execution.",
+    "physics_measurement": "REQUIRED when physics execution occurred; NOT_APPLICABLE only when structured execution state proves termination before physics.",
+    "missing_required_field_result": "SIM_PROVENANCE_QUALIFICATION_BLOCKED",
+    "historical_run_local_backfill": "FORBIDDEN"
+  },
+  "completion_gate": [
+    "contract_b_predecessor_bindings_verified",
+    "one_required_sim008_subject_completed",
+    "ten_required_sim009_subjects_completed",
+    "unique_predecessor_and_scenario_binding",
+    "sim008_distinct_bridge_and_launch_run_authority",
+    "applicable_sim009_run_local_config_world_model_scene_authority",
+    "structured_simulator_timing_present_where_required",
+    "legitimate_pre_physics_fields_explicitly_not_applicable",
+    "no_historical_run_local_backfill",
+    "no_cross_task_result_reuse",
+    "no_cross_scenario_result_reuse",
+    "canonical_machine_evidence_generated",
+    "independent_review_accept",
+    "canonical_acceptance_recorded"
+  ],
+  "scope_reopening_result": "MIN_Q01_SCOPE_REOPEN_REQUIRED"
+}
