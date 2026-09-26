@@ -260,15 +260,21 @@ def test_sim004_live_supplier_reuses_sidecar_execution_for_every_required_scenar
         assert raw["semantic_outcome"]["result"] in {"success", "failure", "pending"}
 
 
-def test_live_adapter_map_exposes_only_the_sim004_supplier_added_by_this_transition() -> None:
-    def supplier(scenario_id: str) -> dict[str, object]:
+def test_live_adapter_map_dispatches_sim004_and_sim005_by_explicit_task_identity() -> None:
+    def sim004_supplier(scenario_id: str) -> dict[str, object]:
         return {"scenario_id": scenario_id}
+
+    def sim005_supplier(scenario_id: str) -> dict[str, object]:
+        return {"scenario_id": scenario_id, "new_run": True}
 
     adapter_factory = getattr(run_simulation_provenance_qualification, "live_adapters", None)
     assert callable(adapter_factory), "canonical runner must expose its live adapter dispatcher"
-    adapters = adapter_factory(sim004_supplier=supplier)
-    assert adapters == {"TASK-SIM-004": supplier}
+    adapters = adapter_factory(sim004_supplier=sim004_supplier, sim005_supplier=sim005_supplier)
+    assert adapters == {"TASK-SIM-004": sim004_supplier, "TASK-SIM-005": sim005_supplier}
     assert adapters["TASK-SIM-004"]("blocked") == {"scenario_id": "blocked"}
+    assert adapters["TASK-SIM-005"]("mujoco-place-nominal") == {
+        "scenario_id": "mujoco-place-nominal", "new_run": True,
+    }
 
 
 def test_canonical_routing_collects_sim004_from_its_live_supplier() -> None:
@@ -292,9 +298,42 @@ def test_canonical_routing_collects_sim004_from_its_live_supplier() -> None:
             "cleanup_complete": True, "semantic_outcome": {"result": "failure" if scenario_id == "blocked" else "success"},
         }
 
-    subjects = collect_qualification_subjects(bindings, run_simulation_provenance_qualification.live_adapters(sim004_supplier=supplier))
+    subjects = collect_qualification_subjects(
+        bindings,
+        run_simulation_provenance_qualification.live_adapters(
+            sim004_supplier=supplier,
+            sim005_supplier=lambda _scenario: None,
+        ),
+    )
     assert calls == ["blocked", "success", "timeout_reconciliation"]
     assert {subject.subject_id for subject in subjects if subject.subject_id.startswith("q01-sim004-")} == set(run_ids.values())
+
+
+def test_canonical_routing_collects_sim005_from_its_live_supplier_without_backfill() -> None:
+    bindings = {}
+    for short, evidence in (("SIM-004", "navigation_backend"), ("SIM-005", "mujoco_vla_backend"), ("SIM-007", "mission_integration"), ("SIM-008", "normal_system_e2e"), ("SIM-009", "failure_recovery")):
+        acceptance = json.loads((ROOT / f"results/reviews/{short}_acceptance.json").read_text())
+        bindings[f"TASK-{short}"] = resolve_predecessor_binding(ROOT, f"TASK-{short}", acceptance, f"results/simulation/{short}_{evidence}.json")
+    raw = run_sim005_qualification("mujoco-place-nominal")
+    calls: list[str] = []
+
+    def supplier(scenario_id: str) -> dict[str, object] | None:
+        calls.append(scenario_id)
+        return raw if scenario_id == "mujoco-place-nominal" else None
+
+    subjects = collect_qualification_subjects(
+        bindings,
+        run_simulation_provenance_qualification.live_adapters(
+            sim004_supplier=lambda _scenario: None,
+            sim005_supplier=supplier,
+        ),
+    )
+    qualified = next(subject for subject in subjects if subject.subject_id == "q01-sim005-mujoco-place-nominal")
+    assert qualified.correlation_identity == raw["correlation_identity"]
+    assert qualified.timing["mujoco_version"] == raw["provenance"]["mujoco_version"]
+    assert qualified.timing["seed"] == raw["provenance"]["seed"]
+    assert qualified.timing["initial_state_id"] == raw["provenance"]["initial_state_id"]
+    assert "mujoco-place-nominal" in calls
 
 
 def test_sim005_wrapper_creates_new_identity_and_extracts_same_run_measurement() -> None:

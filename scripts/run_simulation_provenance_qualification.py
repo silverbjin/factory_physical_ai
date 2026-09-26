@@ -38,12 +38,22 @@ REQUIRED_SUBJECT_IDS = frozenset({
 })
 
 
-def live_adapters(*, sim004_supplier: Callable[[str], Any] | None = None) -> dict[str, Callable[..., Any]]:
+def live_adapters(
+    *,
+    sim004_supplier: Callable[[str], Any] | None = None,
+    sim005_supplier: Callable[[str], Any] | None = None,
+) -> dict[str, Callable[..., Any]]:
     """Return canonical live suppliers; absent task paths are never fabricated."""
     if sim004_supplier is None:
         from scripts.q01_execution_adapters import run_sim004_qualification
         sim004_supplier = run_sim004_qualification
-    return {"TASK-SIM-004": sim004_supplier}
+    if sim005_supplier is None:
+        from scripts.q01_execution_adapters import run_sim005_qualification
+        sim005_supplier = run_sim005_qualification
+    return {
+        "TASK-SIM-004": sim004_supplier,
+        "TASK-SIM-005": sim005_supplier,
+    }
 
 
 def required_subject_manifest(bindings: dict[str, object]) -> tuple[str, ...]:
