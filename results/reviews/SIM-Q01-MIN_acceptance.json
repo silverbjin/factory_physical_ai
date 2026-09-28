@@ -1,0 +1,10 @@
+{
+  "schema_version": 1,
+  "task_id": "TASK-SIM-Q01-MIN",
+  "status": "ACCEPT",
+  "accepted_commit": "b55bc4fc2435e83c3761457b92d9e14892e39435",
+  "recorded_at": "2026-09-29T06:23:27+09:00",
+  "recorded_by": "codex-task-orchestrator",
+  "recording_mode": "deterministic",
+  "workflow_complete": true
+}
