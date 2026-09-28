@@ -27,19 +27,36 @@ class GazeboSystemWorld:
     """Private port coupling the accepted SIM-004 process lifecycle to SIM-008 state."""
     def __init__(self, scenario: Mapping[str, Any]) -> None:
         from scripts import run_simulation_navigation as navigation_runner
-        # SIM-008 owns a tighter end-to-end window than the component runner.
-        navigation_runner.STARTUP_SECONDS = 20
-        navigation_runner.EXECUTION_SECONDS = 20
-        navigation_runner.CLEANUP_SECONDS = 5
-        from scripts.run_simulation_navigation import BoundedGazeboNav2Runtime
+        from scripts.run_simulation_navigation import BoundedGazeboNav2Runtime, NavigationRuntimeBounds
         self.scenario = dict(scenario)
         self.world_name = Path(str(scenario["world"])).stem
         self.entity_name = str(scenario["object"]["gazebo_entity_name"])
-        self.runtime = BoundedGazeboNav2Runtime(ROOT / str(scenario["world"]))
+        source = scenario["regions"]["source"]
+        initial_pose = {
+            "frame_id": navigation_runner.CANONICAL_START["frame_id"],
+            "x": float(source["x"]),
+            "y": float(source["y"]),
+            "yaw": float(navigation_runner.CANONICAL_START["yaw"]),
+            "source": "SIM-008 scenario.regions.source",
+        }
+        self.runtime = BoundedGazeboNav2Runtime(
+            ROOT / str(scenario["world"]),
+            initial_pose=initial_pose,
+            bounds=NavigationRuntimeBounds(
+                startup_seconds=20,
+                localization_seconds=navigation_runner.LOCALIZATION_SECONDS,
+                execution_seconds=20,
+                cleanup_seconds=5,
+            ),
+        )
+        self._readiness_result = None
     @property
     def ready(self) -> bool: return self.runtime.ready
-    def start(self) -> None: self.runtime.start()
-    def bootstrap_localization(self) -> bool: return self.runtime.bootstrap_localization()
+    @property
+    def bootstrap_error(self) -> str | None: return self.runtime.bootstrap_error
+    def start(self) -> None: self._readiness_result = self.runtime.establish_readiness()
+    def bootstrap_localization(self) -> bool:
+        return bool(self._readiness_result is not None and self._readiness_result.ready)
     def navigate(self, request: dict[str, Any]) -> RuntimeObservation: return self.runtime.navigate(request)
     def reconcile(self, action_id: str) -> RuntimeObservation: return self.runtime.reconcile(action_id)
     def _run_gz(self, command: list[str], *, timeout: float = 5) -> subprocess.CompletedProcess[str]:

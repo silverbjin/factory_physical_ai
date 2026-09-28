@@ -1,7 +1,9 @@
 from __future__ import annotations
 
 import hashlib
+import importlib
 import json
+import subprocess
 import sys
 from types import SimpleNamespace
 from pathlib import Path
@@ -32,6 +34,7 @@ from simulation_runtime.failure_recovery import (  # noqa: E402
 )
 from simulation_runtime.navigation_backend import RuntimeObservation  # noqa: E402
 from scripts.run_simulation_failure_recovery import build_evidence  # noqa: E402
+from scripts import run_simulation_navigation  # noqa: E402
 
 
 def test_manifest_has_stable_complete_bounded_scenarios() -> None:
@@ -49,6 +52,46 @@ def test_manifest_has_stable_complete_bounded_scenarios() -> None:
         + NORMAL_RECOVERY_TIMEOUT_MS
         + LIVE_RUNTIME_SCHEDULING_MARGIN_MS
     )
+
+
+def test_manifest_budget_policy_is_isolated_from_sim008_runtime_window() -> None:
+    """SIM-008's local E2E bound must not shrink accepted SIM-009 replay budgets."""
+    import simulation_runtime.failure_recovery as failure_recovery
+
+    original = run_simulation_navigation.EXECUTION_SECONDS
+    try:
+        run_simulation_navigation.EXECUTION_SECONDS = 20
+        reloaded = importlib.reload(failure_recovery)
+        manifest = reloaded.load_manifest()
+        budgets = {scenario["id"]: scenario["budget_ms"] for scenario in manifest["scenarios"]}
+        assert reloaded.NORMAL_RECOVERY_TIMEOUT_MS == 30_000
+        assert reloaded.MAX_SCENARIO_BUDGET_MS == 33_000
+        assert budgets["SIM009-NAV-TIMEOUT-RETRY"] == reloaded.MAX_SCENARIO_BUDGET_MS
+    finally:
+        run_simulation_navigation.EXECUTION_SECONDS = original
+        importlib.reload(failure_recovery)
+
+
+def test_manifest_rejects_budget_and_shape_outside_accepted_policy(tmp_path: Path) -> None:
+    manifest = load_manifest()
+    over_budget = json.loads(json.dumps(manifest))
+    over_budget["scenarios"][5]["budget_ms"] = MAX_SCENARIO_BUDGET_MS + 1
+    path = tmp_path / "over-budget.json"
+    path.write_text(json.dumps(over_budget))
+    with pytest.raises(ValueError, match="SIM-009 scenario budget or shape is malformed"):
+        load_manifest(path)
+
+    malformed = json.loads(json.dumps(manifest))
+    del malformed["scenarios"][0]["budget_ms"]
+    path.write_text(json.dumps(malformed))
+    with pytest.raises(ValueError, match="SIM-009 scenario budget or shape is malformed"):
+        load_manifest(path)
+
+    reordered = json.loads(json.dumps(manifest))
+    reordered["scenarios"][0], reordered["scenarios"][1] = reordered["scenarios"][1], reordered["scenarios"][0]
+    path.write_text(json.dumps(reordered))
+    with pytest.raises(ValueError, match="SIM-009 scenario IDs are incomplete or unstable"):
+        load_manifest(path)
 
 
 def test_repeatability_classifies_bootstrap_failure_as_infrastructure_not_semantic() -> None:
@@ -109,6 +152,30 @@ def test_suite_fails_closed_reconciles_before_retry_and_cleans_up() -> None:
     assert stale["mission"]["mission_state"] == "escalated"
 
 
+def test_pre_request_navigation_failure_has_attempt_identity_but_no_fabricated_correlation(monkeypatch) -> None:
+    import simulation_runtime.failure_recovery as failure_recovery
+
+    class Runtime:
+        def __init__(self) -> None:
+            self.ready = False
+            self.measurements = {"readiness": [], "localization": {}}
+            self.readiness_result = SimpleNamespace(ready=False, stage="CLOCK", error="SIMULATION_CLOCK_UNAVAILABLE", as_dict=lambda: {
+                "ready": False, "stage": "CLOCK", "error": "SIMULATION_CLOCK_UNAVAILABLE",
+            })
+
+        def establish_readiness(self): return self.readiness_result
+        def close(self): return True
+
+    monkeypatch.setattr(failure_recovery, "GoalTrackedGazeboNav2Runtime", Runtime)
+    suite = failure_recovery.run_failure_suite(navigation_runtime_factory=Runtime)
+    blocked = next(row for row in suite["scenarios"] if row["id"] == "SIM009-NAV-BLOCKED")
+
+    assert blocked["qualification_attempt"]["qualification_run_id"].startswith("q01-sim009-")
+    assert blocked["qualification_attempt"]["scenario_execution_id"]
+    assert blocked["execution_integrity"]["stage"] == "CLOCK"
+    assert "mission_id" not in blocked["result"]
+
+
 def test_runner_evidence_is_machine_readable_and_contains_no_successful_unknown_or_uncertain() -> None:
     evidence = build_evidence(navigation_runtime_factory=_ScriptedNavigationRuntime)
 
@@ -121,27 +188,214 @@ def test_runner_evidence_is_machine_readable_and_contains_no_successful_unknown_
     assert not any(row["decision"] == "SUCCESS" for row in evidence["scenarios"] if row["outcome_kind"] in {"unknown", "uncertain", "contradictory"})
 
 
-def test_accepted_binding_rejects_evidence_that_does_not_match_its_accepted_hash(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    import simulation_runtime.failure_recovery as failure_recovery
-
-    evidence_path = tmp_path / "results/simulation/SIM-004_navigation_backend.json"
+def _accepted_binding_repository(
+    tmp_path: Path,
+    *,
+    accepted_payload: dict[str, object],
+    worktree_payload: dict[str, object],
+) -> tuple[Path, str, str]:
+    """Build a real accepted Git tree plus a deliberately divergent worktree."""
+    evidence_relative = "results/simulation/SIM-004_navigation_backend.json"
+    evidence_path = tmp_path / evidence_relative
     evidence_path.parent.mkdir(parents=True)
-    evidence_path.write_text(json.dumps({"task_specific_result": "SIM_NAVIGATION_BACKEND_READY"}))
+    accepted_bytes = json.dumps(accepted_payload, sort_keys=True).encode()
+    evidence_path.write_bytes(accepted_bytes)
+    for command in (
+        ["git", "init"],
+        ["git", "config", "user.email", "q01-test@example.invalid"],
+        ["git", "config", "user.name", "Q01 Test"],
+        ["git", "add", evidence_relative],
+        ["git", "commit", "-m", "accepted evidence"],
+    ):
+        subprocess.run(command, cwd=tmp_path, check=True, capture_output=True)
+    commit = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=tmp_path, text=True).strip()
+    evidence_path.write_text(json.dumps(worktree_payload, sort_keys=True))
     acceptance_path = tmp_path / "results/reviews/SIM-004_acceptance.json"
     acceptance_path.parent.mkdir(parents=True)
     acceptance_path.write_text(json.dumps({
+        "task_id": "TASK-SIM-004",
         "status": "ACCEPT",
+        "accepted_commit": commit,
         "evidence": {
-            "path": "results/simulation/SIM-004_navigation_backend.json",
-            "sha256": "0" * 64,
+            "path": evidence_relative,
+            "sha256": hashlib.sha256(accepted_bytes).hexdigest(),
         },
     }))
-    monkeypatch.setattr(failure_recovery, "ROOT", tmp_path)
+    return tmp_path, commit, hashlib.sha256(accepted_bytes).hexdigest()
 
-    with pytest.raises(ValueError, match="hash"):
+
+def _frozen_sim004_binding(commit: str, digest: str, *, result: str = "SIM_NAVIGATION_BACKEND_READY", path: str = "results/simulation/SIM-004_navigation_backend.json") -> dict[str, str]:
+    return {
+        "task_id": "TASK-SIM-004",
+        "accepted_commit": commit,
+        "evidence_path": path,
+        "evidence_sha256": digest,
+        "task_specific_result": result,
+    }
+
+
+def test_accepted_binding_uses_accepted_git_blob_not_dirty_worktree_evidence(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Changing a mutable worktree Evidence copy must not invalidate accepted provenance."""
+    import simulation_runtime.failure_recovery as failure_recovery
+
+    root, commit, digest = _accepted_binding_repository(
+        tmp_path,
+        accepted_payload={"task_id": "TASK-SIM-004", "task_specific_result": "SIM_NAVIGATION_BACKEND_READY"},
+        worktree_payload={"task_id": "TASK-SIM-004", "task_specific_result": "DIRTY_WORKTREE_VALUE"},
+    )
+    monkeypatch.setattr(failure_recovery, "ROOT", root)
+    monkeypatch.setattr(failure_recovery, "ACCEPTED_PREDECESSOR_BINDINGS", {
+        "SIM-004": _frozen_sim004_binding(commit, digest),
+    })
+
+    binding = failure_recovery._accepted_binding("SIM-004")
+
+    assert binding["acceptance"]["accepted_commit"] == commit
+    assert binding["evidence_sha256"] == digest
+
+
+def test_accepted_binding_supports_minimal_contract_b_acceptance(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """A valid minimal Acceptance still resolves its frozen accepted Evidence."""
+    import simulation_runtime.failure_recovery as failure_recovery
+
+    root, commit, digest = _accepted_binding_repository(
+        tmp_path,
+        accepted_payload={"task_id": "TASK-SIM-004", "task_specific_result": "SIM_NAVIGATION_BACKEND_READY"},
+        worktree_payload={"task_id": "TASK-SIM-004", "task_specific_result": "DIRTY_WORKTREE_VALUE"},
+    )
+    acceptance_path = root / "results/reviews/SIM-004_acceptance.json"
+    acceptance = json.loads(acceptance_path.read_text())
+    del acceptance["evidence"]
+    acceptance_path.write_text(json.dumps(acceptance))
+    monkeypatch.setattr(failure_recovery, "ROOT", root)
+    monkeypatch.setattr(failure_recovery, "ACCEPTED_PREDECESSOR_BINDINGS", {
+        "SIM-004": _frozen_sim004_binding(commit, digest),
+    })
+
+    assert failure_recovery._accepted_binding("SIM-004")["evidence_sha256"] == digest
+
+
+def test_accepted_binding_fails_closed_when_accepted_git_blob_sha_disagrees_with_frozen_binding(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Changing a frozen SHA must reject an otherwise valid accepted Git blob."""
+    import simulation_runtime.failure_recovery as failure_recovery
+
+    root, commit, _digest = _accepted_binding_repository(
+        tmp_path,
+        accepted_payload={"task_id": "TASK-SIM-004", "task_specific_result": "SIM_NAVIGATION_BACKEND_READY"},
+        worktree_payload={"task_id": "TASK-SIM-004", "task_specific_result": "DIRTY_WORKTREE_VALUE"},
+    )
+    monkeypatch.setattr(failure_recovery, "ROOT", root)
+    monkeypatch.setattr(failure_recovery, "ACCEPTED_PREDECESSOR_BINDINGS", {
+        "SIM-004": _frozen_sim004_binding(commit, "0" * 64),
+    })
+
+    with pytest.raises(ValueError, match="FROZEN_EVIDENCE_SHA256_MISMATCH"):
         failure_recovery._accepted_binding("SIM-004")
+
+
+def test_accepted_binding_fails_closed_when_accepted_git_blob_is_missing(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """A mutable working copy cannot stand in for an absent accepted blob."""
+    import simulation_runtime.failure_recovery as failure_recovery
+
+    root, commit, digest = _accepted_binding_repository(
+        tmp_path,
+        accepted_payload={"task_id": "TASK-SIM-004", "task_specific_result": "SIM_NAVIGATION_BACKEND_READY"},
+        worktree_payload={"task_id": "TASK-SIM-004", "task_specific_result": "SIM_NAVIGATION_BACKEND_READY"},
+    )
+    missing = "results/simulation/missing.json"
+    acceptance_path = root / "results/reviews/SIM-004_acceptance.json"
+    acceptance = json.loads(acceptance_path.read_text())
+    acceptance["evidence"]["path"] = missing
+    acceptance_path.write_text(json.dumps(acceptance))
+    monkeypatch.setattr(failure_recovery, "ROOT", root)
+    monkeypatch.setattr(failure_recovery, "ACCEPTED_PREDECESSOR_BINDINGS", {
+        "SIM-004": _frozen_sim004_binding(commit, digest, path=missing),
+    })
+
+    with pytest.raises(ValueError, match="MISSING_ACCEPTED_EVIDENCE"):
+        failure_recovery._accepted_binding("SIM-004")
+
+
+def test_accepted_binding_fails_closed_when_acceptance_commit_differs_from_frozen_binding(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """A current Acceptance record may not redirect accepted provenance to another commit."""
+    import simulation_runtime.failure_recovery as failure_recovery
+
+    root, commit, digest = _accepted_binding_repository(
+        tmp_path,
+        accepted_payload={"task_id": "TASK-SIM-004", "task_specific_result": "SIM_NAVIGATION_BACKEND_READY"},
+        worktree_payload={"task_id": "TASK-SIM-004", "task_specific_result": "SIM_NAVIGATION_BACKEND_READY"},
+    )
+    acceptance_path = root / "results/reviews/SIM-004_acceptance.json"
+    acceptance = json.loads(acceptance_path.read_text())
+    acceptance["accepted_commit"] = "0" * 40
+    acceptance_path.write_text(json.dumps(acceptance))
+    monkeypatch.setattr(failure_recovery, "ROOT", root)
+    monkeypatch.setattr(failure_recovery, "ACCEPTED_PREDECESSOR_BINDINGS", {
+        "SIM-004": _frozen_sim004_binding(commit, digest),
+    })
+
+    with pytest.raises(ValueError, match="FROZEN_ACCEPTED_COMMIT_MISMATCH"):
+        failure_recovery._accepted_binding("SIM-004")
+
+
+def test_accepted_binding_fails_closed_when_accepted_git_result_is_wrong(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """A correct mutable result cannot conceal an invalid result in accepted history."""
+    import simulation_runtime.failure_recovery as failure_recovery
+
+    root, commit, digest = _accepted_binding_repository(
+        tmp_path,
+        accepted_payload={"task_id": "TASK-SIM-004", "task_specific_result": "WRONG"},
+        worktree_payload={"task_id": "TASK-SIM-004", "task_specific_result": "SIM_NAVIGATION_BACKEND_READY"},
+    )
+    monkeypatch.setattr(failure_recovery, "ROOT", root)
+    monkeypatch.setattr(failure_recovery, "ACCEPTED_PREDECESSOR_BINDINGS", {
+        "SIM-004": _frozen_sim004_binding(commit, digest),
+    })
+
+    with pytest.raises(ValueError, match="FROZEN_TASK_RESULT_MISMATCH"):
+        failure_recovery._accepted_binding("SIM-004")
+
+
+def test_dirty_worktree_cannot_make_invalid_accepted_provenance_pass(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """An apparently correct mutable file must not replace an invalid frozen SHA."""
+    import simulation_runtime.failure_recovery as failure_recovery
+
+    root, commit, _digest = _accepted_binding_repository(
+        tmp_path,
+        accepted_payload={"task_id": "TASK-SIM-004", "task_specific_result": "SIM_NAVIGATION_BACKEND_READY"},
+        worktree_payload={"task_id": "TASK-SIM-004", "task_specific_result": "SIM_NAVIGATION_BACKEND_READY"},
+    )
+    monkeypatch.setattr(failure_recovery, "ROOT", root)
+    monkeypatch.setattr(failure_recovery, "ACCEPTED_PREDECESSOR_BINDINGS", {
+        "SIM-004": _frozen_sim004_binding(commit, "f" * 64),
+    })
+
+    with pytest.raises(ValueError, match="FROZEN_EVIDENCE_SHA256_MISMATCH"):
+        failure_recovery._accepted_binding("SIM-004")
+
+
+def test_accepted_binding_preserves_sim006_immutable_legacy_result_contract() -> None:
+    """SIM-006's accepted Git blob predates task_specific_result but remains authoritative."""
+    import simulation_runtime.failure_recovery as failure_recovery
+
+    binding = failure_recovery._accepted_binding("SIM-006")
+
+    assert binding["accepted_commit"] == "a10be6725d386e531f9cb0e00079c8d39ffdb1bf"
+    assert binding["evidence_sha256"] == "6fe14dcdcee21c6f1e5be73add28afeba622d0a4497706d0ee3181f610008ffc"
 
 
 def test_verification_recovery_uses_the_accepted_mission_transition_path() -> None:
@@ -320,24 +574,324 @@ def test_goal_tracker_preflights_its_private_action_client_with_a_bounded_wait()
     from scripts.sim009_goal_tracked_navigation import GoalTrackedGazeboNav2Runtime
 
     class Client:
-        def __init__(self) -> None:
-            self.timeouts: list[float] = []
-
-        def wait_for_server(self, *, timeout_sec: float) -> bool:
-            self.timeouts.append(timeout_sec)
-            return True
+        def ready(self) -> bool: return True
 
     client = Client()
     runtime = object.__new__(GoalTrackedGazeboNav2Runtime)
     runtime.measurements = {"readiness": []}
-    runtime._client = lambda: (object(), object(), client, object())
+    runtime._private_worker = client
 
     assert runtime._preflight_private_action_client() is True
-    assert client.timeouts == [5.0]
     assert runtime.measurements["readiness"][-1] == {
         "sim009_private_action_client": True,
         "timeout_seconds": 5.0,
     }
+
+
+def test_goal_tracker_private_client_uses_explicit_context_without_mutating_environment(monkeypatch) -> None:
+    import os
+    import sys
+    from types import ModuleType
+    from scripts.sim009_goal_tracked_navigation import GoalTrackedGazeboNav2Runtime
+
+    calls: dict[str, object] = {}
+
+    class Context:
+        pass
+
+    class Node:
+        pass
+
+    class ActionClient:
+        def __init__(self, node, goal_type, name) -> None:
+            calls["client"] = (node, goal_type, name)
+
+    rclpy = ModuleType("rclpy")
+    rclpy.context = SimpleNamespace(Context=Context)
+    rclpy.init = lambda **kwargs: calls.setdefault("init", kwargs)
+    rclpy.create_node = lambda name, **kwargs: calls.setdefault("node", (name, kwargs)) and Node()
+    action = ModuleType("rclpy.action"); action.ActionClient = ActionClient
+    geometry = ModuleType("geometry_msgs.msg"); geometry.PoseStamped = type("PoseStamped", (), {})
+    nav2 = ModuleType("nav2_msgs.action"); nav2.NavigateToPose = type("NavigateToPose", (), {})
+    monkeypatch.setitem(sys.modules, "rclpy", rclpy)
+    monkeypatch.setitem(sys.modules, "rclpy.action", action)
+    monkeypatch.setitem(sys.modules, "geometry_msgs.msg", geometry)
+    monkeypatch.setitem(sys.modules, "nav2_msgs.action", nav2)
+
+    runtime = object.__new__(GoalTrackedGazeboNav2Runtime)
+    runtime._action_client = runtime._node = runtime._rclpy = None
+    runtime.context = SimpleNamespace(ros_domain_id="77")
+    before = dict(os.environ)
+
+    assert runtime._client() is not None
+    assert os.environ == before
+    explicit_context = calls["init"]["context"]
+    assert calls["init"] == {"args": None, "context": explicit_context, "domain_id": 77}
+    assert calls["node"][1]["context"] is explicit_context
+
+
+def test_private_action_worker_inherits_only_the_immutable_runtime_environment(monkeypatch) -> None:
+    """A venv worker must delegate rclpy to one ROS-configured child process."""
+    import io
+    import json
+    import os
+    from scripts.sim009_goal_tracked_navigation import PrivateActionWorker
+
+    calls: dict[str, object] = {}
+
+    class Process:
+        def __init__(self, command, **kwargs) -> None:
+            calls["command"] = command
+            calls["kwargs"] = kwargs
+            self.stdin = io.StringIO()
+            self.stdout = io.StringIO(json.dumps({"ready": True}) + "\n")
+            self.stderr = io.StringIO()
+            self.returncode = None
+
+        def poll(self): return self.returncode
+        def terminate(self): self.returncode = -15
+        def wait(self, timeout=None): return self.returncode
+        def kill(self): self.returncode = -9
+
+    monkeypatch.setattr("scripts.sim009_goal_tracked_navigation.subprocess.Popen", Process)
+    before = dict(os.environ)
+    environment = {"ROS_DOMAIN_ID": "77", "PYTHONPATH": "/opt/ros/jazzy/lib/python3.12/site-packages"}
+
+    worker = PrivateActionWorker(environment=environment, ros_domain_id="77")
+
+    assert worker.ready() is True
+    assert os.environ == before
+    assert calls["kwargs"]["env"] == environment
+    assert calls["command"][0] == "/usr/bin/python3"
+    payload = json.loads(worker.process.stdin.getvalue())
+    assert payload == {"operation": "ready", "domain_id": 77}
+
+
+def test_goal_tracker_preflight_uses_the_runtime_scoped_private_worker(monkeypatch) -> None:
+    from scripts.sim009_goal_tracked_navigation import GoalTrackedGazeboNav2Runtime
+
+    created: list[object] = []
+
+    class Worker:
+        def __init__(self, *, environment, ros_domain_id) -> None:
+            created.append((environment, ros_domain_id))
+
+        def ready(self) -> bool: return True
+
+    monkeypatch.setattr("scripts.sim009_goal_tracked_navigation.PrivateActionWorker", Worker)
+    runtime = object.__new__(GoalTrackedGazeboNav2Runtime)
+    runtime.measurements = {"readiness": []}
+    runtime.environment = {"ROS_DOMAIN_ID": "73"}
+    runtime.context = SimpleNamespace(ros_domain_id="73")
+    runtime._private_worker = None
+
+    assert runtime._preflight_private_action_client() is True
+    assert created == [(runtime.environment, "73")]
+
+
+def test_private_action_worker_preserves_one_pending_goal_for_reconciliation(monkeypatch) -> None:
+    import io
+    import json
+    from scripts.sim009_goal_tracked_navigation import PrivateActionWorker
+
+    class Process:
+        def __init__(self, *_args, **_kwargs) -> None:
+            self.stdin = io.StringIO()
+            self.stdout = io.StringIO(
+                json.dumps({"state": "pending", "goal_uuid": "goal-1"}) + "\n"
+                + json.dumps({"state": "terminal", "terminal_status": 5}) + "\n"
+            )
+            self.stderr = io.StringIO()
+            self.returncode = None
+        def poll(self): return self.returncode
+        def terminate(self): self.returncode = -15
+        def wait(self, timeout=None): return self.returncode
+        def kill(self): self.returncode = -9
+
+    monkeypatch.setattr("scripts.sim009_goal_tracked_navigation.subprocess.Popen", Process)
+    worker = PrivateActionWorker(environment={"ROS_DOMAIN_ID": "61"}, ros_domain_id="61")
+
+    pending = worker.execute({"action_id": "action-1", "x": 1.0, "y": 2.0, "frame_id": "map", "timeout_seconds": 0.001, "timeout_fault": True})
+    terminal = worker.reconcile("action-1")
+
+    assert pending == {"state": "pending", "goal_uuid": "goal-1"}
+    assert terminal == {"state": "terminal", "terminal_status": 5}
+    payloads = [json.loads(line) for line in worker.process.stdin.getvalue().splitlines()]
+    assert payloads[0]["operation"] == "execute"
+    assert payloads[1] == {"operation": "reconcile", "action_id": "action-1"}
+
+
+def test_goal_tracker_routes_timeout_and_reconciliation_through_its_private_worker() -> None:
+    from scripts.sim009_goal_tracked_navigation import (
+        GoalTrackedGazeboNav2Runtime, ScenarioExecution,
+    )
+
+    class Worker:
+        def execute(self, _request): return {"state": "pending", "goal_uuid": "11111111-1111-4111-8111-111111111111"}
+        def reconcile(self, _action_id): return {
+            "state": "terminal", "goal_uuid": "11111111-1111-4111-8111-111111111111",
+            "terminal_status": 5, "native_error_code": "1", "native_error_message": "cancelled",
+        }
+
+    runtime = object.__new__(GoalTrackedGazeboNav2Runtime)
+    runtime._private_worker = Worker()
+    runtime._active_scenario = ScenarioExecution("SIM009-NAV-TIMEOUT-RETRY", "scenario-1")
+    runtime._next_goal_fault = None
+    runtime._next_goal_timeout_fault_seconds = 0.001
+    runtime.goal_attempts = []
+    runtime._attempts_by_action_id = {}
+    runtime._scenario_contexts = {"scenario-1": runtime._active_scenario}
+    runtime._tf_probe_records = []
+    runtime.log_files = []
+    runtime.measurements = {"processes": []}
+    runtime._capture_log_offsets = lambda: {}
+    runtime._read_server_log_window = lambda _offsets: ("", True, {})
+    request = {
+        "mission_id": "mission-1", "action_id": "action-1", "idempotency_key": "key-1",
+        "destination_id": "line-b-drop", "timeout_ms": 1000,
+    }
+
+    pending = runtime.navigate(request)
+    resolved = runtime.reconcile("action-1")
+
+    assert pending.observed_status == "unknown"
+    assert pending.error_code == "NAVIGATION_TIMEOUT"
+    assert resolved.observed_status == "failed"
+    assert resolved.error_code == "NAVIGATION_ABORTED"
+
+
+def test_worker_timeout_reconciliation_remains_authoritative_for_retry_policy() -> None:
+    """A one-shot worker terminal read must still authorize a real second goal."""
+    from scripts.sim009_goal_tracked_navigation import GoalTrackedGazeboNav2Runtime
+    from simulation_runtime.failure_recovery import _navigation_scenario
+
+    first_goal = "11111111-1111-4111-8111-111111111111"
+    retry_goal = "22222222-2222-4222-8222-222222222222"
+
+    class OneShotWorker:
+        def __init__(self) -> None:
+            self.execute_calls = 0
+            self.reconcile_calls = 0
+
+        def execute(self, request):
+            self.execute_calls += 1
+            if self.execute_calls == 1:
+                assert request["timeout_fault"] is True
+                return {"state": "pending", "goal_uuid": first_goal}
+            assert request["timeout_fault"] is False
+            return {
+                "state": "terminal", "goal_uuid": retry_goal,
+                "terminal_status": 4, "native_error_code": "0",
+                "native_error_message": None,
+            }
+
+        def reconcile(self, action_id):
+            self.reconcile_calls += 1
+            if self.reconcile_calls == 1:
+                return {
+                    "state": "terminal", "goal_uuid": first_goal,
+                    "terminal_status": 5, "native_error_code": "0",
+                    "native_error_message": None,
+                }
+            return {"state": "missing", "action_id": action_id}
+
+    worker = OneShotWorker()
+    runtime = object.__new__(GoalTrackedGazeboNav2Runtime)
+    runtime._ready = True
+    runtime._private_worker = worker
+    runtime._active_scenario = None
+    runtime._next_goal_fault = None
+    runtime._next_goal_timeout_fault_seconds = None
+    runtime.goal_attempts = []
+    runtime._attempts_by_action_id = {}
+    runtime._scenario_contexts = {}
+    runtime._tf_probe_records = []
+    runtime.log_files = []
+    runtime.measurements = {"processes": [], "cleanup": {}}
+    next_offset = iter((10, 20))
+    runtime._capture_log_offsets = lambda: {"server.log": next(next_offset)}
+    runtime._read_server_log_window = lambda offsets: (
+        "goal-local server evidence", True,
+        {"server.log": next(iter(offsets.values())) + 5},
+    )
+    scenario = next(
+        item for item in load_manifest()["scenarios"]
+        if item["id"] == "SIM009-NAV-TIMEOUT-RETRY"
+    )
+
+    row = _navigation_scenario(
+        scenario, live_runtime=runtime, scenario_execution_id="scenario-timeout",
+    )
+
+    assert row["pass"] is True
+    assert row["decision"] == "RETRY"
+    assert row["retry_suppressed"] is False
+    assert row["retry_authorization"]["error"]["retryable"] is True
+    assert row["identity"]["retry_request_id_new"] is True
+    assert row["identity"]["attempt_incremented"] is True
+    assert worker.execute_calls == 2
+    assert worker.reconcile_calls == 1
+    assert [attempt["nav2_goal_uuid"] for attempt in row["goal_tracking"]["goal_attempts"]] == [
+        first_goal, retry_goal,
+    ]
+    assert [attempt["terminal_status"] for attempt in row["goal_tracking"]["goal_attempts"]] == [
+        "5", "4",
+    ]
+    assert row["goal_tracking"]["goal_attempts"][0]["cancellation_requested"] is True
+
+
+def test_worker_goal_captures_its_server_log_boundary_before_dispatch_and_binds_terminal_uuid() -> None:
+    """Worker terminal evidence must be read from this goal's pre-send boundary."""
+    from scripts.sim009_goal_tracked_navigation import (
+        GoalTrackedGazeboNav2Runtime, ScenarioExecution,
+    )
+
+    events: list[str] = []
+
+    class Worker:
+        def execute(self, _request):
+            events.append("execute")
+            return {
+                "state": "terminal",
+                "goal_uuid": "11111111-1111-4111-8111-111111111111",
+                "terminal_status": 6,
+                "native_error_code": "0",
+                "native_error_message": "failed to load /tmp/sim009-missing-behavior-tree.xml",
+            }
+
+    runtime = object.__new__(GoalTrackedGazeboNav2Runtime)
+    runtime._private_worker = Worker()
+    runtime._active_scenario = ScenarioExecution("SIM009-NAV-ABORTED", "scenario-abort")
+    runtime._next_goal_fault = {
+        "injection_kind": "missing_behavior_tree",
+        "behavior_tree": "/tmp/sim009-missing-behavior-tree.xml",
+        "frame_id": "map",
+    }
+    runtime._next_goal_timeout_fault_seconds = None
+    runtime.goal_attempts = []
+    runtime._attempts_by_action_id = {}
+    runtime._scenario_contexts = {"scenario-abort": runtime._active_scenario}
+    runtime._tf_probe_records = []
+    runtime.log_files = []
+    runtime.measurements = {"processes": []}
+    runtime._capture_log_offsets = lambda: events.append("capture") or {"server.log": 9}
+    runtime._read_server_log_window = lambda offsets: (
+        "failed to load /tmp/sim009-missing-behavior-tree.xml", offsets == {"server.log": 9},
+        {"server.log": 80},
+    )
+    request = {
+        "mission_id": "mission-1", "action_id": "action-1", "idempotency_key": "key-1",
+        "destination_id": "line-b-drop", "timeout_ms": 1000,
+    }
+
+    observation = runtime.navigate(request)
+
+    assert events == ["capture", "execute"]
+    assert observation.error_code == "NAVIGATION_ABORTED"
+    attempt = runtime.goal_attempts[0]
+    assert attempt.server_log_attributed is True
+    assert attempt.server_log_start_offsets == {"server.log": 9}
+    assert attempt.terminal_goal_uuid == attempt.nav2_goal_uuid
 
 
 def test_goal_tracker_evidence_counts_only_the_selected_scenario_execution() -> None:

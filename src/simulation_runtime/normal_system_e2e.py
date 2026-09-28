@@ -170,7 +170,8 @@ class NormalSystemE2E:
         try:
             if select_profile("system").integrated_world != "gazebo_harmonic": raise RuntimeError("system profile lost Gazebo authority")
             self.lifecycle["startup_attempted"] = True; self.world.start()
-            if not (self.world.bootstrap_localization() and self.world.ready): raise RuntimeError("Gazebo system profile unavailable")
+            if not self.world.bootstrap_localization() or not self.world.ready:
+                raise RuntimeError(getattr(self.world, "bootstrap_error", None) or "GAZEBO_LOCALIZATION_BOOTSTRAP_UNAVAILABLE")
             # Startup/readiness has its own scenario bound.  The mission's
             # contract deadline begins only when the canonical mission is dispatched.
             mission_request = self._request(mission_id, trace_id, "mission.execute"); validate_contract_message(mission_request)

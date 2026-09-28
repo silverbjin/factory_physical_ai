@@ -10,6 +10,7 @@ from pathlib import Path
 from typing import Any, Callable, Mapping
 
 ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / "src"))
 
 from simulation_runtime.provenance_qualification import (
@@ -25,11 +26,11 @@ from simulation_runtime.provenance_qualification import (
 )
 
 FROZEN = {
-    "TASK-SIM-004": "results/simulation/SIM-004_navigation_backend.json",
-    "TASK-SIM-005": "results/simulation/SIM-005_mujoco_vla_backend.json",
-    "TASK-SIM-007": "results/simulation/SIM-007_mission_integration.json",
-    "TASK-SIM-008": "results/simulation/SIM-008_normal_system_e2e.json",
-    "TASK-SIM-009": "results/simulation/SIM-009_failure_recovery.json",
+    "TASK-SIM-004": {"task_id": "TASK-SIM-004", "accepted_commit": "b7e8266abd17f48c18cca94d9433db50fd55464d", "evidence_path": "results/simulation/SIM-004_navigation_backend.json", "evidence_sha256": "b4c0ce91dde6c2f92c57ea6a227149362279993dee0dec4fd1ab12877e73f1d9", "task_specific_result": "SIM_NAVIGATION_BACKEND_READY"},
+    "TASK-SIM-005": {"task_id": "TASK-SIM-005", "accepted_commit": "542514a4d10bc03087834e8a5f672d53afe6aa21", "evidence_path": "results/simulation/SIM-005_mujoco_vla_backend.json", "evidence_sha256": "f4d41fdb1f13978e1b1e5c91b95e31b38a69825a0d432a8284ff7731a3beb84f", "task_specific_result": "SIM_MANIPULATION_BACKEND_READY"},
+    "TASK-SIM-007": {"task_id": "TASK-SIM-007", "accepted_commit": "228eb7745aa05c230e1b272184601b5afd53853b", "evidence_path": "results/simulation/SIM-007_mission_integration.json", "evidence_sha256": "7247f8db76c874e533f615f1c8c3f32febb7a7e2377790ff05e3e93320531711", "task_specific_result": "SIM_MISSION_INTEGRATION_BLOCKED"},
+    "TASK-SIM-008": {"task_id": "TASK-SIM-008", "accepted_commit": "ea91e0c16412e20c8cae66355a1a39129919dd42", "evidence_path": "results/simulation/SIM-008_normal_system_e2e.json", "evidence_sha256": "ebf0ef0a27114e3c04fa6bec05aa3eef792fdfc282d2be009640bac7ecc26290", "task_specific_result": "SIM_NORMAL_E2E_READY"},
+    "TASK-SIM-009": {"task_id": "TASK-SIM-009", "accepted_commit": "67bde0e1f29c3f974bf3f0b29dff3f3aaa38e5be", "evidence_path": "results/simulation/SIM-009_failure_recovery.json", "evidence_sha256": "91d10e5bb4fb7ca1b62c325885bec276c6ef6231c6baa0424f3213702be3216e", "task_specific_result": "SIM_FAILURE_SUITE_READY"},
 }
 MIN_SCOPE_PATH = ROOT / "configs/simulation/min_q01_scope.json"
 
@@ -113,20 +114,30 @@ def collect_qualification_subjects(
 ) -> list[QualificationSubject]:
     """Route only MIN-Q01 run-local subjects; excluded paths never execute here."""
     subjects: list[QualificationSubject] = []
+    supplier_results: dict[str, Any] = {}
+
+    def supplied(task_id: str) -> Any:
+        if task_id not in supplier_results:
+            adapter = adapters.get(task_id)
+            if adapter is None:
+                raise ValueError(f"MISSING_LIVE_SUPPLIER:{task_id}")
+            supplier_results[task_id] = adapter()
+        return supplier_results[task_id]
+
     for subject_id in required_subject_manifest(dict(bindings)):
         if subject_id == "q01-sim008-normal-system-authority":
             template = _operation_template(subject_id, bindings["TASK-SIM-008"])
-            adapter = adapters.get("TASK-SIM-008")
-            raw = adapter() if adapter else None
-            if raw is not None:
-                subjects.append(collect_sim008_execution_result(template, raw))
+            raw = supplied("TASK-SIM-008")
+            if raw is None:
+                raise ValueError("MISSING_LIVE_QUALIFICATION_RESULT:SIM-008")
+            subjects.append(collect_sim008_execution_result(template, raw))
         elif subject_id.startswith("q01-sim009-"):
             template = _operation_template(subject_id, bindings["TASK-SIM-009"])
-            adapter = adapters.get("TASK-SIM-009")
-            rows = adapter() if adapter else None
+            rows = supplied("TASK-SIM-009")
             raw = rows.get(template.scenario_id) if isinstance(rows, Mapping) else None
-            if raw is not None:
-                subjects.append(collect_sim009_execution_result(template, raw))
+            if raw is None:
+                raise ValueError(f"MISSING_LIVE_QUALIFICATION_RESULT:{template.scenario_id}")
+            subjects.append(collect_sim009_execution_result(template, raw))
     identities = [subject.subject_id for subject in subjects]
     if len(identities) != len(set(identities)):
         raise ValueError("DUPLICATE_QUALIFICATION_SUBJECT")
@@ -161,9 +172,9 @@ def main() -> int:
     parser.add_argument("--report", type=Path, default=ROOT / "docs/simulation/SIM-Q01_provenance_qualification.md")
     args = parser.parse_args()
     bindings = {}
-    for task_id, evidence_path in FROZEN.items():
+    for task_id, frozen_binding in FROZEN.items():
         acceptance = json.loads((ROOT / f"results/reviews/{task_id.removeprefix('TASK-')}_acceptance.json").read_text())
-        bindings[task_id] = resolve_predecessor_binding(ROOT, task_id, acceptance, evidence_path)
+        bindings[task_id] = resolve_predecessor_binding(ROOT, task_id, acceptance, frozen_binding["evidence_path"], expected_binding=frozen_binding)
     subjects = collect_qualification_subjects(bindings, live_adapters())
     source_git_sha = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=ROOT, text=True).strip()
     evidence = aggregate_qualification_evidence(

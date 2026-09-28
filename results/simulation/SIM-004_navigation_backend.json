@@ -12,7 +12,7 @@
       "complete": true,
       "processes": [
         {
-          "pid": 219798,
+          "pid": 103377,
           "returncode": -15
         }
       ]
@@ -20,36 +20,36 @@
     "execution_bound_ms": 30000,
     "executions": [
       {
-        "action_id": "64ee75b7-6142-4813-a10b-1f70090409b1",
+        "action_id": "4f3b2aeb-3e2e-448e-9f8e-4b554e54a534",
         "arrival_verified": true,
         "destination_id": "line-b-drop",
-        "duration_ms": 5736.032,
+        "duration_ms": 4013.871,
         "execution_bound_ms": 30000,
         "goal": "{pose: {header: {frame_id: map}, pose: {position: {x: -6.0, y: 0.0, z: 0.0}, orientation: {w: 1.0}}}}",
         "observed_status": "succeeded",
         "returncode": 0,
         "stderr_tail": "",
-        "stdout_tail": "Waiting for an action server to become available...\nSending goal:\n     pose:\n  header:\n    stamp:\n      sec: 0\n      nanosec: 0\n    frame_id: map\n  pose:\n    position:\n      x: -6.0\n      y: 0.0\n      z: 0.0\n    orientation:\n      x: 0.0\n      y: 0.0\n      z: 0.0\n      w: 1.0\nbehavior_tree: ''\n\nGoal accepted with ID: 1444ba6115c242548dc378d1661f8d10\n\nResult:\n    error_code: 0\nerror_msg: ''\n\nGoal finished with status: SUCCEEDED\n",
+        "stdout_tail": "Waiting for an action server to become available...\nSending goal:\n     pose:\n  header:\n    stamp:\n      sec: 0\n      nanosec: 0\n    frame_id: map\n  pose:\n    position:\n      x: -6.0\n      y: 0.0\n      z: 0.0\n    orientation:\n      x: 0.0\n      y: 0.0\n      z: 0.0\n      w: 1.0\nbehavior_tree: ''\n\nGoal accepted with ID: c23a4cffa7b24b21adf59d3f43c6c732\n\nResult:\n    error_code: 0\nerror_msg: ''\n\nGoal finished with status: SUCCEEDED\n",
         "terminal_status": "SUCCEEDED"
       },
       {
-        "action_id": "880538db-8d1d-47d1-ba8b-c2ff812913f9",
+        "action_id": "12fbdcc8-af0f-40d4-a099-423f8bb4999f",
         "arrival_verified": false,
         "destination_id": "blocked-bay",
-        "duration_ms": 4128.465,
+        "duration_ms": 3610.87,
         "execution_bound_ms": 30000,
         "goal": "{pose: {header: {frame_id: map}, pose: {position: {x: 100.0, y: 100.0, z: 0.0}, orientation: {w: 1.0}}}}",
         "observed_status": "failed",
         "returncode": 0,
         "stderr_tail": "",
-        "stdout_tail": "Waiting for an action server to become available...\nSending goal:\n     pose:\n  header:\n    stamp:\n      sec: 0\n      nanosec: 0\n    frame_id: map\n  pose:\n    position:\n      x: 100.0\n      y: 100.0\n      z: 0.0\n    orientation:\n      x: 0.0\n      y: 0.0\n      z: 0.0\n      w: 1.0\nbehavior_tree: ''\n\nGoal accepted with ID: 87a3a3845cb843f0a279334b423f20a1\n\nResult:\n    error_code: 204\nerror_msg: ''\n\nGoal finished with status: ABORTED\n",
+        "stdout_tail": "Waiting for an action server to become available...\nSending goal:\n     pose:\n  header:\n    stamp:\n      sec: 0\n      nanosec: 0\n    frame_id: map\n  pose:\n    position:\n      x: 100.0\n      y: 100.0\n      z: 0.0\n    orientation:\n      x: 0.0\n      y: 0.0\n      z: 0.0\n      w: 1.0\nbehavior_tree: ''\n\nGoal accepted with ID: 50639c3867bf4ccc9204221cb691a33a\n\nResult:\n    error_code: 204\nerror_msg: ''\n\nGoal finished with status: ABORTED\n",
         "terminal_status": "ABORTED"
       },
       {
-        "action_id": "696f2f42-f22d-43ba-bd11-d6993bbe5035",
+        "action_id": "44752a02-959e-4b0f-85e5-a51c71a64089",
         "arrival_verified": false,
         "destination_id": "line-b-drop",
-        "duration_ms": 2.939,
+        "duration_ms": 1.886,
         "execution_bound_ms": 1,
         "goal": "{pose: {header: {frame_id: map}, pose: {position: {x: -6.0, y: 0.0, z: 0.0}, orientation: {w: 1.0}}}}",
         "observed_status": "unknown",
@@ -85,7 +85,7 @@
             "/map_server",
             "configure"
           ],
-          "duration_ms": 3664.862,
+          "duration_ms": 2367.125,
           "label": "/map_server:configure",
           "returncode": 0,
           "stderr": "",
@@ -100,7 +100,7 @@
             "/map_server",
             "activate"
           ],
-          "duration_ms": 5938.985,
+          "duration_ms": 2385.265,
           "label": "/map_server:activate",
           "returncode": 0,
           "stderr": "",
@@ -115,7 +115,7 @@
             "/amcl",
             "configure"
           ],
-          "duration_ms": 2702.976,
+          "duration_ms": 3469.217,
           "label": "/amcl:configure",
           "returncode": 0,
           "stderr": "",
@@ -130,7 +130,7 @@
             "/amcl",
             "activate"
           ],
-          "duration_ms": 2380.432,
+          "duration_ms": 3379.293,
           "label": "/amcl:activate",
           "returncode": 0,
           "stderr": "",
@@ -144,7 +144,7 @@
             "list",
             "-t"
           ],
-          "duration_ms": 1264.362,
+          "duration_ms": 756.607,
           "label": "localization_topics",
           "returncode": 0,
           "stderr": "",
@@ -158,7 +158,7 @@
             "get",
             "/amcl"
           ],
-          "duration_ms": 4938.687,
+          "duration_ms": 1524.31,
           "label": "amcl_lifecycle",
           "returncode": 0,
           "stderr": "",
@@ -175,10 +175,10 @@
             "odom",
             "base_link"
           ],
-          "duration_ms": 2502.508,
+          "duration_ms": 3775.839,
           "label": "odom_to_base",
           "observed_transform": true,
-          "output_tail": "[INFO] [1789555079.416970863] [tf2_echo]: Waiting for transform odom ->  base_link: Invalid frame ID \"odom\" passed to canTransform argument target_frame - frame does not exist\nAt time 8.424000000\n- Translation: [0.000, -0.000, 0.000]\n- Rotation: in Quaternion (xyzw) [0.000, 0.000, -0.000, 1.000]\n",
+          "output_tail": "[INFO] [1790435986.897673779] [tf2_echo]: Waiting for transform odom ->  base_link: Invalid frame ID \"odom\" passed to canTransform argument target_frame - frame does not exist\n[INFO] [1790435991.142092145] [tf2_echo]: Waiting for transform odom ->  base_link: Invalid frame ID \"odom\" passed to canTransform argument target_frame - frame does not exist\nAt time 7.56000000\n- Translation: [0.000, -0.000, 0.000]\n- Rotation: in Quaternion (xyzw) [0.000, 0.000, -0.000, 1.000]\n",
           "source_frame": "base_link",
           "target_frame": "odom",
           "timed_out": false
@@ -193,7 +193,7 @@
             "geometry_msgs/msg/PoseWithCovarianceStamped",
             "{header: {frame_id: map}, pose: {pose: {position: {x: -6.5, y: 0.0, z: 0.0}, orientation: {z: 0.0, w: 1.0}}, covariance: [0.25, 0, 0, 0, 0, 0, 0, 0.25, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]}}"
           ],
-          "duration_ms": 2587.031,
+          "duration_ms": 2263.773,
           "label": "initial_pose_publish",
           "returncode": 0,
           "stderr": "",
@@ -210,10 +210,10 @@
             "map",
             "odom"
           ],
-          "duration_ms": 4922.32,
+          "duration_ms": 4554.304,
           "label": "map_to_odom",
           "observed_transform": true,
-          "output_tail": "[INFO] [1789555084.464346222] [tf2_echo]: Waiting for transform map ->  odom: Invalid frame ID \"map\" passed to canTransform argument target_frame - frame does not exist\n[INFO] [1789555086.429583190] [tf2_echo]: Waiting for transform map ->  odom: Invalid frame ID \"map\" passed to canTransform argument target_frame - frame does not exist\n[INFO] [1789555089.179724786] [tf2_echo]: Waiting for transform map ->  odom: Invalid frame ID \"map\" passed to canTransform argument target_frame - frame does not exist\nAt time 15.802000000\n- Translation: [-6.470, -0.003, 0.000]\n- Rotation: in Quaternion (xyzw) [0.000, 0.000, 0.000, 1.000]\n",
+          "output_tail": "[INFO] [1790435996.004965571] [tf2_echo]: Waiting for transform map ->  odom: Invalid frame ID \"map\" passed to canTransform argument target_frame - frame does not exist\n[INFO] [1790435997.960402585] [tf2_echo]: Waiting for transform map ->  odom: Invalid frame ID \"map\" passed to canTransform argument target_frame - frame does not exist\nAt time 14.2000000\n- Translation: [-6.470, -0.003, 0.000]\n- Rotation: in Quaternion (xyzw) [0.000, 0.000, 0.000, 1.000]\n",
           "source_frame": "odom",
           "target_frame": "map",
           "timed_out": false
@@ -227,7 +227,7 @@
             "nav2_msgs/srv/ManageLifecycleNodes",
             "{command: 0}"
           ],
-          "duration_ms": 5533.751,
+          "duration_ms": 5467.585,
           "label": "navigation_lifecycle_start",
           "returncode": 0,
           "stderr": "",
@@ -241,7 +241,7 @@
             "get",
             "/bt_navigator"
           ],
-          "duration_ms": 5890.977,
+          "duration_ms": 2551.679,
           "label": "bt_navigator_lifecycle",
           "returncode": 0,
           "stderr": "",
@@ -255,7 +255,7 @@
             "list",
             "-t"
           ],
-          "duration_ms": 925.678,
+          "duration_ms": 1030.731,
           "label": "navigate_to_pose_action",
           "returncode": 0,
           "stderr": "",
@@ -278,14 +278,14 @@
           "x_pose:=-6.5",
           "y_pose:=0.0",
           "yaw:=0.0",
-          "world:=/home/jinho/projects/factory_physical_ai_sim004R/data/simulation/sim004_navigation_proxy_world.sdf"
+          "world:=/home/jinho/projects/factory_physical_ai_sim_q01/data/simulation/sim004_navigation_proxy_world.sdf"
         ],
-        "log_path": "/tmp/sim004-ros-pt7ep9eg/gazebo_nav2_proxy.log",
-        "log_tail": "gin navigating from current location (-6.47, -0.00) to (-6.00, 0.00)\n[component_container_isolated-8] [INFO] [1789555106.822217209] [controller_server]: Received a goal, begin computing control effort.\n[component_container_isolated-8] [WARN] [1789555106.822328664] [controller_server]: No goal checker was specified in parameter 'current_goal_checker'. Server will use only plugin loaded general_goal_checker . This warning will appear once.\n[component_container_isolated-8] [WARN] [1789555106.822353739] [controller_server]: No progress checker was specified in parameter 'current_progress_checker'. Server will use only plugin loaded progress_checker . This warning will appear once.\n[parameter_bridge-2] [INFO] [1789555106.941366181] [bridge_ros_gz]: Passing message from ROS geometry_msgs/msg/Twist to Gazebo gz.msgs.Twist (showing msg only once per type)\n[component_container_isolated-8] [INFO] [1789555107.872483639] [controller_server]: Passing new path to controller.\n[component_container_isolated-8] [INFO] [1789555108.279542580] [controller_server]: Reached the goal!\n[component_container_isolated-8] [INFO] [1789555108.280897966] [controller_server]: Optimizer reset\n[component_container_isolated-8] [INFO] [1789555108.301289489] [bt_navigator]: Goal succeeded\n[component_container_isolated-8] [INFO] [1789555112.411509166] [bt_navigator]: Begin navigating from current location (-6.15, 0.01) to (100.00, 100.00)\n[component_container_isolated-8] [WARN] [1789555112.412196774] [planner_server]: GridBased plugin failed to plan from (-6.15, 0.01) to (100.00, 100.00): \"Goal Coordinates of(100.000000, 100.000000) was outside bounds\"\n[component_container_isolated-8] [WARN] [1789555112.412275718] [planner_server]: [compute_path_to_pose] [ActionServer] Aborting handle.\n[component_container_isolated-8] [WARN] [1789555112.421725569] [bt_navigator]: [navigate_to_pose] [ActionServer] Aborting handle.\n[component_container_isolated-8] [ERROR] [1789555112.422065940] [bt_navigator]: Goal failed\n",
+        "log_path": "/tmp/sim004-ros-z786yss5/gazebo_nav2_proxy.log",
+        "log_tail": "gin navigating from current location (-6.47, -0.00) to (-6.00, 0.00)\n[component_container_isolated-8] [INFO] [1790436011.408645842] [controller_server]: Received a goal, begin computing control effort.\n[component_container_isolated-8] [WARN] [1790436011.408744384] [controller_server]: No goal checker was specified in parameter 'current_goal_checker'. Server will use only plugin loaded general_goal_checker . This warning will appear once.\n[component_container_isolated-8] [WARN] [1790436011.408837059] [controller_server]: No progress checker was specified in parameter 'current_progress_checker'. Server will use only plugin loaded progress_checker . This warning will appear once.\n[parameter_bridge-2] [INFO] [1790436011.492499416] [bridge_ros_gz]: Passing message from ROS geometry_msgs/msg/Twist to Gazebo gz.msgs.Twist (showing msg only once per type)\n[component_container_isolated-8] [INFO] [1790436012.459039720] [controller_server]: Passing new path to controller.\n[component_container_isolated-8] [INFO] [1790436012.716392494] [controller_server]: Reached the goal!\n[component_container_isolated-8] [INFO] [1790436012.727028305] [controller_server]: Optimizer reset\n[component_container_isolated-8] [INFO] [1790436012.761727998] [bt_navigator]: Goal succeeded\n[component_container_isolated-8] [INFO] [1790436016.418754860] [bt_navigator]: Begin navigating from current location (-6.16, 0.01) to (100.00, 100.00)\n[component_container_isolated-8] [WARN] [1790436016.419797202] [planner_server]: GridBased plugin failed to plan from (-6.16, 0.01) to (100.00, 100.00): \"Goal Coordinates of(100.000000, 100.000000) was outside bounds\"\n[component_container_isolated-8] [WARN] [1790436016.419905277] [planner_server]: [compute_path_to_pose] [ActionServer] Aborting handle.\n[component_container_isolated-8] [WARN] [1790436016.439045100] [bt_navigator]: [navigate_to_pose] [ActionServer] Aborting handle.\n[component_container_isolated-8] [ERROR] [1790436016.439534966] [bt_navigator]: Goal failed\n",
         "name": "gazebo_nav2_proxy",
-        "pgid": 219798,
-        "pid": 219798,
-        "started_ms": 0.71
+        "pgid": 103377,
+        "pid": 103377,
+        "started_ms": 0.789
       }
     ],
     "readiness": [
@@ -296,7 +296,7 @@
           "list",
           "-t"
         ],
-        "duration_ms": 502.568,
+        "duration_ms": 614.415,
         "navigate_to_pose": false,
         "returncode": 0
       },
@@ -307,7 +307,7 @@
           "list",
           "-t"
         ],
-        "duration_ms": 906.9,
+        "duration_ms": 611.575,
         "navigate_to_pose": false,
         "returncode": 0
       },
@@ -316,15 +316,15 @@
         "navigate_to_pose": true
       }
     ],
-    "started_at": "2026-09-16T10:37:32.155Z",
+    "started_at": "2026-09-26T15:19:28.479Z",
     "startup_bound_ms": 45000
   },
-  "generated_at": "2026-09-16T10:38:32.775Z",
+  "generated_at": "2026-09-26T15:20:16.763Z",
   "provenance": {
     "assets": [
       {
         "path": "configs/simulation/sim004_navigation_proxy.yaml",
-        "sha256": "9ec6f3ae8b995e07275fdbd7e9c8a0cc50a7b441b9e7add028a76e75690d9c0e"
+        "sha256": "006cbab86f8f41fde7add60c7a50d15d6ef48375cd6072565c6600393f562201"
       },
       {
         "path": "data/simulation/sim004_navigation_proxy_world.sdf",
@@ -332,11 +332,11 @@
       },
       {
         "path": "scripts/run_simulation_navigation.py",
-        "sha256": "389b372392de00810ea62baa724510b795918a25dbb11c41b4ab3ac16644c112"
+        "sha256": "3692b4ad672f620bc484ce7dadd5764703d27585bb08b91d01e9c22bac4a7e77"
       },
       {
         "path": "src/simulation_runtime/navigation_backend.py",
-        "sha256": "6d75bfe8f1ac9d71e1dcca4b8e4148304b42d4f9c53516e80502800b3ce259cb"
+        "sha256": "4bea383110c8f319ad61a9f134986112d7732653a5fbc587e983f806eced15ba"
       }
     ],
     "baseline_id": "SIM_BASELINE_V1",
@@ -350,7 +350,7 @@
         "sim",
         "--versions"
       ],
-      "duration_ms": 101.591,
+      "duration_ms": 113.728,
       "returncode": 0,
       "stderr": "",
       "stdout": "8.11.0\n"
@@ -362,7 +362,7 @@
         "prefix",
         "nav2_bringup"
       ],
-      "duration_ms": 358.357,
+      "duration_ms": 457.239,
       "returncode": 0,
       "stderr": "",
       "stdout": "/opt/ros/jazzy\n"
@@ -372,7 +372,7 @@
         "/opt/ros/jazzy/bin/ros2",
         "--help"
       ],
-      "duration_ms": 640.147,
+      "duration_ms": 624.205,
       "returncode": 0,
       "stderr": "",
       "stdout": "usage: ros2 [-h] [--use-python-default-buffering]\n            Call `ros2 <command> -h` for more detailed usage. ...\n\nros2 is an extensible command-line tool for ROS 2.\n\noptions:\n  -h, --help            show this help message and exit\n  --use-python-default-buffering\n                        Do not force line buffering in stdout and instead use\n                        the python default buffering, which might be affected\n                        by PYTHONUNBUFFERED/-u and depends on whatever stdout\n                        is interactive or not\n\nCommands:\n  action     Various action related sub-commands\n  bag        Various rosbag related sub-commands\n  component  Various component related sub-commands\n  control    Various control related sub-commands\n  daemon     Various daemon related sub-commands\n  doctor     Check ROS setup and other potential issues\n  interface  Show information about ROS interfaces\n  launch     Run a launch file\n  lifecycle  Various lifecycle related sub-commands\n  m"
@@ -383,7 +383,7 @@
       "id": "success",
       "pass": true,
       "result": {
-        "action_id": "64ee75b7-6142-4813-a10b-1f70090409b1",
+        "action_id": "4f3b2aeb-3e2e-448e-9f8e-4b554e54a534",
         "arrival": {
           "destination_id": "line-b-drop",
           "verified": true
@@ -391,27 +391,27 @@
         "component_version": "sim004-navigation-backend-v2",
         "evidence_refs": [
           {
-            "sha256": "71b4f1f6054986963fd5427071161ef0439f3ceaf8a688992e8f3e27f1b56cbb",
-            "uri": "urn:factory-evidence:sim-004:64ee75b7-6142-4813-a10b-1f70090409b1"
+            "sha256": "6895d811950c817e0870184d66c71554b2e88568e9b9989257c1da7f7a677dbb",
+            "uri": "urn:factory-evidence:sim-004:4f3b2aeb-3e2e-448e-9f8e-4b554e54a534"
           }
         ],
         "message_type": "result",
-        "mission_id": "c87e33c7-e477-4acb-aa70-dfe6615ad630",
+        "mission_id": "89c6fbd3-a065-472b-9e0a-a37666f297a3",
         "operation": "navigation.execute",
-        "request_id": "12530069-52aa-4884-958b-6b337a961200",
+        "request_id": "00651dcc-4124-438c-abaa-08194d646cf2",
         "result": "success",
         "schema_version": "1.0",
         "source_kind": "mock",
         "status": "succeeded",
-        "timestamp": "2026-09-16T10:38:28.524Z",
-        "trace_id": "b522c9ba-a677-41dc-9e8d-b212a97d758a"
+        "timestamp": "2026-09-26T15:20:13.035Z",
+        "trace_id": "b2c4a955-20b7-459a-8964-16eb38b4b88f"
       }
     },
     {
       "id": "invalid_goal",
       "pass": true,
       "result": {
-        "action_id": "53ee000f-2e9f-405e-94ea-0e147c9a870d",
+        "action_id": "928dd2e7-30f5-4437-a398-ae40c0ecbfa9",
         "component_version": "sim004-navigation-backend-v2",
         "error": {
           "category": "VALIDATION",
@@ -421,27 +421,27 @@
         },
         "evidence_refs": [
           {
-            "sha256": "c5783319870b22d6660969d1db3fa2bf46b4dce3a9d2870cd1f8fc005d6e1efc",
-            "uri": "urn:factory-evidence:sim-004:53ee000f-2e9f-405e-94ea-0e147c9a870d"
+            "sha256": "6625928a0d252129eef511da448c743ecfe27b23479ef7cf5d6daecfcaeb5d64",
+            "uri": "urn:factory-evidence:sim-004:928dd2e7-30f5-4437-a398-ae40c0ecbfa9"
           }
         ],
         "message_type": "result",
-        "mission_id": "0cf0e7ca-437c-4042-a6b2-194fd2568915",
+        "mission_id": "09a5f2ba-3b6c-460f-ab1c-39d1dd90c6c7",
         "operation": "navigation.execute",
-        "request_id": "4e15a5fb-1d10-4d24-8203-80fb56cf170c",
+        "request_id": "983d8002-8a50-4245-92b9-c3d67e5e5b90",
         "result": "failure",
         "schema_version": "1.0",
         "source_kind": "mock",
         "status": "failed",
-        "timestamp": "2026-09-16T10:38:28.529Z",
-        "trace_id": "22d35e87-df8e-44b6-ba65-9f2a250e3dbf"
+        "timestamp": "2026-09-26T15:20:13.039Z",
+        "trace_id": "280bb5e0-ad8b-4dd7-bc1e-7843bbe2ba04"
       }
     },
     {
       "id": "unavailable",
       "pass": true,
       "result": {
-        "action_id": "1c91ddfd-ece4-4454-b402-3d3fa699a663",
+        "action_id": "3ce41fa8-9d36-4b64-a493-8f03a26e6b4b",
         "component_version": "sim004-navigation-backend-v2",
         "error": {
           "category": "RESOURCE_UNAVAILABLE",
@@ -451,27 +451,27 @@
         },
         "evidence_refs": [
           {
-            "sha256": "78efd52473fa32ffa315da23b52ed6792fdc9adad291e71f19135d7735cce71c",
-            "uri": "urn:factory-evidence:sim-004:1c91ddfd-ece4-4454-b402-3d3fa699a663"
+            "sha256": "a2bd43d10858f5e78e5de8e7f7ecfa6d41ee1fbc96b8e91fb4e015483b70a0b7",
+            "uri": "urn:factory-evidence:sim-004:3ce41fa8-9d36-4b64-a493-8f03a26e6b4b"
           }
         ],
         "message_type": "result",
-        "mission_id": "3c29761e-7e62-4b71-8f4d-9df01e0a0a48",
+        "mission_id": "d83d0da5-25d3-4657-8bab-4aee165c1d9e",
         "operation": "navigation.execute",
-        "request_id": "95b18299-1ae8-42f6-8c5f-28029f7e593c",
+        "request_id": "3998664b-2a8e-4003-a570-3d8f694e5140",
         "result": "failure",
         "schema_version": "1.0",
         "source_kind": "mock",
         "status": "failed",
-        "timestamp": "2026-09-16T10:38:28.530Z",
-        "trace_id": "3f2e8aa3-b0ec-4928-bd17-10f28f384edd"
+        "timestamp": "2026-09-26T15:20:13.040Z",
+        "trace_id": "cd5c5da9-5e18-4325-8c49-f9145ce6abda"
       }
     },
     {
       "id": "blocked",
       "pass": true,
       "result": {
-        "action_id": "880538db-8d1d-47d1-ba8b-c2ff812913f9",
+        "action_id": "12fbdcc8-af0f-40d4-a099-423f8bb4999f",
         "component_version": "sim004-navigation-backend-v2",
         "error": {
           "category": "EXECUTION_FAILED",
@@ -481,49 +481,49 @@
         },
         "evidence_refs": [
           {
-            "sha256": "55900ff7c798949617643ec9d06cbba9209e9b33389cedb3c896bd1087def6a1",
-            "uri": "urn:factory-evidence:sim-004:880538db-8d1d-47d1-ba8b-c2ff812913f9"
+            "sha256": "8e90d95e34cd9ae112d5613ab878259af3d6a2557a89cacb4ed6d4b2c992306e",
+            "uri": "urn:factory-evidence:sim-004:12fbdcc8-af0f-40d4-a099-423f8bb4999f"
           }
         ],
         "message_type": "result",
-        "mission_id": "48f34a30-ce2b-4dab-8e13-33f0fa5ee059",
+        "mission_id": "a95423fb-742b-4be2-aa29-e1092e733ba9",
         "operation": "navigation.execute",
-        "request_id": "e8880031-7430-4f0c-91c5-941a2ee997e0",
+        "request_id": "6d6f3a9e-58aa-4e3b-8876-49af56e4da5c",
         "result": "failure",
         "schema_version": "1.0",
         "source_kind": "mock",
         "status": "failed",
-        "timestamp": "2026-09-16T10:38:32.661Z",
-        "trace_id": "23a01408-6f93-454f-8104-25a0bdf11a07"
+        "timestamp": "2026-09-26T15:20:16.652Z",
+        "trace_id": "433e1c1d-66fc-475e-82d8-0dcf3fbeef42"
       }
     },
     {
       "id": "timeout_reconciliation",
       "pass": true,
       "status": {
-        "action_id": "696f2f42-f22d-43ba-bd11-d6993bbe5035",
+        "action_id": "44752a02-959e-4b0f-85e5-a51c71a64089",
         "component_version": "sim004-navigation-backend-v2",
         "evidence_refs": [
           {
-            "sha256": "bb8b045acd5d9862d4cf1b6b9f95ac1f357f8759dfca382bbde37faa63baf39d",
-            "uri": "urn:factory-evidence:sim-004:696f2f42-f22d-43ba-bd11-d6993bbe5035"
+            "sha256": "b359869265566b7a6eda3334b241226cf83239e25918bc0b8a779f96e2448783",
+            "uri": "urn:factory-evidence:sim-004:44752a02-959e-4b0f-85e5-a51c71a64089"
           }
         ],
         "message_type": "result",
-        "mission_id": "2426718f-649d-475c-8307-f89c3c62ea87",
-        "observed_at": "2026-09-16T10:38:32.674Z",
+        "mission_id": "32b352ea-8877-415f-8f6b-87839f8a0d9f",
+        "observed_at": "2026-09-26T15:20:16.661Z",
         "observed_status": "unknown",
         "operation": "action_status.get",
-        "request_id": "6e6db1d2-8bdb-4b69-9425-cf5330987395",
+        "request_id": "f36d49fc-c57b-4f87-b7cb-f0c9900bf0cb",
         "result": "success",
         "schema_version": "1.0",
         "source_kind": "mock",
         "status": "succeeded",
-        "timestamp": "2026-09-16T10:38:32.674Z",
-        "trace_id": "55278c11-15d0-4172-aa51-2ec4928a3ab9"
+        "timestamp": "2026-09-26T15:20:16.661Z",
+        "trace_id": "dbbd8e70-5235-408b-9386-830c40c1af63"
       },
       "timeout": {
-        "action_id": "696f2f42-f22d-43ba-bd11-d6993bbe5035",
+        "action_id": "44752a02-959e-4b0f-85e5-a51c71a64089",
         "component_version": "sim004-navigation-backend-v2",
         "error": {
           "category": "DEPENDENCY_TIMEOUT",
@@ -533,20 +533,20 @@
         },
         "evidence_refs": [
           {
-            "sha256": "bb8b045acd5d9862d4cf1b6b9f95ac1f357f8759dfca382bbde37faa63baf39d",
-            "uri": "urn:factory-evidence:sim-004:696f2f42-f22d-43ba-bd11-d6993bbe5035"
+            "sha256": "b359869265566b7a6eda3334b241226cf83239e25918bc0b8a779f96e2448783",
+            "uri": "urn:factory-evidence:sim-004:44752a02-959e-4b0f-85e5-a51c71a64089"
           }
         ],
         "message_type": "result",
-        "mission_id": "2426718f-649d-475c-8307-f89c3c62ea87",
+        "mission_id": "32b352ea-8877-415f-8f6b-87839f8a0d9f",
         "operation": "navigation.execute",
-        "request_id": "6d6d70cf-5841-49ec-9309-33fec48bb0db",
+        "request_id": "8cf47456-cf22-462d-bafa-82c8a726413f",
         "result": "pending",
         "schema_version": "1.0",
         "source_kind": "mock",
         "status": "unknown",
-        "timestamp": "2026-09-16T10:38:32.667Z",
-        "trace_id": "55278c11-15d0-4172-aa51-2ec4928a3ab9"
+        "timestamp": "2026-09-26T15:20:16.657Z",
+        "trace_id": "dbbd8e70-5235-408b-9386-830c40c1af63"
       }
     }
   ],

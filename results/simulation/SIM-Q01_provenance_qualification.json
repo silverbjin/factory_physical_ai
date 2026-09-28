@@ -1,0 +1,885 @@
+{
+  "immutable_authority_bindings": {
+    "TASK-SIM-004": {
+      "claim_scope": "immutable_accepted_authority",
+      "claims": [
+        "component_version",
+        "runtime_identity",
+        "world_authority",
+        "bridge_authority",
+        "runner_authority"
+      ],
+      "predecessor_binding": {
+        "accepted_commit": "b7e8266abd17f48c18cca94d9433db50fd55464d",
+        "evidence_path": "results/simulation/SIM-004_navigation_backend.json",
+        "evidence_sha256": "b4c0ce91dde6c2f92c57ea6a227149362279993dee0dec4fd1ab12877e73f1d9",
+        "task_id": "TASK-SIM-004"
+      }
+    },
+    "TASK-SIM-005": {
+      "claim_scope": "immutable_accepted_authority",
+      "claims": [
+        "mujoco_version",
+        "model_scene_authority",
+        "configuration_source_authority",
+        "version_wide_seed_timestep_authority",
+        "accepted_initial_state_authority"
+      ],
+      "predecessor_binding": {
+        "accepted_commit": "542514a4d10bc03087834e8a5f672d53afe6aa21",
+        "evidence_path": "results/simulation/SIM-005_mujoco_vla_backend.json",
+        "evidence_sha256": "f4d41fdb1f13978e1b1e5c91b95e31b38a69825a0d432a8284ff7731a3beb84f",
+        "task_id": "TASK-SIM-005"
+      }
+    },
+    "TASK-SIM-007": {
+      "claim_scope": "immutable_accepted_authority",
+      "claims": [
+        "profile_identity",
+        "profile_source_configuration_authority",
+        "accepted_aggregate_outcome"
+      ],
+      "predecessor_binding": {
+        "accepted_commit": "228eb7745aa05c230e1b272184601b5afd53853b",
+        "evidence_path": "results/simulation/SIM-007_mission_integration.json",
+        "evidence_sha256": "7247f8db76c874e533f615f1c8c3f32febb7a7e2377790ff05e3e93320531711",
+        "task_id": "TASK-SIM-007"
+      }
+    }
+  },
+  "qualification_subjects": [
+    {
+      "applicability": {
+        "physics_measurement": {
+          "state": "REQUIRED"
+        },
+        "structured_simulator_time": {
+          "state": "REQUIRED"
+        }
+      },
+      "authority_paths": {
+        "bridge_configuration": "src/simulation_runtime/normal_system_e2e.py",
+        "launch_run_configuration": "configs/simulation/sim008_normal_system_scenario.json",
+        "world": "data/simulation/sim008_normal_system_world.sdf"
+      },
+      "backend_id": "gazebo",
+      "claim_scope": "run_local",
+      "component_version": "sim008-normal-system-e2e-v1",
+      "configuration_provenance": {
+        "bridge_configuration": "b00fdf7c1c7b9b3a83ea211d88a05f7e6477b04d27d8fd5f9cded0733bce2d3d",
+        "launch_run_configuration": "1da47e9dd0a174a2124ee6493b534d295d0b93be77b5446c8661fd863888beb4"
+      },
+      "correlation_identity": {
+        "mission_id": "c1e81b0e-da57-4645-b003-3c653cad4ee3",
+        "request_id": "36bbc8d4-f071-425a-b9cb-86e905bf2f3c",
+        "trace_id": "1fb6da48-2b87-4452-a903-bbf48e6dc4a3"
+      },
+      "predecessor_binding": {
+        "accepted_commit": "ea91e0c16412e20c8cae66355a1a39129919dd42",
+        "evidence_path": "results/simulation/SIM-008_normal_system_e2e.json",
+        "evidence_sha256": "ebf0ef0a27114e3c04fa6bec05aa3eef792fdfc282d2be009640bac7ecc26290",
+        "task_id": "TASK-SIM-008"
+      },
+      "profile_id": null,
+      "qualification_run_id": "q01-sim008-normal-system-authority",
+      "record_kind": "operation_run",
+      "scenario_id": "SIM_NORMAL_BRAKE_ECU_LINE_B",
+      "semantic_outcome": {
+        "result": "success",
+        "status": "completed"
+      },
+      "subject_id": "q01-sim008-normal-system-authority",
+      "timing": {
+        "bounded_execution": true,
+        "cleanup_complete": true,
+        "physics_measurement": {
+          "seconds": 34.803,
+          "source": "gazebo_authoritative_observation"
+        },
+        "simulation_time": 34.803,
+        "simulation_time_source": "gazebo_authoritative_observation",
+        "startup_attempted": true
+      },
+      "world_model_provenance": {
+        "system": "f7716c41100293446681213521e16974f6504b2a48e03e43b535dc7dcd59a7ad",
+        "world": "fff98b8a19feb8874a65c9dd66f029145ff0be46990dcfd668376df2b30b8ee1"
+      }
+    },
+    {
+      "applicability": {
+        "physics_measurement": {
+          "state": "REQUIRED"
+        },
+        "structured_simulator_time": {
+          "state": "REQUIRED"
+        }
+      },
+      "authority_paths": {
+        "run_local_configuration": "configs/simulation/sim009_failure_scenarios.json",
+        "world_model": "data/simulation/sim004_navigation_proxy_world.sdf"
+      },
+      "backend_id": "gazebo_navigation",
+      "claim_scope": "run_local",
+      "component_version": "sim004-navigation-backend-v2",
+      "configuration_provenance": {
+        "run_local_configuration": "4df8805ce573247084b38f8ea98da4893e089e4e89a25466c1f86d7196df9002"
+      },
+      "correlation_identity": {
+        "action_id": "67583161-79cf-45ba-b370-e97bc02071ad",
+        "mission_id": "3f98a0bd-9964-4f0f-a654-5974d30a935a",
+        "request_id": "985b6530-fd05-485c-92e1-be56425ebc68",
+        "trace_id": "e5fe6d12-04de-403b-b016-76c098317778"
+      },
+      "predecessor_binding": {
+        "accepted_commit": "67bde0e1f29c3f974bf3f0b29dff3f3aaa38e5be",
+        "evidence_path": "results/simulation/SIM-009_failure_recovery.json",
+        "evidence_sha256": "91d10e5bb4fb7ca1b62c325885bec276c6ef6231c6baa0424f3213702be3216e",
+        "task_id": "TASK-SIM-009"
+      },
+      "profile_id": null,
+      "qualification_run_id": "q01-sim009-cea7d45b-081a-4563-9932-348d9bf49288",
+      "record_kind": "operation_run",
+      "scenario_id": "SIM009-NAV-ABORTED",
+      "semantic_outcome": {
+        "decision": "FAIL_CLOSED",
+        "execution_identity": {
+          "qualification_run_id": "q01-sim009-cea7d45b-081a-4563-9932-348d9bf49288",
+          "scenario_execution_id": "ff17fd24-3d96-4b99-b496-ff611eb30147"
+        },
+        "outcome_kind": "failure",
+        "result": "failure",
+        "status": "failed"
+      },
+      "subject_id": "q01-sim009-SIM009-NAV-ABORTED",
+      "timing": {
+        "bounded_execution": true,
+        "cleanup_complete": true,
+        "physics_measurement": {
+          "seconds": 37.704,
+          "source": "gz_stats"
+        },
+        "simulation_time": 37.704,
+        "simulation_time_source": "gz_stats"
+      },
+      "world_model_provenance": {
+        "world_model": "c26bf7270026bce976abf4bce7f6b2a188885396281c2139970461db01486959"
+      }
+    },
+    {
+      "applicability": {
+        "physics_measurement": {
+          "state": "REQUIRED"
+        },
+        "structured_simulator_time": {
+          "state": "REQUIRED"
+        }
+      },
+      "authority_paths": {
+        "run_local_configuration": "configs/simulation/sim009_failure_scenarios.json",
+        "world_model": "data/simulation/sim004_navigation_proxy_world.sdf"
+      },
+      "backend_id": "gazebo_navigation",
+      "claim_scope": "run_local",
+      "component_version": "sim004-navigation-backend-v2",
+      "configuration_provenance": {
+        "run_local_configuration": "4df8805ce573247084b38f8ea98da4893e089e4e89a25466c1f86d7196df9002"
+      },
+      "correlation_identity": {
+        "action_id": "07dfad81-d743-415c-a442-2de99f89c080",
+        "mission_id": "7a24a36f-096e-43b7-b455-0ebd7b7a15f7",
+        "request_id": "cb669630-d568-4ca9-8cc4-3d2ecc710b51",
+        "trace_id": "c17adbdb-037d-4000-832a-a3b78a4a3495"
+      },
+      "predecessor_binding": {
+        "accepted_commit": "67bde0e1f29c3f974bf3f0b29dff3f3aaa38e5be",
+        "evidence_path": "results/simulation/SIM-009_failure_recovery.json",
+        "evidence_sha256": "91d10e5bb4fb7ca1b62c325885bec276c6ef6231c6baa0424f3213702be3216e",
+        "task_id": "TASK-SIM-009"
+      },
+      "profile_id": null,
+      "qualification_run_id": "q01-sim009-cea7d45b-081a-4563-9932-348d9bf49288",
+      "record_kind": "operation_run",
+      "scenario_id": "SIM009-NAV-BLOCKED",
+      "semantic_outcome": {
+        "decision": "FAIL_CLOSED",
+        "execution_identity": {
+          "qualification_run_id": "q01-sim009-cea7d45b-081a-4563-9932-348d9bf49288",
+          "scenario_execution_id": "4d3b328c-e115-4376-b779-09a68d3b16c0"
+        },
+        "outcome_kind": "failure",
+        "result": "failure",
+        "status": "failed"
+      },
+      "subject_id": "q01-sim009-SIM009-NAV-BLOCKED",
+      "timing": {
+        "bounded_execution": true,
+        "cleanup_complete": true,
+        "physics_measurement": {
+          "seconds": 37.503,
+          "source": "gz_stats"
+        },
+        "simulation_time": 37.503,
+        "simulation_time_source": "gz_stats"
+      },
+      "world_model_provenance": {
+        "world_model": "c26bf7270026bce976abf4bce7f6b2a188885396281c2139970461db01486959"
+      }
+    },
+    {
+      "applicability": {
+        "physics_measurement": {
+          "state": "REQUIRED"
+        },
+        "structured_simulator_time": {
+          "state": "REQUIRED"
+        }
+      },
+      "authority_paths": {
+        "run_local_configuration": "configs/simulation/sim009_failure_scenarios.json",
+        "world_model": "data/simulation/sim004_navigation_proxy_world.sdf"
+      },
+      "backend_id": "gazebo_navigation",
+      "claim_scope": "run_local",
+      "component_version": "sim004-navigation-backend-v2",
+      "configuration_provenance": {
+        "run_local_configuration": "4df8805ce573247084b38f8ea98da4893e089e4e89a25466c1f86d7196df9002"
+      },
+      "correlation_identity": {
+        "action_id": "72358f4e-e776-4dbb-ac4e-46e3aa638c31",
+        "mission_id": "d4a26371-06d7-44ec-bbaa-9001c915d8d0",
+        "request_id": "7e169362-e5f3-4ea9-9787-01ea454f36b0",
+        "trace_id": "e794a64e-7585-46f8-be5a-00225906d586"
+      },
+      "predecessor_binding": {
+        "accepted_commit": "67bde0e1f29c3f974bf3f0b29dff3f3aaa38e5be",
+        "evidence_path": "results/simulation/SIM-009_failure_recovery.json",
+        "evidence_sha256": "91d10e5bb4fb7ca1b62c325885bec276c6ef6231c6baa0424f3213702be3216e",
+        "task_id": "TASK-SIM-009"
+      },
+      "profile_id": null,
+      "qualification_run_id": "q01-sim009-cea7d45b-081a-4563-9932-348d9bf49288",
+      "record_kind": "operation_run",
+      "scenario_id": "SIM009-NAV-TF-UNAVAILABLE",
+      "semantic_outcome": {
+        "decision": "FAIL_CLOSED",
+        "execution_identity": {
+          "qualification_run_id": "q01-sim009-cea7d45b-081a-4563-9932-348d9bf49288",
+          "scenario_execution_id": "e96442ff-1999-49b2-991f-d3e7de3e60e4"
+        },
+        "outcome_kind": "failure",
+        "result": "failure",
+        "status": "failed"
+      },
+      "subject_id": "q01-sim009-SIM009-NAV-TF-UNAVAILABLE",
+      "timing": {
+        "bounded_execution": true,
+        "cleanup_complete": true,
+        "physics_measurement": {
+          "seconds": 47.607,
+          "source": "gz_stats"
+        },
+        "simulation_time": 47.607,
+        "simulation_time_source": "gz_stats"
+      },
+      "world_model_provenance": {
+        "world_model": "c26bf7270026bce976abf4bce7f6b2a188885396281c2139970461db01486959"
+      }
+    },
+    {
+      "applicability": {
+        "physics_measurement": {
+          "state": "REQUIRED"
+        },
+        "structured_simulator_time": {
+          "state": "REQUIRED"
+        }
+      },
+      "authority_paths": {
+        "run_local_configuration": "configs/simulation/sim009_failure_scenarios.json",
+        "world_model": "data/simulation/sim004_navigation_proxy_world.sdf"
+      },
+      "backend_id": "gazebo_navigation",
+      "claim_scope": "run_local",
+      "component_version": "sim004-navigation-backend-v2",
+      "configuration_provenance": {
+        "run_local_configuration": "4df8805ce573247084b38f8ea98da4893e089e4e89a25466c1f86d7196df9002"
+      },
+      "correlation_identity": {
+        "action_id": "6eb85042-057d-4508-809b-f6e91536bfc3",
+        "mission_id": "aaf7252c-f063-45b9-900c-e0cb368608f9",
+        "request_id": "219bf184-f1a8-48d7-b423-8ed21a46c918",
+        "trace_id": "0d1f8549-383f-4cde-be6e-d599c1e8aeeb"
+      },
+      "predecessor_binding": {
+        "accepted_commit": "67bde0e1f29c3f974bf3f0b29dff3f3aaa38e5be",
+        "evidence_path": "results/simulation/SIM-009_failure_recovery.json",
+        "evidence_sha256": "91d10e5bb4fb7ca1b62c325885bec276c6ef6231c6baa0424f3213702be3216e",
+        "task_id": "TASK-SIM-009"
+      },
+      "profile_id": null,
+      "qualification_run_id": "q01-sim009-cea7d45b-081a-4563-9932-348d9bf49288",
+      "record_kind": "operation_run",
+      "scenario_id": "SIM009-NAV-TIMEOUT-RETRY",
+      "semantic_outcome": {
+        "decision": "RETRY",
+        "execution_identity": {
+          "qualification_run_id": "q01-sim009-cea7d45b-081a-4563-9932-348d9bf49288",
+          "scenario_execution_id": "44b4acc2-4b57-4280-97d0-05b459eaddbb"
+        },
+        "identity": {
+          "action_id_stable": true,
+          "attempt_incremented": true,
+          "idempotency_key_stable": true,
+          "mission_id_stable": true,
+          "retry_request_id_new": true
+        },
+        "logical_side_effect_count": 1,
+        "outcome_kind": "unknown",
+        "reconciliation": {
+          "action_id": "6eb85042-057d-4508-809b-f6e91536bfc3",
+          "component_version": "sim004-navigation-backend-v2",
+          "evidence_refs": [
+            {
+              "sha256": "a8bdf369058ce5fac379075eb44f486b547e03dcd56cc6dcc38488e90cd74054",
+              "uri": "urn:factory-evidence:sim-004:6eb85042-057d-4508-809b-f6e91536bfc3"
+            }
+          ],
+          "message_type": "result",
+          "mission_id": "aaf7252c-f063-45b9-900c-e0cb368608f9",
+          "observed_at": "2026-09-28T14:03:26.630Z",
+          "observed_status": "failed",
+          "operation": "action_status.get",
+          "request_id": "e33c8c29-6f87-42e5-998c-d1ca99dce81f",
+          "result": "success",
+          "schema_version": "1.0",
+          "source_kind": "mock",
+          "status": "succeeded",
+          "timestamp": "2026-09-28T14:03:26.630Z",
+          "trace_id": "0d1f8549-383f-4cde-be6e-d599c1e8aeeb"
+        },
+        "result": "pending",
+        "retry_authorization": {
+          "action_id": "6eb85042-057d-4508-809b-f6e91536bfc3",
+          "error": {
+            "category": "EXECUTION_FAILED",
+            "code": "NAVIGATION_ABORTED",
+            "message": "0",
+            "retryable": true
+          },
+          "idempotency_key": "sim009-navigation",
+          "mission_id": "aaf7252c-f063-45b9-900c-e0cb368608f9",
+          "new_request_id": "7f7d97bc-1e2a-4a81-a913-62013bbf3ca4",
+          "next_attempt": 2,
+          "previous_attempt": 1,
+          "previous_request_id": "219bf184-f1a8-48d7-b423-8ed21a46c918",
+          "reconciliation_completed": true,
+          "record_type": "retry_authorization",
+          "resolved_status": "failed",
+          "retry_budget_remaining": 1
+        },
+        "retry_request": {
+          "action_id": "6eb85042-057d-4508-809b-f6e91536bfc3",
+          "attempt": 2,
+          "component_version": "sim009-failure-suite-v1",
+          "deadline_at": "2026-09-28T14:03:56.630Z",
+          "destination_id": "line-b-drop",
+          "idempotency_key": "sim009-navigation",
+          "message_type": "request",
+          "mission_id": "aaf7252c-f063-45b9-900c-e0cb368608f9",
+          "operation": "navigation.execute",
+          "request_id": "7f7d97bc-1e2a-4a81-a913-62013bbf3ca4",
+          "retry_budget_remaining": 0,
+          "robot_id": "simulation-proxy-mobile-base",
+          "schema_version": "1.0",
+          "speed_profile_id": "sim-safe-v1",
+          "timeout_ms": 30000,
+          "timestamp": "2026-09-28T14:03:26.630Z",
+          "trace_id": "0d1f8549-383f-4cde-be6e-d599c1e8aeeb"
+        },
+        "retry_result": {
+          "action_id": "6eb85042-057d-4508-809b-f6e91536bfc3",
+          "arrival": {
+            "destination_id": "line-b-drop",
+            "verified": true
+          },
+          "component_version": "sim004-navigation-backend-v2",
+          "evidence_refs": [
+            {
+              "sha256": "a8bdf369058ce5fac379075eb44f486b547e03dcd56cc6dcc38488e90cd74054",
+              "uri": "urn:factory-evidence:sim-004:6eb85042-057d-4508-809b-f6e91536bfc3"
+            }
+          ],
+          "message_type": "result",
+          "mission_id": "aaf7252c-f063-45b9-900c-e0cb368608f9",
+          "operation": "navigation.execute",
+          "request_id": "7f7d97bc-1e2a-4a81-a913-62013bbf3ca4",
+          "result": "success",
+          "schema_version": "1.0",
+          "source_kind": "mock",
+          "status": "succeeded",
+          "timestamp": "2026-09-28T14:03:27.941Z",
+          "trace_id": "0d1f8549-383f-4cde-be6e-d599c1e8aeeb"
+        },
+        "retry_suppressed": false,
+        "status": "unknown"
+      },
+      "subject_id": "q01-sim009-SIM009-NAV-TIMEOUT-RETRY",
+      "timing": {
+        "bounded_execution": true,
+        "cleanup_complete": true,
+        "physics_measurement": {
+          "seconds": 39.204,
+          "source": "gz_stats"
+        },
+        "simulation_time": 39.204,
+        "simulation_time_source": "gz_stats"
+      },
+      "world_model_provenance": {
+        "world_model": "c26bf7270026bce976abf4bce7f6b2a188885396281c2139970461db01486959"
+      }
+    },
+    {
+      "applicability": {
+        "physics_measurement": {
+          "execution_state": {
+            "physics_started": false,
+            "simulator_started": false
+          },
+          "justification": "TERMINATED_BEFORE_SIMULATOR_PHYSICS",
+          "state": "NOT_APPLICABLE"
+        },
+        "structured_simulator_time": {
+          "execution_state": {
+            "physics_started": false,
+            "simulator_started": false
+          },
+          "justification": "TERMINATED_BEFORE_SIMULATOR_PHYSICS",
+          "state": "NOT_APPLICABLE"
+        }
+      },
+      "authority_paths": {
+        "run_local_configuration": "configs/simulation/sim005_mujoco_manipulation.yaml",
+        "world_model": "data/simulation/sim005_mujoco_manipulation.xml"
+      },
+      "backend_id": "mujoco",
+      "claim_scope": "run_local",
+      "component_version": "sim005-mujoco-vla-backend-v1",
+      "configuration_provenance": {
+        "run_local_configuration": "34c0900610d69e5f7500bcf0121490c984a62b20943e89dd3bc7d5c0c87b84a9"
+      },
+      "correlation_identity": {
+        "action_id": "7c31887b-02f4-4371-9f1d-f0b6fa7a8a0d",
+        "mission_id": "2f343c22-0be3-490a-bcda-82f7ed6c62f4",
+        "request_id": "2c75065a-3c72-4fab-8e41-e6ddef711cb0",
+        "trace_id": "f04d2e1c-8b64-4207-a37b-605f208914e4"
+      },
+      "predecessor_binding": {
+        "accepted_commit": "67bde0e1f29c3f974bf3f0b29dff3f3aaa38e5be",
+        "evidence_path": "results/simulation/SIM-009_failure_recovery.json",
+        "evidence_sha256": "91d10e5bb4fb7ca1b62c325885bec276c6ef6231c6baa0424f3213702be3216e",
+        "task_id": "TASK-SIM-009"
+      },
+      "profile_id": null,
+      "qualification_run_id": "q01-sim009-cea7d45b-081a-4563-9932-348d9bf49288",
+      "record_kind": "operation_run",
+      "scenario_id": "SIM009-VLA-AMBIGUOUS",
+      "semantic_outcome": {
+        "decision": "FAIL_CLOSED",
+        "execution_identity": {
+          "qualification_run_id": "q01-sim009-cea7d45b-081a-4563-9932-348d9bf49288",
+          "scenario_execution_id": "f9907156-b669-4363-a156-da2bfca0f612"
+        },
+        "outcome_kind": "uncertain",
+        "result": "failure",
+        "status": "failed"
+      },
+      "subject_id": "q01-sim009-SIM009-VLA-AMBIGUOUS",
+      "timing": {
+        "bounded_execution": true,
+        "cleanup_complete": true,
+        "execution_state": {
+          "physics_started": false,
+          "simulator_started": false
+        },
+        "simulation_time_source": "mujoco_no_physics_start"
+      },
+      "world_model_provenance": {
+        "world_model": "21fcb775690b058285480d77c96c788779bd8e7aaced663ba6eeda4691dfd160"
+      }
+    },
+    {
+      "applicability": {
+        "physics_measurement": {
+          "state": "REQUIRED"
+        },
+        "structured_simulator_time": {
+          "state": "REQUIRED"
+        }
+      },
+      "authority_paths": {
+        "run_local_configuration": "configs/simulation/sim005_mujoco_manipulation.yaml",
+        "world_model": "data/simulation/sim005_mujoco_manipulation.xml"
+      },
+      "backend_id": "mujoco",
+      "claim_scope": "run_local",
+      "component_version": "sim005-mujoco-vla-backend-v1",
+      "configuration_provenance": {
+        "run_local_configuration": "34c0900610d69e5f7500bcf0121490c984a62b20943e89dd3bc7d5c0c87b84a9"
+      },
+      "correlation_identity": {
+        "action_id": "2e08bb94-c844-4033-8da5-34059a6d496b",
+        "mission_id": "17d5fdff-aabf-4dc4-b74e-ddd84f83a930",
+        "request_id": "7ccf2f86-ebeb-4a44-865d-0913f3eb8209",
+        "trace_id": "93cdb5b5-8110-40df-ba96-274911b151ef"
+      },
+      "predecessor_binding": {
+        "accepted_commit": "67bde0e1f29c3f974bf3f0b29dff3f3aaa38e5be",
+        "evidence_path": "results/simulation/SIM-009_failure_recovery.json",
+        "evidence_sha256": "91d10e5bb4fb7ca1b62c325885bec276c6ef6231c6baa0424f3213702be3216e",
+        "task_id": "TASK-SIM-009"
+      },
+      "profile_id": null,
+      "qualification_run_id": "q01-sim009-cea7d45b-081a-4563-9932-348d9bf49288",
+      "record_kind": "operation_run",
+      "scenario_id": "SIM009-VLA-CONTACT-LOSS",
+      "semantic_outcome": {
+        "decision": "FAIL_CLOSED",
+        "execution_identity": {
+          "qualification_run_id": "q01-sim009-cea7d45b-081a-4563-9932-348d9bf49288",
+          "scenario_execution_id": "d5c639d5-4fb9-4ed3-b5e0-dd11884e7b67"
+        },
+        "outcome_kind": "failure",
+        "result": "failure",
+        "status": "failed"
+      },
+      "subject_id": "q01-sim009-SIM009-VLA-CONTACT-LOSS",
+      "timing": {
+        "bounded_execution": true,
+        "cleanup_complete": true,
+        "physics_measurement": {
+          "seconds": 0.8,
+          "source": "mujoco_steps_times_timestep"
+        },
+        "simulation_time": 0.8,
+        "simulation_time_source": "mujoco_steps_times_timestep"
+      },
+      "world_model_provenance": {
+        "world_model": "21fcb775690b058285480d77c96c788779bd8e7aaced663ba6eeda4691dfd160"
+      }
+    },
+    {
+      "applicability": {
+        "physics_measurement": {
+          "state": "REQUIRED"
+        },
+        "structured_simulator_time": {
+          "state": "REQUIRED"
+        }
+      },
+      "authority_paths": {
+        "run_local_configuration": "configs/simulation/sim005_mujoco_manipulation.yaml",
+        "world_model": "data/simulation/sim005_mujoco_manipulation.xml"
+      },
+      "backend_id": "mujoco",
+      "claim_scope": "run_local",
+      "component_version": "sim005-mujoco-vla-backend-v1",
+      "configuration_provenance": {
+        "run_local_configuration": "34c0900610d69e5f7500bcf0121490c984a62b20943e89dd3bc7d5c0c87b84a9"
+      },
+      "correlation_identity": {
+        "action_id": "88f1c230-a98d-488f-bdb7-220e07006149",
+        "mission_id": "d95460f1-e637-4575-9b83-fa24428db3b2",
+        "request_id": "e92527eb-8d55-4d0e-acca-0329adb9240e",
+        "trace_id": "2b96f038-b7ee-4beb-9c48-8107614d2cff"
+      },
+      "predecessor_binding": {
+        "accepted_commit": "67bde0e1f29c3f974bf3f0b29dff3f3aaa38e5be",
+        "evidence_path": "results/simulation/SIM-009_failure_recovery.json",
+        "evidence_sha256": "91d10e5bb4fb7ca1b62c325885bec276c6ef6231c6baa0424f3213702be3216e",
+        "task_id": "TASK-SIM-009"
+      },
+      "profile_id": null,
+      "qualification_run_id": "q01-sim009-cea7d45b-081a-4563-9932-348d9bf49288",
+      "record_kind": "operation_run",
+      "scenario_id": "SIM009-VLA-GRASP-MISS",
+      "semantic_outcome": {
+        "decision": "FAIL_CLOSED",
+        "execution_identity": {
+          "qualification_run_id": "q01-sim009-cea7d45b-081a-4563-9932-348d9bf49288",
+          "scenario_execution_id": "1ac7d2d4-7e6f-4263-ac7d-7ddd98fc5a85"
+        },
+        "outcome_kind": "failure",
+        "result": "failure",
+        "status": "failed"
+      },
+      "subject_id": "q01-sim009-SIM009-VLA-GRASP-MISS",
+      "timing": {
+        "bounded_execution": true,
+        "cleanup_complete": true,
+        "physics_measurement": {
+          "seconds": 0.8,
+          "source": "mujoco_steps_times_timestep"
+        },
+        "simulation_time": 0.8,
+        "simulation_time_source": "mujoco_steps_times_timestep"
+      },
+      "world_model_provenance": {
+        "world_model": "21fcb775690b058285480d77c96c788779bd8e7aaced663ba6eeda4691dfd160"
+      }
+    },
+    {
+      "applicability": {
+        "physics_measurement": {
+          "execution_state": {
+            "physics_started": false,
+            "simulator_started": false
+          },
+          "justification": "TERMINATED_BEFORE_SIMULATOR_PHYSICS",
+          "state": "NOT_APPLICABLE"
+        },
+        "structured_simulator_time": {
+          "execution_state": {
+            "physics_started": false,
+            "simulator_started": false
+          },
+          "justification": "TERMINATED_BEFORE_SIMULATOR_PHYSICS",
+          "state": "NOT_APPLICABLE"
+        }
+      },
+      "authority_paths": {
+        "run_local_configuration": "configs/simulation/sim005_mujoco_manipulation.yaml",
+        "world_model": "data/simulation/sim005_mujoco_manipulation.xml"
+      },
+      "backend_id": "mujoco",
+      "claim_scope": "run_local",
+      "component_version": "sim005-mujoco-vla-backend-v1",
+      "configuration_provenance": {
+        "run_local_configuration": "34c0900610d69e5f7500bcf0121490c984a62b20943e89dd3bc7d5c0c87b84a9"
+      },
+      "correlation_identity": {
+        "action_id": "876cbdb2-05ad-4386-b3a6-d9461949d85d",
+        "mission_id": "a2e17199-c27a-4163-91e0-7941fc5eaff6",
+        "request_id": "71696272-a739-4fb1-bdcf-525573254716",
+        "trace_id": "4db6fda1-0b21-434a-b214-680c8416ca2f"
+      },
+      "predecessor_binding": {
+        "accepted_commit": "67bde0e1f29c3f974bf3f0b29dff3f3aaa38e5be",
+        "evidence_path": "results/simulation/SIM-009_failure_recovery.json",
+        "evidence_sha256": "91d10e5bb4fb7ca1b62c325885bec276c6ef6231c6baa0424f3213702be3216e",
+        "task_id": "TASK-SIM-009"
+      },
+      "profile_id": null,
+      "qualification_run_id": "q01-sim009-cea7d45b-081a-4563-9932-348d9bf49288",
+      "record_kind": "operation_run",
+      "scenario_id": "SIM009-VLA-TIMEOUT",
+      "semantic_outcome": {
+        "decision": "RECONCILE",
+        "execution_identity": {
+          "qualification_run_id": "q01-sim009-cea7d45b-081a-4563-9932-348d9bf49288",
+          "scenario_execution_id": "6cad6df8-d944-45e9-b3a3-7f138112b944"
+        },
+        "outcome_kind": "unknown",
+        "reconciliation": {
+          "action_id": "876cbdb2-05ad-4386-b3a6-d9461949d85d",
+          "component_version": "sim005-mujoco-vla-backend-v1",
+          "evidence_refs": [
+            {
+              "sha256": "5969938ed9e417d4b016d10ece4c5ccecdc5b3674c8c3c979802a0a45df86035",
+              "uri": "urn:factory-evidence:sim-005:a2e17199-c27a-4163-91e0-7941fc5eaff6:876cbdb2-05ad-4386-b3a6-d9461949d85d"
+            }
+          ],
+          "message_type": "result",
+          "mission_id": "a2e17199-c27a-4163-91e0-7941fc5eaff6",
+          "observed_at": "2026-09-28T14:03:36.967Z",
+          "observed_status": "unknown",
+          "operation": "action_status.get",
+          "request_id": "fd26aa30-54ab-4878-961c-7d7a9f411306",
+          "result": "success",
+          "schema_version": "1.0",
+          "source_kind": "mock",
+          "status": "succeeded",
+          "timestamp": "2026-09-28T14:03:36.973Z",
+          "trace_id": "4db6fda1-0b21-434a-b214-680c8416ca2f"
+        },
+        "result": "pending",
+        "status": "unknown"
+      },
+      "subject_id": "q01-sim009-SIM009-VLA-TIMEOUT",
+      "timing": {
+        "bounded_execution": true,
+        "cleanup_complete": true,
+        "execution_state": {
+          "physics_started": false,
+          "simulator_started": false
+        },
+        "simulation_time_source": "mujoco_no_physics_start"
+      },
+      "world_model_provenance": {
+        "world_model": "21fcb775690b058285480d77c96c788779bd8e7aaced663ba6eeda4691dfd160"
+      }
+    },
+    {
+      "applicability": {
+        "physics_measurement": {
+          "state": "REQUIRED"
+        },
+        "structured_simulator_time": {
+          "state": "REQUIRED"
+        }
+      },
+      "authority_paths": {
+        "run_local_configuration": "configs/simulation/sim005_mujoco_manipulation.yaml",
+        "world_model": "data/simulation/sim005_mujoco_manipulation.xml"
+      },
+      "backend_id": "mujoco",
+      "claim_scope": "run_local",
+      "component_version": "sim005-mujoco-vla-backend-v1",
+      "configuration_provenance": {
+        "run_local_configuration": "34c0900610d69e5f7500bcf0121490c984a62b20943e89dd3bc7d5c0c87b84a9"
+      },
+      "correlation_identity": {
+        "action_id": "eab81deb-1f58-4905-8ada-3f010e633769",
+        "mission_id": "999cda65-4064-44c0-8388-9356413ce540",
+        "request_id": "f327e78f-3d47-47d3-9dcf-b37f38fc9c30",
+        "trace_id": "00856976-c920-46fa-a651-7c7581dc638e"
+      },
+      "predecessor_binding": {
+        "accepted_commit": "67bde0e1f29c3f974bf3f0b29dff3f3aaa38e5be",
+        "evidence_path": "results/simulation/SIM-009_failure_recovery.json",
+        "evidence_sha256": "91d10e5bb4fb7ca1b62c325885bec276c6ef6231c6baa0424f3213702be3216e",
+        "task_id": "TASK-SIM-009"
+      },
+      "profile_id": null,
+      "qualification_run_id": "q01-sim009-cea7d45b-081a-4563-9932-348d9bf49288",
+      "record_kind": "operation_run",
+      "scenario_id": "SIM009-VLA-UNKNOWN",
+      "semantic_outcome": {
+        "decision": "RECONCILE",
+        "execution_identity": {
+          "qualification_run_id": "q01-sim009-cea7d45b-081a-4563-9932-348d9bf49288",
+          "scenario_execution_id": "aa32c41b-30c2-4c65-a193-6a9bb36df9bc"
+        },
+        "outcome_kind": "unknown",
+        "reconciliation": {
+          "action_id": "eab81deb-1f58-4905-8ada-3f010e633769",
+          "component_version": "sim005-mujoco-vla-backend-v1",
+          "evidence_refs": [
+            {
+              "sha256": "084b2adc635cef2948b4051ca09ba7c2ce29e1e34fe46ec4a03e18733d14edc3",
+              "uri": "urn:factory-evidence:sim-005:999cda65-4064-44c0-8388-9356413ce540:eab81deb-1f58-4905-8ada-3f010e633769"
+            }
+          ],
+          "message_type": "result",
+          "mission_id": "999cda65-4064-44c0-8388-9356413ce540",
+          "observed_at": "2026-09-28T14:03:36.991Z",
+          "observed_status": "succeeded",
+          "operation": "action_status.get",
+          "request_id": "947ce88d-1214-422f-997a-f742012bab66",
+          "result": "success",
+          "schema_version": "1.0",
+          "source_kind": "mock",
+          "status": "succeeded",
+          "timestamp": "2026-09-28T14:03:36.996Z",
+          "trace_id": "00856976-c920-46fa-a651-7c7581dc638e"
+        },
+        "result": "pending",
+        "status": "unknown"
+      },
+      "subject_id": "q01-sim009-SIM009-VLA-UNKNOWN",
+      "timing": {
+        "bounded_execution": true,
+        "cleanup_complete": true,
+        "physics_measurement": {
+          "seconds": 0.8,
+          "source": "mujoco_steps_times_timestep"
+        },
+        "simulation_time": 0.8,
+        "simulation_time_source": "mujoco_steps_times_timestep"
+      },
+      "world_model_provenance": {
+        "world_model": "21fcb775690b058285480d77c96c788779bd8e7aaced663ba6eeda4691dfd160"
+      }
+    },
+    {
+      "applicability": {
+        "physics_measurement": {
+          "execution_state": {
+            "physics_started": false,
+            "simulator_started": false
+          },
+          "justification": "TERMINATED_BEFORE_SIMULATOR_PHYSICS",
+          "state": "NOT_APPLICABLE"
+        },
+        "structured_simulator_time": {
+          "execution_state": {
+            "physics_started": false,
+            "simulator_started": false
+          },
+          "justification": "TERMINATED_BEFORE_SIMULATOR_PHYSICS",
+          "state": "NOT_APPLICABLE"
+        }
+      },
+      "authority_paths": {
+        "run_local_configuration": "configs/simulation/sim005_mujoco_manipulation.yaml",
+        "world_model": "data/simulation/sim005_mujoco_manipulation.xml"
+      },
+      "backend_id": "mujoco",
+      "claim_scope": "run_local",
+      "component_version": "sim005-mujoco-vla-backend-v1",
+      "configuration_provenance": {
+        "run_local_configuration": "34c0900610d69e5f7500bcf0121490c984a62b20943e89dd3bc7d5c0c87b84a9"
+      },
+      "correlation_identity": {
+        "action_id": "b874ff8c-d2ec-4f98-bb8d-ea9fd5842cee",
+        "mission_id": "fc586fef-a4d5-4f48-a239-b159bcad1339",
+        "request_id": "790eee54-04d8-403e-9d70-fc61480085d5",
+        "trace_id": "a523f808-aea1-49d7-94ff-61fd9c000775"
+      },
+      "predecessor_binding": {
+        "accepted_commit": "67bde0e1f29c3f974bf3f0b29dff3f3aaa38e5be",
+        "evidence_path": "results/simulation/SIM-009_failure_recovery.json",
+        "evidence_sha256": "91d10e5bb4fb7ca1b62c325885bec276c6ef6231c6baa0424f3213702be3216e",
+        "task_id": "TASK-SIM-009"
+      },
+      "profile_id": null,
+      "qualification_run_id": "q01-sim009-cea7d45b-081a-4563-9932-348d9bf49288",
+      "record_kind": "operation_run",
+      "scenario_id": "SIM009-VLA-WORKSPACE-LIMIT",
+      "semantic_outcome": {
+        "decision": "FAIL_CLOSED",
+        "execution_identity": {
+          "qualification_run_id": "q01-sim009-cea7d45b-081a-4563-9932-348d9bf49288",
+          "scenario_execution_id": "2086e31b-b7dc-431e-9578-41536032f136"
+        },
+        "outcome_kind": "failure",
+        "result": "failure",
+        "status": "failed"
+      },
+      "subject_id": "q01-sim009-SIM009-VLA-WORKSPACE-LIMIT",
+      "timing": {
+        "bounded_execution": true,
+        "cleanup_complete": true,
+        "execution_state": {
+          "physics_started": false,
+          "simulator_started": false
+        },
+        "simulation_time_source": "mujoco_no_physics_start"
+      },
+      "world_model_provenance": {
+        "world_model": "21fcb775690b058285480d77c96c788779bd8e7aaced663ba6eeda4691dfd160"
+      }
+    }
+  ],
+  "schema_version": "1.0",
+  "simulation_only": true,
+  "source_git_sha": "c3027fb708186d6ba2fa96444e8aae553687939d",
+  "task_id": "TASK-SIM-Q01",
+  "task_specific_result": "SIM_PROVENANCE_QUALIFICATION_READY",
+  "validation": {
+    "binding_error_subject_ids": [],
+    "extra_subject_ids": [],
+    "missing_subject_ids": [],
+    "status": "PASS",
+    "subject_count": 11
+  }
+}

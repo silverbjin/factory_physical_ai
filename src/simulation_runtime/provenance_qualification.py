@@ -42,13 +42,31 @@ class VerifiedPredecessorBinding:
     evidence: Mapping[str, Any]
 
 
-def resolve_predecessor_binding(root: Path, task_id: str, acceptance: Mapping[str, Any], evidence_path: str) -> VerifiedPredecessorBinding:
+def resolve_predecessor_binding(
+    root: Path, task_id: str, acceptance: Mapping[str, Any], evidence_path: str,
+    *, expected_binding: Mapping[str, str] | None = None,
+) -> VerifiedPredecessorBinding:
     """Resolve a canonical Evidence object from its immutable accepted tree."""
     if acceptance.get("task_id") != task_id or acceptance.get("status") != "ACCEPT":
         raise ValueError("ACCEPTANCE_IDENTITY_MISMATCH")
     commit = acceptance.get("accepted_commit")
     if not isinstance(commit, str) or len(commit) != 40:
         raise ValueError("INVALID_ACCEPTED_COMMIT")
+    if expected_binding is not None:
+        if expected_binding.get("task_id") != task_id:
+            raise ValueError("FROZEN_TASK_ID_MISMATCH")
+        if commit != expected_binding.get("accepted_commit"):
+            raise ValueError("FROZEN_ACCEPTED_COMMIT_MISMATCH")
+        if evidence_path != expected_binding.get("evidence_path"):
+            raise ValueError("FROZEN_EVIDENCE_PATH_MISMATCH")
+        if "evidence" in acceptance:
+            accepted_evidence = acceptance["evidence"]
+            if not isinstance(accepted_evidence, Mapping):
+                raise ValueError("FROZEN_EVIDENCE_BINDING_MISSING")
+            if accepted_evidence.get("path") != evidence_path:
+                raise ValueError("FROZEN_EVIDENCE_PATH_MISMATCH")
+            if accepted_evidence.get("sha256") != expected_binding.get("evidence_sha256"):
+                raise ValueError("FROZEN_EVIDENCE_SHA256_MISMATCH")
     exists = subprocess.run(["git", "cat-file", "-e", f"{commit}^{{commit}}"], cwd=root, capture_output=True)
     if exists.returncode:
         raise ValueError("INVALID_ACCEPTED_COMMIT")
@@ -56,12 +74,21 @@ def resolve_predecessor_binding(root: Path, task_id: str, acceptance: Mapping[st
     if blob.returncode:
         raise ValueError("MISSING_ACCEPTED_EVIDENCE")
     digest = hashlib.sha256(blob.stdout).hexdigest()
+    if expected_binding is not None and digest != expected_binding.get("evidence_sha256"):
+        raise ValueError("FROZEN_EVIDENCE_SHA256_MISMATCH")
     try:
         evidence = json.loads(blob.stdout)
     except json.JSONDecodeError as exc:
         raise ValueError("MALFORMED_ACCEPTED_EVIDENCE") from exc
     if not isinstance(evidence, dict) or evidence.get("task_id") != task_id:
         raise ValueError("TASK_ID_MISMATCH")
+    # SIM-006's immutable accepted Evidence predates the task_specific_result
+    # field but its legacy result field carries the same task-level decision.
+    # Keep the value bound to the accepted Git blob; this is compatibility, not
+    # a current-worktree fallback.
+    task_result = evidence.get("task_specific_result", evidence.get("result"))
+    if expected_binding is not None and task_result != expected_binding.get("task_specific_result"):
+        raise ValueError("FROZEN_TASK_RESULT_MISMATCH")
     return VerifiedPredecessorBinding(task_id, commit, evidence_path, digest, evidence)
 
 
@@ -295,9 +322,9 @@ def collect_sim008_configuration_qualification(root: Path, binding: VerifiedPred
         qualification_run_id="q01-sim008-normal-system-authority", scenario_id=str(scenario.get("scenario_id")), backend_id="gazebo", component_version=component,
         configuration_provenance={"bridge_configuration": bridge_hash, "launch_run_configuration": launch_hash},
         world_model_provenance={"world": str(scenario.get("world_sha256"))},
-        timing={"simulation_time": simulation_time, "bounded_execution": measurement.get("bounded_execution") is True}, semantic_outcome={"result": execution.get("mission", {}).get("result")},
+        timing={"simulation_time": simulation_time, "physics_measurement": {"source": "collector_measurement", "seconds": simulation_time}, "bounded_execution": measurement.get("bounded_execution") is True}, semantic_outcome={"result": execution.get("mission", {}).get("result")},
         authority_paths={"bridge_configuration": f"{binding.accepted_commit}:{bridge_path}", "launch_run_configuration": f"{binding.accepted_commit}:{launch_path}"},
-        applicability={"structured_simulator_time": {"state": "REQUIRED"}, "physics_measurement": {"state": "OPTIONAL"}},
+        applicability={"structured_simulator_time": {"state": "REQUIRED"}, "physics_measurement": {"state": "REQUIRED"}},
     )
     validate_subject(subject)
     return subject
@@ -338,6 +365,7 @@ def collect_sim008_execution_result(template: QualificationSubject, result: Mapp
         "timing": {
             "simulation_time": timing["seconds"],
             "simulation_time_source": timing["source"],
+            "physics_measurement": {"source": timing["source"], "seconds": timing["seconds"]},
             "startup_attempted": result["startup_attempted"],
             "cleanup_complete": result["cleanup_complete"],
             "bounded_execution": True,
@@ -351,7 +379,7 @@ def collect_sim008_execution_result(template: QualificationSubject, result: Mapp
         },
         "applicability": {
             "structured_simulator_time": {"state": "REQUIRED"},
-            "physics_measurement": {"state": "OPTIONAL"},
+            "physics_measurement": {"state": "REQUIRED"},
         },
     })
     validate_subject(subject)
@@ -387,9 +415,9 @@ def collect_sim009_scenario_qualifications(binding: VerifiedPredecessorBinding, 
             qualification_run_id=str(measured.get("qualification_run_id") or f"q01-sim009-{scenario_id}"), scenario_id=scenario_id, backend_id=str(row["backend"]),
             component_version=str(result.get("component_version")) if isinstance(result, Mapping) else "sim009-scenario-v1",
             configuration_provenance={"run_local_configuration": config}, world_model_provenance={"world_model": world},
-            timing={"simulation_time": measured["simulation_time"], "bounded_execution": measured.get("bounded_execution") is True},
+            timing={"simulation_time": measured["simulation_time"], "physics_measurement": {"source": "collector_measurement", "seconds": measured["simulation_time"]}, "bounded_execution": measured.get("bounded_execution") is True},
             semantic_outcome={"accepted_outcome_kind": row.get("outcome_kind"), "accepted_decision": row.get("decision")},
-            applicability={"structured_simulator_time": {"state": "REQUIRED"}, "physics_measurement": {"state": "OPTIONAL"}},
+            applicability={"structured_simulator_time": {"state": "REQUIRED"}, "physics_measurement": {"state": "REQUIRED"}},
         ))
     for subject in subjects:
         validate_subject(subject)
@@ -400,15 +428,18 @@ def collect_sim009_execution_result(template: QualificationSubject, result: Mapp
     """Convert one explicit SIM-009 execution measurement without scenario reuse."""
     if template.predecessor_binding.get("task_id") != "TASK-SIM-009":
         raise ValueError("PREDECESSOR_TASK_MISMATCH")
-    if result.get("qualification_run_id") != f"q01-sim009-{template.scenario_id}":
+    if not isinstance(result.get("qualification_run_id"), str) or not result["qualification_run_id"].startswith("q01-sim009-"):
         raise ValueError("INVALID_QUALIFICATION_RUN_ID")
     if result.get("scenario_id") != template.scenario_id or result.get("backend_id") != template.backend_id:
         raise ValueError("CROSS_SCENARIO_ASSOCIATION")
     provenance = result.get("run_local_provenance")
     correlation = result.get("correlation_identity")
+    execution_identity = result.get("execution_identity")
     outcome = result.get("semantic_outcome")
     if not all(isinstance(value, Mapping) for value in (provenance, correlation, outcome)) or not provenance:
         raise ValueError("MISSING_RUN_LOCAL_PROVENANCE")
+    if not isinstance(execution_identity, Mapping) or execution_identity.get("qualification_run_id") != result.get("qualification_run_id") or not isinstance(execution_identity.get("scenario_execution_id"), str) or not execution_identity["scenario_execution_id"]:
+        raise ValueError("MISSING_SCENARIO_EXECUTION_IDENTITY")
     if not all(isinstance(correlation.get(field), str) and correlation[field] for field in ("mission_id", "request_id", "trace_id")):
         raise ValueError("MISSING_RUN_LOCAL_CORRELATION")
     timing = provenance.get("simulation_time")
@@ -427,13 +458,21 @@ def collect_sim009_execution_result(template: QualificationSubject, result: Mapp
         raise ValueError("MISSING_EXECUTION_ASSET_BINDING")
     if not isinstance(result.get("component_version"), str) or not isinstance(result.get("cleanup_complete"), bool):
         raise ValueError("INVALID_EXECUTION_RESULT")
+    required_semantics = {
+        "SIM009-NAV-TIMEOUT-RETRY": {"reconciliation", "retry_authorization", "retry_request", "retry_result", "identity"},
+        "SIM009-VLA-TIMEOUT": {"reconciliation"},
+        "SIM009-VLA-UNKNOWN": {"reconciliation"},
+    }.get(template.scenario_id, set())
+    if not required_semantics.issubset(outcome):
+        raise ValueError("MISSING_SIM009_EXECUTION_SEMANTICS")
     subject = QualificationSubject(**{**template.__dict__,
+        "qualification_run_id": result["qualification_run_id"],
         "component_version": result["component_version"],
         "configuration_provenance": {"run_local_configuration": config},
         "world_model_provenance": {"world_model": world},
-        "timing": ({"simulation_time": timing["seconds"], "simulation_time_source": timing["source"], "cleanup_complete": result["cleanup_complete"], "bounded_execution": True}
+        "timing": ({"simulation_time": timing["seconds"], "simulation_time_source": timing["source"], "physics_measurement": {"source": timing["source"], "seconds": timing["seconds"]}, "cleanup_complete": result["cleanup_complete"], "bounded_execution": True}
                    if not pre_physics else {"simulation_time_source": timing["source"], "cleanup_complete": result["cleanup_complete"], "bounded_execution": True, "execution_state": dict(timing["execution_state"])}),
-        "semantic_outcome": dict(outcome),
+        "semantic_outcome": {**dict(outcome), "execution_identity": dict(execution_identity)},
         "correlation_identity": dict(correlation),
         "authority_paths": {"run_local_configuration": paths["configuration"], "world_model": paths["world_model"]},
         "applicability": ({
@@ -441,7 +480,7 @@ def collect_sim009_execution_result(template: QualificationSubject, result: Mapp
             "physics_measurement": {"state": "NOT_APPLICABLE", "justification": "TERMINATED_BEFORE_SIMULATOR_PHYSICS", "execution_state": dict(timing["execution_state"])},
         } if pre_physics else {
             "structured_simulator_time": {"state": "REQUIRED"},
-            "physics_measurement": {"state": "OPTIONAL"},
+            "physics_measurement": {"state": "REQUIRED"},
         }),
     })
     validate_subject(subject)
@@ -563,6 +602,12 @@ def validate_subject(subject: QualificationSubject) -> None:
             state = time_policy.get("execution_state")
             if not isinstance(time_policy.get("justification"), str) or state != {"simulator_started": False, "physics_started": False} or subject.timing.get("simulation_time") is not None:
                 raise ValueError("INVALID_NOT_APPLICABLE_EXECUTION_STATE")
+        if physics_policy["state"] == "REQUIRED":
+            measurement = subject.timing.get("physics_measurement")
+            if not isinstance(measurement, Mapping) or not isinstance(measurement.get("source"), str) or not isinstance(measurement.get("seconds"), (int, float)):
+                raise ValueError("MISSING_PHYSICS_MEASUREMENT")
+        elif physics_policy["state"] == "OPTIONAL" and subject.subject_id.startswith(("q01-sim008-", "q01-sim009-")):
+            raise ValueError("INVALID_PHYSICS_APPLICABILITY")
         if physics_policy["state"] == "NOT_APPLICABLE":
             state = physics_policy.get("execution_state")
             if not isinstance(physics_policy.get("justification"), str) or state != {"simulator_started": False, "physics_started": False}:
