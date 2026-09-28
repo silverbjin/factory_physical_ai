@@ -70,9 +70,9 @@
         "launch_run_configuration": "1da47e9dd0a174a2124ee6493b534d295d0b93be77b5446c8661fd863888beb4"
       },
       "correlation_identity": {
-        "mission_id": "c1e81b0e-da57-4645-b003-3c653cad4ee3",
-        "request_id": "36bbc8d4-f071-425a-b9cb-86e905bf2f3c",
-        "trace_id": "1fb6da48-2b87-4452-a903-bbf48e6dc4a3"
+        "mission_id": "10fdfd79-d2b8-4242-bc89-b5461bde5aae",
+        "request_id": "75b48a79-1f88-4cf2-9e49-a07110b3ddce",
+        "trace_id": "1cc5f8d6-c0aa-4dba-a467-1539a647fbf4"
       },
       "predecessor_binding": {
         "accepted_commit": "ea91e0c16412e20c8cae66355a1a39129919dd42",
@@ -93,10 +93,10 @@
         "bounded_execution": true,
         "cleanup_complete": true,
         "physics_measurement": {
-          "seconds": 34.803,
+          "seconds": 37.704,
           "source": "gazebo_authoritative_observation"
         },
-        "simulation_time": 34.803,
+        "simulation_time": 37.704,
         "simulation_time_source": "gazebo_authoritative_observation",
         "startup_attempted": true
       },
@@ -125,10 +125,10 @@
         "run_local_configuration": "4df8805ce573247084b38f8ea98da4893e089e4e89a25466c1f86d7196df9002"
       },
       "correlation_identity": {
-        "action_id": "67583161-79cf-45ba-b370-e97bc02071ad",
-        "mission_id": "3f98a0bd-9964-4f0f-a654-5974d30a935a",
-        "request_id": "985b6530-fd05-485c-92e1-be56425ebc68",
-        "trace_id": "e5fe6d12-04de-403b-b016-76c098317778"
+        "action_id": "0436171d-2f82-4b27-90b3-d31665098019",
+        "mission_id": "ecea6495-d2e5-451e-a4f5-94ff845bc4e4",
+        "request_id": "44f5b218-bda4-4533-835f-71c8967d9ed2",
+        "trace_id": "601766eb-907a-4ca7-afd2-4a687a4c1011"
       },
       "predecessor_binding": {
         "accepted_commit": "67bde0e1f29c3f974bf3f0b29dff3f3aaa38e5be",
@@ -137,14 +137,14 @@
         "task_id": "TASK-SIM-009"
       },
       "profile_id": null,
-      "qualification_run_id": "q01-sim009-cea7d45b-081a-4563-9932-348d9bf49288",
+      "qualification_run_id": "q01-sim009-75bf27c5-84b0-40ab-84d2-1e28f440a779",
       "record_kind": "operation_run",
       "scenario_id": "SIM009-NAV-ABORTED",
       "semantic_outcome": {
         "decision": "FAIL_CLOSED",
         "execution_identity": {
-          "qualification_run_id": "q01-sim009-cea7d45b-081a-4563-9932-348d9bf49288",
-          "scenario_execution_id": "ff17fd24-3d96-4b99-b496-ff611eb30147"
+          "qualification_run_id": "q01-sim009-75bf27c5-84b0-40ab-84d2-1e28f440a779",
+          "scenario_execution_id": "57c6e638-c11b-4eb3-8cc8-d8e3ce49403f"
         },
         "outcome_kind": "failure",
         "result": "failure",
@@ -155,10 +155,10 @@
         "bounded_execution": true,
         "cleanup_complete": true,
         "physics_measurement": {
-          "seconds": 37.704,
+          "seconds": 39.003,
           "source": "gz_stats"
         },
-        "simulation_time": 37.704,
+        "simulation_time": 39.003,
         "simulation_time_source": "gz_stats"
       },
       "world_model_provenance": {
@@ -185,10 +185,10 @@
         "run_local_configuration": "4df8805ce573247084b38f8ea98da4893e089e4e89a25466c1f86d7196df9002"
       },
       "correlation_identity": {
-        "action_id": "07dfad81-d743-415c-a442-2de99f89c080",
-        "mission_id": "7a24a36f-096e-43b7-b455-0ebd7b7a15f7",
-        "request_id": "cb669630-d568-4ca9-8cc4-3d2ecc710b51",
-        "trace_id": "c17adbdb-037d-4000-832a-a3b78a4a3495"
+        "action_id": "efab9824-4cdd-448e-8efb-1ec69bda8c75",
+        "mission_id": "dedbaf91-7ee6-4c53-a3ef-6e7b9416bfd6",
+        "request_id": "e164fce4-7645-4e41-8787-0ff1cf05b9b0",
+        "trace_id": "e5ce5093-81f1-42ba-aaf4-82467217d461"
       },
       "predecessor_binding": {
         "accepted_commit": "67bde0e1f29c3f974bf3f0b29dff3f3aaa38e5be",
@@ -197,14 +197,14 @@
         "task_id": "TASK-SIM-009"
       },
       "profile_id": null,
-      "qualification_run_id": "q01-sim009-cea7d45b-081a-4563-9932-348d9bf49288",
+      "qualification_run_id": "q01-sim009-75bf27c5-84b0-40ab-84d2-1e28f440a779",
       "record_kind": "operation_run",
       "scenario_id": "SIM009-NAV-BLOCKED",
       "semantic_outcome": {
         "decision": "FAIL_CLOSED",
         "execution_identity": {
-          "qualification_run_id": "q01-sim009-cea7d45b-081a-4563-9932-348d9bf49288",
-          "scenario_execution_id": "4d3b328c-e115-4376-b779-09a68d3b16c0"
+          "qualification_run_id": "q01-sim009-75bf27c5-84b0-40ab-84d2-1e28f440a779",
+          "scenario_execution_id": "34d935e6-074c-48d5-8c7c-eafd52315fa8"
         },
         "outcome_kind": "failure",
         "result": "failure",
@@ -215,10 +215,10 @@
         "bounded_execution": true,
         "cleanup_complete": true,
         "physics_measurement": {
-          "seconds": 37.503,
+          "seconds": 38.808,
           "source": "gz_stats"
         },
-        "simulation_time": 37.503,
+        "simulation_time": 38.808,
         "simulation_time_source": "gz_stats"
       },
       "world_model_provenance": {
@@ -245,10 +245,10 @@
         "run_local_configuration": "4df8805ce573247084b38f8ea98da4893e089e4e89a25466c1f86d7196df9002"
       },
       "correlation_identity": {
-        "action_id": "72358f4e-e776-4dbb-ac4e-46e3aa638c31",
-        "mission_id": "d4a26371-06d7-44ec-bbaa-9001c915d8d0",
-        "request_id": "7e169362-e5f3-4ea9-9787-01ea454f36b0",
-        "trace_id": "e794a64e-7585-46f8-be5a-00225906d586"
+        "action_id": "0fa4e7f0-5ed2-4a5c-b918-a3ff9e069a5e",
+        "mission_id": "3f22c751-51da-4ef3-b570-b4929b1cfe45",
+        "request_id": "88b70c1a-657d-48c0-9140-70f58e0778d7",
+        "trace_id": "40e3cd89-807a-4c57-bc8f-8b0d684a10b2"
       },
       "predecessor_binding": {
         "accepted_commit": "67bde0e1f29c3f974bf3f0b29dff3f3aaa38e5be",
@@ -257,14 +257,14 @@
         "task_id": "TASK-SIM-009"
       },
       "profile_id": null,
-      "qualification_run_id": "q01-sim009-cea7d45b-081a-4563-9932-348d9bf49288",
+      "qualification_run_id": "q01-sim009-75bf27c5-84b0-40ab-84d2-1e28f440a779",
       "record_kind": "operation_run",
       "scenario_id": "SIM009-NAV-TF-UNAVAILABLE",
       "semantic_outcome": {
         "decision": "FAIL_CLOSED",
         "execution_identity": {
-          "qualification_run_id": "q01-sim009-cea7d45b-081a-4563-9932-348d9bf49288",
-          "scenario_execution_id": "e96442ff-1999-49b2-991f-d3e7de3e60e4"
+          "qualification_run_id": "q01-sim009-75bf27c5-84b0-40ab-84d2-1e28f440a779",
+          "scenario_execution_id": "17f07b0f-2644-4bee-977c-6e0c51e87782"
         },
         "outcome_kind": "failure",
         "result": "failure",
@@ -275,10 +275,10 @@
         "bounded_execution": true,
         "cleanup_complete": true,
         "physics_measurement": {
-          "seconds": 47.607,
+          "seconds": 48.804,
           "source": "gz_stats"
         },
-        "simulation_time": 47.607,
+        "simulation_time": 48.804,
         "simulation_time_source": "gz_stats"
       },
       "world_model_provenance": {
@@ -305,10 +305,10 @@
         "run_local_configuration": "4df8805ce573247084b38f8ea98da4893e089e4e89a25466c1f86d7196df9002"
       },
       "correlation_identity": {
-        "action_id": "6eb85042-057d-4508-809b-f6e91536bfc3",
-        "mission_id": "aaf7252c-f063-45b9-900c-e0cb368608f9",
-        "request_id": "219bf184-f1a8-48d7-b423-8ed21a46c918",
-        "trace_id": "0d1f8549-383f-4cde-be6e-d599c1e8aeeb"
+        "action_id": "e8a56d66-c6ec-4b0d-97cf-4751d803eb6a",
+        "mission_id": "3140e908-06fd-40c0-a94a-de40ea196aab",
+        "request_id": "2272acaa-372b-45a5-bf2e-38d40dc0263f",
+        "trace_id": "65a17658-eea3-4f6e-a0df-6075ae2664e5"
       },
       "predecessor_binding": {
         "accepted_commit": "67bde0e1f29c3f974bf3f0b29dff3f3aaa38e5be",
@@ -317,14 +317,14 @@
         "task_id": "TASK-SIM-009"
       },
       "profile_id": null,
-      "qualification_run_id": "q01-sim009-cea7d45b-081a-4563-9932-348d9bf49288",
+      "qualification_run_id": "q01-sim009-75bf27c5-84b0-40ab-84d2-1e28f440a779",
       "record_kind": "operation_run",
       "scenario_id": "SIM009-NAV-TIMEOUT-RETRY",
       "semantic_outcome": {
         "decision": "RETRY",
         "execution_identity": {
-          "qualification_run_id": "q01-sim009-cea7d45b-081a-4563-9932-348d9bf49288",
-          "scenario_execution_id": "44b4acc2-4b57-4280-97d0-05b459eaddbb"
+          "qualification_run_id": "q01-sim009-75bf27c5-84b0-40ab-84d2-1e28f440a779",
+          "scenario_execution_id": "87e60acd-b109-4d63-9bf0-3b2505fece5a"
         },
         "identity": {
           "action_id_stable": true,
@@ -336,30 +336,30 @@
         "logical_side_effect_count": 1,
         "outcome_kind": "unknown",
         "reconciliation": {
-          "action_id": "6eb85042-057d-4508-809b-f6e91536bfc3",
+          "action_id": "e8a56d66-c6ec-4b0d-97cf-4751d803eb6a",
           "component_version": "sim004-navigation-backend-v2",
           "evidence_refs": [
             {
-              "sha256": "a8bdf369058ce5fac379075eb44f486b547e03dcd56cc6dcc38488e90cd74054",
-              "uri": "urn:factory-evidence:sim-004:6eb85042-057d-4508-809b-f6e91536bfc3"
+              "sha256": "2530eb4b0a09ca4da65a44b7c96f4e2c3e88df428d4bab2a6b87bd9927f56178",
+              "uri": "urn:factory-evidence:sim-004:e8a56d66-c6ec-4b0d-97cf-4751d803eb6a"
             }
           ],
           "message_type": "result",
-          "mission_id": "aaf7252c-f063-45b9-900c-e0cb368608f9",
-          "observed_at": "2026-09-28T14:03:26.630Z",
+          "mission_id": "3140e908-06fd-40c0-a94a-de40ea196aab",
+          "observed_at": "2026-09-28T14:29:58.813Z",
           "observed_status": "failed",
           "operation": "action_status.get",
-          "request_id": "e33c8c29-6f87-42e5-998c-d1ca99dce81f",
+          "request_id": "ff0a11c3-42bd-4193-90bc-7ad5dc9bc1fb",
           "result": "success",
           "schema_version": "1.0",
           "source_kind": "mock",
           "status": "succeeded",
-          "timestamp": "2026-09-28T14:03:26.630Z",
-          "trace_id": "0d1f8549-383f-4cde-be6e-d599c1e8aeeb"
+          "timestamp": "2026-09-28T14:29:58.813Z",
+          "trace_id": "65a17658-eea3-4f6e-a0df-6075ae2664e5"
         },
         "result": "pending",
         "retry_authorization": {
-          "action_id": "6eb85042-057d-4508-809b-f6e91536bfc3",
+          "action_id": "e8a56d66-c6ec-4b0d-97cf-4751d803eb6a",
           "error": {
             "category": "EXECUTION_FAILED",
             "code": "NAVIGATION_ABORTED",
@@ -367,37 +367,37 @@
             "retryable": true
           },
           "idempotency_key": "sim009-navigation",
-          "mission_id": "aaf7252c-f063-45b9-900c-e0cb368608f9",
-          "new_request_id": "7f7d97bc-1e2a-4a81-a913-62013bbf3ca4",
+          "mission_id": "3140e908-06fd-40c0-a94a-de40ea196aab",
+          "new_request_id": "c8e3fb47-6378-46e1-b629-ca9be1898bef",
           "next_attempt": 2,
           "previous_attempt": 1,
-          "previous_request_id": "219bf184-f1a8-48d7-b423-8ed21a46c918",
+          "previous_request_id": "2272acaa-372b-45a5-bf2e-38d40dc0263f",
           "reconciliation_completed": true,
           "record_type": "retry_authorization",
           "resolved_status": "failed",
           "retry_budget_remaining": 1
         },
         "retry_request": {
-          "action_id": "6eb85042-057d-4508-809b-f6e91536bfc3",
+          "action_id": "e8a56d66-c6ec-4b0d-97cf-4751d803eb6a",
           "attempt": 2,
           "component_version": "sim009-failure-suite-v1",
-          "deadline_at": "2026-09-28T14:03:56.630Z",
+          "deadline_at": "2026-09-28T14:30:28.813Z",
           "destination_id": "line-b-drop",
           "idempotency_key": "sim009-navigation",
           "message_type": "request",
-          "mission_id": "aaf7252c-f063-45b9-900c-e0cb368608f9",
+          "mission_id": "3140e908-06fd-40c0-a94a-de40ea196aab",
           "operation": "navigation.execute",
-          "request_id": "7f7d97bc-1e2a-4a81-a913-62013bbf3ca4",
+          "request_id": "c8e3fb47-6378-46e1-b629-ca9be1898bef",
           "retry_budget_remaining": 0,
           "robot_id": "simulation-proxy-mobile-base",
           "schema_version": "1.0",
           "speed_profile_id": "sim-safe-v1",
           "timeout_ms": 30000,
-          "timestamp": "2026-09-28T14:03:26.630Z",
-          "trace_id": "0d1f8549-383f-4cde-be6e-d599c1e8aeeb"
+          "timestamp": "2026-09-28T14:29:58.813Z",
+          "trace_id": "65a17658-eea3-4f6e-a0df-6075ae2664e5"
         },
         "retry_result": {
-          "action_id": "6eb85042-057d-4508-809b-f6e91536bfc3",
+          "action_id": "e8a56d66-c6ec-4b0d-97cf-4751d803eb6a",
           "arrival": {
             "destination_id": "line-b-drop",
             "verified": true
@@ -405,20 +405,20 @@
           "component_version": "sim004-navigation-backend-v2",
           "evidence_refs": [
             {
-              "sha256": "a8bdf369058ce5fac379075eb44f486b547e03dcd56cc6dcc38488e90cd74054",
-              "uri": "urn:factory-evidence:sim-004:6eb85042-057d-4508-809b-f6e91536bfc3"
+              "sha256": "2530eb4b0a09ca4da65a44b7c96f4e2c3e88df428d4bab2a6b87bd9927f56178",
+              "uri": "urn:factory-evidence:sim-004:e8a56d66-c6ec-4b0d-97cf-4751d803eb6a"
             }
           ],
           "message_type": "result",
-          "mission_id": "aaf7252c-f063-45b9-900c-e0cb368608f9",
+          "mission_id": "3140e908-06fd-40c0-a94a-de40ea196aab",
           "operation": "navigation.execute",
-          "request_id": "7f7d97bc-1e2a-4a81-a913-62013bbf3ca4",
+          "request_id": "c8e3fb47-6378-46e1-b629-ca9be1898bef",
           "result": "success",
           "schema_version": "1.0",
           "source_kind": "mock",
           "status": "succeeded",
-          "timestamp": "2026-09-28T14:03:27.941Z",
-          "trace_id": "0d1f8549-383f-4cde-be6e-d599c1e8aeeb"
+          "timestamp": "2026-09-28T14:30:00.125Z",
+          "trace_id": "65a17658-eea3-4f6e-a0df-6075ae2664e5"
         },
         "retry_suppressed": false,
         "status": "unknown"
@@ -428,10 +428,10 @@
         "bounded_execution": true,
         "cleanup_complete": true,
         "physics_measurement": {
-          "seconds": 39.204,
+          "seconds": 40.488,
           "source": "gz_stats"
         },
-        "simulation_time": 39.204,
+        "simulation_time": 40.488,
         "simulation_time_source": "gz_stats"
       },
       "world_model_provenance": {
@@ -468,10 +468,10 @@
         "run_local_configuration": "34c0900610d69e5f7500bcf0121490c984a62b20943e89dd3bc7d5c0c87b84a9"
       },
       "correlation_identity": {
-        "action_id": "7c31887b-02f4-4371-9f1d-f0b6fa7a8a0d",
-        "mission_id": "2f343c22-0be3-490a-bcda-82f7ed6c62f4",
-        "request_id": "2c75065a-3c72-4fab-8e41-e6ddef711cb0",
-        "trace_id": "f04d2e1c-8b64-4207-a37b-605f208914e4"
+        "action_id": "b4bf6fae-4a32-4408-a723-0e63d53c2dfb",
+        "mission_id": "0a0e0346-6be4-4987-9895-fed937fedfd9",
+        "request_id": "994ebf2c-37cf-46d5-a9fd-466965e4758c",
+        "trace_id": "47d6e02c-c519-4a9e-b2c3-97aa063ac929"
       },
       "predecessor_binding": {
         "accepted_commit": "67bde0e1f29c3f974bf3f0b29dff3f3aaa38e5be",
@@ -480,14 +480,14 @@
         "task_id": "TASK-SIM-009"
       },
       "profile_id": null,
-      "qualification_run_id": "q01-sim009-cea7d45b-081a-4563-9932-348d9bf49288",
+      "qualification_run_id": "q01-sim009-75bf27c5-84b0-40ab-84d2-1e28f440a779",
       "record_kind": "operation_run",
       "scenario_id": "SIM009-VLA-AMBIGUOUS",
       "semantic_outcome": {
         "decision": "FAIL_CLOSED",
         "execution_identity": {
-          "qualification_run_id": "q01-sim009-cea7d45b-081a-4563-9932-348d9bf49288",
-          "scenario_execution_id": "f9907156-b669-4363-a156-da2bfca0f612"
+          "qualification_run_id": "q01-sim009-75bf27c5-84b0-40ab-84d2-1e28f440a779",
+          "scenario_execution_id": "c962efde-d281-4312-bc6c-eef1e865caa2"
         },
         "outcome_kind": "uncertain",
         "result": "failure",
@@ -527,10 +527,10 @@
         "run_local_configuration": "34c0900610d69e5f7500bcf0121490c984a62b20943e89dd3bc7d5c0c87b84a9"
       },
       "correlation_identity": {
-        "action_id": "2e08bb94-c844-4033-8da5-34059a6d496b",
-        "mission_id": "17d5fdff-aabf-4dc4-b74e-ddd84f83a930",
-        "request_id": "7ccf2f86-ebeb-4a44-865d-0913f3eb8209",
-        "trace_id": "93cdb5b5-8110-40df-ba96-274911b151ef"
+        "action_id": "aaa345a2-d490-49c9-9e1c-5aa73a2c2ae2",
+        "mission_id": "871afe2f-dc0a-4848-8511-ce68d2f905f7",
+        "request_id": "6e9b4b22-0888-45fe-bbb4-6e10c630ed40",
+        "trace_id": "fbf2a649-0459-41d7-9832-0c46b2f92776"
       },
       "predecessor_binding": {
         "accepted_commit": "67bde0e1f29c3f974bf3f0b29dff3f3aaa38e5be",
@@ -539,14 +539,14 @@
         "task_id": "TASK-SIM-009"
       },
       "profile_id": null,
-      "qualification_run_id": "q01-sim009-cea7d45b-081a-4563-9932-348d9bf49288",
+      "qualification_run_id": "q01-sim009-75bf27c5-84b0-40ab-84d2-1e28f440a779",
       "record_kind": "operation_run",
       "scenario_id": "SIM009-VLA-CONTACT-LOSS",
       "semantic_outcome": {
         "decision": "FAIL_CLOSED",
         "execution_identity": {
-          "qualification_run_id": "q01-sim009-cea7d45b-081a-4563-9932-348d9bf49288",
-          "scenario_execution_id": "d5c639d5-4fb9-4ed3-b5e0-dd11884e7b67"
+          "qualification_run_id": "q01-sim009-75bf27c5-84b0-40ab-84d2-1e28f440a779",
+          "scenario_execution_id": "6b2ba9ea-0b0d-4800-936a-2545750b52fe"
         },
         "outcome_kind": "failure",
         "result": "failure",
@@ -587,10 +587,10 @@
         "run_local_configuration": "34c0900610d69e5f7500bcf0121490c984a62b20943e89dd3bc7d5c0c87b84a9"
       },
       "correlation_identity": {
-        "action_id": "88f1c230-a98d-488f-bdb7-220e07006149",
-        "mission_id": "d95460f1-e637-4575-9b83-fa24428db3b2",
-        "request_id": "e92527eb-8d55-4d0e-acca-0329adb9240e",
-        "trace_id": "2b96f038-b7ee-4beb-9c48-8107614d2cff"
+        "action_id": "2292a58a-41e4-4a89-bf36-40a490d5a784",
+        "mission_id": "c3be59df-80c3-49eb-b419-2d0b62d15352",
+        "request_id": "0620b132-5366-457c-8f8d-9252d18daa42",
+        "trace_id": "e7fb61df-0606-4c65-bc4f-a46af60ffaee"
       },
       "predecessor_binding": {
         "accepted_commit": "67bde0e1f29c3f974bf3f0b29dff3f3aaa38e5be",
@@ -599,14 +599,14 @@
         "task_id": "TASK-SIM-009"
       },
       "profile_id": null,
-      "qualification_run_id": "q01-sim009-cea7d45b-081a-4563-9932-348d9bf49288",
+      "qualification_run_id": "q01-sim009-75bf27c5-84b0-40ab-84d2-1e28f440a779",
       "record_kind": "operation_run",
       "scenario_id": "SIM009-VLA-GRASP-MISS",
       "semantic_outcome": {
         "decision": "FAIL_CLOSED",
         "execution_identity": {
-          "qualification_run_id": "q01-sim009-cea7d45b-081a-4563-9932-348d9bf49288",
-          "scenario_execution_id": "1ac7d2d4-7e6f-4263-ac7d-7ddd98fc5a85"
+          "qualification_run_id": "q01-sim009-75bf27c5-84b0-40ab-84d2-1e28f440a779",
+          "scenario_execution_id": "89b2ff09-975b-4077-8d14-7242279dac12"
         },
         "outcome_kind": "failure",
         "result": "failure",
@@ -657,10 +657,10 @@
         "run_local_configuration": "34c0900610d69e5f7500bcf0121490c984a62b20943e89dd3bc7d5c0c87b84a9"
       },
       "correlation_identity": {
-        "action_id": "876cbdb2-05ad-4386-b3a6-d9461949d85d",
-        "mission_id": "a2e17199-c27a-4163-91e0-7941fc5eaff6",
-        "request_id": "71696272-a739-4fb1-bdcf-525573254716",
-        "trace_id": "4db6fda1-0b21-434a-b214-680c8416ca2f"
+        "action_id": "ac165ad8-8dbc-4915-82c8-4190bd4e5823",
+        "mission_id": "10f5b0bc-6677-4278-95ab-b64f0f9208fc",
+        "request_id": "123e3ab2-cf01-4c53-8c53-22f41456430a",
+        "trace_id": "a5cce503-e7b6-4209-a0a2-b1cb738f8a92"
       },
       "predecessor_binding": {
         "accepted_commit": "67bde0e1f29c3f974bf3f0b29dff3f3aaa38e5be",
@@ -669,37 +669,37 @@
         "task_id": "TASK-SIM-009"
       },
       "profile_id": null,
-      "qualification_run_id": "q01-sim009-cea7d45b-081a-4563-9932-348d9bf49288",
+      "qualification_run_id": "q01-sim009-75bf27c5-84b0-40ab-84d2-1e28f440a779",
       "record_kind": "operation_run",
       "scenario_id": "SIM009-VLA-TIMEOUT",
       "semantic_outcome": {
         "decision": "RECONCILE",
         "execution_identity": {
-          "qualification_run_id": "q01-sim009-cea7d45b-081a-4563-9932-348d9bf49288",
-          "scenario_execution_id": "6cad6df8-d944-45e9-b3a3-7f138112b944"
+          "qualification_run_id": "q01-sim009-75bf27c5-84b0-40ab-84d2-1e28f440a779",
+          "scenario_execution_id": "da8efe66-50dd-4b63-a115-d55982b8eee0"
         },
         "outcome_kind": "unknown",
         "reconciliation": {
-          "action_id": "876cbdb2-05ad-4386-b3a6-d9461949d85d",
+          "action_id": "ac165ad8-8dbc-4915-82c8-4190bd4e5823",
           "component_version": "sim005-mujoco-vla-backend-v1",
           "evidence_refs": [
             {
-              "sha256": "5969938ed9e417d4b016d10ece4c5ccecdc5b3674c8c3c979802a0a45df86035",
-              "uri": "urn:factory-evidence:sim-005:a2e17199-c27a-4163-91e0-7941fc5eaff6:876cbdb2-05ad-4386-b3a6-d9461949d85d"
+              "sha256": "ce318761bb98b7a7d512e807ea5f469bc97234887883d22a2e7b02b72849d3f7",
+              "uri": "urn:factory-evidence:sim-005:10f5b0bc-6677-4278-95ab-b64f0f9208fc:ac165ad8-8dbc-4915-82c8-4190bd4e5823"
             }
           ],
           "message_type": "result",
-          "mission_id": "a2e17199-c27a-4163-91e0-7941fc5eaff6",
-          "observed_at": "2026-09-28T14:03:36.967Z",
+          "mission_id": "10f5b0bc-6677-4278-95ab-b64f0f9208fc",
+          "observed_at": "2026-09-28T14:30:09.298Z",
           "observed_status": "unknown",
           "operation": "action_status.get",
-          "request_id": "fd26aa30-54ab-4878-961c-7d7a9f411306",
+          "request_id": "64abdab5-5bc8-4e4d-8b8c-f863d7e6bef1",
           "result": "success",
           "schema_version": "1.0",
           "source_kind": "mock",
           "status": "succeeded",
-          "timestamp": "2026-09-28T14:03:36.973Z",
-          "trace_id": "4db6fda1-0b21-434a-b214-680c8416ca2f"
+          "timestamp": "2026-09-28T14:30:09.305Z",
+          "trace_id": "a5cce503-e7b6-4209-a0a2-b1cb738f8a92"
         },
         "result": "pending",
         "status": "unknown"
@@ -738,10 +738,10 @@
         "run_local_configuration": "34c0900610d69e5f7500bcf0121490c984a62b20943e89dd3bc7d5c0c87b84a9"
       },
       "correlation_identity": {
-        "action_id": "eab81deb-1f58-4905-8ada-3f010e633769",
-        "mission_id": "999cda65-4064-44c0-8388-9356413ce540",
-        "request_id": "f327e78f-3d47-47d3-9dcf-b37f38fc9c30",
-        "trace_id": "00856976-c920-46fa-a651-7c7581dc638e"
+        "action_id": "272be7ee-6998-4865-ac21-1e2799975701",
+        "mission_id": "ef3265d5-6aad-45e0-9a5e-1b1d0688936d",
+        "request_id": "89da5b90-429f-4e0c-bfe5-b941c409204c",
+        "trace_id": "10303398-71e7-4f45-a439-6de6931c31ff"
       },
       "predecessor_binding": {
         "accepted_commit": "67bde0e1f29c3f974bf3f0b29dff3f3aaa38e5be",
@@ -750,37 +750,37 @@
         "task_id": "TASK-SIM-009"
       },
       "profile_id": null,
-      "qualification_run_id": "q01-sim009-cea7d45b-081a-4563-9932-348d9bf49288",
+      "qualification_run_id": "q01-sim009-75bf27c5-84b0-40ab-84d2-1e28f440a779",
       "record_kind": "operation_run",
       "scenario_id": "SIM009-VLA-UNKNOWN",
       "semantic_outcome": {
         "decision": "RECONCILE",
         "execution_identity": {
-          "qualification_run_id": "q01-sim009-cea7d45b-081a-4563-9932-348d9bf49288",
-          "scenario_execution_id": "aa32c41b-30c2-4c65-a193-6a9bb36df9bc"
+          "qualification_run_id": "q01-sim009-75bf27c5-84b0-40ab-84d2-1e28f440a779",
+          "scenario_execution_id": "8c21779d-4884-4df2-a757-030378df2030"
         },
         "outcome_kind": "unknown",
         "reconciliation": {
-          "action_id": "eab81deb-1f58-4905-8ada-3f010e633769",
+          "action_id": "272be7ee-6998-4865-ac21-1e2799975701",
           "component_version": "sim005-mujoco-vla-backend-v1",
           "evidence_refs": [
             {
-              "sha256": "084b2adc635cef2948b4051ca09ba7c2ce29e1e34fe46ec4a03e18733d14edc3",
-              "uri": "urn:factory-evidence:sim-005:999cda65-4064-44c0-8388-9356413ce540:eab81deb-1f58-4905-8ada-3f010e633769"
+              "sha256": "4735da4d86a6e1381331b51df7f0502c94e300380b1b48b18d825e306cf0428c",
+              "uri": "urn:factory-evidence:sim-005:ef3265d5-6aad-45e0-9a5e-1b1d0688936d:272be7ee-6998-4865-ac21-1e2799975701"
             }
           ],
           "message_type": "result",
-          "mission_id": "999cda65-4064-44c0-8388-9356413ce540",
-          "observed_at": "2026-09-28T14:03:36.991Z",
+          "mission_id": "ef3265d5-6aad-45e0-9a5e-1b1d0688936d",
+          "observed_at": "2026-09-28T14:30:09.323Z",
           "observed_status": "succeeded",
           "operation": "action_status.get",
-          "request_id": "947ce88d-1214-422f-997a-f742012bab66",
+          "request_id": "e8eeb466-b054-4087-9838-2524d8816868",
           "result": "success",
           "schema_version": "1.0",
           "source_kind": "mock",
           "status": "succeeded",
-          "timestamp": "2026-09-28T14:03:36.996Z",
-          "trace_id": "00856976-c920-46fa-a651-7c7581dc638e"
+          "timestamp": "2026-09-28T14:30:09.329Z",
+          "trace_id": "10303398-71e7-4f45-a439-6de6931c31ff"
         },
         "result": "pending",
         "status": "unknown"
@@ -830,10 +830,10 @@
         "run_local_configuration": "34c0900610d69e5f7500bcf0121490c984a62b20943e89dd3bc7d5c0c87b84a9"
       },
       "correlation_identity": {
-        "action_id": "b874ff8c-d2ec-4f98-bb8d-ea9fd5842cee",
-        "mission_id": "fc586fef-a4d5-4f48-a239-b159bcad1339",
-        "request_id": "790eee54-04d8-403e-9d70-fc61480085d5",
-        "trace_id": "a523f808-aea1-49d7-94ff-61fd9c000775"
+        "action_id": "baa15dfc-6b87-4589-bd52-52e8f9575ecb",
+        "mission_id": "ffb6e677-84ae-495d-b312-783fc1aaa52f",
+        "request_id": "7133c788-11f8-4510-bb1e-f37a1e1db5ec",
+        "trace_id": "d862a3bd-c3f5-4984-8ef0-18fabcf16ad6"
       },
       "predecessor_binding": {
         "accepted_commit": "67bde0e1f29c3f974bf3f0b29dff3f3aaa38e5be",
@@ -842,14 +842,14 @@
         "task_id": "TASK-SIM-009"
       },
       "profile_id": null,
-      "qualification_run_id": "q01-sim009-cea7d45b-081a-4563-9932-348d9bf49288",
+      "qualification_run_id": "q01-sim009-75bf27c5-84b0-40ab-84d2-1e28f440a779",
       "record_kind": "operation_run",
       "scenario_id": "SIM009-VLA-WORKSPACE-LIMIT",
       "semantic_outcome": {
         "decision": "FAIL_CLOSED",
         "execution_identity": {
-          "qualification_run_id": "q01-sim009-cea7d45b-081a-4563-9932-348d9bf49288",
-          "scenario_execution_id": "2086e31b-b7dc-431e-9578-41536032f136"
+          "qualification_run_id": "q01-sim009-75bf27c5-84b0-40ab-84d2-1e28f440a779",
+          "scenario_execution_id": "c563ad34-44f9-479c-8e58-9e53554ed30d"
         },
         "outcome_kind": "failure",
         "result": "failure",
@@ -872,7 +872,7 @@
   ],
   "schema_version": "1.0",
   "simulation_only": true,
-  "source_git_sha": "c3027fb708186d6ba2fa96444e8aae553687939d",
+  "source_git_sha": "d3952bdf07d5d7b2bbe80cf55bcdd5bfbc24a9e1",
   "task_id": "TASK-SIM-Q01",
   "task_specific_result": "SIM_PROVENANCE_QUALIFICATION_READY",
   "validation": {
