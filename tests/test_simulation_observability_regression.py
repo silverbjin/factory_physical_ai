@@ -7,6 +7,8 @@ from pathlib import Path
 import subprocess
 import sys
 
+import pytest
+
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
@@ -16,6 +18,8 @@ from simulation_runtime.observability_regression import (
     extract_bound_runs,
     failure_signatures,
     resolve_accepted_evidence,
+    resolve_q01_qualification,
+    validate_q01_chain,
 )
 
 
@@ -209,12 +213,13 @@ def test_sim007_profile_mapping_is_per_profile_entry() -> None:
     ]
 
 
-def test_complete_bound_sources_produce_ready_evidence(tmp_path: Path) -> None:
+def test_complete_historical_sources_without_pinned_q01_stay_blocked(tmp_path: Path) -> None:
     _accepted_fixture(tmp_path)
     result = build_regression_evidence(tmp_path)
-    assert result["task_specific_result"] == "SIM_OBSERVABILITY_REGRESSION_READY"
+    assert result["task_specific_result"] == "SIM_OBSERVABILITY_REGRESSION_BLOCKED"
+    assert result["q01_qualification_binding"]["status"] == "BLOCKED"  # type: ignore[index]
     assert result["deterministic_replay"]["status"] == "PASS"  # type: ignore[index]
-    assert result["physics_semantic_regression"]["status"] == "PASS"  # type: ignore[index]
+    assert result["physics_semantic_regression"]["status"] == "BLOCKED"  # type: ignore[index]
     assert result["normal_failure_suite_coverage"]["status"] == "PASS"  # type: ignore[index]
 
 
@@ -225,7 +230,8 @@ def test_mutated_worktree_evidence_is_ignored_in_favor_of_accepted_blob(tmp_path
     del payload["trace_id"]
     path.write_text(json.dumps(payload))
     result = build_regression_evidence(tmp_path)
-    assert result["task_specific_result"] == "SIM_OBSERVABILITY_REGRESSION_READY"
+    assert result["task_specific_result"] == "SIM_OBSERVABILITY_REGRESSION_BLOCKED"
+    assert result["q01_qualification_binding"]["status"] == "BLOCKED"  # type: ignore[index]
 
 
 def test_provenance_replay_and_semantic_failures_are_reported(tmp_path: Path) -> None:
@@ -429,7 +435,7 @@ def test_sim009_backend_qualification_requires_exact_binding_and_component_versi
     assert mismatched_run["backend_qualification"] is None
 
 
-def test_real_validation_removes_false_blockers_but_preserves_true_gaps() -> None:
+def test_q01_binding_replaces_only_downstream_gate_blockers_not_history() -> None:
     result = build_regression_evidence(ROOT)
     sim004 = _row(result, "SIM-004")["run_validation"]["failures"]  # type: ignore[index]
     sim005 = _row(result, "SIM-005")["run_validation"]["failures"]  # type: ignore[index]
@@ -455,4 +461,79 @@ def test_real_validation_removes_false_blockers_but_preserves_true_gaps() -> Non
         source["scenario_id"] for source in sim009_row["run_sources"]  # type: ignore[index]
     }
     assert result["normal_failure_suite_coverage"]["status"] == "PASS"  # type: ignore[index]
-    assert result["task_specific_result"] == "SIM_OBSERVABILITY_REGRESSION_BLOCKED"
+    assert result["task_specific_result"] == "SIM_OBSERVABILITY_REGRESSION_READY"
+
+
+def _q01_chain() -> tuple[dict[str, object], dict[str, object]]:
+    acceptance = json.loads(
+        subprocess.run(
+            ["git", "show", "a1f1539c27f61fb2ce52aed33ceaf1bfe343912c:results/reviews/SIM-Q01-MIN_acceptance.json"],
+            cwd=ROOT, text=True, capture_output=True, check=True,
+        ).stdout
+    )
+    evidence = json.loads(
+        subprocess.run(
+            ["git", "show", "b55bc4fc2435e83c3761457b92d9e14892e39435:results/simulation/SIM-Q01_provenance_qualification.json"],
+            cwd=ROOT, text=True, capture_output=True, check=True,
+        ).stdout
+    )
+    return acceptance, evidence
+
+
+def test_q01_pinned_chain_and_exact_subjects_pass() -> None:
+    resolved = resolve_q01_qualification(ROOT)
+    subjects = resolved["qualification_subjects"]
+    assert resolved["acceptance_task_id"] == "TASK-SIM-Q01-MIN"
+    assert resolved["evidence_task_id"] == "TASK-SIM-Q01"
+    assert len(subjects) == 11
+    assert {item["subject_id"] for item in subjects} == {
+        "q01-sim008-normal-system-authority", "q01-sim009-SIM009-NAV-BLOCKED",
+        "q01-sim009-SIM009-NAV-ABORTED", "q01-sim009-SIM009-NAV-TIMEOUT-RETRY",
+        "q01-sim009-SIM009-NAV-TF-UNAVAILABLE", "q01-sim009-SIM009-VLA-GRASP-MISS",
+        "q01-sim009-SIM009-VLA-CONTACT-LOSS", "q01-sim009-SIM009-VLA-WORKSPACE-LIMIT",
+        "q01-sim009-SIM009-VLA-TIMEOUT", "q01-sim009-SIM009-VLA-AMBIGUOUS",
+        "q01-sim009-SIM009-VLA-UNKNOWN",
+    }
+    assert all(item["replay_applicable"] is False for item in subjects)
+
+
+@pytest.mark.parametrize(
+    ("target", "value"),
+    [
+        ("status", "REJECT"), ("workflow_complete", False),
+        ("accepted_commit", "0" * 40),
+    ],
+)
+def test_q01_acceptance_contract_fails_closed(target: str, value: object) -> None:
+    acceptance, evidence = _q01_chain()
+    acceptance[target] = value
+    with pytest.raises(ValueError):
+        validate_q01_chain(ROOT, acceptance, evidence)
+
+
+@pytest.mark.parametrize(
+    ("path", "value"),
+    [
+        (("task_id",), "TASK-SIM-Q01-MIN"),
+        (("task_specific_result",), "SIM_WRONG"),
+        (("qualification_subjects", 0, "claim_scope"), "historical_oracle"),
+        (("qualification_subjects", 0, "predecessor_binding", "evidence_sha256"), "0" * 64),
+        (("qualification_subjects", 0, "applicability", "physics_measurement", "state"), "UNKNOWN"),
+    ],
+)
+def test_q01_evidence_contract_fails_closed(path: tuple[object, ...], value: object) -> None:
+    acceptance, evidence = _q01_chain()
+    target: object = evidence
+    for key in path[:-1]:
+        target = target[key]  # type: ignore[index]
+    target[path[-1]] = value  # type: ignore[index]
+    with pytest.raises(ValueError):
+        validate_q01_chain(ROOT, acceptance, evidence)
+
+
+def test_q01_rejects_duplicate_and_extra_subjects() -> None:
+    acceptance, evidence = _q01_chain()
+    duplicate = deepcopy(evidence["qualification_subjects"][0])  # type: ignore[index]
+    evidence["qualification_subjects"].append(duplicate)  # type: ignore[index]
+    with pytest.raises(ValueError):
+        validate_q01_chain(ROOT, acceptance, evidence)

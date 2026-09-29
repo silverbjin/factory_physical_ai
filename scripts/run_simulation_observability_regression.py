@@ -27,58 +27,64 @@ def _run_regression(cwd: Path) -> subprocess.CompletedProcess[str]:
     return subprocess.run(COMMAND, cwd=cwd, text=True, capture_output=True, check=False, env=os.environ | {"PYTHONDONTWRITEBYTECODE": "1"})
 
 
-def _baseline_checkout(root: Path) -> Path:
-    temporary = Path(tempfile.mkdtemp(prefix="sim010-baseline-wt-"))
+def _detached_checkout(root: Path, commit: str, prefix: str) -> Path:
+    temporary = Path(tempfile.mkdtemp(prefix=prefix))
     temporary.rmdir()
     checkout = subprocess.run(
-        ["git", "worktree", "add", "--detach", str(temporary), BASELINE_COMMIT],
+        ["git", "worktree", "add", "--detach", str(temporary), commit],
         cwd=root,
         text=True,
         capture_output=True,
         check=False,
     )
     if checkout.returncode:
-        raise RuntimeError("BASELINE_WORKTREE_CREATE_FAILED")
+        raise RuntimeError("REGRESSION_WORKTREE_CREATE_FAILED")
     return temporary
 
 
-def _remove_baseline_checkout(root: Path, baseline: Path) -> None:
+def _remove_checkout(root: Path, checkout_path: Path) -> None:
     removal = subprocess.run(
-        ["git", "worktree", "remove", "--force", str(baseline)],
+        ["git", "worktree", "remove", "--force", str(checkout_path)],
         cwd=root,
         text=True,
         capture_output=True,
         check=False,
     )
     if removal.returncode:
-        raise RuntimeError("BASELINE_WORKTREE_CLEANUP_FAILED")
+        raise RuntimeError("REGRESSION_WORKTREE_CLEANUP_FAILED")
 
 
 def main() -> int:
     evidence = build_regression_evidence(ROOT)
-    validation = _run_regression(ROOT)
-    current_failures = failure_signatures(validation.stdout)
-    baseline_error = None
+    candidate_commit = subprocess.run(["git", "rev-parse", "HEAD"], cwd=ROOT, text=True, capture_output=True, check=False).stdout.strip()
+    comparison_error = None
+    current = baseline = None
+    validation = baseline_result = None
+    current_failures: dict[str, str] = {}
     baseline_failures: dict[str, str] = {}
-    baseline_result = None
-    baseline = None
     try:
-        baseline = _baseline_checkout(ROOT)
+        current = _detached_checkout(ROOT, candidate_commit, "sim010-current-wt-")
+        baseline = _detached_checkout(ROOT, BASELINE_COMMIT, "sim010-baseline-wt-")
+        validation = _run_regression(current)
+        current_failures = failure_signatures(validation.stdout)
         baseline_result = _run_regression(baseline)
         baseline_failures = failure_signatures(baseline_result.stdout)
     except (OSError, RuntimeError) as exc:
-        baseline_error = str(exc)
+        comparison_error = str(exc)
     finally:
-        if baseline is not None:
+        for checkout_path in (baseline, current):
+            if checkout_path is None:
+                continue
             try:
-                _remove_baseline_checkout(ROOT, baseline)
+                _remove_checkout(ROOT, checkout_path)
             except RuntimeError as exc:
-                baseline_error = str(exc)
-    classification = "POSSIBLY_TASK_RELATED" if baseline_error else classify_regression_failures(current_failures, baseline_failures)
+                comparison_error = str(exc)
+    classification = "POSSIBLY_TASK_RELATED" if comparison_error else classify_regression_failures(current_failures, baseline_failures)
     evidence["full_repository_regression"] = {
         "command": "PYTHONDONTWRITEBYTECODE=1 python3 -m pytest -q -p no:cacheprovider",
-        "exit_code": validation.returncode,
-        "result": "PASS" if validation.returncode == 0 else "FAIL",
+        "candidate_commit": candidate_commit,
+        "exit_code": validation.returncode if validation is not None else None,
+        "result": "PASS" if validation is not None and validation.returncode == 0 else "FAIL",
         "baseline_commit": BASELINE_COMMIT,
         "python_executable": shutil.which("python3"),
         "virtual_env": os.environ.get("VIRTUAL_ENV"),
@@ -89,16 +95,16 @@ def main() -> int:
     }
     if baseline_result is not None:
         evidence["full_repository_regression"]["baseline_exit_code"] = baseline_result.returncode
-    if baseline_error:
-        evidence["full_repository_regression"]["baseline_error"] = baseline_error
-    if validation.returncode != 0:
+    if comparison_error:
+        evidence["full_repository_regression"]["comparison_error"] = comparison_error
+    if validation is None or validation.returncode != 0:
         if classification == "PROVEN_PREEXISTING":
             evidence["full_repository_regression"]["blocking_reason"] = "PROVEN_PREEXISTING_FULL_REGRESSION_FAILURES"
         else:
             evidence["task_specific_result"] = "SIM_OBSERVABILITY_REGRESSION_BLOCKED"
             evidence["full_repository_regression"]["blocking_reason"] = "FULL_REGRESSION_FAILED"
     evidence["generated_at"] = datetime.now(timezone.utc).isoformat(timespec="seconds").replace("+00:00", "Z")
-    evidence["source_git_sha"] = subprocess.run(["git", "rev-parse", "HEAD"], cwd=ROOT, text=True, capture_output=True, check=False).stdout.strip()
+    evidence["source_git_sha"] = candidate_commit
     path = ROOT / "results/simulation/SIM-010_observability_regression.json"
     path.write_text(json.dumps(evidence, indent=2, sort_keys=True) + "\n")
     print(json.dumps(evidence, sort_keys=True))
