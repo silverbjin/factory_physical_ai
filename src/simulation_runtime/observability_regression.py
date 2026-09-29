@@ -72,6 +72,44 @@ Q01_SUPPORT_CLAIMS = {
     "TASK-SIM-007": {"profile_identity", "profile_source_configuration_authority", "accepted_aggregate_outcome"},
 }
 
+HISTORICAL_DIAGNOSTIC_FAILURES = {
+    ("SIM-004", "success"): frozenset({"MISSING_SIMULATION_TIME"}),
+    ("SIM-004", "blocked"): frozenset({"MISSING_SIMULATION_TIME"}),
+    ("SIM-004", "timeout_reconciliation"): frozenset({"MISSING_SIMULATION_TIME"}),
+    **{("SIM-005", scenario): frozenset({"MISSING_TRACE_ID", "INCOMPLETE_CORRELATION_IDENTITY"}) for scenario in (
+        "mujoco-place-nominal", "mujoco-grasp-miss", "mujoco-contact-loss",
+        "mujoco-workspace-limit", "mujoco-invalid-observation", "mujoco-timeout", "mujoco-unknown",
+    )},
+    **{("SIM-007", scenario): frozenset({"MISSING_SOURCE_CONFIG_HASHES"}) for scenario in (
+        "deterministic", "navigation_physics", "manipulation_physics", "system",
+    )},
+}
+QUALIFIED_RUN_FAILURES = {
+    ("SIM-008", "SIM_NORMAL_BRAKE_ECU_LINE_B"): (
+        "q01-sim008-normal-system-authority",
+        frozenset({"MISSING_BRIDGE_SHA256", "MISSING_LAUNCH_SHA256"}),
+    ),
+    **{("SIM-009", scenario): (subject_id, frozenset({
+        "MISSING_SOURCE_HASH:run_config_sha256", "MISSING_WORLD_MODEL_SHA256", "MISSING_SIMULATION_TIME",
+    })) for subject_id, scenario in (
+        ("q01-sim009-SIM009-NAV-BLOCKED", "SIM009-NAV-BLOCKED"),
+        ("q01-sim009-SIM009-NAV-ABORTED", "SIM009-NAV-ABORTED"),
+        ("q01-sim009-SIM009-NAV-TIMEOUT-RETRY", "SIM009-NAV-TIMEOUT-RETRY"),
+        ("q01-sim009-SIM009-NAV-TF-UNAVAILABLE", "SIM009-NAV-TF-UNAVAILABLE"),
+        ("q01-sim009-SIM009-VLA-GRASP-MISS", "SIM009-VLA-GRASP-MISS"),
+        ("q01-sim009-SIM009-VLA-CONTACT-LOSS", "SIM009-VLA-CONTACT-LOSS"),
+        ("q01-sim009-SIM009-VLA-WORKSPACE-LIMIT", "SIM009-VLA-WORKSPACE-LIMIT"),
+        ("q01-sim009-SIM009-VLA-TIMEOUT", "SIM009-VLA-TIMEOUT"),
+        ("q01-sim009-SIM009-VLA-AMBIGUOUS", "SIM009-VLA-AMBIGUOUS"),
+        ("q01-sim009-SIM009-VLA-UNKNOWN", "SIM009-VLA-UNKNOWN"),
+    )},
+}
+REQUIRED_RUN_FAILURE_CLASSES = (
+    "HISTORICAL_DIAGNOSTIC_ONLY_NON_GATING",
+    "EXPLICITLY_QUALIFIED_BY_Q01",
+    "STILL_BLOCKING",
+)
+
 
 def sha256(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
@@ -341,6 +379,83 @@ def resolve_q01_qualification(root: Path) -> dict[str, Any]:
             "replay_applicable": False,
         })
     return {"acceptance_task_id": Q01_BINDING["acceptance_task_id"], "evidence_task_id": Q01_BINDING["evidence_task_id"], "evidence_sha256": Q01_BINDING["evidence_sha256"], "qualification_subjects": normalized}
+
+
+def _valid_qualified_subjects(q01: Mapping[str, Any] | None) -> dict[tuple[str, str], str]:
+    """Return only exact, separately-namespaced Q01 subject mappings."""
+    if not isinstance(q01, Mapping):
+        return {}
+    linked_subjects = q01.get("qualification_subjects")
+    if not isinstance(linked_subjects, list):
+        return {}
+    mappings: dict[tuple[str, str], str] = {}
+    for linked in linked_subjects:
+        if not isinstance(linked, Mapping):
+            continue
+        subject_id = linked.get("subject_id")
+        expected = Q01_SUBJECTS.get(subject_id)
+        historical = linked.get("historical_oracle")
+        observation = linked.get("qualification_observation")
+        if not isinstance(expected, tuple) or not isinstance(historical, Mapping) or not isinstance(observation, Mapping):
+            continue
+        predecessor_task, scenario_id, _, _ = expected
+        envelope = historical.get("envelope")
+        if (
+            historical.get("task_id") != f"TASK-{predecessor_task}"
+            or not isinstance(envelope, Mapping)
+            or envelope.get("scenario_id") != scenario_id
+            or observation.get("subject_id") != subject_id
+            or observation.get("scenario_id") != scenario_id
+            or observation.get("claim_scope") != "run_local"
+        ):
+            continue
+        mappings[(predecessor_task, scenario_id)] = subject_id
+    return mappings
+
+
+def classify_required_run_failures(
+    index: list[Mapping[str, Any]], q01: Mapping[str, Any] | None,
+) -> dict[str, Any]:
+    """Classify each retained historical failure without backfilling its source row."""
+    qualified_subjects = _valid_qualified_subjects(q01)
+    entries: list[dict[str, Any]] = []
+    failure_pattern = re.compile(r"^RUN\[(?P<index>\d+)\]:(?P<failure>.+)$")
+    for row in index:
+        short_id = row.get("short_task_id")
+        if not isinstance(short_id, str) or short_id not in RUN_EXTRACTOR_TASKS:
+            continue
+        sources = row.get("run_sources")
+        validation = row.get("run_validation")
+        failures = validation.get("failures") if isinstance(validation, Mapping) else []
+        if not isinstance(sources, list) or not isinstance(failures, list):
+            continue
+        for raw_failure in failures:
+            if not isinstance(raw_failure, str):
+                continue
+            match = failure_pattern.match(raw_failure)
+            position = int(match.group("index")) if match else None
+            failure = match.group("failure") if match else raw_failure
+            source = sources[position] if position is not None and position < len(sources) and isinstance(sources[position], Mapping) else {}
+            scenario_id = source.get("scenario_id") if isinstance(source.get("scenario_id"), str) else None
+            historical_allowed = HISTORICAL_DIAGNOSTIC_FAILURES.get((short_id, scenario_id))
+            qualified = QUALIFIED_RUN_FAILURES.get((short_id, scenario_id))
+            subject_id = qualified_subjects.get((short_id, scenario_id))
+            if historical_allowed is not None and failure in historical_allowed:
+                classification = "HISTORICAL_DIAGNOSTIC_ONLY_NON_GATING"
+            elif qualified is not None and subject_id == qualified[0] and failure in qualified[1]:
+                classification = "EXPLICITLY_QUALIFIED_BY_Q01"
+            else:
+                classification = "STILL_BLOCKING"
+            entries.append({
+                "source_task": short_id,
+                "run_index": position,
+                "scenario_id": scenario_id,
+                "failure": failure,
+                "classification": classification,
+                "qualification_subject_id": subject_id,
+            })
+    counts = {kind: sum(entry["classification"] == kind for entry in entries) for kind in REQUIRED_RUN_FAILURE_CLASSES}
+    return {"entries": entries, "counts": counts, "status": "PASS" if counts["STILL_BLOCKING"] == 0 else "BLOCKED"}
 
 
 def _identity(raw: Mapping[str, Any]) -> dict[str, Any]:
@@ -1173,20 +1288,18 @@ def build_regression_evidence(root: Path) -> dict[str, Any]:
         }
         for missing in sorted(declared - extracted):
             coverage_failures.append(f"MISSING_MANDATORY_SCENARIO:{coverage_row['short_task_id']}:{missing}")
+    required_failure_classification = classify_required_run_failures(index, q01)
     required_run_failures = [
-        row["short_task_id"]
-        for row in index
-        if row["short_task_id"] in RUN_EXTRACTOR_TASKS
-        and (
-            not has_extracted_runs(row)
-            or (isinstance(row.get("run_validation"), Mapping) and row["run_validation"].get("status") != "PASS")
-        )
+        entry for entry in required_failure_classification["entries"]
+        if entry["classification"] == "STILL_BLOCKING"
     ]
-    # Historical SIM-004/005/007 run-schema gaps remain visible diagnostics;
-    # accepted bindings plus Q01's separately scoped observations are the
-    # authorized authority for the downstream Q01 gate, not a backfill.
-    if q01 is not None:
-        required_run_failures = []
+    for row in index:
+        if row["short_task_id"] in RUN_EXTRACTOR_TASKS and not has_extracted_runs(row):
+            required_run_failures.append({
+                "source_task": row["short_task_id"],
+                "failure": "NO_EXTRACTABLE_RUNS",
+                "classification": "STILL_BLOCKING",
+            })
     ready = (
         all(row["status"] == "PASS" for row in index)
         and not required_run_failures
@@ -1194,4 +1307,4 @@ def build_regression_evidence(root: Path) -> dict[str, Any]:
         and q01 is not None
         and deterministic["status"] == physics["status"] == "PASS"
     )
-    return {"schema_version": "1.0", "task_id": "TASK-SIM-010", "simulation_only": True, "claim_scope": "Simulation evidence only; no physical or production performance claim.", "accepted_source_index": index, "q01_qualification_binding": q01 or {"status": "BLOCKED", "failures": q01_failures}, "deterministic_replay": deterministic, "physics_semantic_regression": physics, "normal_failure_suite_coverage": {"status": "PASS" if not coverage_failures else "BLOCKED", "failures": coverage_failures}, "task_specific_result": "SIM_OBSERVABILITY_REGRESSION_READY" if ready else "SIM_OBSERVABILITY_REGRESSION_BLOCKED"}
+    return {"schema_version": "1.0", "task_id": "TASK-SIM-010", "simulation_only": True, "claim_scope": "Simulation evidence only; no physical or production performance claim.", "accepted_source_index": index, "required_run_failure_classification": required_failure_classification, "q01_qualification_binding": q01 or {"status": "BLOCKED", "failures": q01_failures}, "deterministic_replay": deterministic, "physics_semantic_regression": physics, "normal_failure_suite_coverage": {"status": "PASS" if not coverage_failures else "BLOCKED", "failures": coverage_failures}, "task_specific_result": "SIM_OBSERVABILITY_REGRESSION_READY" if ready else "SIM_OBSERVABILITY_REGRESSION_BLOCKED"}
