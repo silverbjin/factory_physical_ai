@@ -21,3 +21,5 @@ Current status: REJECTED / FIX REQUIRED
 | 16 | Implementation | COMPLETE | `16_implementation.md` | `SIM010_G5_ENVIRONMENT_BINDING_DEFECT` | `S10-G0`–`S10-G5` PASS / generate canonical Evidence and run repeatability |
 | 17 | Implementation | COMPLETE | `17_implementation.md` | `SIM010_Q01_INTEGRATION_GAP` | `S10-G6`–`S10-G7` PASS / Independent Read-only Review |
 | 18 | Review | REJECT | `18_review.md` | `SIM010_G4_FAIL_OPEN` | resolve `SIM010-G8-001` through `SIM010-G8-003` before Acceptance |
+| 19 | Fix | READY FOR INDEPENDENT RE-REVIEW | `19_fix.md` | `SIM010_G4_FAIL_OPEN` | Independent Read-only Review |
+| 20 | Review | REJECT | `20_review.md` | `SIM010_EVIDENCE_FAIL_OPEN` | resolve `SIM010-RR-001` and `SIM010-RR-002` before Acceptance |

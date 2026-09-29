@@ -59,6 +59,18 @@ Q01_SUBJECTS = {
     "q01-sim009-SIM009-VLA-AMBIGUOUS": ("SIM-009", "SIM009-VLA-AMBIGUOUS", "mujoco", "sim005-mujoco-vla-backend-v1"),
     "q01-sim009-SIM009-VLA-UNKNOWN": ("SIM-009", "SIM009-VLA-UNKNOWN", "mujoco", "sim005-mujoco-vla-backend-v1"),
 }
+Q01_PREDECESSOR_ACCEPTANCES = {
+    "SIM-004": "ebf84580f141f9d8ea0962d008ef35a5d14b7dd6",
+    "SIM-005": "ebf84580f141f9d8ea0962d008ef35a5d14b7dd6",
+    "SIM-007": "8ecca674f2e5c39df175362f98d43f174e44923b",
+    "SIM-008": "162ffaa4e78b255630cd1204aa43fa2d7c229108",
+    "SIM-009": "2e85d275277b3c2bbc331b04f8b6c3a9c81fe8a3",
+}
+Q01_SUPPORT_CLAIMS = {
+    "TASK-SIM-004": {"component_version", "runtime_identity", "world_authority", "bridge_authority", "runner_authority"},
+    "TASK-SIM-005": {"mujoco_version", "model_scene_authority", "configuration_source_authority", "version_wide_seed_timestep_authority", "accepted_initial_state_authority"},
+    "TASK-SIM-007": {"profile_identity", "profile_source_configuration_authority", "accepted_aggregate_outcome"},
+}
 
 
 def sha256(path: Path) -> str:
@@ -158,6 +170,26 @@ def _q01_profile(value: Any) -> str | None:
     return {"gazebo": "gazebo", "gazebo_navigation": "gazebo", "mujoco": "mujoco"}.get(value)
 
 
+def _resolve_q01_predecessor(root: Path, short_id: str) -> dict[str, Any]:
+    """Resolve a Q01 predecessor through its pinned Acceptance tree object."""
+    acceptance_commit = Q01_PREDECESSOR_ACCEPTANCES[short_id]
+    acceptance_path = f"results/reviews/{short_id}_acceptance.json"
+    _git(root, "cat-file", "-e", f"{acceptance_commit}^{{commit}}")
+    try:
+        acceptance = json.loads(_git(root, "show", f"{acceptance_commit}:{acceptance_path}"))
+    except json.JSONDecodeError as exc:
+        _q01_fail("MALFORMED_PREDECESSOR_ACCEPTANCE")
+        raise exc  # pragma: no cover
+    if (not isinstance(acceptance, Mapping) or acceptance.get("task_id") != f"TASK-{short_id}"
+            or acceptance.get("status") != "ACCEPT"):
+        _q01_fail("INVALID_PREDECESSOR_ACCEPTANCE")
+    try:
+        return resolve_accepted_evidence(root, short_id, acceptance)
+    except (OSError, ValueError, json.JSONDecodeError):
+        _q01_fail("UNRESOLVABLE_PREDECESSOR")
+    raise AssertionError("unreachable")  # pragma: no cover
+
+
 def _validate_q01_applicability(subject: Mapping[str, Any]) -> None:
     applicability = subject.get("applicability")
     timing = subject.get("timing")
@@ -170,10 +202,13 @@ def _validate_q01_applicability(subject: Mapping[str, Any]) -> None:
         state = claim.get("state")
         if state == "REQUIRED":
             observation = timing.get("physics_measurement") if field == "physics_measurement" else timing.get("simulation_time")
-            if (isinstance(observation, Mapping) and isinstance(observation.get("seconds"), (int, float))) or isinstance(observation, (int, float)):
+            source = observation.get("source") if isinstance(observation, Mapping) else timing.get("simulation_time_source")
+            if ((isinstance(observation, Mapping) and isinstance(observation.get("seconds"), (int, float))) or isinstance(observation, (int, float))) and isinstance(source, str) and source:
                 continue
             _q01_fail("MISSING_REQUIRED_OBSERVATION")
         if state == "NOT_APPLICABLE":
+            if not isinstance(claim.get("justification"), str) or not claim["justification"]:
+                _q01_fail("MISSING_NOT_APPLICABLE_JUSTIFICATION")
             execution = claim.get("execution_state")
             if not isinstance(execution, Mapping):
                 execution = timing.get("execution_state")
@@ -204,6 +239,7 @@ def validate_q01_chain(root: Path, acceptance: Mapping[str, Any], evidence: Mapp
         _q01_fail("SUBJECT_SET_MISMATCH")
     runs: set[tuple[Any, Any]] = set()
     mappings: set[tuple[Any, Any]] = set()
+    scenario_executions: set[tuple[Any, Any]] = set()
     for subject in subjects:
         if not isinstance(subject, Mapping):
             _q01_fail("INVALID_SUBJECT")
@@ -222,14 +258,7 @@ def validate_q01_chain(root: Path, acceptance: Mapping[str, Any], evidence: Mapp
         binding = subject.get("predecessor_binding")
         if not isinstance(binding, Mapping) or binding.get("task_id") != f"TASK-{predecessor_task}":
             _q01_fail("INVALID_PREDECESSOR_BINDING")
-        try:
-            resolved = resolve_accepted_evidence(
-                root,
-                predecessor_task,
-                _load_json(root / "results/reviews" / f"{predecessor_task}_acceptance.json"),
-            )
-        except (OSError, ValueError, json.JSONDecodeError):
-            _q01_fail("UNRESOLVABLE_PREDECESSOR")
+        resolved = _resolve_q01_predecessor(root, predecessor_task)
         if any(resolved[key] != binding.get(key) for key in ("accepted_commit", "evidence_path", "evidence_sha256")):
             _q01_fail("PREDECESSOR_BINDING_MISMATCH")
         run_key = (subject.get("qualification_run_id"), subject.get("scenario_id"))
@@ -237,15 +266,32 @@ def validate_q01_chain(root: Path, acceptance: Mapping[str, Any], evidence: Mapp
         if not all(isinstance(value, str) and value for value in run_key) or run_key in runs or mapping_key in mappings:
             _q01_fail("DUPLICATE_AUTHORITY")
         runs.add(run_key); mappings.add(mapping_key)
+        semantic = subject.get("semantic_outcome")
+        execution_identity = semantic.get("execution_identity") if isinstance(semantic, Mapping) else None
+        if predecessor_task == "SIM-009":
+            scenario_execution_id = execution_identity.get("scenario_execution_id") if isinstance(execution_identity, Mapping) else None
+            if not isinstance(scenario_execution_id, str) or not scenario_execution_id:
+                _q01_fail("INVALID_SCENARIO_EXECUTION_IDENTITY")
+            execution_key = (subject.get("qualification_run_id"), scenario_execution_id)
+            if execution_key in scenario_executions:
+                _q01_fail("DUPLICATE_AUTHORITY")
+            scenario_executions.add(execution_key)
         _validate_q01_applicability(subject)
     immutable = evidence.get("immutable_authority_bindings")
     if not isinstance(immutable, Mapping):
         _q01_fail("INVALID_SUPPORT_AUTHORITY")
-    for task_id in ("TASK-SIM-004", "TASK-SIM-005", "TASK-SIM-007"):
+    for task_id, allowed_claims in Q01_SUPPORT_CLAIMS.items():
         item = immutable.get(task_id)
         if (not isinstance(item, Mapping) or item.get("claim_scope") != "immutable_accepted_authority"
-                or not isinstance(item.get("claims"), list) or not item["claims"]):
+                or not isinstance(item.get("claims"), list) or set(item["claims"]) != allowed_claims):
             _q01_fail("INVALID_SUPPORT_AUTHORITY")
+        binding = item.get("predecessor_binding")
+        short_id = task_id[5:]
+        if not isinstance(binding, Mapping):
+            _q01_fail("INVALID_SUPPORT_AUTHORITY")
+        resolved = _resolve_q01_predecessor(root, short_id)
+        if any(resolved[key] != binding.get(key) for key in ("accepted_commit", "evidence_path", "evidence_sha256")):
+            _q01_fail("SUPPORT_PREDECESSOR_BINDING_MISMATCH")
 
 
 def resolve_q01_qualification(root: Path) -> dict[str, Any]:
@@ -273,8 +319,7 @@ def resolve_q01_qualification(root: Path) -> dict[str, Any]:
     for subject in evidence["qualification_subjects"]:
         binding = subject["predecessor_binding"]
         short_id = str(binding["task_id"])[5:]
-        acceptance_path = root / "results/reviews" / f"{short_id}_acceptance.json"
-        predecessor = resolve_accepted_evidence(root, short_id, _load_json(acceptance_path))
+        predecessor = _resolve_q01_predecessor(root, short_id)
         if any(predecessor[key] != binding.get(key) for key in ("accepted_commit", "evidence_path", "evidence_sha256")):
             _q01_fail("PREDECESSOR_BINDING_MISMATCH")
         expected = Q01_SUBJECTS[subject["subject_id"]]
@@ -594,6 +639,17 @@ def _normalized_run(
     )
     row["record_kind"] = "operation_run"
     row["requires_operation_identity"] = True
+    row["semantic_outcome"] = {
+        key: value for key, value in {
+            "result": result.get("result"),
+            "status": result.get("status"),
+            "decision": scenario.get("expected_decision") or scenario.get("decision"),
+            "outcome_kind": scenario.get("outcome_kind"),
+            "lifecycle": scenario.get("expected_lifecycle"),
+            "state_invariants": scenario.get("state_invariants"),
+            "tolerances": scenario.get("measurements"),
+        }.items() if value not in (None, "", [], {})
+    }
     row["replay_applicable"] = short_id == "SIM-009" and scenario.get("backend") == "contract"
     row["physics_semantic_applicable"] = row.get("backend_profile") in {"gazebo", "mujoco", "mixed"}
     if row["replay_applicable"]:
@@ -833,6 +889,10 @@ def extract_bound_runs(
             "source_json_path": "/execution",
             "scenario_source_path": "/execution",
             "scenario_pass": final_result.get("verdict") == "pass",
+            "semantic_outcome": {
+                "result": mission.get("result"),
+                "status": mission.get("status"),
+            },
             "requires_failure_recovery": False,
             "requires_skill": True,
             "requires_verification": True,
@@ -1000,8 +1060,21 @@ def _q01_physics_rows(linked_rows: list[Mapping[str, Any]]) -> tuple[list[dict[s
             failures.append(f"Q01_ORACLE_PROFILE_MISMATCH:{linked.get('subject_id')}")
             continue
         actual = observation.get("semantic_outcome")
-        if not isinstance(actual, Mapping) or not isinstance(actual.get("result"), str) or not isinstance(actual.get("status"), str):
+        expected = oracle.get("envelope", {}).get("semantic_outcome") if isinstance(oracle.get("envelope"), Mapping) else None
+        if (not isinstance(actual, Mapping) or not isinstance(expected, Mapping)
+                or not isinstance(actual.get("result"), str) or not isinstance(actual.get("status"), str)):
             failures.append(f"Q01_INVALID_SEMANTIC_OUTCOME:{linked.get('subject_id')}")
+            continue
+        comparable = ("result", "status", "decision", "outcome_kind", "lifecycle", "state_invariants", "tolerances")
+        mismatches = [key for key in comparable if expected.get(key) not in (None, "", [], {}) and actual.get(key) != expected.get(key)]
+        if mismatches:
+            failures.append(f"Q01_SEMANTIC_MISMATCH:{linked.get('subject_id')}:{','.join(mismatches)}")
+            continue
+        if not all(
+            isinstance(value, Mapping) and value
+            for value in (observation.get("configuration_provenance"), observation.get("world_model_provenance"))
+        ):
+            failures.append(f"Q01_PROVENANCE_MISMATCH:{linked.get('subject_id')}")
             continue
         row = dict(observation)
         row.update({"scenario_id": oracle.get("envelope", {}).get("scenario_id"), "scenario_pass": True})

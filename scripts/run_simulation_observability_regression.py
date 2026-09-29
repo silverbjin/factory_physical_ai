@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -127,11 +128,28 @@ def _detached_checkout(root: Path, commit: str, prefix: str) -> Path:
         check=False,
     )
     if checkout.returncode:
-        raise RuntimeError("REGRESSION_WORKTREE_CREATE_FAILED")
+        # Some sandboxed runners can read the shared Git directory but cannot
+        # create its worktree-admin entry.  A local shared clone remains a
+        # clean detached checkout of the same immutable object without using
+        # mutable source files from the active worktree.
+        clone = subprocess.run(
+            ["git", "clone", "--shared", "--no-checkout", str(root), str(temporary)],
+            cwd=root, text=True, capture_output=True, check=False,
+        )
+        detached = subprocess.run(
+            ["git", "checkout", "--detach", commit], cwd=temporary,
+            text=True, capture_output=True, check=False,
+        ) if clone.returncode == 0 else None
+        if clone.returncode or detached is None or detached.returncode:
+            shutil.rmtree(temporary, ignore_errors=True)
+            raise RuntimeError("REGRESSION_WORKTREE_CREATE_FAILED")
     return temporary
 
 
 def _remove_checkout(root: Path, checkout_path: Path) -> None:
+    if (checkout_path / ".git").is_dir():
+        shutil.rmtree(checkout_path)
+        return
     removal = subprocess.run(
         ["git", "worktree", "remove", "--force", str(checkout_path)],
         cwd=root,

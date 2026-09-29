@@ -14,6 +14,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
 from simulation_runtime.observability_regression import (
+    _q01_physics_rows,
     build_regression_evidence,
     classify_regression_failures,
     extract_bound_runs,
@@ -548,6 +549,35 @@ def test_q01_rejects_duplicate_and_extra_subjects() -> None:
         validate_q01_chain(ROOT, acceptance, evidence)
 
 
+@pytest.mark.parametrize(
+    ("mutate",),
+    [
+        (lambda evidence: evidence["immutable_authority_bindings"]["TASK-SIM-004"].update({"claims": ["request_id"]}),),
+        (lambda evidence: evidence["immutable_authority_bindings"]["TASK-SIM-004"]["predecessor_binding"].update({"evidence_sha256": "0" * 64}),),
+        (lambda evidence: evidence["qualification_subjects"][4]["applicability"]["physics_measurement"].update({"state": "NOT_APPLICABLE", "execution_state": {"simulator_started": False, "physics_started": False}}),),
+        (lambda evidence: evidence["qualification_subjects"][1]["semantic_outcome"]["execution_identity"].update({"scenario_execution_id": evidence["qualification_subjects"][2]["semantic_outcome"]["execution_identity"]["scenario_execution_id"]}),),
+    ],
+)
+def test_q01_rejects_support_scope_binding_applicability_and_execution_identity_bypasses(mutate: object) -> None:
+    acceptance, evidence = _q01_chain()
+    mutate(evidence)  # type: ignore[operator]
+    with pytest.raises(ValueError):
+        validate_q01_chain(ROOT, acceptance, evidence)
+
+
+def test_q01_physics_rejects_contradictory_observation_semantics() -> None:
+    linked = resolve_q01_qualification(ROOT)["qualification_subjects"]
+    contradictory = deepcopy(next(item for item in linked if item["subject_id"] == "q01-sim009-SIM009-NAV-ABORTED"))
+    contradictory["qualification_observation"]["semantic_outcome"].update(  # type: ignore[index]
+        {"decision": "CONTRADICTORY_DECISION", "result": "success", "status": "completed"}
+    )
+
+    rows, failures = _q01_physics_rows([contradictory])
+
+    assert rows == []
+    assert any("Q01_SEMANTIC_MISMATCH" in failure for failure in failures)
+
+
 def test_runner_binds_one_explicit_interpreter_to_identical_commands() -> None:
     python = Path(sys.executable)
     candidate = RUNNER.regression_command(python)
@@ -586,6 +616,21 @@ def test_runner_dependency_preflight_failure_is_fail_closed(tmp_path: Path) -> N
 
     with pytest.raises(RuntimeError, match="DEPENDENCY_PREFLIGHT_FAILED"):
         RUNNER.preflight_environment(fake_python)
+
+
+def test_runner_falls_back_to_clean_detached_clone_when_worktree_admin_is_unwritable() -> None:
+    commit = subprocess.run(
+        ["git", "rev-parse", "HEAD"], cwd=ROOT, text=True, capture_output=True, check=True,
+    ).stdout.strip()
+    checkout = RUNNER._detached_checkout(ROOT, commit, "sim010-test-wt-")
+    try:
+        assert (checkout / ".git").is_dir()
+        assert subprocess.run(
+            ["git", "rev-parse", "--is-inside-work-tree"], cwd=checkout,
+            text=True, capture_output=True, check=True,
+        ).stdout.strip() == "true"
+    finally:
+        RUNNER._remove_checkout(ROOT, checkout)
 
 
 def test_environment_and_collection_failures_cannot_be_preexisting() -> None:
