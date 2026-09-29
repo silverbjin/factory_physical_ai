@@ -1,6 +1,6 @@
 # TASK-SIM-010 History
 
-Current status: IMPLEMENTED / EVIDENCE PENDING
+Current status: IMPLEMENTED / INDEPENDENT REVIEW PENDING
 
 | Seq | Type | Result | Record | Primary fault domain | Architecture decision / next action |
 |---:|---|---|---|---|---|
@@ -19,3 +19,4 @@ Current status: IMPLEMENTED / EVIDENCE PENDING
 | 14 | Implementation | IN PROGRESS | `14_implementation.md` | `SIM010_Q01_INTEGRATION_GAP` | bounded Q01 consumer correction plan |
 | 15 | Implementation | INCOMPLETE | `15_implementation.md` | `FULL_REGRESSION_EXECUTION_FAILURE` | `S10-G5` BLOCKED / diagnose declared regression environment |
 | 16 | Implementation | COMPLETE | `16_implementation.md` | `SIM010_G5_ENVIRONMENT_BINDING_DEFECT` | `S10-G0`–`S10-G5` PASS / generate canonical Evidence and run repeatability |
+| 17 | Implementation | COMPLETE | `17_implementation.md` | `SIM010_Q01_INTEGRATION_GAP` | `S10-G6`–`S10-G7` PASS / Independent Read-only Review |
