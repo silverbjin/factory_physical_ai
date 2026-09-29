@@ -28,6 +28,7 @@ from simulation_runtime.failure_recovery import (  # noqa: E402
     _validate_live_navigation_evidence,
     load_manifest,
     run_failure_suite,
+    classify_repeatability_run,
 )
 from simulation_runtime.navigation_backend import RuntimeObservation  # noqa: E402
 from scripts.run_simulation_failure_recovery import build_evidence  # noqa: E402
@@ -48,6 +49,17 @@ def test_manifest_has_stable_complete_bounded_scenarios() -> None:
         + NORMAL_RECOVERY_TIMEOUT_MS
         + LIVE_RUNTIME_SCHEDULING_MARGIN_MS
     )
+
+
+def test_repeatability_classifies_bootstrap_failure_as_infrastructure_not_semantic() -> None:
+    run = {
+        "task_specific_result": "SIM_FAILURE_SUITE_BLOCKED",
+        "scenarios": [
+            {"id": "SIM009-NAV-BLOCKED", "live_runtime_ready": False, "runtime_calls": 0},
+        ],
+    }
+
+    assert classify_repeatability_run(run) == "INFRASTRUCTURE_NOT_READY"
 
 
 def test_blocked_budget_covers_bounded_goal_acceptance_and_terminal_waits() -> None:
@@ -264,6 +276,108 @@ def test_goal_tracker_records_one_shot_fault_and_filters_evidence_by_scenario() 
     assert attempt["injection_kind"] == "missing_behavior_tree"
 
 
+def test_goal_tracker_reads_only_the_current_attempt_log_window(tmp_path: Path) -> None:
+    from scripts.sim009_goal_tracked_navigation import GoalTrackedGazeboNav2Runtime
+
+    log_path = tmp_path / "nav2.log"
+    log_path.write_text("BLOCKED_MARKER\n")
+    runtime = object.__new__(GoalTrackedGazeboNav2Runtime)
+    runtime.measurements = {"processes": [{"log_path": str(log_path)}]}
+
+    aborted_window_start = runtime._capture_log_offsets()
+    with log_path.open("a") as log_file:
+        log_file.write("ABORTED_BT_MARKER\n")
+    aborted_log, aborted_attributed, _ = runtime._read_server_log_window(aborted_window_start)
+
+    assert aborted_attributed is True
+    assert "ABORTED_BT_MARKER" in aborted_log
+    assert "BLOCKED_MARKER" not in aborted_log
+
+    tf_window_start = runtime._capture_log_offsets()
+    with log_path.open("a") as log_file:
+        log_file.write("TF_MISSING_FRAME_MARKER\n")
+    tf_log, tf_attributed, _ = runtime._read_server_log_window(tf_window_start)
+
+    assert tf_attributed is True
+    assert "TF_MISSING_FRAME_MARKER" in tf_log
+    assert "BLOCKED_MARKER" not in tf_log
+    assert "ABORTED_BT_MARKER" not in tf_log
+
+
+def test_goal_tracker_fails_closed_when_a_log_window_cannot_be_attributed(tmp_path: Path) -> None:
+    from scripts.sim009_goal_tracked_navigation import GoalTrackedGazeboNav2Runtime
+
+    runtime = object.__new__(GoalTrackedGazeboNav2Runtime)
+    runtime.measurements = {"processes": [{"log_path": str(tmp_path / "missing.log")}]}
+
+    log, attributed, _ = runtime._read_server_log_window({str(tmp_path / "missing.log"): 0})
+
+    assert log == ""
+    assert attributed is False
+
+
+def test_goal_tracker_preflights_its_private_action_client_with_a_bounded_wait() -> None:
+    from scripts.sim009_goal_tracked_navigation import GoalTrackedGazeboNav2Runtime
+
+    class Client:
+        def __init__(self) -> None:
+            self.timeouts: list[float] = []
+
+        def wait_for_server(self, *, timeout_sec: float) -> bool:
+            self.timeouts.append(timeout_sec)
+            return True
+
+    client = Client()
+    runtime = object.__new__(GoalTrackedGazeboNav2Runtime)
+    runtime.measurements = {"readiness": []}
+    runtime._client = lambda: (object(), object(), client, object())
+
+    assert runtime._preflight_private_action_client() is True
+    assert client.timeouts == [5.0]
+    assert runtime.measurements["readiness"][-1] == {
+        "sim009_private_action_client": True,
+        "timeout_seconds": 5.0,
+    }
+
+
+def test_goal_tracker_evidence_counts_only_the_selected_scenario_execution() -> None:
+    from scripts.sim009_goal_tracked_navigation import (
+        GoalAttemptRecord,
+        GoalTrackedGazeboNav2Runtime,
+    )
+
+    runtime = object.__new__(GoalTrackedGazeboNav2Runtime)
+    runtime.measurements = {"cleanup": {}}
+    runtime._tf_probe_records = []
+    runtime.goal_attempts = []
+    for execution_id, scenario_id, goal_uuid, terminal_status in (
+        ("execution-blocked", "SIM009-NAV-BLOCKED", "11111111-1111-4111-8111-111111111111", "6"),
+        ("execution-aborted", "SIM009-NAV-ABORTED", "22222222-2222-4222-8222-222222222222", "6"),
+        ("execution-timeout", "SIM009-NAV-TIMEOUT-RETRY", "33333333-3333-4333-8333-333333333333", "5"),
+        ("execution-timeout", "SIM009-NAV-TIMEOUT-RETRY", "44444444-4444-4444-8444-444444444444", "4"),
+        ("execution-tf", "SIM009-NAV-TF-UNAVAILABLE", "55555555-5555-4555-8555-555555555555", "6"),
+    ):
+        runtime.goal_attempts.append(GoalAttemptRecord(
+            mission_id="66666666-6666-4666-8666-666666666666",
+            action_id="77777777-7777-4777-8777-777777777777" if execution_id == "execution-timeout" else goal_uuid,
+            idempotency_key="sim009-navigation",
+            destination_id="line-b-drop",
+            nav2_goal_uuid=goal_uuid,
+            scenario_id=scenario_id,
+            scenario_execution_id=execution_id,
+            terminal_status=terminal_status,
+        ))
+
+    counts = {
+        execution_id: runtime.evidence_for(execution_id)
+        for execution_id in ("execution-blocked", "execution-aborted", "execution-timeout", "execution-tf")
+    }
+
+    assert [counts[key]["runtime_calls"] for key in counts] == [1, 1, 2, 1]
+    assert counts["execution-timeout"]["logical_side_effect_count"] == 1
+    assert counts["execution-tf"]["logical_side_effect_count"] == 0
+
+
 def test_faulted_goal_cannot_classify_a_native_success_as_the_injected_failure() -> None:
     from scripts.sim009_goal_tracked_navigation import (
         GoalAttemptRecord,
@@ -366,6 +480,7 @@ def test_tf_fault_rejects_unavailable_baseline_even_with_local_aborted_goal() ->
             "injection_kind": "missing_goal_frame",
             "native_error_code": "202",
             "native_error_message": "TF unavailable",
+            "server_log_attributed": True,
         }],
         "tf_probes": [
             {"label": "sim009_tf_baseline", "available": False},
@@ -442,6 +557,7 @@ def test_tf_fault_requires_complete_local_live_proof() -> None:
             "injection_kind": "missing_goal_frame",
             "native_error_code": "202",
             "native_error_message": "TF unavailable",
+            "server_log_attributed": True,
         }],
         "tf_probes": [
             {"scenario_execution_id": "execution-tf", "label": "sim009_tf_baseline", "available": True},

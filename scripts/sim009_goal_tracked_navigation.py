@@ -10,6 +10,7 @@ import os
 import time
 import uuid
 from dataclasses import dataclass, field
+from pathlib import Path
 from typing import Any
 
 from scripts.run_simulation_navigation import BoundedGazeboNav2Runtime
@@ -23,6 +24,7 @@ _GOAL_POINTS = {
 }
 _TIMEOUT_FAULT_SECONDS = 0.001
 _CANCELLATION_RECONCILIATION_SECONDS = 2.0
+_PRIVATE_ACTION_CLIENT_READY_SECONDS = 5.0
 
 
 @dataclass(slots=True)
@@ -59,6 +61,9 @@ class GoalAttemptRecord:
     native_error_code: str | None = None
     native_error_message: str | None = None
     server_log_tail: str = ""
+    server_log_attributed: bool = False
+    server_log_start_offsets: dict[str, int] = field(default_factory=dict)
+    server_log_end_offsets: dict[str, int] = field(default_factory=dict)
     terminal_goal_uuid: str | None = None
     terminal_status: str | None = None
     goal_handle: Any = field(default=None, repr=False)
@@ -164,15 +169,76 @@ class GoalTrackedGazeboNav2Runtime(BoundedGazeboNav2Runtime):
         self._record_tf_probe(label, target_frame, source_frame, available)
         return available
 
-    def _server_log_tail(self) -> str:
-        tails: list[str] = []
+    def _process_log_paths(self) -> list[Path]:
+        """Return the accepted runtime's process logs without owning them."""
+        paths: list[Path] = []
+        for process in self.measurements.get("processes", []):
+            log_path = process.get("log_path")
+            if isinstance(log_path, str):
+                paths.append(Path(log_path))
+        return paths
+
+    def _capture_log_offsets(self) -> dict[str, int] | None:
+        """Snapshot every accepted process log before a single Nav2 goal."""
         for log_file in getattr(self, "log_files", []):
             log_file.flush()
-            position = log_file.tell()
-            log_file.seek(0)
-            tails.append(log_file.read()[-4000:])
-            log_file.seek(position)
-        return "\n".join(tails)
+        paths = self._process_log_paths()
+        if not paths:
+            return None
+        offsets: dict[str, int] = {}
+        try:
+            for path in paths:
+                offsets[str(path)] = path.stat().st_size
+        except OSError:
+            return None
+        return offsets
+
+    def _read_server_log_window(
+        self, start_offsets: dict[str, int] | None,
+    ) -> tuple[str, bool, dict[str, int]]:
+        """Read only bytes written after a goal's own start snapshot.
+
+        A missing/truncated log never falls back to the cumulative process tail:
+        the resulting Evidence is explicitly unattributed and fails closed.
+        """
+        if not start_offsets:
+            return "", False, {}
+        for log_file in getattr(self, "log_files", []):
+            log_file.flush()
+        chunks: list[str] = []
+        end_offsets: dict[str, int] = {}
+        try:
+            for raw_path, start in start_offsets.items():
+                path = Path(raw_path)
+                end = path.stat().st_size
+                if end < start:
+                    return "", False, {}
+                with path.open("rb") as log_file:
+                    log_file.seek(start)
+                    chunks.append(log_file.read(end - start).decode("utf-8", errors="replace"))
+                end_offsets[raw_path] = end
+        except OSError:
+            return "", False, {}
+        return "\n".join(chunks), True, end_offsets
+
+    def _preflight_private_action_client(self) -> bool:
+        """Bound private DDS discovery before any scenario timer starts."""
+        client_parts = self._client()
+        available = client_parts is not None and client_parts[2].wait_for_server(
+            timeout_sec=_PRIVATE_ACTION_CLIENT_READY_SECONDS,
+        )
+        self.measurements.setdefault("readiness", []).append({
+            "sim009_private_action_client": available,
+            "timeout_seconds": _PRIVATE_ACTION_CLIENT_READY_SECONDS,
+        })
+        return available
+
+    def bootstrap_localization(self) -> bool:
+        """Keep the accepted bootstrap, then ready SIM-009's private client."""
+        if not super().bootstrap_localization():
+            return False
+        self._ready = self._preflight_private_action_client()
+        return self._ready
 
     def _client(self) -> tuple[Any, Any, Any, Any] | None:
         if self._action_client is not None:
@@ -212,7 +278,11 @@ class GoalTrackedGazeboNav2Runtime(BoundedGazeboNav2Runtime):
         native_result = getattr(result, "result", None)
         attempt.native_error_code = str(getattr(native_result, "error_code", "")) or None
         attempt.native_error_message = str(getattr(native_result, "error_msg", "")) or None
-        attempt.server_log_tail = self._server_log_tail()
+        (
+            attempt.server_log_tail,
+            attempt.server_log_attributed,
+            attempt.server_log_end_offsets,
+        ) = self._read_server_log_window(attempt.server_log_start_offsets)
         # nav2_msgs/action status codes: SUCCEEDED=4.  The result future is
         # attached to the same ClientGoalHandle, not a second lookup goal.
         if status == 4 and attempt.injection_kind != "none":
@@ -292,6 +362,7 @@ class GoalTrackedGazeboNav2Runtime(BoundedGazeboNav2Runtime):
         if fault and fault["injection_kind"] == "missing_goal_frame":
             self._probe_scenario_tf("sim009_tf_baseline", "map", "base_link")
             self._probe_scenario_tf("sim009_tf_injected_missing", fault["frame_id"], "base_link")
+        log_start_offsets = self._capture_log_offsets()
         sent = client.send_goal_async(goal)
         rclpy.spin_until_future_complete(node, sent, timeout_sec=timeout)
         if not sent.done() or not sent.result().accepted:
@@ -309,6 +380,7 @@ class GoalTrackedGazeboNav2Runtime(BoundedGazeboNav2Runtime):
             injection_kind=fault["injection_kind"] if fault else "none",
             frame_id=fault["frame_id"] if fault else "map",
             behavior_tree=fault["behavior_tree"] if fault else "",
+            server_log_start_offsets=log_start_offsets or {},
         )
         self._record_attempt(attempt)
         execution_timeout = timeout_fault if timeout_fault is not None else timeout
@@ -347,7 +419,10 @@ class GoalTrackedGazeboNav2Runtime(BoundedGazeboNav2Runtime):
                  "frame_id": item.frame_id, "behavior_tree": item.behavior_tree,
                  "native_error_code": item.native_error_code,
                  "native_error_message": item.native_error_message,
-                 "server_log_tail": item.server_log_tail}
+                 "server_log_tail": item.server_log_tail,
+                 "server_log_attributed": item.server_log_attributed,
+                 "server_log_start_offsets": dict(item.server_log_start_offsets),
+                 "server_log_end_offsets": dict(item.server_log_end_offsets)}
                 for item in attempts
             ],
             "scenario_id": next(iter(contexts), context.scenario_id if context else None),
@@ -360,6 +435,10 @@ class GoalTrackedGazeboNav2Runtime(BoundedGazeboNav2Runtime):
                  "source_frame": item.source_frame, "available": item.available}
                 for item in probes
             ],
+            "runtime_calls": len(attempts),
+            "logical_side_effect_count": len({
+                item.action_id for item in attempts if item.terminal_status == "4"
+            }),
         }
 
     def evidence(self, scenario_id: str | None = None) -> dict[str, Any]:

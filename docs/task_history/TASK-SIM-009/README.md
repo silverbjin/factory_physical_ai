@@ -1,6 +1,6 @@
 # TASK-SIM-009 History
 
-Current status: REJECTED_AFTER_INDEPENDENT_RE_REVIEW
+Current status: ACCEPTED FOR CANONICAL ACCEPTANCE RECORDING
 
 | Seq | Type | Result | Record |
 |---:|---|---|---|
@@ -22,11 +22,17 @@ Current status: REJECTED_AFTER_INDEPENDENT_RE_REVIEW
 | 16 | Fix | READY FOR HOST VALIDATION | `16_fix.md` |
 | 17 | Fix | READY FOR INDEPENDENT RE-REVIEW | `17_fix.md` |
 | 18 | Review | REJECT | `18_review.md` |
+| 19 | Diagnosis | RESOLVED | `19_diagnosis.md` |
+| 20 | Diagnosis | RESOLVED | `20_diagnosis.md` |
+| 21 | Fix | BLOCKED | `21_fix.md` |
+| 22 | Diagnosis | RESOLVED | `22_diagnosis.md` |
+| 23 | Fix | READY FOR INDEPENDENT RE-REVIEW | `23_fix.md` |
+| 24 | Review | ACCEPT | `24_review.md` |
 
-Latest review: `18_review.md`
+Latest review: `24_review.md`
 
 Blocking finding: `SIM009-REREV-001` — HIGH — RETAINED
 
-Remaining blocker: Scenario-local Evidence is incomplete because server-log tails and `runtime_calls` are cumulative across L1-NAV scenarios.
+SIM009-REREV-001: CLOSED
 
-Next action: `AUTO_DIAGNOSE_AND_FIX_SIM009_REREV_001`
+Next action: `RECORD_CANONICAL_ACCEPTANCE`
