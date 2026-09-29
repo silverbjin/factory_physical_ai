@@ -1467,6 +1467,41 @@
       "status": "PASS"
     }
   ],
+  "canonical_gate_results": {
+    "S10-G0": {
+      "gate": "Q01_ACCEPTANCE_BINDING",
+      "status": "PASS"
+    },
+    "S10-G1": {
+      "gate": "SUBJECT_MAPPING",
+      "status": "PASS"
+    },
+    "S10-G2": {
+      "gate": "NORMAL_FAILURE_TRACEABILITY",
+      "status": "PASS"
+    },
+    "S10-G3": {
+      "gate": "DETERMINISTIC_REPLAY",
+      "status": "PASS"
+    },
+    "S10-G4": {
+      "gate": "PHYSICS_SEMANTIC_REGRESSION",
+      "status": "PASS"
+    },
+    "S10-G5": {
+      "classification": "PROVEN_PREEXISTING",
+      "gate": "FULL_REGRESSION_CLASSIFICATION",
+      "status": "PASS"
+    },
+    "S10-G6": {
+      "gate": "CANONICAL_SIM010_EVIDENCE",
+      "status": "PASS"
+    },
+    "S10-G7": {
+      "gate": "REPEATABILITY_AND_FINALIZATION",
+      "status": "PASS"
+    }
+  },
   "claim_scope": "Simulation evidence only; no physical or production performance claim.",
   "deterministic_replay": {
     "criterion": "equivalent decisions and lifecycle outcomes",
@@ -1475,50 +1510,1830 @@
   },
   "full_repository_regression": {
     "baseline_commit": "6909c6cceb727598570f6e170ae8d1d293418c9a",
-    "baseline_exit_code": 1,
-    "baseline_failure_signatures": {
-      "scripts/codex/test_run_task_orchestrator.py::OrchestratorUnitTests::test_load_model_policy": "7305ef81303173de1137ce866aff5bff0ced5edd15c44f84bfd16ed13eb53b04",
-      "tests/test_simulation_lane_gate.py::SimulationLaneGateTests::test_canonical_state_reconstructs_sim_go_without_authorizing_lane": "1e9c0d4ab987b547e72dffd7db684d9ff251636a27ad76ca7dbd1db0ce4beeb2",
-      "tests/test_simulation_lane_gate.py::SimulationLaneGateTests::test_combined_review_commit_rewrite_and_concatenated_operation_fails_closed": "71149efcf3e8cb3a7c89e4c00a54a807f6f2618412f8c97b4a4fc34de6b3cef4",
-      "tests/test_simulation_lane_gate.py::SimulationLaneGateTests::test_rehashed_unreviewed_runtime_operation_marker_fails_provenance_closed": "71149efcf3e8cb3a7c89e4c00a54a807f6f2618412f8c97b4a4fc34de6b3cef4"
+    "baseline_execution": {
+      "commit": "6909c6cceb727598570f6e170ae8d1d293418c9a",
+      "detached_worktree_path": "/tmp/sim010-g6b-20260929T074135Z-baseline-oI6v2r",
+      "exit_code": 1,
+      "failed_node_set": [
+        "scripts/codex/test_run_task_orchestrator.py::OrchestratorUnitTests::test_load_model_policy",
+        "tests/test_simulation_lane_gate.py::SimulationLaneGateTests::test_canonical_state_reconstructs_sim_go_without_authorizing_lane",
+        "tests/test_simulation_lane_gate.py::SimulationLaneGateTests::test_combined_review_commit_rewrite_and_concatenated_operation_fails_closed",
+        "tests/test_simulation_lane_gate.py::SimulationLaneGateTests::test_rehashed_unreviewed_runtime_operation_marker_fails_provenance_closed"
+      ],
+      "failure_signatures": {
+        "scripts/codex/test_run_task_orchestrator.py::OrchestratorUnitTests::test_load_model_policy": "7305ef81303173de1137ce866aff5bff0ced5edd15c44f84bfd16ed13eb53b04",
+        "tests/test_simulation_lane_gate.py::SimulationLaneGateTests::test_canonical_state_reconstructs_sim_go_without_authorizing_lane": "1e9c0d4ab987b547e72dffd7db684d9ff251636a27ad76ca7dbd1db0ce4beeb2",
+        "tests/test_simulation_lane_gate.py::SimulationLaneGateTests::test_combined_review_commit_rewrite_and_concatenated_operation_fails_closed": "71149efcf3e8cb3a7c89e4c00a54a807f6f2618412f8c97b4a4fc34de6b3cef4",
+        "tests/test_simulation_lane_gate.py::SimulationLaneGateTests::test_rehashed_unreviewed_runtime_operation_marker_fails_provenance_closed": "71149efcf3e8cb3a7c89e4c00a54a807f6f2618412f8c97b4a4fc34de6b3cef4"
+      },
+      "output_sha256": "a30ab30e92afcb32f4785bcda71495f96e206c0e5a0375736d93115b64e79cb8",
+      "probe": {
+        "cwd": "/tmp/sim010-g6b-20260929T074135Z-baseline-oI6v2r",
+        "mujoco_file": "/home/jinho/projects/factory_physical_ai/.venv-sim/lib/python3.12/site-packages/mujoco/__init__.py",
+        "mujoco_version": "3.13.0",
+        "project_module_origin": "/tmp/sim010-g6b-20260929T074135Z-baseline-oI6v2r/src/simulation_runtime/mujoco_vla_backend.py",
+        "pytest_file": "/usr/lib/python3/dist-packages/pytest/__init__.py",
+        "python": "/home/jinho/projects/factory_physical_ai/.venv-sim/bin/python",
+        "python_version": "3.12.3 (main, Aug 31 2026, 10:18:26) [GCC 13.3.0]",
+        "sys_path": [
+          "",
+          "/tmp/sim010-g6b-20260929T074135Z-baseline-oI6v2r/src",
+          "/usr/lib/python312.zip",
+          "/usr/lib/python3.12",
+          "/usr/lib/python3.12/lib-dynload",
+          "/home/jinho/projects/factory_physical_ai/.venv-sim/lib/python3.12/site-packages",
+          "/usr/local/lib/python3.12/dist-packages",
+          "/usr/lib/python3/dist-packages",
+          "/usr/lib/python3.12/dist-packages"
+        ]
+      }
     },
-    "blocking_reason": "PROVEN_PREEXISTING_FULL_REGRESSION_FAILURES",
-    "command": "PYTHONDONTWRITEBYTECODE=1 python3 -m pytest -q -p no:cacheprovider",
-    "exit_code": 1,
-    "failed_node_ids": [
-      "scripts/codex/test_run_task_orchestrator.py::OrchestratorUnitTests::test_load_model_policy",
-      "tests/test_simulation_lane_gate.py::SimulationLaneGateTests::test_canonical_state_reconstructs_sim_go_without_authorizing_lane",
-      "tests/test_simulation_lane_gate.py::SimulationLaneGateTests::test_combined_review_commit_rewrite_and_concatenated_operation_fails_closed",
-      "tests/test_simulation_lane_gate.py::SimulationLaneGateTests::test_rehashed_unreviewed_runtime_operation_marker_fails_provenance_closed"
-    ],
+    "candidate_commit": "2ec859845628992b02686a6d8bcdbcb77985a5a2",
+    "candidate_execution": {
+      "commit": "2ec859845628992b02686a6d8bcdbcb77985a5a2",
+      "detached_worktree_path": "/tmp/sim010-g6b-20260929T074135Z-candidate-WxTV14",
+      "exit_code": 1,
+      "failed_node_set": [
+        "scripts/codex/test_run_task_orchestrator.py::OrchestratorUnitTests::test_load_model_policy",
+        "tests/test_simulation_lane_gate.py::SimulationLaneGateTests::test_canonical_state_reconstructs_sim_go_without_authorizing_lane",
+        "tests/test_simulation_lane_gate.py::SimulationLaneGateTests::test_combined_review_commit_rewrite_and_concatenated_operation_fails_closed",
+        "tests/test_simulation_lane_gate.py::SimulationLaneGateTests::test_rehashed_unreviewed_runtime_operation_marker_fails_provenance_closed"
+      ],
+      "failure_signatures": {
+        "scripts/codex/test_run_task_orchestrator.py::OrchestratorUnitTests::test_load_model_policy": "7305ef81303173de1137ce866aff5bff0ced5edd15c44f84bfd16ed13eb53b04",
+        "tests/test_simulation_lane_gate.py::SimulationLaneGateTests::test_canonical_state_reconstructs_sim_go_without_authorizing_lane": "1e9c0d4ab987b547e72dffd7db684d9ff251636a27ad76ca7dbd1db0ce4beeb2",
+        "tests/test_simulation_lane_gate.py::SimulationLaneGateTests::test_combined_review_commit_rewrite_and_concatenated_operation_fails_closed": "71149efcf3e8cb3a7c89e4c00a54a807f6f2618412f8c97b4a4fc34de6b3cef4",
+        "tests/test_simulation_lane_gate.py::SimulationLaneGateTests::test_rehashed_unreviewed_runtime_operation_marker_fails_provenance_closed": "71149efcf3e8cb3a7c89e4c00a54a807f6f2618412f8c97b4a4fc34de6b3cef4"
+      },
+      "output_sha256": "581bb94909f828175cf9f5c34f29d5342beb5cfbc431ef0e8ac6df07d817be28",
+      "probe": {
+        "cwd": "/tmp/sim010-g6b-20260929T074135Z-candidate-WxTV14",
+        "mujoco_file": "/home/jinho/projects/factory_physical_ai/.venv-sim/lib/python3.12/site-packages/mujoco/__init__.py",
+        "mujoco_version": "3.13.0",
+        "project_module_origin": "/tmp/sim010-g6b-20260929T074135Z-candidate-WxTV14/src/simulation_runtime/mujoco_vla_backend.py",
+        "pytest_file": "/usr/lib/python3/dist-packages/pytest/__init__.py",
+        "python": "/home/jinho/projects/factory_physical_ai/.venv-sim/bin/python",
+        "python_version": "3.12.3 (main, Aug 31 2026, 10:18:26) [GCC 13.3.0]",
+        "sys_path": [
+          "",
+          "/tmp/sim010-g6b-20260929T074135Z-candidate-WxTV14/src",
+          "/usr/lib/python312.zip",
+          "/usr/lib/python3.12",
+          "/usr/lib/python3.12/lib-dynload",
+          "/home/jinho/projects/factory_physical_ai/.venv-sim/lib/python3.12/site-packages",
+          "/usr/local/lib/python3.12/dist-packages",
+          "/usr/lib/python3/dist-packages",
+          "/usr/lib/python3.12/dist-packages"
+        ]
+      }
+    },
+    "classification_rule": "PROVEN_PREEXISTING requires identical complete non-empty failed-node set and identical non-empty stable signature for every node.",
+    "cleanup_result": "PASS: detached worktrees removed without --force",
     "failure_classification": "PROVEN_PREEXISTING",
-    "failure_signatures": {
-      "scripts/codex/test_run_task_orchestrator.py::OrchestratorUnitTests::test_load_model_policy": "7305ef81303173de1137ce866aff5bff0ced5edd15c44f84bfd16ed13eb53b04",
-      "tests/test_simulation_lane_gate.py::SimulationLaneGateTests::test_canonical_state_reconstructs_sim_go_without_authorizing_lane": "1e9c0d4ab987b547e72dffd7db684d9ff251636a27ad76ca7dbd1db0ce4beeb2",
-      "tests/test_simulation_lane_gate.py::SimulationLaneGateTests::test_combined_review_commit_rewrite_and_concatenated_operation_fails_closed": "71149efcf3e8cb3a7c89e4c00a54a807f6f2618412f8c97b4a4fc34de6b3cef4",
-      "tests/test_simulation_lane_gate.py::SimulationLaneGateTests::test_rehashed_unreviewed_runtime_operation_marker_fails_provenance_closed": "71149efcf3e8cb3a7c89e4c00a54a807f6f2618412f8c97b4a4fc34de6b3cef4"
-    },
-    "python_executable": "/home/jinho/projects/factory_physical_ai/.venv-sim/bin/python3",
-    "result": "FAIL",
-    "virtual_env": "/home/jinho/projects/factory_physical_ai/.venv-sim"
+    "mujoco_version": "3.13.0",
+    "pytest_command": "PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=<detached-worktree>/src /home/jinho/projects/factory_physical_ai/.venv-sim/bin/python -m pytest -q -p no:cacheprovider",
+    "qualified_python": "/home/jinho/projects/factory_physical_ai/.venv-sim/bin/python"
   },
-  "generated_at": "2026-09-25T12:55:28Z",
+  "generated_at": "2026-09-29T07:44:47Z",
   "normal_failure_suite_coverage": {
     "failures": [],
     "status": "PASS"
   },
   "physics_semantic_regression": {
     "criterion": "outcome, lifecycle, invariants, and declared tolerances",
-    "failures": [
-      "NO_VALIDATED_PHYSICS_RUNS",
-      "MISSING_REQUIRED_PHYSICS_PROFILE:gazebo",
-      "MISSING_REQUIRED_PHYSICS_PROFILE:mujoco"
-    ],
-    "status": "BLOCKED"
+    "failures": [],
+    "status": "PASS"
+  },
+  "protected_scope_integrity": {
+    "checked_against_addendum_commit": "527c7cf236fbe0143748964ae312f9d919f06bb6",
+    "protected_mutations_detected": [],
+    "status": "PASS"
+  },
+  "q01_accepted_authority": {
+    "acceptance_path": "results/reviews/SIM-Q01-MIN_acceptance.json",
+    "acceptance_recording_commit": "a1f1539c27f61fb2ce52aed33ceaf1bfe343912c",
+    "acceptance_task_id": "TASK-SIM-Q01-MIN",
+    "accepted_commit": "b55bc4fc2435e83c3761457b92d9e14892e39435",
+    "compatibility_evidence_task_id": "TASK-SIM-Q01",
+    "evidence_path": "results/simulation/SIM-Q01_provenance_qualification.json",
+    "evidence_sha256": "dbd2fc20f6072f8889466fff29b80ec874d105b37c5633e909c633facdb2eb6a",
+    "expected_result": "SIM_PROVENANCE_QUALIFICATION_READY",
+    "validation": "PASS"
+  },
+  "q01_qualification_binding": {
+    "acceptance_task_id": "TASK-SIM-Q01-MIN",
+    "evidence_sha256": "dbd2fc20f6072f8889466fff29b80ec874d105b37c5633e909c633facdb2eb6a",
+    "evidence_task_id": "TASK-SIM-Q01",
+    "qualification_subjects": [
+      {
+        "historical_oracle": {
+          "accepted_commit": "ea91e0c16412e20c8cae66355a1a39129919dd42",
+          "envelope": {
+            "action_id": "c16115d9-0199-421e-94d7-7582a7f97ced",
+            "backend_profile": "gazebo",
+            "mission_id": "289e48e4-079f-4a24-8af0-acc59488eeb2",
+            "request_id": "dd6d57e3-b32c-46aa-9f9a-4c9c73e03ac2",
+            "requires_failure_recovery": false,
+            "requires_skill": true,
+            "requires_verification": true,
+            "scenario_id": "SIM_NORMAL_BRAKE_ECU_LINE_B",
+            "scenario_pass": true,
+            "scenario_source_path": "/execution",
+            "simulation_only": true,
+            "simulator_provenance": {
+              "bounded_execution": true,
+              "bridge_sha256": null,
+              "gazebo_version": "gazebo_harmonic",
+              "launch_sha256": null,
+              "ros2_identity": "gazebo_harmonic",
+              "simulation_time": 35,
+              "wall_time_ms": 62178.386,
+              "world_model_sha256": "fff98b8a19feb8874a65c9dd66f029145ff0be46990dcfd668376df2b30b8ee1"
+            },
+            "skill_result": "succeeded",
+            "source_hashes": {
+              "scenario_config": "1da47e9dd0a174a2124ee6493b534d295d0b93be77b5446c8661fd863888beb4",
+              "world": "fff98b8a19feb8874a65c9dd66f029145ff0be46990dcfd668376df2b30b8ee1"
+            },
+            "source_json_path": "/execution",
+            "trace_id": "b056f07b-06c1-4a90-9621-d08978a5236c",
+            "verification_result": "pass"
+          },
+          "evidence_path": "results/simulation/SIM-008_normal_system_e2e.json",
+          "evidence_sha256": "ebf0ef0a27114e3c04fa6bec05aa3eef792fdfc282d2be009640bac7ecc26290",
+          "scenario_source_path": "/execution",
+          "task_id": "TASK-SIM-008"
+        },
+        "qualification_observation": {
+          "applicability": {
+            "physics_measurement": {
+              "state": "REQUIRED"
+            },
+            "structured_simulator_time": {
+              "state": "REQUIRED"
+            }
+          },
+          "authority_kind": "qualification_observation",
+          "authority_paths": {
+            "bridge_configuration": "src/simulation_runtime/normal_system_e2e.py",
+            "launch_run_configuration": "configs/simulation/sim008_normal_system_scenario.json",
+            "world": "data/simulation/sim008_normal_system_world.sdf"
+          },
+          "backend_id": "gazebo",
+          "backend_profile": "gazebo",
+          "claim_scope": "run_local",
+          "component_version": "sim008-normal-system-e2e-v1",
+          "configuration_provenance": {
+            "bridge_configuration": "b00fdf7c1c7b9b3a83ea211d88a05f7e6477b04d27d8fd5f9cded0733bce2d3d",
+            "launch_run_configuration": "1da47e9dd0a174a2124ee6493b534d295d0b93be77b5446c8661fd863888beb4"
+          },
+          "correlation_identity": {
+            "mission_id": "10fdfd79-d2b8-4242-bc89-b5461bde5aae",
+            "request_id": "75b48a79-1f88-4cf2-9e49-a07110b3ddce",
+            "trace_id": "1cc5f8d6-c0aa-4dba-a467-1539a647fbf4"
+          },
+          "physics_semantic_applicable": true,
+          "predecessor_binding": {
+            "accepted_commit": "ea91e0c16412e20c8cae66355a1a39129919dd42",
+            "evidence_path": "results/simulation/SIM-008_normal_system_e2e.json",
+            "evidence_sha256": "ebf0ef0a27114e3c04fa6bec05aa3eef792fdfc282d2be009640bac7ecc26290",
+            "task_id": "TASK-SIM-008"
+          },
+          "profile_id": null,
+          "qualification_accepted_commit": "b55bc4fc2435e83c3761457b92d9e14892e39435",
+          "qualification_evidence_sha256": "dbd2fc20f6072f8889466fff29b80ec874d105b37c5633e909c633facdb2eb6a",
+          "qualification_evidence_task_id": "TASK-SIM-Q01",
+          "qualification_run_id": "q01-sim008-normal-system-authority",
+          "qualification_task_id": "TASK-SIM-Q01-MIN",
+          "record_kind": "operation_run",
+          "replay_applicable": false,
+          "scenario_id": "SIM_NORMAL_BRAKE_ECU_LINE_B",
+          "semantic_outcome": {
+            "result": "success",
+            "status": "completed"
+          },
+          "subject_id": "q01-sim008-normal-system-authority",
+          "timing": {
+            "bounded_execution": true,
+            "cleanup_complete": true,
+            "physics_measurement": {
+              "seconds": 37.704,
+              "source": "gazebo_authoritative_observation"
+            },
+            "simulation_time": 37.704,
+            "simulation_time_source": "gazebo_authoritative_observation",
+            "startup_attempted": true
+          },
+          "world_model_provenance": {
+            "system": "f7716c41100293446681213521e16974f6504b2a48e03e43b535dc7dcd59a7ad",
+            "world": "fff98b8a19feb8874a65c9dd66f029145ff0be46990dcfd668376df2b30b8ee1"
+          }
+        },
+        "replay_applicable": false,
+        "subject_id": "q01-sim008-normal-system-authority"
+      },
+      {
+        "historical_oracle": {
+          "accepted_commit": "67bde0e1f29c3f974bf3f0b29dff3f3aaa38e5be",
+          "envelope": {
+            "action_id": "51d7b6b3-f3e0-4edb-bd1d-9da4e74427aa",
+            "artifact_context_paths": [
+              "/simulation_authority",
+              "/infrastructure"
+            ],
+            "backend_profile": "gazebo",
+            "backend_qualification": null,
+            "backend_qualification_authority": null,
+            "failure_code": "NAVIGATION_ABORTED",
+            "mission_id": "ea180f2d-2a9c-4e43-8d84-977263e87680",
+            "physics_semantic_applicable": true,
+            "provenance_authority": {
+              "manifest_sha256": "/manifest_sha256"
+            },
+            "record_kind": "operation_run",
+            "recovery_decision": "FAIL_CLOSED",
+            "replay_applicable": false,
+            "request_id": "7c3f793d-8951-4c1c-8340-5ecdbb6c26f4",
+            "required_backend_qualification_fields": [
+              "source_task",
+              "component_version",
+              "accepted_commit",
+              "evidence_path",
+              "evidence_sha256"
+            ],
+            "required_provenance_fields": [
+              "world_model_sha256",
+              "simulation_time"
+            ],
+            "required_source_hash_fields": [
+              "manifest_sha256",
+              "run_config_sha256"
+            ],
+            "requires_failure_recovery": true,
+            "requires_operation_identity": true,
+            "requires_skill": false,
+            "requires_verification": false,
+            "scenario_id": "SIM009-NAV-ABORTED",
+            "scenario_pass": true,
+            "scenario_source_path": "/scenarios/4",
+            "simulation_only": true,
+            "simulator_provenance": {},
+            "skill_result": null,
+            "source_hashes": {
+              "manifest_sha256": "d47b16bd2096c0f4d966f61768cca38e1571393d0346ebf5d1aa5f657ebef317"
+            },
+            "source_json_path": "/scenarios/4/result",
+            "trace_id": "60958352-4fa2-45b7-a431-8b48d1b752ea",
+            "verification_operational_failure": false,
+            "verification_result": null
+          },
+          "evidence_path": "results/simulation/SIM-009_failure_recovery.json",
+          "evidence_sha256": "91d10e5bb4fb7ca1b62c325885bec276c6ef6231c6baa0424f3213702be3216e",
+          "scenario_source_path": "/scenarios/4/result",
+          "task_id": "TASK-SIM-009"
+        },
+        "qualification_observation": {
+          "applicability": {
+            "physics_measurement": {
+              "state": "REQUIRED"
+            },
+            "structured_simulator_time": {
+              "state": "REQUIRED"
+            }
+          },
+          "authority_kind": "qualification_observation",
+          "authority_paths": {
+            "run_local_configuration": "configs/simulation/sim009_failure_scenarios.json",
+            "world_model": "data/simulation/sim004_navigation_proxy_world.sdf"
+          },
+          "backend_id": "gazebo_navigation",
+          "backend_profile": "gazebo",
+          "claim_scope": "run_local",
+          "component_version": "sim004-navigation-backend-v2",
+          "configuration_provenance": {
+            "run_local_configuration": "4df8805ce573247084b38f8ea98da4893e089e4e89a25466c1f86d7196df9002"
+          },
+          "correlation_identity": {
+            "action_id": "0436171d-2f82-4b27-90b3-d31665098019",
+            "mission_id": "ecea6495-d2e5-451e-a4f5-94ff845bc4e4",
+            "request_id": "44f5b218-bda4-4533-835f-71c8967d9ed2",
+            "trace_id": "601766eb-907a-4ca7-afd2-4a687a4c1011"
+          },
+          "physics_semantic_applicable": true,
+          "predecessor_binding": {
+            "accepted_commit": "67bde0e1f29c3f974bf3f0b29dff3f3aaa38e5be",
+            "evidence_path": "results/simulation/SIM-009_failure_recovery.json",
+            "evidence_sha256": "91d10e5bb4fb7ca1b62c325885bec276c6ef6231c6baa0424f3213702be3216e",
+            "task_id": "TASK-SIM-009"
+          },
+          "profile_id": null,
+          "qualification_accepted_commit": "b55bc4fc2435e83c3761457b92d9e14892e39435",
+          "qualification_evidence_sha256": "dbd2fc20f6072f8889466fff29b80ec874d105b37c5633e909c633facdb2eb6a",
+          "qualification_evidence_task_id": "TASK-SIM-Q01",
+          "qualification_run_id": "q01-sim009-75bf27c5-84b0-40ab-84d2-1e28f440a779",
+          "qualification_task_id": "TASK-SIM-Q01-MIN",
+          "record_kind": "operation_run",
+          "replay_applicable": false,
+          "scenario_id": "SIM009-NAV-ABORTED",
+          "semantic_outcome": {
+            "decision": "FAIL_CLOSED",
+            "execution_identity": {
+              "qualification_run_id": "q01-sim009-75bf27c5-84b0-40ab-84d2-1e28f440a779",
+              "scenario_execution_id": "57c6e638-c11b-4eb3-8cc8-d8e3ce49403f"
+            },
+            "outcome_kind": "failure",
+            "result": "failure",
+            "status": "failed"
+          },
+          "subject_id": "q01-sim009-SIM009-NAV-ABORTED",
+          "timing": {
+            "bounded_execution": true,
+            "cleanup_complete": true,
+            "physics_measurement": {
+              "seconds": 39.003,
+              "source": "gz_stats"
+            },
+            "simulation_time": 39.003,
+            "simulation_time_source": "gz_stats"
+          },
+          "world_model_provenance": {
+            "world_model": "c26bf7270026bce976abf4bce7f6b2a188885396281c2139970461db01486959"
+          }
+        },
+        "replay_applicable": false,
+        "subject_id": "q01-sim009-SIM009-NAV-ABORTED"
+      },
+      {
+        "historical_oracle": {
+          "accepted_commit": "67bde0e1f29c3f974bf3f0b29dff3f3aaa38e5be",
+          "envelope": {
+            "action_id": "8dad1b82-1231-4081-817d-15c0a2b06782",
+            "artifact_context_paths": [
+              "/simulation_authority",
+              "/infrastructure"
+            ],
+            "backend_profile": "gazebo",
+            "backend_qualification": null,
+            "backend_qualification_authority": null,
+            "failure_code": "NAVIGATION_ABORTED",
+            "mission_id": "7652f7e0-9454-4136-8564-cce94eb1a257",
+            "physics_semantic_applicable": true,
+            "provenance_authority": {
+              "manifest_sha256": "/manifest_sha256"
+            },
+            "record_kind": "operation_run",
+            "recovery_decision": "FAIL_CLOSED",
+            "replay_applicable": false,
+            "request_id": "845c17fb-ddcd-4399-af5e-4a4cc2d9c9ff",
+            "required_backend_qualification_fields": [
+              "source_task",
+              "component_version",
+              "accepted_commit",
+              "evidence_path",
+              "evidence_sha256"
+            ],
+            "required_provenance_fields": [
+              "world_model_sha256",
+              "simulation_time"
+            ],
+            "required_source_hash_fields": [
+              "manifest_sha256",
+              "run_config_sha256"
+            ],
+            "requires_failure_recovery": true,
+            "requires_operation_identity": true,
+            "requires_skill": false,
+            "requires_verification": false,
+            "scenario_id": "SIM009-NAV-BLOCKED",
+            "scenario_pass": true,
+            "scenario_source_path": "/scenarios/3",
+            "simulation_only": true,
+            "simulator_provenance": {},
+            "skill_result": null,
+            "source_hashes": {
+              "manifest_sha256": "d47b16bd2096c0f4d966f61768cca38e1571393d0346ebf5d1aa5f657ebef317"
+            },
+            "source_json_path": "/scenarios/3/result",
+            "trace_id": "5a201f21-ae3f-40e6-aef2-cee615f966eb",
+            "verification_operational_failure": false,
+            "verification_result": null
+          },
+          "evidence_path": "results/simulation/SIM-009_failure_recovery.json",
+          "evidence_sha256": "91d10e5bb4fb7ca1b62c325885bec276c6ef6231c6baa0424f3213702be3216e",
+          "scenario_source_path": "/scenarios/3/result",
+          "task_id": "TASK-SIM-009"
+        },
+        "qualification_observation": {
+          "applicability": {
+            "physics_measurement": {
+              "state": "REQUIRED"
+            },
+            "structured_simulator_time": {
+              "state": "REQUIRED"
+            }
+          },
+          "authority_kind": "qualification_observation",
+          "authority_paths": {
+            "run_local_configuration": "configs/simulation/sim009_failure_scenarios.json",
+            "world_model": "data/simulation/sim004_navigation_proxy_world.sdf"
+          },
+          "backend_id": "gazebo_navigation",
+          "backend_profile": "gazebo",
+          "claim_scope": "run_local",
+          "component_version": "sim004-navigation-backend-v2",
+          "configuration_provenance": {
+            "run_local_configuration": "4df8805ce573247084b38f8ea98da4893e089e4e89a25466c1f86d7196df9002"
+          },
+          "correlation_identity": {
+            "action_id": "efab9824-4cdd-448e-8efb-1ec69bda8c75",
+            "mission_id": "dedbaf91-7ee6-4c53-a3ef-6e7b9416bfd6",
+            "request_id": "e164fce4-7645-4e41-8787-0ff1cf05b9b0",
+            "trace_id": "e5ce5093-81f1-42ba-aaf4-82467217d461"
+          },
+          "physics_semantic_applicable": true,
+          "predecessor_binding": {
+            "accepted_commit": "67bde0e1f29c3f974bf3f0b29dff3f3aaa38e5be",
+            "evidence_path": "results/simulation/SIM-009_failure_recovery.json",
+            "evidence_sha256": "91d10e5bb4fb7ca1b62c325885bec276c6ef6231c6baa0424f3213702be3216e",
+            "task_id": "TASK-SIM-009"
+          },
+          "profile_id": null,
+          "qualification_accepted_commit": "b55bc4fc2435e83c3761457b92d9e14892e39435",
+          "qualification_evidence_sha256": "dbd2fc20f6072f8889466fff29b80ec874d105b37c5633e909c633facdb2eb6a",
+          "qualification_evidence_task_id": "TASK-SIM-Q01",
+          "qualification_run_id": "q01-sim009-75bf27c5-84b0-40ab-84d2-1e28f440a779",
+          "qualification_task_id": "TASK-SIM-Q01-MIN",
+          "record_kind": "operation_run",
+          "replay_applicable": false,
+          "scenario_id": "SIM009-NAV-BLOCKED",
+          "semantic_outcome": {
+            "decision": "FAIL_CLOSED",
+            "execution_identity": {
+              "qualification_run_id": "q01-sim009-75bf27c5-84b0-40ab-84d2-1e28f440a779",
+              "scenario_execution_id": "34d935e6-074c-48d5-8c7c-eafd52315fa8"
+            },
+            "outcome_kind": "failure",
+            "result": "failure",
+            "status": "failed"
+          },
+          "subject_id": "q01-sim009-SIM009-NAV-BLOCKED",
+          "timing": {
+            "bounded_execution": true,
+            "cleanup_complete": true,
+            "physics_measurement": {
+              "seconds": 38.808,
+              "source": "gz_stats"
+            },
+            "simulation_time": 38.808,
+            "simulation_time_source": "gz_stats"
+          },
+          "world_model_provenance": {
+            "world_model": "c26bf7270026bce976abf4bce7f6b2a188885396281c2139970461db01486959"
+          }
+        },
+        "replay_applicable": false,
+        "subject_id": "q01-sim009-SIM009-NAV-BLOCKED"
+      },
+      {
+        "historical_oracle": {
+          "accepted_commit": "67bde0e1f29c3f974bf3f0b29dff3f3aaa38e5be",
+          "envelope": {
+            "action_id": "657a98c7-5478-4b74-93e2-0e4a2b7bd0c0",
+            "artifact_context_paths": [
+              "/simulation_authority",
+              "/infrastructure"
+            ],
+            "backend_profile": "gazebo",
+            "backend_qualification": null,
+            "backend_qualification_authority": null,
+            "failure_code": "NAVIGATION_TF_UNAVAILABLE",
+            "mission_id": "bbf3293b-1aa3-47d9-993e-3c5fdfe7e4bb",
+            "physics_semantic_applicable": true,
+            "provenance_authority": {
+              "manifest_sha256": "/manifest_sha256"
+            },
+            "record_kind": "operation_run",
+            "recovery_decision": "FAIL_CLOSED",
+            "replay_applicable": false,
+            "request_id": "b3131279-3c6b-4f2a-a676-0dc964574792",
+            "required_backend_qualification_fields": [
+              "source_task",
+              "component_version",
+              "accepted_commit",
+              "evidence_path",
+              "evidence_sha256"
+            ],
+            "required_provenance_fields": [
+              "world_model_sha256",
+              "simulation_time"
+            ],
+            "required_source_hash_fields": [
+              "manifest_sha256",
+              "run_config_sha256"
+            ],
+            "requires_failure_recovery": true,
+            "requires_operation_identity": true,
+            "requires_skill": false,
+            "requires_verification": false,
+            "scenario_id": "SIM009-NAV-TF-UNAVAILABLE",
+            "scenario_pass": true,
+            "scenario_source_path": "/scenarios/6",
+            "simulation_only": true,
+            "simulator_provenance": {},
+            "skill_result": null,
+            "source_hashes": {
+              "manifest_sha256": "d47b16bd2096c0f4d966f61768cca38e1571393d0346ebf5d1aa5f657ebef317"
+            },
+            "source_json_path": "/scenarios/6/result",
+            "trace_id": "7dd90d8b-13f4-4ee3-aefd-0f0d9939ee0c",
+            "verification_operational_failure": false,
+            "verification_result": null
+          },
+          "evidence_path": "results/simulation/SIM-009_failure_recovery.json",
+          "evidence_sha256": "91d10e5bb4fb7ca1b62c325885bec276c6ef6231c6baa0424f3213702be3216e",
+          "scenario_source_path": "/scenarios/6/result",
+          "task_id": "TASK-SIM-009"
+        },
+        "qualification_observation": {
+          "applicability": {
+            "physics_measurement": {
+              "state": "REQUIRED"
+            },
+            "structured_simulator_time": {
+              "state": "REQUIRED"
+            }
+          },
+          "authority_kind": "qualification_observation",
+          "authority_paths": {
+            "run_local_configuration": "configs/simulation/sim009_failure_scenarios.json",
+            "world_model": "data/simulation/sim004_navigation_proxy_world.sdf"
+          },
+          "backend_id": "gazebo_navigation",
+          "backend_profile": "gazebo",
+          "claim_scope": "run_local",
+          "component_version": "sim004-navigation-backend-v2",
+          "configuration_provenance": {
+            "run_local_configuration": "4df8805ce573247084b38f8ea98da4893e089e4e89a25466c1f86d7196df9002"
+          },
+          "correlation_identity": {
+            "action_id": "0fa4e7f0-5ed2-4a5c-b918-a3ff9e069a5e",
+            "mission_id": "3f22c751-51da-4ef3-b570-b4929b1cfe45",
+            "request_id": "88b70c1a-657d-48c0-9140-70f58e0778d7",
+            "trace_id": "40e3cd89-807a-4c57-bc8f-8b0d684a10b2"
+          },
+          "physics_semantic_applicable": true,
+          "predecessor_binding": {
+            "accepted_commit": "67bde0e1f29c3f974bf3f0b29dff3f3aaa38e5be",
+            "evidence_path": "results/simulation/SIM-009_failure_recovery.json",
+            "evidence_sha256": "91d10e5bb4fb7ca1b62c325885bec276c6ef6231c6baa0424f3213702be3216e",
+            "task_id": "TASK-SIM-009"
+          },
+          "profile_id": null,
+          "qualification_accepted_commit": "b55bc4fc2435e83c3761457b92d9e14892e39435",
+          "qualification_evidence_sha256": "dbd2fc20f6072f8889466fff29b80ec874d105b37c5633e909c633facdb2eb6a",
+          "qualification_evidence_task_id": "TASK-SIM-Q01",
+          "qualification_run_id": "q01-sim009-75bf27c5-84b0-40ab-84d2-1e28f440a779",
+          "qualification_task_id": "TASK-SIM-Q01-MIN",
+          "record_kind": "operation_run",
+          "replay_applicable": false,
+          "scenario_id": "SIM009-NAV-TF-UNAVAILABLE",
+          "semantic_outcome": {
+            "decision": "FAIL_CLOSED",
+            "execution_identity": {
+              "qualification_run_id": "q01-sim009-75bf27c5-84b0-40ab-84d2-1e28f440a779",
+              "scenario_execution_id": "17f07b0f-2644-4bee-977c-6e0c51e87782"
+            },
+            "outcome_kind": "failure",
+            "result": "failure",
+            "status": "failed"
+          },
+          "subject_id": "q01-sim009-SIM009-NAV-TF-UNAVAILABLE",
+          "timing": {
+            "bounded_execution": true,
+            "cleanup_complete": true,
+            "physics_measurement": {
+              "seconds": 48.804,
+              "source": "gz_stats"
+            },
+            "simulation_time": 48.804,
+            "simulation_time_source": "gz_stats"
+          },
+          "world_model_provenance": {
+            "world_model": "c26bf7270026bce976abf4bce7f6b2a188885396281c2139970461db01486959"
+          }
+        },
+        "replay_applicable": false,
+        "subject_id": "q01-sim009-SIM009-NAV-TF-UNAVAILABLE"
+      },
+      {
+        "historical_oracle": {
+          "accepted_commit": "67bde0e1f29c3f974bf3f0b29dff3f3aaa38e5be",
+          "envelope": {
+            "action_id": "ad08d656-cabc-4bb1-9bb7-616f5a8b7780",
+            "artifact_context_paths": [
+              "/simulation_authority",
+              "/infrastructure"
+            ],
+            "backend_profile": "gazebo",
+            "backend_qualification": null,
+            "backend_qualification_authority": null,
+            "failure_code": "NAVIGATION_TIMEOUT",
+            "mission_id": "ac39f94a-02ba-488c-a0be-1ea287bcd52f",
+            "physics_semantic_applicable": true,
+            "provenance_authority": {
+              "manifest_sha256": "/manifest_sha256"
+            },
+            "record_kind": "operation_run",
+            "recovery_decision": "RETRY",
+            "replay_applicable": false,
+            "request_id": "86e9bcb4-0ae2-4513-a6b2-4c1661addca0",
+            "required_backend_qualification_fields": [
+              "source_task",
+              "component_version",
+              "accepted_commit",
+              "evidence_path",
+              "evidence_sha256"
+            ],
+            "required_provenance_fields": [
+              "world_model_sha256",
+              "simulation_time"
+            ],
+            "required_source_hash_fields": [
+              "manifest_sha256",
+              "run_config_sha256"
+            ],
+            "requires_failure_recovery": true,
+            "requires_operation_identity": true,
+            "requires_skill": false,
+            "requires_verification": false,
+            "scenario_id": "SIM009-NAV-TIMEOUT-RETRY",
+            "scenario_pass": true,
+            "scenario_source_path": "/scenarios/5",
+            "simulation_only": true,
+            "simulator_provenance": {},
+            "skill_result": null,
+            "source_hashes": {
+              "manifest_sha256": "d47b16bd2096c0f4d966f61768cca38e1571393d0346ebf5d1aa5f657ebef317"
+            },
+            "source_json_path": "/scenarios/5/first_result",
+            "trace_id": "68130a6a-5369-40f0-b7b6-5854eb8944ce",
+            "verification_operational_failure": false,
+            "verification_result": null
+          },
+          "evidence_path": "results/simulation/SIM-009_failure_recovery.json",
+          "evidence_sha256": "91d10e5bb4fb7ca1b62c325885bec276c6ef6231c6baa0424f3213702be3216e",
+          "scenario_source_path": "/scenarios/5/first_result",
+          "task_id": "TASK-SIM-009"
+        },
+        "qualification_observation": {
+          "applicability": {
+            "physics_measurement": {
+              "state": "REQUIRED"
+            },
+            "structured_simulator_time": {
+              "state": "REQUIRED"
+            }
+          },
+          "authority_kind": "qualification_observation",
+          "authority_paths": {
+            "run_local_configuration": "configs/simulation/sim009_failure_scenarios.json",
+            "world_model": "data/simulation/sim004_navigation_proxy_world.sdf"
+          },
+          "backend_id": "gazebo_navigation",
+          "backend_profile": "gazebo",
+          "claim_scope": "run_local",
+          "component_version": "sim004-navigation-backend-v2",
+          "configuration_provenance": {
+            "run_local_configuration": "4df8805ce573247084b38f8ea98da4893e089e4e89a25466c1f86d7196df9002"
+          },
+          "correlation_identity": {
+            "action_id": "e8a56d66-c6ec-4b0d-97cf-4751d803eb6a",
+            "mission_id": "3140e908-06fd-40c0-a94a-de40ea196aab",
+            "request_id": "2272acaa-372b-45a5-bf2e-38d40dc0263f",
+            "trace_id": "65a17658-eea3-4f6e-a0df-6075ae2664e5"
+          },
+          "physics_semantic_applicable": true,
+          "predecessor_binding": {
+            "accepted_commit": "67bde0e1f29c3f974bf3f0b29dff3f3aaa38e5be",
+            "evidence_path": "results/simulation/SIM-009_failure_recovery.json",
+            "evidence_sha256": "91d10e5bb4fb7ca1b62c325885bec276c6ef6231c6baa0424f3213702be3216e",
+            "task_id": "TASK-SIM-009"
+          },
+          "profile_id": null,
+          "qualification_accepted_commit": "b55bc4fc2435e83c3761457b92d9e14892e39435",
+          "qualification_evidence_sha256": "dbd2fc20f6072f8889466fff29b80ec874d105b37c5633e909c633facdb2eb6a",
+          "qualification_evidence_task_id": "TASK-SIM-Q01",
+          "qualification_run_id": "q01-sim009-75bf27c5-84b0-40ab-84d2-1e28f440a779",
+          "qualification_task_id": "TASK-SIM-Q01-MIN",
+          "record_kind": "operation_run",
+          "replay_applicable": false,
+          "scenario_id": "SIM009-NAV-TIMEOUT-RETRY",
+          "semantic_outcome": {
+            "decision": "RETRY",
+            "execution_identity": {
+              "qualification_run_id": "q01-sim009-75bf27c5-84b0-40ab-84d2-1e28f440a779",
+              "scenario_execution_id": "87e60acd-b109-4d63-9bf0-3b2505fece5a"
+            },
+            "identity": {
+              "action_id_stable": true,
+              "attempt_incremented": true,
+              "idempotency_key_stable": true,
+              "mission_id_stable": true,
+              "retry_request_id_new": true
+            },
+            "logical_side_effect_count": 1,
+            "outcome_kind": "unknown",
+            "reconciliation": {
+              "action_id": "e8a56d66-c6ec-4b0d-97cf-4751d803eb6a",
+              "component_version": "sim004-navigation-backend-v2",
+              "evidence_refs": [
+                {
+                  "sha256": "2530eb4b0a09ca4da65a44b7c96f4e2c3e88df428d4bab2a6b87bd9927f56178",
+                  "uri": "urn:factory-evidence:sim-004:e8a56d66-c6ec-4b0d-97cf-4751d803eb6a"
+                }
+              ],
+              "message_type": "result",
+              "mission_id": "3140e908-06fd-40c0-a94a-de40ea196aab",
+              "observed_at": "2026-09-28T14:29:58.813Z",
+              "observed_status": "failed",
+              "operation": "action_status.get",
+              "request_id": "ff0a11c3-42bd-4193-90bc-7ad5dc9bc1fb",
+              "result": "success",
+              "schema_version": "1.0",
+              "source_kind": "mock",
+              "status": "succeeded",
+              "timestamp": "2026-09-28T14:29:58.813Z",
+              "trace_id": "65a17658-eea3-4f6e-a0df-6075ae2664e5"
+            },
+            "result": "pending",
+            "retry_authorization": {
+              "action_id": "e8a56d66-c6ec-4b0d-97cf-4751d803eb6a",
+              "error": {
+                "category": "EXECUTION_FAILED",
+                "code": "NAVIGATION_ABORTED",
+                "message": "0",
+                "retryable": true
+              },
+              "idempotency_key": "sim009-navigation",
+              "mission_id": "3140e908-06fd-40c0-a94a-de40ea196aab",
+              "new_request_id": "c8e3fb47-6378-46e1-b629-ca9be1898bef",
+              "next_attempt": 2,
+              "previous_attempt": 1,
+              "previous_request_id": "2272acaa-372b-45a5-bf2e-38d40dc0263f",
+              "reconciliation_completed": true,
+              "record_type": "retry_authorization",
+              "resolved_status": "failed",
+              "retry_budget_remaining": 1
+            },
+            "retry_request": {
+              "action_id": "e8a56d66-c6ec-4b0d-97cf-4751d803eb6a",
+              "attempt": 2,
+              "component_version": "sim009-failure-suite-v1",
+              "deadline_at": "2026-09-28T14:30:28.813Z",
+              "destination_id": "line-b-drop",
+              "idempotency_key": "sim009-navigation",
+              "message_type": "request",
+              "mission_id": "3140e908-06fd-40c0-a94a-de40ea196aab",
+              "operation": "navigation.execute",
+              "request_id": "c8e3fb47-6378-46e1-b629-ca9be1898bef",
+              "retry_budget_remaining": 0,
+              "robot_id": "simulation-proxy-mobile-base",
+              "schema_version": "1.0",
+              "speed_profile_id": "sim-safe-v1",
+              "timeout_ms": 30000,
+              "timestamp": "2026-09-28T14:29:58.813Z",
+              "trace_id": "65a17658-eea3-4f6e-a0df-6075ae2664e5"
+            },
+            "retry_result": {
+              "action_id": "e8a56d66-c6ec-4b0d-97cf-4751d803eb6a",
+              "arrival": {
+                "destination_id": "line-b-drop",
+                "verified": true
+              },
+              "component_version": "sim004-navigation-backend-v2",
+              "evidence_refs": [
+                {
+                  "sha256": "2530eb4b0a09ca4da65a44b7c96f4e2c3e88df428d4bab2a6b87bd9927f56178",
+                  "uri": "urn:factory-evidence:sim-004:e8a56d66-c6ec-4b0d-97cf-4751d803eb6a"
+                }
+              ],
+              "message_type": "result",
+              "mission_id": "3140e908-06fd-40c0-a94a-de40ea196aab",
+              "operation": "navigation.execute",
+              "request_id": "c8e3fb47-6378-46e1-b629-ca9be1898bef",
+              "result": "success",
+              "schema_version": "1.0",
+              "source_kind": "mock",
+              "status": "succeeded",
+              "timestamp": "2026-09-28T14:30:00.125Z",
+              "trace_id": "65a17658-eea3-4f6e-a0df-6075ae2664e5"
+            },
+            "retry_suppressed": false,
+            "status": "unknown"
+          },
+          "subject_id": "q01-sim009-SIM009-NAV-TIMEOUT-RETRY",
+          "timing": {
+            "bounded_execution": true,
+            "cleanup_complete": true,
+            "physics_measurement": {
+              "seconds": 40.488,
+              "source": "gz_stats"
+            },
+            "simulation_time": 40.488,
+            "simulation_time_source": "gz_stats"
+          },
+          "world_model_provenance": {
+            "world_model": "c26bf7270026bce976abf4bce7f6b2a188885396281c2139970461db01486959"
+          }
+        },
+        "replay_applicable": false,
+        "subject_id": "q01-sim009-SIM009-NAV-TIMEOUT-RETRY"
+      },
+      {
+        "historical_oracle": {
+          "accepted_commit": "67bde0e1f29c3f974bf3f0b29dff3f3aaa38e5be",
+          "envelope": {
+            "action_id": "23641957-fa29-4ed6-b832-c820e6ff66b0",
+            "artifact_context_paths": [
+              "/simulation_authority",
+              "/infrastructure"
+            ],
+            "backend_profile": "mujoco",
+            "backend_qualification": null,
+            "backend_qualification_authority": null,
+            "failure_code": "INVALID_OBSERVATION",
+            "mission_id": "b8c19a7b-031f-4a5f-8121-7db8bab17f6e",
+            "physics_semantic_applicable": true,
+            "provenance_authority": {
+              "manifest_sha256": "/manifest_sha256"
+            },
+            "record_kind": "operation_run",
+            "recovery_decision": "FAIL_CLOSED",
+            "replay_applicable": false,
+            "request_id": "c9de7549-eaee-43b1-a91d-738d00840a35",
+            "required_backend_qualification_fields": [
+              "source_task",
+              "component_version",
+              "accepted_commit",
+              "evidence_path",
+              "evidence_sha256"
+            ],
+            "required_provenance_fields": [
+              "world_model_sha256",
+              "simulation_time"
+            ],
+            "required_source_hash_fields": [
+              "manifest_sha256",
+              "run_config_sha256"
+            ],
+            "requires_failure_recovery": true,
+            "requires_operation_identity": true,
+            "requires_skill": false,
+            "requires_verification": false,
+            "scenario_id": "SIM009-VLA-AMBIGUOUS",
+            "scenario_pass": true,
+            "scenario_source_path": "/scenarios/11",
+            "simulation_only": true,
+            "simulator_provenance": {},
+            "skill_result": "failed",
+            "source_hashes": {
+              "manifest_sha256": "d47b16bd2096c0f4d966f61768cca38e1571393d0346ebf5d1aa5f657ebef317"
+            },
+            "source_json_path": "/scenarios/11/result",
+            "trace_id": "27d55dfa-2662-4c01-944a-2a35d21112bc",
+            "verification_operational_failure": false,
+            "verification_result": null
+          },
+          "evidence_path": "results/simulation/SIM-009_failure_recovery.json",
+          "evidence_sha256": "91d10e5bb4fb7ca1b62c325885bec276c6ef6231c6baa0424f3213702be3216e",
+          "scenario_source_path": "/scenarios/11/result",
+          "task_id": "TASK-SIM-009"
+        },
+        "qualification_observation": {
+          "applicability": {
+            "physics_measurement": {
+              "execution_state": {
+                "physics_started": false,
+                "simulator_started": false
+              },
+              "justification": "TERMINATED_BEFORE_SIMULATOR_PHYSICS",
+              "state": "NOT_APPLICABLE"
+            },
+            "structured_simulator_time": {
+              "execution_state": {
+                "physics_started": false,
+                "simulator_started": false
+              },
+              "justification": "TERMINATED_BEFORE_SIMULATOR_PHYSICS",
+              "state": "NOT_APPLICABLE"
+            }
+          },
+          "authority_kind": "qualification_observation",
+          "authority_paths": {
+            "run_local_configuration": "configs/simulation/sim005_mujoco_manipulation.yaml",
+            "world_model": "data/simulation/sim005_mujoco_manipulation.xml"
+          },
+          "backend_id": "mujoco",
+          "backend_profile": "mujoco",
+          "claim_scope": "run_local",
+          "component_version": "sim005-mujoco-vla-backend-v1",
+          "configuration_provenance": {
+            "run_local_configuration": "34c0900610d69e5f7500bcf0121490c984a62b20943e89dd3bc7d5c0c87b84a9"
+          },
+          "correlation_identity": {
+            "action_id": "b4bf6fae-4a32-4408-a723-0e63d53c2dfb",
+            "mission_id": "0a0e0346-6be4-4987-9895-fed937fedfd9",
+            "request_id": "994ebf2c-37cf-46d5-a9fd-466965e4758c",
+            "trace_id": "47d6e02c-c519-4a9e-b2c3-97aa063ac929"
+          },
+          "physics_semantic_applicable": false,
+          "predecessor_binding": {
+            "accepted_commit": "67bde0e1f29c3f974bf3f0b29dff3f3aaa38e5be",
+            "evidence_path": "results/simulation/SIM-009_failure_recovery.json",
+            "evidence_sha256": "91d10e5bb4fb7ca1b62c325885bec276c6ef6231c6baa0424f3213702be3216e",
+            "task_id": "TASK-SIM-009"
+          },
+          "profile_id": null,
+          "qualification_accepted_commit": "b55bc4fc2435e83c3761457b92d9e14892e39435",
+          "qualification_evidence_sha256": "dbd2fc20f6072f8889466fff29b80ec874d105b37c5633e909c633facdb2eb6a",
+          "qualification_evidence_task_id": "TASK-SIM-Q01",
+          "qualification_run_id": "q01-sim009-75bf27c5-84b0-40ab-84d2-1e28f440a779",
+          "qualification_task_id": "TASK-SIM-Q01-MIN",
+          "record_kind": "operation_run",
+          "replay_applicable": false,
+          "scenario_id": "SIM009-VLA-AMBIGUOUS",
+          "semantic_outcome": {
+            "decision": "FAIL_CLOSED",
+            "execution_identity": {
+              "qualification_run_id": "q01-sim009-75bf27c5-84b0-40ab-84d2-1e28f440a779",
+              "scenario_execution_id": "c962efde-d281-4312-bc6c-eef1e865caa2"
+            },
+            "outcome_kind": "uncertain",
+            "result": "failure",
+            "status": "failed"
+          },
+          "subject_id": "q01-sim009-SIM009-VLA-AMBIGUOUS",
+          "timing": {
+            "bounded_execution": true,
+            "cleanup_complete": true,
+            "execution_state": {
+              "physics_started": false,
+              "simulator_started": false
+            },
+            "simulation_time_source": "mujoco_no_physics_start"
+          },
+          "world_model_provenance": {
+            "world_model": "21fcb775690b058285480d77c96c788779bd8e7aaced663ba6eeda4691dfd160"
+          }
+        },
+        "replay_applicable": false,
+        "subject_id": "q01-sim009-SIM009-VLA-AMBIGUOUS"
+      },
+      {
+        "historical_oracle": {
+          "accepted_commit": "67bde0e1f29c3f974bf3f0b29dff3f3aaa38e5be",
+          "envelope": {
+            "action_id": "78f3e584-f123-4d2c-8388-5dfd87c3198b",
+            "artifact_context_paths": [
+              "/simulation_authority",
+              "/infrastructure"
+            ],
+            "backend_profile": "mujoco",
+            "backend_qualification": null,
+            "backend_qualification_authority": null,
+            "failure_code": "CONTACT_LOSS",
+            "mission_id": "1c0f5a4b-158f-490e-bdef-1f4e72143c32",
+            "physics_semantic_applicable": true,
+            "provenance_authority": {
+              "manifest_sha256": "/manifest_sha256"
+            },
+            "record_kind": "operation_run",
+            "recovery_decision": "FAIL_CLOSED",
+            "replay_applicable": false,
+            "request_id": "a45e8862-7775-41c6-8b7a-2d080b60e90d",
+            "required_backend_qualification_fields": [
+              "source_task",
+              "component_version",
+              "accepted_commit",
+              "evidence_path",
+              "evidence_sha256"
+            ],
+            "required_provenance_fields": [
+              "world_model_sha256",
+              "simulation_time"
+            ],
+            "required_source_hash_fields": [
+              "manifest_sha256",
+              "run_config_sha256"
+            ],
+            "requires_failure_recovery": true,
+            "requires_operation_identity": true,
+            "requires_skill": false,
+            "requires_verification": false,
+            "scenario_id": "SIM009-VLA-CONTACT-LOSS",
+            "scenario_pass": true,
+            "scenario_source_path": "/scenarios/8",
+            "simulation_only": true,
+            "simulator_provenance": {},
+            "skill_result": "failed",
+            "source_hashes": {
+              "manifest_sha256": "d47b16bd2096c0f4d966f61768cca38e1571393d0346ebf5d1aa5f657ebef317"
+            },
+            "source_json_path": "/scenarios/8/result",
+            "trace_id": "52624b9b-2e08-4d0a-8f8c-75e4a7ff8e32",
+            "verification_operational_failure": false,
+            "verification_result": null
+          },
+          "evidence_path": "results/simulation/SIM-009_failure_recovery.json",
+          "evidence_sha256": "91d10e5bb4fb7ca1b62c325885bec276c6ef6231c6baa0424f3213702be3216e",
+          "scenario_source_path": "/scenarios/8/result",
+          "task_id": "TASK-SIM-009"
+        },
+        "qualification_observation": {
+          "applicability": {
+            "physics_measurement": {
+              "state": "REQUIRED"
+            },
+            "structured_simulator_time": {
+              "state": "REQUIRED"
+            }
+          },
+          "authority_kind": "qualification_observation",
+          "authority_paths": {
+            "run_local_configuration": "configs/simulation/sim005_mujoco_manipulation.yaml",
+            "world_model": "data/simulation/sim005_mujoco_manipulation.xml"
+          },
+          "backend_id": "mujoco",
+          "backend_profile": "mujoco",
+          "claim_scope": "run_local",
+          "component_version": "sim005-mujoco-vla-backend-v1",
+          "configuration_provenance": {
+            "run_local_configuration": "34c0900610d69e5f7500bcf0121490c984a62b20943e89dd3bc7d5c0c87b84a9"
+          },
+          "correlation_identity": {
+            "action_id": "aaa345a2-d490-49c9-9e1c-5aa73a2c2ae2",
+            "mission_id": "871afe2f-dc0a-4848-8511-ce68d2f905f7",
+            "request_id": "6e9b4b22-0888-45fe-bbb4-6e10c630ed40",
+            "trace_id": "fbf2a649-0459-41d7-9832-0c46b2f92776"
+          },
+          "physics_semantic_applicable": true,
+          "predecessor_binding": {
+            "accepted_commit": "67bde0e1f29c3f974bf3f0b29dff3f3aaa38e5be",
+            "evidence_path": "results/simulation/SIM-009_failure_recovery.json",
+            "evidence_sha256": "91d10e5bb4fb7ca1b62c325885bec276c6ef6231c6baa0424f3213702be3216e",
+            "task_id": "TASK-SIM-009"
+          },
+          "profile_id": null,
+          "qualification_accepted_commit": "b55bc4fc2435e83c3761457b92d9e14892e39435",
+          "qualification_evidence_sha256": "dbd2fc20f6072f8889466fff29b80ec874d105b37c5633e909c633facdb2eb6a",
+          "qualification_evidence_task_id": "TASK-SIM-Q01",
+          "qualification_run_id": "q01-sim009-75bf27c5-84b0-40ab-84d2-1e28f440a779",
+          "qualification_task_id": "TASK-SIM-Q01-MIN",
+          "record_kind": "operation_run",
+          "replay_applicable": false,
+          "scenario_id": "SIM009-VLA-CONTACT-LOSS",
+          "semantic_outcome": {
+            "decision": "FAIL_CLOSED",
+            "execution_identity": {
+              "qualification_run_id": "q01-sim009-75bf27c5-84b0-40ab-84d2-1e28f440a779",
+              "scenario_execution_id": "6b2ba9ea-0b0d-4800-936a-2545750b52fe"
+            },
+            "outcome_kind": "failure",
+            "result": "failure",
+            "status": "failed"
+          },
+          "subject_id": "q01-sim009-SIM009-VLA-CONTACT-LOSS",
+          "timing": {
+            "bounded_execution": true,
+            "cleanup_complete": true,
+            "physics_measurement": {
+              "seconds": 0.8,
+              "source": "mujoco_steps_times_timestep"
+            },
+            "simulation_time": 0.8,
+            "simulation_time_source": "mujoco_steps_times_timestep"
+          },
+          "world_model_provenance": {
+            "world_model": "21fcb775690b058285480d77c96c788779bd8e7aaced663ba6eeda4691dfd160"
+          }
+        },
+        "replay_applicable": false,
+        "subject_id": "q01-sim009-SIM009-VLA-CONTACT-LOSS"
+      },
+      {
+        "historical_oracle": {
+          "accepted_commit": "67bde0e1f29c3f974bf3f0b29dff3f3aaa38e5be",
+          "envelope": {
+            "action_id": "72af3a60-8964-48dd-9809-35f59de73804",
+            "artifact_context_paths": [
+              "/simulation_authority",
+              "/infrastructure"
+            ],
+            "backend_profile": "mujoco",
+            "backend_qualification": null,
+            "backend_qualification_authority": null,
+            "failure_code": "GRASP_MISS",
+            "mission_id": "cc63a4c9-ca2a-4668-9ca1-734c639980f4",
+            "physics_semantic_applicable": true,
+            "provenance_authority": {
+              "manifest_sha256": "/manifest_sha256"
+            },
+            "record_kind": "operation_run",
+            "recovery_decision": "FAIL_CLOSED",
+            "replay_applicable": false,
+            "request_id": "6fd97f23-3f3d-49db-9935-1058bc7bc28b",
+            "required_backend_qualification_fields": [
+              "source_task",
+              "component_version",
+              "accepted_commit",
+              "evidence_path",
+              "evidence_sha256"
+            ],
+            "required_provenance_fields": [
+              "world_model_sha256",
+              "simulation_time"
+            ],
+            "required_source_hash_fields": [
+              "manifest_sha256",
+              "run_config_sha256"
+            ],
+            "requires_failure_recovery": true,
+            "requires_operation_identity": true,
+            "requires_skill": false,
+            "requires_verification": false,
+            "scenario_id": "SIM009-VLA-GRASP-MISS",
+            "scenario_pass": true,
+            "scenario_source_path": "/scenarios/7",
+            "simulation_only": true,
+            "simulator_provenance": {},
+            "skill_result": "failed",
+            "source_hashes": {
+              "manifest_sha256": "d47b16bd2096c0f4d966f61768cca38e1571393d0346ebf5d1aa5f657ebef317"
+            },
+            "source_json_path": "/scenarios/7/result",
+            "trace_id": "97372976-e0b5-46c8-967b-4cc3a3cb5509",
+            "verification_operational_failure": false,
+            "verification_result": null
+          },
+          "evidence_path": "results/simulation/SIM-009_failure_recovery.json",
+          "evidence_sha256": "91d10e5bb4fb7ca1b62c325885bec276c6ef6231c6baa0424f3213702be3216e",
+          "scenario_source_path": "/scenarios/7/result",
+          "task_id": "TASK-SIM-009"
+        },
+        "qualification_observation": {
+          "applicability": {
+            "physics_measurement": {
+              "state": "REQUIRED"
+            },
+            "structured_simulator_time": {
+              "state": "REQUIRED"
+            }
+          },
+          "authority_kind": "qualification_observation",
+          "authority_paths": {
+            "run_local_configuration": "configs/simulation/sim005_mujoco_manipulation.yaml",
+            "world_model": "data/simulation/sim005_mujoco_manipulation.xml"
+          },
+          "backend_id": "mujoco",
+          "backend_profile": "mujoco",
+          "claim_scope": "run_local",
+          "component_version": "sim005-mujoco-vla-backend-v1",
+          "configuration_provenance": {
+            "run_local_configuration": "34c0900610d69e5f7500bcf0121490c984a62b20943e89dd3bc7d5c0c87b84a9"
+          },
+          "correlation_identity": {
+            "action_id": "2292a58a-41e4-4a89-bf36-40a490d5a784",
+            "mission_id": "c3be59df-80c3-49eb-b419-2d0b62d15352",
+            "request_id": "0620b132-5366-457c-8f8d-9252d18daa42",
+            "trace_id": "e7fb61df-0606-4c65-bc4f-a46af60ffaee"
+          },
+          "physics_semantic_applicable": true,
+          "predecessor_binding": {
+            "accepted_commit": "67bde0e1f29c3f974bf3f0b29dff3f3aaa38e5be",
+            "evidence_path": "results/simulation/SIM-009_failure_recovery.json",
+            "evidence_sha256": "91d10e5bb4fb7ca1b62c325885bec276c6ef6231c6baa0424f3213702be3216e",
+            "task_id": "TASK-SIM-009"
+          },
+          "profile_id": null,
+          "qualification_accepted_commit": "b55bc4fc2435e83c3761457b92d9e14892e39435",
+          "qualification_evidence_sha256": "dbd2fc20f6072f8889466fff29b80ec874d105b37c5633e909c633facdb2eb6a",
+          "qualification_evidence_task_id": "TASK-SIM-Q01",
+          "qualification_run_id": "q01-sim009-75bf27c5-84b0-40ab-84d2-1e28f440a779",
+          "qualification_task_id": "TASK-SIM-Q01-MIN",
+          "record_kind": "operation_run",
+          "replay_applicable": false,
+          "scenario_id": "SIM009-VLA-GRASP-MISS",
+          "semantic_outcome": {
+            "decision": "FAIL_CLOSED",
+            "execution_identity": {
+              "qualification_run_id": "q01-sim009-75bf27c5-84b0-40ab-84d2-1e28f440a779",
+              "scenario_execution_id": "89b2ff09-975b-4077-8d14-7242279dac12"
+            },
+            "outcome_kind": "failure",
+            "result": "failure",
+            "status": "failed"
+          },
+          "subject_id": "q01-sim009-SIM009-VLA-GRASP-MISS",
+          "timing": {
+            "bounded_execution": true,
+            "cleanup_complete": true,
+            "physics_measurement": {
+              "seconds": 0.8,
+              "source": "mujoco_steps_times_timestep"
+            },
+            "simulation_time": 0.8,
+            "simulation_time_source": "mujoco_steps_times_timestep"
+          },
+          "world_model_provenance": {
+            "world_model": "21fcb775690b058285480d77c96c788779bd8e7aaced663ba6eeda4691dfd160"
+          }
+        },
+        "replay_applicable": false,
+        "subject_id": "q01-sim009-SIM009-VLA-GRASP-MISS"
+      },
+      {
+        "historical_oracle": {
+          "accepted_commit": "67bde0e1f29c3f974bf3f0b29dff3f3aaa38e5be",
+          "envelope": {
+            "action_id": "d8f32438-7c96-485a-a966-bb41446c5bc3",
+            "artifact_context_paths": [
+              "/simulation_authority",
+              "/infrastructure"
+            ],
+            "backend_profile": "mujoco",
+            "backend_qualification": null,
+            "backend_qualification_authority": null,
+            "failure_code": "MUJOCO_TIMEOUT",
+            "mission_id": "6f5f39c8-b28f-47b7-b6c6-3af270f45467",
+            "physics_semantic_applicable": true,
+            "provenance_authority": {
+              "manifest_sha256": "/manifest_sha256"
+            },
+            "record_kind": "operation_run",
+            "recovery_decision": "RECONCILE",
+            "replay_applicable": false,
+            "request_id": "c2f3b88d-8781-4404-bc25-ddeabbfc3256",
+            "required_backend_qualification_fields": [
+              "source_task",
+              "component_version",
+              "accepted_commit",
+              "evidence_path",
+              "evidence_sha256"
+            ],
+            "required_provenance_fields": [
+              "world_model_sha256",
+              "simulation_time"
+            ],
+            "required_source_hash_fields": [
+              "manifest_sha256",
+              "run_config_sha256"
+            ],
+            "requires_failure_recovery": true,
+            "requires_operation_identity": true,
+            "requires_skill": false,
+            "requires_verification": false,
+            "scenario_id": "SIM009-VLA-TIMEOUT",
+            "scenario_pass": true,
+            "scenario_source_path": "/scenarios/10",
+            "simulation_only": true,
+            "simulator_provenance": {},
+            "skill_result": "uncertain",
+            "source_hashes": {
+              "manifest_sha256": "d47b16bd2096c0f4d966f61768cca38e1571393d0346ebf5d1aa5f657ebef317"
+            },
+            "source_json_path": "/scenarios/10/result",
+            "trace_id": "feb94512-6b30-40b4-8334-61c5e37d44c7",
+            "verification_operational_failure": false,
+            "verification_result": null
+          },
+          "evidence_path": "results/simulation/SIM-009_failure_recovery.json",
+          "evidence_sha256": "91d10e5bb4fb7ca1b62c325885bec276c6ef6231c6baa0424f3213702be3216e",
+          "scenario_source_path": "/scenarios/10/result",
+          "task_id": "TASK-SIM-009"
+        },
+        "qualification_observation": {
+          "applicability": {
+            "physics_measurement": {
+              "execution_state": {
+                "physics_started": false,
+                "simulator_started": false
+              },
+              "justification": "TERMINATED_BEFORE_SIMULATOR_PHYSICS",
+              "state": "NOT_APPLICABLE"
+            },
+            "structured_simulator_time": {
+              "execution_state": {
+                "physics_started": false,
+                "simulator_started": false
+              },
+              "justification": "TERMINATED_BEFORE_SIMULATOR_PHYSICS",
+              "state": "NOT_APPLICABLE"
+            }
+          },
+          "authority_kind": "qualification_observation",
+          "authority_paths": {
+            "run_local_configuration": "configs/simulation/sim005_mujoco_manipulation.yaml",
+            "world_model": "data/simulation/sim005_mujoco_manipulation.xml"
+          },
+          "backend_id": "mujoco",
+          "backend_profile": "mujoco",
+          "claim_scope": "run_local",
+          "component_version": "sim005-mujoco-vla-backend-v1",
+          "configuration_provenance": {
+            "run_local_configuration": "34c0900610d69e5f7500bcf0121490c984a62b20943e89dd3bc7d5c0c87b84a9"
+          },
+          "correlation_identity": {
+            "action_id": "ac165ad8-8dbc-4915-82c8-4190bd4e5823",
+            "mission_id": "10f5b0bc-6677-4278-95ab-b64f0f9208fc",
+            "request_id": "123e3ab2-cf01-4c53-8c53-22f41456430a",
+            "trace_id": "a5cce503-e7b6-4209-a0a2-b1cb738f8a92"
+          },
+          "physics_semantic_applicable": false,
+          "predecessor_binding": {
+            "accepted_commit": "67bde0e1f29c3f974bf3f0b29dff3f3aaa38e5be",
+            "evidence_path": "results/simulation/SIM-009_failure_recovery.json",
+            "evidence_sha256": "91d10e5bb4fb7ca1b62c325885bec276c6ef6231c6baa0424f3213702be3216e",
+            "task_id": "TASK-SIM-009"
+          },
+          "profile_id": null,
+          "qualification_accepted_commit": "b55bc4fc2435e83c3761457b92d9e14892e39435",
+          "qualification_evidence_sha256": "dbd2fc20f6072f8889466fff29b80ec874d105b37c5633e909c633facdb2eb6a",
+          "qualification_evidence_task_id": "TASK-SIM-Q01",
+          "qualification_run_id": "q01-sim009-75bf27c5-84b0-40ab-84d2-1e28f440a779",
+          "qualification_task_id": "TASK-SIM-Q01-MIN",
+          "record_kind": "operation_run",
+          "replay_applicable": false,
+          "scenario_id": "SIM009-VLA-TIMEOUT",
+          "semantic_outcome": {
+            "decision": "RECONCILE",
+            "execution_identity": {
+              "qualification_run_id": "q01-sim009-75bf27c5-84b0-40ab-84d2-1e28f440a779",
+              "scenario_execution_id": "da8efe66-50dd-4b63-a115-d55982b8eee0"
+            },
+            "outcome_kind": "unknown",
+            "reconciliation": {
+              "action_id": "ac165ad8-8dbc-4915-82c8-4190bd4e5823",
+              "component_version": "sim005-mujoco-vla-backend-v1",
+              "evidence_refs": [
+                {
+                  "sha256": "ce318761bb98b7a7d512e807ea5f469bc97234887883d22a2e7b02b72849d3f7",
+                  "uri": "urn:factory-evidence:sim-005:10f5b0bc-6677-4278-95ab-b64f0f9208fc:ac165ad8-8dbc-4915-82c8-4190bd4e5823"
+                }
+              ],
+              "message_type": "result",
+              "mission_id": "10f5b0bc-6677-4278-95ab-b64f0f9208fc",
+              "observed_at": "2026-09-28T14:30:09.298Z",
+              "observed_status": "unknown",
+              "operation": "action_status.get",
+              "request_id": "64abdab5-5bc8-4e4d-8b8c-f863d7e6bef1",
+              "result": "success",
+              "schema_version": "1.0",
+              "source_kind": "mock",
+              "status": "succeeded",
+              "timestamp": "2026-09-28T14:30:09.305Z",
+              "trace_id": "a5cce503-e7b6-4209-a0a2-b1cb738f8a92"
+            },
+            "result": "pending",
+            "status": "unknown"
+          },
+          "subject_id": "q01-sim009-SIM009-VLA-TIMEOUT",
+          "timing": {
+            "bounded_execution": true,
+            "cleanup_complete": true,
+            "execution_state": {
+              "physics_started": false,
+              "simulator_started": false
+            },
+            "simulation_time_source": "mujoco_no_physics_start"
+          },
+          "world_model_provenance": {
+            "world_model": "21fcb775690b058285480d77c96c788779bd8e7aaced663ba6eeda4691dfd160"
+          }
+        },
+        "replay_applicable": false,
+        "subject_id": "q01-sim009-SIM009-VLA-TIMEOUT"
+      },
+      {
+        "historical_oracle": {
+          "accepted_commit": "67bde0e1f29c3f974bf3f0b29dff3f3aaa38e5be",
+          "envelope": {
+            "action_id": "8f8c4ae7-45fe-4e6f-ab33-01eee0350252",
+            "artifact_context_paths": [
+              "/simulation_authority",
+              "/infrastructure"
+            ],
+            "backend_profile": "mujoco",
+            "backend_qualification": null,
+            "backend_qualification_authority": null,
+            "failure_code": "MUJOCO_OUTCOME_UNKNOWN",
+            "mission_id": "428ffcb7-0969-4908-91ba-a4d209143bc0",
+            "physics_semantic_applicable": true,
+            "provenance_authority": {
+              "manifest_sha256": "/manifest_sha256"
+            },
+            "record_kind": "operation_run",
+            "recovery_decision": "RECONCILE",
+            "replay_applicable": false,
+            "request_id": "d590b07a-c051-4e82-99ac-4b6501b27a20",
+            "required_backend_qualification_fields": [
+              "source_task",
+              "component_version",
+              "accepted_commit",
+              "evidence_path",
+              "evidence_sha256"
+            ],
+            "required_provenance_fields": [
+              "world_model_sha256",
+              "simulation_time"
+            ],
+            "required_source_hash_fields": [
+              "manifest_sha256",
+              "run_config_sha256"
+            ],
+            "requires_failure_recovery": true,
+            "requires_operation_identity": true,
+            "requires_skill": false,
+            "requires_verification": false,
+            "scenario_id": "SIM009-VLA-UNKNOWN",
+            "scenario_pass": true,
+            "scenario_source_path": "/scenarios/12",
+            "simulation_only": true,
+            "simulator_provenance": {},
+            "skill_result": "uncertain",
+            "source_hashes": {
+              "manifest_sha256": "d47b16bd2096c0f4d966f61768cca38e1571393d0346ebf5d1aa5f657ebef317"
+            },
+            "source_json_path": "/scenarios/12/result",
+            "trace_id": "df39caf6-b189-4991-bbf8-01d7e0bb6f6e",
+            "verification_operational_failure": false,
+            "verification_result": null
+          },
+          "evidence_path": "results/simulation/SIM-009_failure_recovery.json",
+          "evidence_sha256": "91d10e5bb4fb7ca1b62c325885bec276c6ef6231c6baa0424f3213702be3216e",
+          "scenario_source_path": "/scenarios/12/result",
+          "task_id": "TASK-SIM-009"
+        },
+        "qualification_observation": {
+          "applicability": {
+            "physics_measurement": {
+              "state": "REQUIRED"
+            },
+            "structured_simulator_time": {
+              "state": "REQUIRED"
+            }
+          },
+          "authority_kind": "qualification_observation",
+          "authority_paths": {
+            "run_local_configuration": "configs/simulation/sim005_mujoco_manipulation.yaml",
+            "world_model": "data/simulation/sim005_mujoco_manipulation.xml"
+          },
+          "backend_id": "mujoco",
+          "backend_profile": "mujoco",
+          "claim_scope": "run_local",
+          "component_version": "sim005-mujoco-vla-backend-v1",
+          "configuration_provenance": {
+            "run_local_configuration": "34c0900610d69e5f7500bcf0121490c984a62b20943e89dd3bc7d5c0c87b84a9"
+          },
+          "correlation_identity": {
+            "action_id": "272be7ee-6998-4865-ac21-1e2799975701",
+            "mission_id": "ef3265d5-6aad-45e0-9a5e-1b1d0688936d",
+            "request_id": "89da5b90-429f-4e0c-bfe5-b941c409204c",
+            "trace_id": "10303398-71e7-4f45-a439-6de6931c31ff"
+          },
+          "physics_semantic_applicable": true,
+          "predecessor_binding": {
+            "accepted_commit": "67bde0e1f29c3f974bf3f0b29dff3f3aaa38e5be",
+            "evidence_path": "results/simulation/SIM-009_failure_recovery.json",
+            "evidence_sha256": "91d10e5bb4fb7ca1b62c325885bec276c6ef6231c6baa0424f3213702be3216e",
+            "task_id": "TASK-SIM-009"
+          },
+          "profile_id": null,
+          "qualification_accepted_commit": "b55bc4fc2435e83c3761457b92d9e14892e39435",
+          "qualification_evidence_sha256": "dbd2fc20f6072f8889466fff29b80ec874d105b37c5633e909c633facdb2eb6a",
+          "qualification_evidence_task_id": "TASK-SIM-Q01",
+          "qualification_run_id": "q01-sim009-75bf27c5-84b0-40ab-84d2-1e28f440a779",
+          "qualification_task_id": "TASK-SIM-Q01-MIN",
+          "record_kind": "operation_run",
+          "replay_applicable": false,
+          "scenario_id": "SIM009-VLA-UNKNOWN",
+          "semantic_outcome": {
+            "decision": "RECONCILE",
+            "execution_identity": {
+              "qualification_run_id": "q01-sim009-75bf27c5-84b0-40ab-84d2-1e28f440a779",
+              "scenario_execution_id": "8c21779d-4884-4df2-a757-030378df2030"
+            },
+            "outcome_kind": "unknown",
+            "reconciliation": {
+              "action_id": "272be7ee-6998-4865-ac21-1e2799975701",
+              "component_version": "sim005-mujoco-vla-backend-v1",
+              "evidence_refs": [
+                {
+                  "sha256": "4735da4d86a6e1381331b51df7f0502c94e300380b1b48b18d825e306cf0428c",
+                  "uri": "urn:factory-evidence:sim-005:ef3265d5-6aad-45e0-9a5e-1b1d0688936d:272be7ee-6998-4865-ac21-1e2799975701"
+                }
+              ],
+              "message_type": "result",
+              "mission_id": "ef3265d5-6aad-45e0-9a5e-1b1d0688936d",
+              "observed_at": "2026-09-28T14:30:09.323Z",
+              "observed_status": "succeeded",
+              "operation": "action_status.get",
+              "request_id": "e8eeb466-b054-4087-9838-2524d8816868",
+              "result": "success",
+              "schema_version": "1.0",
+              "source_kind": "mock",
+              "status": "succeeded",
+              "timestamp": "2026-09-28T14:30:09.329Z",
+              "trace_id": "10303398-71e7-4f45-a439-6de6931c31ff"
+            },
+            "result": "pending",
+            "status": "unknown"
+          },
+          "subject_id": "q01-sim009-SIM009-VLA-UNKNOWN",
+          "timing": {
+            "bounded_execution": true,
+            "cleanup_complete": true,
+            "physics_measurement": {
+              "seconds": 0.8,
+              "source": "mujoco_steps_times_timestep"
+            },
+            "simulation_time": 0.8,
+            "simulation_time_source": "mujoco_steps_times_timestep"
+          },
+          "world_model_provenance": {
+            "world_model": "21fcb775690b058285480d77c96c788779bd8e7aaced663ba6eeda4691dfd160"
+          }
+        },
+        "replay_applicable": false,
+        "subject_id": "q01-sim009-SIM009-VLA-UNKNOWN"
+      },
+      {
+        "historical_oracle": {
+          "accepted_commit": "67bde0e1f29c3f974bf3f0b29dff3f3aaa38e5be",
+          "envelope": {
+            "action_id": "626a064b-1ba4-4bd2-bcd5-b116c1201d75",
+            "artifact_context_paths": [
+              "/simulation_authority",
+              "/infrastructure"
+            ],
+            "backend_profile": "mujoco",
+            "backend_qualification": null,
+            "backend_qualification_authority": null,
+            "failure_code": "WORKSPACE_LIMIT",
+            "mission_id": "3d31ade6-761c-4585-b239-523b64d52d84",
+            "physics_semantic_applicable": true,
+            "provenance_authority": {
+              "manifest_sha256": "/manifest_sha256"
+            },
+            "record_kind": "operation_run",
+            "recovery_decision": "FAIL_CLOSED",
+            "replay_applicable": false,
+            "request_id": "e0dbd3cd-4672-4364-9e2a-22a64dd6de89",
+            "required_backend_qualification_fields": [
+              "source_task",
+              "component_version",
+              "accepted_commit",
+              "evidence_path",
+              "evidence_sha256"
+            ],
+            "required_provenance_fields": [
+              "world_model_sha256",
+              "simulation_time"
+            ],
+            "required_source_hash_fields": [
+              "manifest_sha256",
+              "run_config_sha256"
+            ],
+            "requires_failure_recovery": true,
+            "requires_operation_identity": true,
+            "requires_skill": false,
+            "requires_verification": false,
+            "scenario_id": "SIM009-VLA-WORKSPACE-LIMIT",
+            "scenario_pass": true,
+            "scenario_source_path": "/scenarios/9",
+            "simulation_only": true,
+            "simulator_provenance": {},
+            "skill_result": "failed",
+            "source_hashes": {
+              "manifest_sha256": "d47b16bd2096c0f4d966f61768cca38e1571393d0346ebf5d1aa5f657ebef317"
+            },
+            "source_json_path": "/scenarios/9/result",
+            "trace_id": "c006eeac-3722-4000-8117-0e7f86334651",
+            "verification_operational_failure": false,
+            "verification_result": null
+          },
+          "evidence_path": "results/simulation/SIM-009_failure_recovery.json",
+          "evidence_sha256": "91d10e5bb4fb7ca1b62c325885bec276c6ef6231c6baa0424f3213702be3216e",
+          "scenario_source_path": "/scenarios/9/result",
+          "task_id": "TASK-SIM-009"
+        },
+        "qualification_observation": {
+          "applicability": {
+            "physics_measurement": {
+              "execution_state": {
+                "physics_started": false,
+                "simulator_started": false
+              },
+              "justification": "TERMINATED_BEFORE_SIMULATOR_PHYSICS",
+              "state": "NOT_APPLICABLE"
+            },
+            "structured_simulator_time": {
+              "execution_state": {
+                "physics_started": false,
+                "simulator_started": false
+              },
+              "justification": "TERMINATED_BEFORE_SIMULATOR_PHYSICS",
+              "state": "NOT_APPLICABLE"
+            }
+          },
+          "authority_kind": "qualification_observation",
+          "authority_paths": {
+            "run_local_configuration": "configs/simulation/sim005_mujoco_manipulation.yaml",
+            "world_model": "data/simulation/sim005_mujoco_manipulation.xml"
+          },
+          "backend_id": "mujoco",
+          "backend_profile": "mujoco",
+          "claim_scope": "run_local",
+          "component_version": "sim005-mujoco-vla-backend-v1",
+          "configuration_provenance": {
+            "run_local_configuration": "34c0900610d69e5f7500bcf0121490c984a62b20943e89dd3bc7d5c0c87b84a9"
+          },
+          "correlation_identity": {
+            "action_id": "baa15dfc-6b87-4589-bd52-52e8f9575ecb",
+            "mission_id": "ffb6e677-84ae-495d-b312-783fc1aaa52f",
+            "request_id": "7133c788-11f8-4510-bb1e-f37a1e1db5ec",
+            "trace_id": "d862a3bd-c3f5-4984-8ef0-18fabcf16ad6"
+          },
+          "physics_semantic_applicable": false,
+          "predecessor_binding": {
+            "accepted_commit": "67bde0e1f29c3f974bf3f0b29dff3f3aaa38e5be",
+            "evidence_path": "results/simulation/SIM-009_failure_recovery.json",
+            "evidence_sha256": "91d10e5bb4fb7ca1b62c325885bec276c6ef6231c6baa0424f3213702be3216e",
+            "task_id": "TASK-SIM-009"
+          },
+          "profile_id": null,
+          "qualification_accepted_commit": "b55bc4fc2435e83c3761457b92d9e14892e39435",
+          "qualification_evidence_sha256": "dbd2fc20f6072f8889466fff29b80ec874d105b37c5633e909c633facdb2eb6a",
+          "qualification_evidence_task_id": "TASK-SIM-Q01",
+          "qualification_run_id": "q01-sim009-75bf27c5-84b0-40ab-84d2-1e28f440a779",
+          "qualification_task_id": "TASK-SIM-Q01-MIN",
+          "record_kind": "operation_run",
+          "replay_applicable": false,
+          "scenario_id": "SIM009-VLA-WORKSPACE-LIMIT",
+          "semantic_outcome": {
+            "decision": "FAIL_CLOSED",
+            "execution_identity": {
+              "qualification_run_id": "q01-sim009-75bf27c5-84b0-40ab-84d2-1e28f440a779",
+              "scenario_execution_id": "c563ad34-44f9-479c-8e58-9e53554ed30d"
+            },
+            "outcome_kind": "failure",
+            "result": "failure",
+            "status": "failed"
+          },
+          "subject_id": "q01-sim009-SIM009-VLA-WORKSPACE-LIMIT",
+          "timing": {
+            "bounded_execution": true,
+            "cleanup_complete": true,
+            "execution_state": {
+              "physics_started": false,
+              "simulator_started": false
+            },
+            "simulation_time_source": "mujoco_no_physics_start"
+          },
+          "world_model_provenance": {
+            "world_model": "21fcb775690b058285480d77c96c788779bd8e7aaced663ba6eeda4691dfd160"
+          }
+        },
+        "replay_applicable": false,
+        "subject_id": "q01-sim009-SIM009-VLA-WORKSPACE-LIMIT"
+      }
+    ]
+  },
+  "repeatability": {
+    "fresh_execution": {
+      "baseline": {
+        "commit": "6909c6cceb727598570f6e170ae8d1d293418c9a",
+        "detached_worktree_path": "/tmp/sim010-g7-20260929T074541Z-baseline-e7TiTG",
+        "exit_code": 1,
+        "failed_node_set": [
+          "scripts/codex/test_run_task_orchestrator.py::OrchestratorUnitTests::test_load_model_policy",
+          "tests/test_simulation_lane_gate.py::SimulationLaneGateTests::test_canonical_state_reconstructs_sim_go_without_authorizing_lane",
+          "tests/test_simulation_lane_gate.py::SimulationLaneGateTests::test_combined_review_commit_rewrite_and_concatenated_operation_fails_closed",
+          "tests/test_simulation_lane_gate.py::SimulationLaneGateTests::test_rehashed_unreviewed_runtime_operation_marker_fails_provenance_closed"
+        ],
+        "failure_signatures": {
+          "scripts/codex/test_run_task_orchestrator.py::OrchestratorUnitTests::test_load_model_policy": "7305ef81303173de1137ce866aff5bff0ced5edd15c44f84bfd16ed13eb53b04",
+          "tests/test_simulation_lane_gate.py::SimulationLaneGateTests::test_canonical_state_reconstructs_sim_go_without_authorizing_lane": "1e9c0d4ab987b547e72dffd7db684d9ff251636a27ad76ca7dbd1db0ce4beeb2",
+          "tests/test_simulation_lane_gate.py::SimulationLaneGateTests::test_combined_review_commit_rewrite_and_concatenated_operation_fails_closed": "71149efcf3e8cb3a7c89e4c00a54a807f6f2618412f8c97b4a4fc34de6b3cef4",
+          "tests/test_simulation_lane_gate.py::SimulationLaneGateTests::test_rehashed_unreviewed_runtime_operation_marker_fails_provenance_closed": "71149efcf3e8cb3a7c89e4c00a54a807f6f2618412f8c97b4a4fc34de6b3cef4"
+        },
+        "output_sha256": "6025c84a2041c47db8d39c82f556bf8d5c2ec2cfec0368186654082a66e6798f",
+        "probe": {
+          "cwd": "/tmp/sim010-g7-20260929T074541Z-baseline-e7TiTG",
+          "mujoco_file": "/home/jinho/projects/factory_physical_ai/.venv-sim/lib/python3.12/site-packages/mujoco/__init__.py",
+          "mujoco_version": "3.13.0",
+          "project_module_origin": "/tmp/sim010-g7-20260929T074541Z-baseline-e7TiTG/src/simulation_runtime/mujoco_vla_backend.py",
+          "pytest_file": "/usr/lib/python3/dist-packages/pytest/__init__.py",
+          "python": "/home/jinho/projects/factory_physical_ai/.venv-sim/bin/python",
+          "python_version": "3.12.3 (main, Aug 31 2026, 10:18:26) [GCC 13.3.0]",
+          "sys_path": [
+            "",
+            "/tmp/sim010-g7-20260929T074541Z-baseline-e7TiTG/src",
+            "/usr/lib/python312.zip",
+            "/usr/lib/python3.12",
+            "/usr/lib/python3.12/lib-dynload",
+            "/home/jinho/projects/factory_physical_ai/.venv-sim/lib/python3.12/site-packages",
+            "/usr/local/lib/python3.12/dist-packages",
+            "/usr/lib/python3/dist-packages",
+            "/usr/lib/python3.12/dist-packages"
+          ]
+        },
+        "pytest_summary": "4 failed, 337 passed in 50.51s"
+      },
+      "candidate": {
+        "commit": "2ec859845628992b02686a6d8bcdbcb77985a5a2",
+        "detached_worktree_path": "/tmp/sim010-g7-20260929T074541Z-candidate-PxkfGM",
+        "exit_code": 1,
+        "failed_node_set": [
+          "scripts/codex/test_run_task_orchestrator.py::OrchestratorUnitTests::test_load_model_policy",
+          "tests/test_simulation_lane_gate.py::SimulationLaneGateTests::test_canonical_state_reconstructs_sim_go_without_authorizing_lane",
+          "tests/test_simulation_lane_gate.py::SimulationLaneGateTests::test_combined_review_commit_rewrite_and_concatenated_operation_fails_closed",
+          "tests/test_simulation_lane_gate.py::SimulationLaneGateTests::test_rehashed_unreviewed_runtime_operation_marker_fails_provenance_closed"
+        ],
+        "failure_signatures": {
+          "scripts/codex/test_run_task_orchestrator.py::OrchestratorUnitTests::test_load_model_policy": "7305ef81303173de1137ce866aff5bff0ced5edd15c44f84bfd16ed13eb53b04",
+          "tests/test_simulation_lane_gate.py::SimulationLaneGateTests::test_canonical_state_reconstructs_sim_go_without_authorizing_lane": "1e9c0d4ab987b547e72dffd7db684d9ff251636a27ad76ca7dbd1db0ce4beeb2",
+          "tests/test_simulation_lane_gate.py::SimulationLaneGateTests::test_combined_review_commit_rewrite_and_concatenated_operation_fails_closed": "71149efcf3e8cb3a7c89e4c00a54a807f6f2618412f8c97b4a4fc34de6b3cef4",
+          "tests/test_simulation_lane_gate.py::SimulationLaneGateTests::test_rehashed_unreviewed_runtime_operation_marker_fails_provenance_closed": "71149efcf3e8cb3a7c89e4c00a54a807f6f2618412f8c97b4a4fc34de6b3cef4"
+        },
+        "output_sha256": "38967ef7ee82f1210fce4b5acbb98e7d6651bd28b55d765766f440fc2113b875",
+        "probe": {
+          "cwd": "/tmp/sim010-g7-20260929T074541Z-candidate-PxkfGM",
+          "mujoco_file": "/home/jinho/projects/factory_physical_ai/.venv-sim/lib/python3.12/site-packages/mujoco/__init__.py",
+          "mujoco_version": "3.13.0",
+          "project_module_origin": "/tmp/sim010-g7-20260929T074541Z-candidate-PxkfGM/src/simulation_runtime/mujoco_vla_backend.py",
+          "pytest_file": "/usr/lib/python3/dist-packages/pytest/__init__.py",
+          "python": "/home/jinho/projects/factory_physical_ai/.venv-sim/bin/python",
+          "python_version": "3.12.3 (main, Aug 31 2026, 10:18:26) [GCC 13.3.0]",
+          "sys_path": [
+            "",
+            "/tmp/sim010-g7-20260929T074541Z-candidate-PxkfGM/src",
+            "/usr/lib/python312.zip",
+            "/usr/lib/python3.12",
+            "/usr/lib/python3.12/lib-dynload",
+            "/home/jinho/projects/factory_physical_ai/.venv-sim/lib/python3.12/site-packages",
+            "/usr/local/lib/python3.12/dist-packages",
+            "/usr/lib/python3/dist-packages",
+            "/usr/lib/python3.12/dist-packages"
+          ]
+        },
+        "pytest_summary": "4 failed, 379 passed in 55.18s"
+      },
+      "classification": "PROVEN_PREEXISTING",
+      "cleanup": "git worktree remove (without --force) via EXIT trap",
+      "pytest_command": "PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=<detached-worktree>/src /home/jinho/projects/factory_physical_ai/.venv-sim/bin/python -m pytest -q -p no:cacheprovider",
+      "run_id": "g7-20260929T074541Z"
+    },
+    "gate": "S10-G7 REPEATABILITY_AND_FINALIZATION",
+    "qualified_python": "/home/jinho/projects/factory_physical_ai/.venv-sim/bin/python",
+    "repeat_source_commit": "2ec859845628992b02686a6d8bcdbcb77985a5a2",
+    "semantic_authority_comparison": {
+      "compared_fields": [
+        "accepted_source_index",
+        "q01_qualification_binding",
+        "deterministic_replay",
+        "physics_semantic_regression",
+        "normal_failure_suite_coverage",
+        "task_specific_result",
+        "full_repository_regression.failure_classification",
+        "full_repository_regression.failed_node_set",
+        "full_repository_regression.failure_signatures"
+      ],
+      "runtime_identity_comparison": "not required; fresh detached-worktree paths and output hashes differ by design",
+      "status": "PASS"
+    },
+    "status": "PASS"
   },
   "schema_version": "1.0",
   "simulation_only": true,
-  "source_git_sha": "3e528e218023df76ac86c1c82d8b4833e6f064fc",
+  "source_authority": {
+    "candidate_commit": "2ec859845628992b02686a6d8bcdbcb77985a5a2",
+    "implementation_files": [
+      {
+        "path": "src/simulation_runtime/observability_regression.py",
+        "sha256": "ea1053a78241f98108f698d4d92c06115e72f1e6220fb4b9a88d11d217cbe23b"
+      },
+      {
+        "path": "scripts/run_simulation_observability_regression.py",
+        "sha256": "ef710ea41cbcd956a1d04c6ee47158ba370b4bde8638caf3123ff6a34318c71b"
+      },
+      {
+        "path": "tests/test_simulation_observability_regression.py",
+        "sha256": "8e05767547f364cc363d662bb867ed40f7ea6658451bdc2403f32cb52a593082"
+      }
+    ],
+    "validated_against_immutable_git_objects": true
+  },
+  "source_git_sha": "2ec859845628992b02686a6d8bcdbcb77985a5a2",
   "task_id": "TASK-SIM-010",
-  "task_specific_result": "SIM_OBSERVABILITY_REGRESSION_BLOCKED"
+  "task_specific_result": "SIM_OBSERVABILITY_REGRESSION_READY"
 }
