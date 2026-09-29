@@ -1,6 +1,6 @@
 # TASK-SIM-010 History
 
-Current status: INCOMPLETE / QUALIFICATION APPROVAL REQUIRED
+Current status: INCOMPLETE / Q01 INTEGRATION CORRECTION REQUIRED
 
 | Seq | Type | Result | Record | Primary fault domain | Architecture decision / next action |
 |---:|---|---|---|---|---|
@@ -15,3 +15,4 @@ Current status: INCOMPLETE / QUALIFICATION APPROVAL REQUIRED
 | 10 | Fix | NOT READY FOR INDEPENDENT RE-REVIEW | `10_fix.md` | `SIM010_IMPLEMENTATION_DEFECT` | normalized-row false blockers removed; accepted-field gaps remain fail-closed |
 | 11 | Diagnosis | RESOLVED | `11_diagnosis.md` | `COMBINED_PROVENANCE_ARCHITECTURE_DEFECT` | `PREDECESSOR_QUALIFICATION_TASK_REQUIRED` / `IMPLEMENT_RESOLVED_FIX` |
 | 12 | Fix | NOT READY FOR INDEPENDENT RE-REVIEW | `12_fix.md` | `TRUE_PREDECESSOR_EVIDENCE_GAP` | `PREDECESSOR_QUALIFICATION_TASK_APPROVAL` |
+| 13 | Diagnosis | RESOLVED | `13_diagnosis.md` | `SIM010_Q01_INTEGRATION_GAP` | `ADDITIVE_Q01_BINDING_REQUIRED` / narrow TASK addendum, then bounded correction |
