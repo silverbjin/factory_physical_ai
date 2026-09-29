@@ -37,6 +37,7 @@ LOCALIZATION_SECONDS = 30
 CANONICAL_START = {"frame_id": "map", "x": -6.5, "y": 0.0, "yaw": 0.0,
                    "source": "depot.yaml free cell at (-6.5, 0.0), verified against map origin/resolution"}
 GOALS = {
+    "warehouse-a": "{pose: {header: {frame_id: map}, pose: {position: {x: -6.5, y: 0.0, z: 0.0}, orientation: {w: 1.0}}}}",
     "line-b-drop": "{pose: {header: {frame_id: map}, pose: {position: {x: -6.0, y: 0.0, z: 0.0}, orientation: {w: 1.0}}}}",
     "blocked-bay": "{pose: {header: {frame_id: map}, pose: {position: {x: 100.0, y: 100.0, z: 0.0}, orientation: {w: 1.0}}}}",
 }
@@ -72,7 +73,7 @@ def request(destination: str = "line-b-drop", timeout_ms: int = 30000) -> dict[s
 class BoundedGazeboNav2Runtime:
     """Private ROS action implementation with process-group lifecycle control."""
 
-    def __init__(self) -> None:
+    def __init__(self, world_path: Path | None = None) -> None:
         self.processes: list[subprocess.Popen[str]] = []
         self.observations: dict[str, RuntimeObservation] = {}
         self.measurements: dict[str, Any] = {"started_at": now(), "processes": [], "readiness": [], "cleanup": {}}
@@ -86,6 +87,7 @@ class BoundedGazeboNav2Runtime:
         self.environment["GZ_PARTITION"] = f"sim004-{uuid.uuid4().hex[:12]}"
         self.log_files: list[Any] = []
         self._ready = False
+        self.world_path = world_path or ROOT / "data/simulation/sim004_navigation_proxy_world.sdf"
 
     @property
     def ready(self) -> bool:
@@ -105,7 +107,7 @@ class BoundedGazeboNav2Runtime:
         # world, bridge, localization, and navigation topology.  Starting the
         # generic bringup separately leaves its map->odom transform unrelated
         # to the proxy robot and makes every goal fail closed.
-        self._start("gazebo_nav2_proxy", [ROS2, "launch", "nav2_bringup", "tb4_simulation_launch.py", "headless:=True", "use_rviz:=False", "autostart:=False", f"x_pose:={CANONICAL_START['x']}", f"y_pose:={CANONICAL_START['y']}", f"yaw:={CANONICAL_START['yaw']}", f"world:={ROOT / 'data/simulation/sim004_navigation_proxy_world.sdf'}"])
+        self._start("gazebo_nav2_proxy", [ROS2, "launch", "nav2_bringup", "tb4_simulation_launch.py", "headless:=True", "use_rviz:=False", "autostart:=False", f"x_pose:={CANONICAL_START['x']}", f"y_pose:={CANONICAL_START['y']}", f"yaw:={CANONICAL_START['yaw']}", f"world:={self.world_path}"])
         deadline = time.monotonic() + STARTUP_SECONDS
         while time.monotonic() < deadline:
             probe_start = time.monotonic()

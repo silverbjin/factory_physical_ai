@@ -1,0 +1,363 @@
+"""Simulator-neutral adapter and executor for ``verification.verify``.
+
+Only immutable adapter output reaches the verifier. Gazebo and MuJoCo input is
+limited to the public accepted result records; no simulator runtime is queried.
+"""
+from __future__ import annotations
+
+from dataclasses import dataclass
+from datetime import datetime, timedelta, timezone
+import hashlib
+import json
+from pathlib import Path
+from typing import Any, Mapping, Sequence
+
+from .smoke import ContractViolation, canonical_sha256, validate_contract_message
+
+COMPONENT_VERSION = "sim006-verification-backend-v1"
+VALIDITY_WINDOW = timedelta(minutes=5)
+_SOURCES = frozenset({"deterministic", "gazebo", "gazebo_system", "mujoco"})
+_PAYLOAD_FIELDS = frozenset({"quality", "part_id", "location_id"})
+_ACCEPTED_PROVENANCE = {
+    "deterministic": {"backend_id": "sim006-deterministic-adapter-v1", "accepted_task_id": "TASK-SIM-006", "accepted_commit": "local-fixture", "evidence_path": "deterministic-fixture", "evidence_sha256": "local-fixture"},
+    "gazebo": {"backend_id": "sim004-gazebo-navigation-backend-v2", "accepted_task_id": "TASK-SIM-004", "accepted_commit": "b7e8266abd17f48c18cca94d9433db50fd55464d", "evidence_path": "results/simulation/SIM-004_navigation_backend.json", "evidence_sha256": "b4c0ce91dde6c2f92c57ea6a227149362279993dee0dec4fd1ab12877e73f1d9"},
+    "gazebo_system": {"backend_id": "sim008-gazebo-system-observation-adapter-v1", "accepted_task_id": "TASK-SIM-008", "accepted_commit": "task-owned-runtime", "evidence_path": "results/simulation/SIM-008_normal_system_e2e.json", "evidence_sha256": "task-owned-runtime"},
+    "mujoco": {"backend_id": "sim005-mujoco-vla-backend-v1", "accepted_task_id": "TASK-SIM-005", "accepted_commit": "542514a4d10bc03087834e8a5f672d53afe6aa21", "evidence_path": "results/simulation/SIM-005_mujoco_vla_backend.json", "evidence_sha256": "f4d41fdb1f13978e1b1e5c91b95e31b38a69825a0d432a8284ff7731a3beb84f"},
+}
+_ROOT = Path(__file__).resolve().parents[2]
+
+
+class FrozenDict(dict[str, str]):
+    """JSON-schema-compatible mapping that cannot be changed after creation."""
+    def _immutable(self, *_: object, **__: object) -> None:
+        raise TypeError("normalized observation data is immutable")
+    __setitem__ = __delitem__ = clear = pop = popitem = setdefault = update = __ior__ = _immutable
+
+
+def _frozen(value: Mapping[str, object]) -> FrozenDict:
+    return FrozenDict({str(key): str(item) for key, item in value.items()})
+
+
+def _timestamp(value: str) -> datetime:
+    parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
+    if parsed.tzinfo is None:
+        raise ValueError("timestamp must be UTC")
+    return parsed.astimezone(timezone.utc)
+
+
+def _now() -> str:
+    return datetime.now(timezone.utc).isoformat(timespec="milliseconds").replace("+00:00", "Z")
+
+
+def _accepted_records(source: str) -> tuple[Mapping[str, Any], ...]:
+    """Load records only after verifying their accepted immutable artifact."""
+    if source not in {"gazebo", "mujoco"}:
+        raise ValueError("accepted upstream records are required only for simulator sources")
+    binding = _ACCEPTED_PROVENANCE[source]
+    artifact = _ROOT / binding["evidence_path"]
+    try:
+        raw = artifact.read_bytes()
+        evidence = json.loads(raw)
+    except (OSError, UnicodeDecodeError, json.JSONDecodeError) as exc:
+        raise ValueError("accepted upstream evidence is unavailable or malformed") from exc
+    if hashlib.sha256(raw).hexdigest() != binding["evidence_sha256"]:
+        raise ValueError("accepted upstream evidence hash mismatch")
+    scenarios = evidence.get("scenarios") if isinstance(evidence, Mapping) else None
+    if not isinstance(scenarios, list):
+        raise ValueError("accepted upstream evidence has no scenarios")
+    if source == "gazebo":
+        records = [item["result"] for item in scenarios if isinstance(item, Mapping) and isinstance(item.get("result"), Mapping)]
+    else:
+        records = [item for item in scenarios if isinstance(item, Mapping)]
+    return tuple(records)
+
+
+def _record_sha256(record: Mapping[str, Any]) -> str:
+    """Return the shared canonical identity for one full accepted record."""
+    return canonical_sha256(dict(record))
+
+
+def _match_accepted_record(source: str, candidate: Mapping[str, Any]) -> Mapping[str, Any]:
+    """Resolve caller input to exactly one byte-bound accepted artifact record."""
+    records = _accepted_records(source)
+    if source == "gazebo":
+        action_id = candidate.get("action_id")
+        records = tuple(record for record in records if record.get("action_id") == action_id)
+    matches = tuple(record for record in records if dict(record) == dict(candidate))
+    if len(matches) != 1:
+        raise ValueError("upstream observation must match exactly one accepted record")
+    return matches[0]
+
+
+def _accepted_record_by_hash(source: str, record_sha256: str) -> Mapping[str, Any]:
+    """Resolve a preserved record binding to exactly one accepted record."""
+    if len(record_sha256) != 64 or any(character not in "0123456789abcdef" for character in record_sha256):
+        raise ContractViolation("upstream record hash is malformed")
+    matches = tuple(record for record in _accepted_records(source) if _record_sha256(record) == record_sha256)
+    if len(matches) != 1:
+        raise ContractViolation("upstream record hash must resolve exactly one accepted record")
+    return matches[0]
+
+
+def _source_identity_from_record(source: str, trusted: Mapping[str, Any]) -> Mapping[str, str]:
+    """Extract provenance only from an already matched accepted record."""
+    if source == "gazebo":
+        evidence_refs = trusted.get("evidence_refs")
+        if not isinstance(evidence_refs, list) or len(evidence_refs) != 1 or not isinstance(evidence_refs[0], Mapping):
+            raise ValueError("accepted SIM-004 evidence identity is malformed")
+        identity = evidence_refs[0]
+    else:
+        identity = trusted.get("observation_identity")
+        if not isinstance(identity, Mapping):
+            raise ValueError("accepted SIM-005 observation identity is malformed")
+    if not all(isinstance(key, str) and isinstance(value, str) for key, value in identity.items()):
+        raise ValueError("accepted upstream identity is malformed")
+    return identity
+
+
+def _normalized_material_from_record(source: str, trusted: Mapping[str, Any]) -> tuple[dict[str, str], dict[str, str]]:
+    """Derive the only contract-visible payload/reference for one trusted record."""
+    payload = {"quality": "insufficient"}
+    if source == "gazebo":
+        action_id, timestamp = trusted.get("action_id"), trusted.get("timestamp")
+        if not isinstance(action_id, str) or not action_id or not isinstance(timestamp, str) or not timestamp:
+            raise ContractViolation("accepted SIM-004 record identity is malformed")
+        fixture_id = f"gazebo-navigation-{action_id}"
+        fixture_version = "sim004-navigation-backend-v2"
+    else:
+        identity = _source_identity_from_record(source, trusted)
+        fixture_id, fixture_version, timestamp = identity.get("fixture_id"), identity.get("fixture_version"), identity.get("timestamp")
+        if not all(isinstance(value, str) and value for value in (fixture_id, fixture_version, timestamp)):
+            raise ContractViolation("accepted SIM-005 record identity is malformed")
+    reference = {"fixture_set_id": "SIM_FIXTURE_SET_V1", "fixture_id": fixture_id, "fixture_version": fixture_version, "content_sha256": canonical_sha256(payload), "timestamp": timestamp, "source_kind": "mock"}
+    return payload, reference
+
+
+def _validate_simulator_record_binding(observation: NormalizedObservation) -> None:
+    """Verify record hash, source identity, payload, and reference as one binding."""
+    if observation.source == "gazebo_system":
+        encoded = observation.provenance.get("runtime_record")
+        try:
+            record = json.loads(encoded) if isinstance(encoded, str) else None
+        except json.JSONDecodeError:
+            record = None
+        if not isinstance(record, Mapping):
+            raise ContractViolation("Gazebo system runtime record is missing")
+        identity = record.get("observation_identity")
+        if (record.get("integrated_world") != "gazebo_harmonic" or
+                record.get("mujoco_live_world") is not False or
+                not isinstance(identity, Mapping) or
+                dict(identity) != dict(observation.source_identity) or
+                dict(record.get("observation", {})) != dict(observation.payload)):
+            raise ContractViolation("Gazebo system runtime record is malformed")
+        return
+    record_sha256 = observation.provenance.get("record_sha256")
+    if not isinstance(record_sha256, str):
+        raise ContractViolation("upstream record hash is missing")
+    trusted = _accepted_record_by_hash(observation.source, record_sha256)
+    if dict(observation.source_identity) != dict(_source_identity_from_record(observation.source, trusted)):
+        raise ContractViolation("source identity does not bind to the accepted upstream record")
+    expected_payload, expected_reference = _normalized_material_from_record(observation.source, trusted)
+    if dict(observation.payload) != expected_payload or dict(observation.reference) != expected_reference:
+        raise ContractViolation("normalized observation does not bind to the accepted upstream record")
+
+
+@dataclass(frozen=True)
+class NormalizedObservation:
+    """Immutable contract evidence plus validated accepted-backend provenance."""
+    reference: FrozenDict
+    payload: FrozenDict
+    source: str
+    provenance: FrozenDict
+    source_identity: FrozenDict
+
+    def __post_init__(self) -> None:
+        object.__setattr__(self, "reference", _frozen(self.reference))
+        object.__setattr__(self, "payload", _frozen(self.payload))
+        object.__setattr__(self, "provenance", _frozen(self.provenance))
+        object.__setattr__(self, "source_identity", _frozen(self.source_identity))
+
+
+@dataclass(frozen=True)
+class VerificationDecision:
+    result: dict[str, Any]
+    route: str
+
+
+def _normalized(
+    source: str,
+    payload: Mapping[str, str],
+    *,
+    fixture_id: str,
+    fixture_version: str,
+    timestamp: str,
+    trusted_record: Mapping[str, Any] | None = None,
+) -> NormalizedObservation:
+    if source not in _SOURCES:
+        raise ValueError("unsupported observation source")
+    if not fixture_id.strip() or not fixture_version.strip():
+        raise ValueError("fixture identity is required")
+    _timestamp(timestamp)
+    material = dict(payload)
+    if set(material) - _PAYLOAD_FIELDS:
+        raise ValueError("simulator-specific or hidden-state fields are forbidden")
+    quality = material.get("quality")
+    if quality not in {"valid", "insufficient", "ambiguous"}:
+        raise ValueError("observation quality is invalid")
+    if quality == "valid":
+        if set(material) != _PAYLOAD_FIELDS or not material["part_id"].strip() or not material["location_id"].strip():
+            raise ValueError("valid observations require exact part and location")
+    elif set(material) != {"quality"}:
+        raise ValueError("insufficient or ambiguous evidence must not assert state")
+    identity_hash = canonical_sha256(material)
+    reference = {"fixture_set_id": "SIM_FIXTURE_SET_V1", "fixture_id": fixture_id, "fixture_version": fixture_version, "content_sha256": identity_hash, "timestamp": timestamp, "source_kind": "mock"}
+    provenance = {"source": source, **_ACCEPTED_PROVENANCE[source]}
+    if source == "deterministic":
+        if trusted_record is not None:
+            raise ValueError("deterministic observations cannot carry simulator provenance")
+        source_identity = reference
+    elif source == "gazebo_system":
+        if not isinstance(trusted_record, Mapping):
+            raise ValueError("Gazebo system observations require a runtime record")
+        identity = trusted_record.get("observation_identity")
+        if not isinstance(identity, Mapping):
+            raise ValueError("Gazebo system observation identity is malformed")
+        provenance["runtime_record"] = json.dumps(dict(trusted_record), sort_keys=True, separators=(",", ":"))
+        source_identity = identity
+    else:
+        if trusted_record is None:
+            raise ValueError("simulator observations require a trusted accepted record")
+        provenance["record_sha256"] = _record_sha256(trusted_record)
+        source_identity = _source_identity_from_record(source, trusted_record)
+    return NormalizedObservation(reference, material, source, provenance, source_identity)
+
+
+def normalize_deterministic_observation(observation: Mapping[str, str], **identity: str) -> NormalizedObservation:
+    return _normalized("deterministic", observation, **identity)
+
+
+def normalize_gazebo_observation(navigation_result: Mapping[str, Any]) -> NormalizedObservation:
+    """Adapt a public SIM-004 ``navigation.execute`` result, not world state."""
+    allowed = {"action_id", "arrival", "component_version", "evidence_refs", "message_type", "mission_id", "operation", "request_id", "result", "schema_version", "source_kind", "status", "timestamp", "trace_id"}
+    if set(navigation_result) - allowed:
+        raise ValueError("SIM-004 navigation result contains forbidden hidden-state fields")
+    evidence_refs = navigation_result.get("evidence_refs")
+    timestamp, action_id = str(navigation_result.get("timestamp", "")), str(navigation_result.get("action_id", ""))
+    if not action_id:
+        raise ValueError("SIM-004 navigation result requires action_id")
+    if not isinstance(evidence_refs, Sequence) or isinstance(evidence_refs, (str, bytes)) or len(evidence_refs) != 1 or not isinstance(evidence_refs[0], Mapping):
+        raise ValueError("SIM-004 navigation result requires exactly one immutable evidence reference")
+    if not isinstance(evidence_refs[0].get("sha256"), str):
+        raise ValueError("SIM-004 navigation evidence hash is malformed")
+    # SIM-004 proves arrival at a destination but does not observe a part.  It
+    # therefore cannot establish the complete expected state for a pass.
+    trusted_record = _match_accepted_record("gazebo", navigation_result)
+    return _normalized("gazebo", {"quality": "insufficient"}, fixture_id=f"gazebo-navigation-{action_id}", fixture_version="sim004-navigation-backend-v2", timestamp=timestamp, trusted_record=trusted_record)
+
+
+def normalize_gazebo_system_observation(record: Mapping[str, Any]) -> NormalizedObservation:
+    """Adapt one task-owned Gazebo system-world observation for SIM-008.
+
+    The adapter deliberately accepts a tiny, immutable semantic record rather
+    than Gazebo transport messages or hidden simulator state.  It is not a
+    MuJoCo adapter and cannot make a dual-world claim.
+    """
+    observation = record.get("observation")
+    identity = record.get("observation_identity")
+    if not isinstance(observation, Mapping) or not isinstance(identity, Mapping):
+        raise ValueError("Gazebo system observation record is malformed")
+    required = {"fixture_set_id", "fixture_id", "fixture_version", "content_sha256", "timestamp", "source_kind"}
+    if set(identity) != required or identity.get("source_kind") != "mock":
+        raise ValueError("Gazebo system observation identity is malformed")
+    if identity.get("content_sha256") != canonical_sha256(dict(observation)):
+        raise ValueError("Gazebo system observation hash mismatch")
+    return _normalized("gazebo_system", observation, fixture_id=str(identity["fixture_id"]), fixture_version=str(identity["fixture_version"]), timestamp=str(identity["timestamp"]), trusted_record=record)
+
+
+def normalize_mujoco_observation(scenario: Mapping[str, Any]) -> NormalizedObservation:
+    """Adapt a public SIM-005 scenario record, never MuJoCo model state."""
+    allowed = {"action_id", "actual_error_code", "expected_error_code", "expected_result", "expected_status", "initial_state_identity", "measurement", "mission_id", "observation_identity", "pass", "policy_identity", "request_id", "result", "scenario", "status", "status_lookup"}
+    if set(scenario) - allowed:
+        raise ValueError("SIM-005 scenario contains forbidden hidden-state fields")
+    identity = scenario.get("observation_identity")
+    if not isinstance(identity, Mapping):
+        raise ValueError("SIM-005 scenario requires observation_identity")
+    fixture_id, fixture_version, timestamp, content_sha256 = (identity.get("fixture_id"), identity.get("fixture_version"), identity.get("timestamp"), identity.get("content_sha256"))
+    if identity.get("fixture_set_id") != "SIM_FIXTURE_SET_V1" or identity.get("source_kind") != "mock" or not all(isinstance(value, str) and value for value in (fixture_id, fixture_version, timestamp, content_sha256)):
+        raise ValueError("SIM-005 observation identity is malformed")
+    # SIM-005 exposes manipulation success evidence, not semantic part or
+    # location state.  Preserve its identity but fail closed as insufficient.
+    trusted_record = _match_accepted_record("mujoco", scenario)
+    return _normalized("mujoco", {"quality": "insufficient"}, fixture_id=fixture_id, fixture_version=fixture_version, timestamp=timestamp, trusted_record=trusted_record)
+
+
+class VerificationBackend:
+    """Execute the frozen exact-match profile from normalized evidence alone."""
+    def verify(self, request: Mapping[str, Any], observations: Sequence[NormalizedObservation], *, confidence: float | None = None) -> dict[str, Any]:
+        return self.verify_with_route(request, observations, confidence=confidence).result
+
+    def verify_with_route(self, request: Mapping[str, Any], observations: Sequence[NormalizedObservation], *, confidence: float | None = None) -> VerificationDecision:
+        try:
+            validate_contract_message(request)
+            if request.get("operation") != "verification.verify":
+                raise ContractViolation("verification.verify required")
+            self._validate_evidence(request, observations)
+        except (ContractViolation, KeyError, TypeError, ValueError) as exc:
+            return VerificationDecision(self._failure(request, "INVALID_VERIFICATION_EVIDENCE", str(exc)), "HITL")
+        payloads = [observation.payload for observation in observations]
+        if len(payloads) != 1 or payloads[0]["quality"] != "valid":
+            return VerificationDecision(self._success(request, "uncertain", observations, confidence), "RECONCILE")
+        expected, payload = request["expected_state"], payloads[0]
+        if payload["part_id"] != expected["part_id"] or payload["location_id"] != expected["location_id"]:
+            return VerificationDecision(self._success(request, "fail", observations, confidence), "RECOVERY")
+        return VerificationDecision(self._success(request, "pass", observations, confidence), "CONFIRMED")
+
+    def _validate_evidence(self, request: Mapping[str, Any], observations: Sequence[NormalizedObservation]) -> None:
+        references = request["observation_refs"]
+        if len(references) != len(observations) or not observations:
+            raise ContractViolation("every request reference must resolve exactly once")
+        request_time = _timestamp(request["timestamp"])
+        for reference, observation in zip(references, observations, strict=True):
+            if not isinstance(observation, NormalizedObservation) or dict(reference) != dict(observation.reference):
+                raise ContractViolation("observation identity, version, hash, or provenance mismatch")
+            if observation.source not in _SOURCES:
+                raise ContractViolation("unaccepted backend provenance")
+            provenance = dict(observation.provenance)
+            record_sha256 = provenance.pop("record_sha256", None)
+            runtime_record = provenance.pop("runtime_record", None)
+            if provenance != {"source": observation.source, **_ACCEPTED_PROVENANCE[observation.source]}:
+                raise ContractViolation("unaccepted backend provenance")
+            if canonical_sha256(dict(observation.payload)) != observation.reference["content_sha256"]:
+                raise ContractViolation("observation content hash mismatch")
+            if observation.source == "deterministic":
+                if record_sha256 is not None:
+                    raise ContractViolation("deterministic observation has simulator record provenance")
+                if dict(observation.reference) != dict(observation.source_identity):
+                    raise ContractViolation("normalized reference does not preserve source identity")
+            else:
+                if observation.source != "gazebo_system" and not isinstance(record_sha256, str):
+                    raise ContractViolation("upstream record hash is missing")
+                if observation.source == "gazebo_system" and not isinstance(runtime_record, str):
+                    raise ContractViolation("Gazebo system runtime record is missing")
+                _validate_simulator_record_binding(observation)
+            age = request_time - _timestamp(observation.reference["timestamp"])
+            if age < timedelta(0) or age > VALIDITY_WINDOW:
+                raise ContractViolation("observation is stale or from the future")
+
+    def _success(self, request: Mapping[str, Any], verdict: str, observations: Sequence[NormalizedObservation], confidence: float | None) -> dict[str, Any]:
+        if confidence is not None and not 0 <= confidence <= 1:
+            raise ValueError("confidence must be in [0, 1]")
+        default_confidence = {"pass": 1.0, "fail": 0.0, "uncertain": 0.0}[verdict]
+        result: dict[str, Any] = {"operation": "verification.verify", "message_type": "result", "schema_version": "1.0", "mission_id": request["mission_id"], "request_id": request["request_id"], "trace_id": request["trace_id"], "action_id": request["action_id"], "timestamp": _now(), "component_version": COMPONENT_VERSION, "source_kind": "mock", "status": "succeeded", "result": "success", "verification_profile_version": "sim-exact-match-v1", "verdict": verdict, "confidence": default_confidence if verdict == "uncertain" else confidence if confidence is not None else default_confidence, "evidence_refs": [{"uri": f"urn:factory-evidence:sim-006:{observation.source}:{observation.reference['fixture_id']}", "sha256": observation.reference["content_sha256"]} for observation in observations]}
+        if verdict != "pass":
+            result["mismatch_code"] = "INSUFFICIENT_OR_AMBIGUOUS_EVIDENCE" if verdict == "uncertain" else "EXPECTED_STATE_MISMATCH"
+        validate_contract_message(result)
+        return result
+
+    def _failure(self, request: Mapping[str, Any], code: str, message: str) -> dict[str, Any]:
+        required = {"mission_id", "request_id", "trace_id", "action_id"}
+        if not required <= request.keys():
+            raise ContractViolation(message)
+        result = {"operation": "verification.verify", "message_type": "result", "schema_version": "1.0", "mission_id": request["mission_id"], "request_id": request["request_id"], "trace_id": request["trace_id"], "action_id": request["action_id"], "timestamp": _now(), "component_version": COMPONENT_VERSION, "source_kind": "mock", "status": "failed", "result": "failure", "verification_profile_version": "sim-exact-match-v1", "error": {"code": code, "message": message or "verification evidence is invalid", "category": "DEPENDENCY_MALFORMED", "retryable": False}}
+        validate_contract_message(result)
+        return result

@@ -357,3 +357,82 @@ python3 scripts/codex/run_task_orchestrator.py \
   --max-fix-cycles 2 \
   resume TASK-SIM-004
 ```
+
+# First-run startup and Ctrl+C handling
+
+A newly created worktree can make the first `codex exec` child appear quiet while Codex initializes its model/session state.
+The runner now makes that state visible:
+
+```text
+START   TASK-SIM-006 IMPLEMENTATION — gpt-5.6-terra / medium
+CHILD   TASK-SIM-006 IMPLEMENTATION pid=<PID> started; waiting for Codex output
+WAIT    TASK-SIM-006 IMPLEMENTATION starting (10s)
+ACTIVE  TASK-SIM-006 IMPLEMENTATION child output detected
+```
+
+The default quiet heartbeat is now 10 seconds. Override it when needed:
+
+```bash
+python3 scripts/codex/run_task_orchestrator.py \
+  --heartbeat-seconds 5 \
+  range TASK-SIM-006 TASK-SIM-007
+```
+
+## Safe Ctrl+C
+
+`Ctrl+C` no longer leaks a Python `KeyboardInterrupt` traceback from `queue.get()`.
+The host catches it, stops the isolated child process group using bounded
+SIGINT -> SIGTERM -> SIGKILL escalation, records the interruption, preserves the
+TASK checkpoint/worktree, writes `summary.md` / `run_report.json`, and exits
+fail-closed.
+
+Expected output:
+
+```text
+INTERRUPT TASK-SIM-006 IMPLEMENTATION Ctrl+C received; stopping child cleanly
+STOP      TASK-SIM-006 — ERROR
+
+Next action: RESUME_INTERRUPTED_STAGE
+Resume: scripts/codex/resume-task TASK-SIM-006
+```
+
+Resume only the interrupted TASK stage:
+
+```bash
+scripts/codex/resume-task TASK-SIM-006
+```
+
+For a range, finish the interrupted TASK first. After it reaches ACCEPTED, start
+the remaining range from the next TASK if necessary.
+
+
+# Canonical Acceptance Manifest Directory
+
+All TASK acceptance manifests are now stored under:
+
+```text
+results/reviews/<TASK_SHORT>_acceptance.json
+```
+
+Technical Evidence remains in each TASK's declared Evidence directory. For example:
+
+```text
+results/simulation/SIM-004_navigation_backend.json   # technical Evidence
+results/reviews/SIM-004_acceptance.json              # acceptance manifest
+```
+
+Do not manually move acceptance manifests between Evidence directories.
+
+For legacy SIM acceptance manifests created under `results/simulation/`, run once:
+
+```bash
+python3 scripts/codex/migrate_acceptance_records.py TASK-SIM-004 TASK-SIM-005
+```
+
+Or migrate every legacy acceptance manifest found under `results/simulation/`:
+
+```bash
+python3 scripts/codex/migrate_acceptance_records.py
+```
+
+The migration is copy-safe: an existing different destination file causes failure rather than overwrite.

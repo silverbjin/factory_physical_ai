@@ -1,0 +1,19 @@
+profiles:
+  deterministic:
+    navigation: deterministic_fixture
+    vla: deterministic_fixture
+    verification: deterministic_normalized_fixture
+  navigation_physics:
+    navigation: ros2_jazzy_gazebo_harmonic
+    vla: deterministic_proxy
+    verification: normalized_evidence
+  manipulation_physics:
+    navigation: deterministic_fixture
+    vla: mujoco
+    verification: normalized_evidence
+  system:
+    integrated_world: gazebo_harmonic
+    navigation: ros2_jazzy_gazebo_harmonic
+    vla: gazebo_contract_preserving_surrogate
+    verification: gazebo_system_observation_adapter
+    mujoco_live_world: false

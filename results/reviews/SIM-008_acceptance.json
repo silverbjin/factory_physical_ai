@@ -1,0 +1,11 @@
+{
+  "schema_version": 1,
+  "task_id": "TASK-SIM-008",
+  "status": "ACCEPT",
+  "accepted_commit": "ea91e0c16412e20c8cae66355a1a39129919dd42",
+  "review_record": "docs/task_history/TASK-SIM-008/03_review.md",
+  "evidence": {
+    "path": "results/simulation/SIM-008_normal_system_e2e.json",
+    "sha256": "ebf0ef0a27114e3c04fa6bec05aa3eef792fdfc282d2be009640bac7ecc26290"
+  }
+}

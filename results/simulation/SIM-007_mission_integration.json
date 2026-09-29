@@ -1,0 +1,183 @@
+{
+  "accepted_bindings": {
+    "SIM-004": {
+      "accepted_commit": "b7e8266abd17f48c18cca94d9433db50fd55464d",
+      "evidence": {
+        "path": "results/simulation/SIM-004_navigation_backend.json",
+        "sha256": "b4c0ce91dde6c2f92c57ea6a227149362279993dee0dec4fd1ab12877e73f1d9"
+      },
+      "review_record": "docs/task_history/TASK-SIM-004/05_review.md",
+      "schema_version": 1,
+      "status": "ACCEPT",
+      "task_id": "TASK-SIM-004"
+    },
+    "SIM-005": {
+      "accepted_commit": "542514a4d10bc03087834e8a5f672d53afe6aa21",
+      "evidence": {
+        "path": "results/simulation/SIM-005_mujoco_vla_backend.json",
+        "sha256": "f4d41fdb1f13978e1b1e5c91b95e31b38a69825a0d432a8284ff7731a3beb84f"
+      },
+      "review_record": "docs/task_history/TASK-SIM-005/04_review.md",
+      "schema_version": 1,
+      "status": "ACCEPT",
+      "task_id": "TASK-SIM-005"
+    },
+    "SIM-006": {
+      "accepted_commit": "a10be6725d386e531f9cb0e00079c8d39ffdb1bf",
+      "evidence": {
+        "path": "results/simulation/SIM-006_verification_backend.json",
+        "sha256": "6fe14dcdcee21c6f1e5be73add28afeba622d0a4497706d0ee3181f610008ffc"
+      },
+      "review_record": "docs/task_history/TASK-SIM-006/08_review.md",
+      "schema_version": 1,
+      "status": "ACCEPT",
+      "task_id": "TASK-SIM-006"
+    }
+  },
+  "bounded_lifecycle": {
+    "physical_activity": false,
+    "startup_execution_cleanup_bounded": true
+  },
+  "generated_at": "2026-09-17T08:26:59.947770Z",
+  "profile_smoke": [
+    {
+      "action_ids": [
+        "5497ec98-06d5-4631-8171-7d6abf32bdbb",
+        "0f573034-6f40-4301-aa1f-60b3958e8294",
+        "0f573034-6f40-4301-aa1f-60b3958e8294"
+      ],
+      "cleanup_complete": true,
+      "failure_code": null,
+      "lifecycle": {
+        "cleanup_complete": true,
+        "profile": "deterministic",
+        "ready": null,
+        "startup_attempted": false
+      },
+      "mission_id": "d1ae1b23-82e6-42fa-b6d4-5e8b863e62ad",
+      "mission_result": "success",
+      "mujoco_live_world": false,
+      "pass": true,
+      "profile": "deterministic",
+      "system_world": null,
+      "trace_id": "37215252-533f-426a-a423-93fa94b77b6e",
+      "verification_before_completion": true
+    },
+    {
+      "action_ids": [
+        null,
+        null,
+        null
+      ],
+      "cleanup_complete": true,
+      "failure_code": "PROFILE_UNAVAILABLE",
+      "lifecycle": {
+        "cleanup_complete": true,
+        "profile": "navigation_physics",
+        "ready": false,
+        "startup_attempted": true
+      },
+      "mission_id": "a195b1bd-0de0-46ab-b52a-b681bd2391be",
+      "mission_result": "failure",
+      "mujoco_live_world": false,
+      "pass": false,
+      "profile": "navigation_physics",
+      "system_world": "gazebo_harmonic",
+      "trace_id": "335a2638-8f7d-47a6-9955-9eab1a058817",
+      "verification_before_completion": false
+    },
+    {
+      "action_ids": [
+        "869ba98e-7fa0-4ca1-a1f7-9b797bc81165",
+        "8619394d-73a9-43ed-ba29-553b76022fca",
+        "8619394d-73a9-43ed-ba29-553b76022fca"
+      ],
+      "cleanup_complete": true,
+      "failure_code": "VERIFICATION_NOT_ELIGIBLE",
+      "lifecycle": {
+        "cleanup_complete": true,
+        "profile": "manipulation_physics",
+        "ready": null,
+        "startup_attempted": false,
+        "verification_observation": "live_gazebo_record_unaccepted"
+      },
+      "mission_id": "cca4dad7-ddb7-488d-9ee0-b69a3c34c1e8",
+      "mission_result": "failure",
+      "mujoco_live_world": true,
+      "pass": false,
+      "profile": "manipulation_physics",
+      "system_world": "mujoco",
+      "trace_id": "17250429-4124-4026-ad02-8ad2e06112b3",
+      "verification_before_completion": true
+    },
+    {
+      "action_ids": [
+        null,
+        null,
+        null
+      ],
+      "cleanup_complete": true,
+      "failure_code": "PROFILE_UNAVAILABLE",
+      "lifecycle": {
+        "cleanup_complete": true,
+        "profile": "system",
+        "ready": false,
+        "startup_attempted": true
+      },
+      "mission_id": "3c155574-75d9-4d3f-be7e-455e707aedb7",
+      "mission_result": "failure",
+      "mujoco_live_world": false,
+      "pass": false,
+      "profile": "system",
+      "system_world": "gazebo_harmonic",
+      "trace_id": "dad561ac-7eb6-4e4d-ad57-08848160f21e",
+      "verification_before_completion": false
+    }
+  ],
+  "profiles": {
+    "deterministic": {
+      "gazebo_release": null,
+      "integrated_world": null,
+      "name": "deterministic",
+      "navigation": "deterministic_fixture",
+      "ros_distro": null,
+      "verification": "deterministic_normalized_fixture",
+      "vla": "deterministic_fixture"
+    },
+    "manipulation_physics": {
+      "gazebo_release": null,
+      "integrated_world": "mujoco",
+      "name": "manipulation_physics",
+      "navigation": "deterministic_fixture",
+      "ros_distro": null,
+      "verification": "normalized_evidence",
+      "vla": "mujoco"
+    },
+    "navigation_physics": {
+      "gazebo_release": "harmonic",
+      "integrated_world": "gazebo_harmonic",
+      "name": "navigation_physics",
+      "navigation": "ros2_jazzy_gazebo_harmonic",
+      "ros_distro": "jazzy",
+      "verification": "normalized_evidence",
+      "vla": "deterministic_proxy"
+    },
+    "system": {
+      "gazebo_release": "harmonic",
+      "integrated_world": "gazebo_harmonic",
+      "name": "system",
+      "navigation": "ros2_jazzy_gazebo_harmonic",
+      "ros_distro": "jazzy",
+      "verification": "gazebo_system_observation_adapter",
+      "vla": "gazebo_contract_preserving_surrogate"
+    }
+  },
+  "schema_version": "1.0",
+  "system_authority": {
+    "dual_world": false,
+    "integrated_world": "gazebo_harmonic",
+    "mujoco_live_world": false
+  },
+  "task_id": "TASK-SIM-007",
+  "task_specific_result": "SIM_MISSION_INTEGRATION_BLOCKED"
+}

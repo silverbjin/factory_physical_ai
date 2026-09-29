@@ -1,0 +1,1345 @@
+{
+  "accepted_bindings": {
+    "SIM-004": {
+      "acceptance": {
+        "accepted_commit": "b7e8266abd17f48c18cca94d9433db50fd55464d",
+        "evidence": {
+          "path": "results/simulation/SIM-004_navigation_backend.json",
+          "sha256": "b4c0ce91dde6c2f92c57ea6a227149362279993dee0dec4fd1ab12877e73f1d9"
+        },
+        "review_record": "docs/task_history/TASK-SIM-004/05_review.md",
+        "schema_version": 1,
+        "status": "ACCEPT",
+        "task_id": "TASK-SIM-004"
+      },
+      "acceptance_sha256": "23a7793f4eb0e91183dc9566c5717b71d0eb38129ace49e411d68928b78e91e6"
+    },
+    "SIM-005": {
+      "acceptance": {
+        "accepted_commit": "542514a4d10bc03087834e8a5f672d53afe6aa21",
+        "evidence": {
+          "path": "results/simulation/SIM-005_mujoco_vla_backend.json",
+          "sha256": "f4d41fdb1f13978e1b1e5c91b95e31b38a69825a0d432a8284ff7731a3beb84f"
+        },
+        "review_record": "docs/task_history/TASK-SIM-005/04_review.md",
+        "schema_version": 1,
+        "status": "ACCEPT",
+        "task_id": "TASK-SIM-005"
+      },
+      "acceptance_sha256": "021ed2d2877244cc2c08b2f53f0e961ad7a84c77b3e60cfa543c377ef72bca06"
+    },
+    "SIM-006": {
+      "acceptance": {
+        "accepted_commit": "a10be6725d386e531f9cb0e00079c8d39ffdb1bf",
+        "evidence": {
+          "path": "results/simulation/SIM-006_verification_backend.json",
+          "sha256": "6fe14dcdcee21c6f1e5be73add28afeba622d0a4497706d0ee3181f610008ffc"
+        },
+        "review_record": "docs/task_history/TASK-SIM-006/08_review.md",
+        "schema_version": 1,
+        "status": "ACCEPT",
+        "task_id": "TASK-SIM-006"
+      },
+      "acceptance_sha256": "046096a99ddea83f750247bdab0609bb0f493225def9e1367e31bf439f771fb1"
+    },
+    "SIM-008": {
+      "acceptance": {
+        "accepted_commit": "ea91e0c16412e20c8cae66355a1a39129919dd42",
+        "evidence": {
+          "path": "results/simulation/SIM-008_normal_system_e2e.json",
+          "sha256": "ebf0ef0a27114e3c04fa6bec05aa3eef792fdfc282d2be009640bac7ecc26290"
+        },
+        "review_record": "docs/task_history/TASK-SIM-008/03_review.md",
+        "schema_version": 1,
+        "status": "ACCEPT",
+        "task_id": "TASK-SIM-008"
+      },
+      "acceptance_sha256": "385461a8c3cfdb9a154934efc516e3f172fac65ba4b8809935365b4890e0dcf0"
+    }
+  },
+  "cleanup_complete": true,
+  "generated_at": "2026-09-20T15:23:31.823Z",
+  "infrastructure": {
+    "localization_measurements": {
+      "amcl_active": true,
+      "initial_pose": {
+        "frame_id": "map",
+        "published": true,
+        "source": "depot.yaml free cell at (-6.5, 0.0), verified against map origin/resolution",
+        "x": -6.5,
+        "y": 0.0,
+        "yaw": 0.0
+      },
+      "map_to_odom_available": true,
+      "prerequisites": {
+        "map_available": true,
+        "odom_available": true,
+        "odom_to_base_available": true,
+        "scan_available": true
+      },
+      "probes": [
+        {
+          "command": [
+            "/opt/ros/jazzy/bin/ros2",
+            "lifecycle",
+            "set",
+            "/map_server",
+            "configure"
+          ],
+          "duration_ms": 1233.524,
+          "label": "/map_server:configure",
+          "returncode": 0,
+          "stderr": "",
+          "stdout": "Transitioning successful\n",
+          "timed_out": false
+        },
+        {
+          "command": [
+            "/opt/ros/jazzy/bin/ros2",
+            "lifecycle",
+            "set",
+            "/map_server",
+            "activate"
+          ],
+          "duration_ms": 2962.724,
+          "label": "/map_server:activate",
+          "returncode": 0,
+          "stderr": "",
+          "stdout": "Transitioning successful\n",
+          "timed_out": false
+        },
+        {
+          "command": [
+            "/opt/ros/jazzy/bin/ros2",
+            "lifecycle",
+            "set",
+            "/amcl",
+            "configure"
+          ],
+          "duration_ms": 2778.667,
+          "label": "/amcl:configure",
+          "returncode": 0,
+          "stderr": "",
+          "stdout": "Transitioning successful\n",
+          "timed_out": false
+        },
+        {
+          "command": [
+            "/opt/ros/jazzy/bin/ros2",
+            "lifecycle",
+            "set",
+            "/amcl",
+            "activate"
+          ],
+          "duration_ms": 2565.042,
+          "label": "/amcl:activate",
+          "returncode": 0,
+          "stderr": "",
+          "stdout": "Transitioning successful\n",
+          "timed_out": false
+        },
+        {
+          "command": [
+            "/opt/ros/jazzy/bin/ros2",
+            "topic",
+            "list",
+            "-t"
+          ],
+          "duration_ms": 908.292,
+          "label": "localization_topics",
+          "returncode": 0,
+          "stderr": "",
+          "stdout": "ssed [sensor_msgs/msg/CompressedImage]\n/rgbd_camera/depth_image/compressedDepth [sensor_msgs/msg/CompressedImage]\n/rgbd_camera/depth_image/theora [theora_image_transport/msg/Packet]\n/rgbd_camera/depth_image/zstd [sensor_msgs/msg/CompressedImage]\n/rgbd_camera/image [sensor_msgs/msg/Image]\n/rgbd_camera/image/compressed [sensor_msgs/msg/CompressedImage]\n/rgbd_camera/image/compressedDepth [sensor_msgs/msg/CompressedImage]\n/rgbd_camera/image/theora [theora_image_transport/msg/Packet]\n/rgbd_camera/image/zstd [sensor_msgs/msg/CompressedImage]\n/robot_description [std_msgs/msg/String]\n/rosout [rcl_interfaces/msg/Log]\n/route_server/transition_event [lifecycle_msgs/msg/TransitionEvent]\n/scan [sensor_msgs/msg/LaserScan]\n/smoother_server/transition_event [lifecycle_msgs/msg/TransitionEvent]\n/tf [tf2_msgs/msg/TFMessage]\n/tf_static [tf2_msgs/msg/TFMessage]\n/velocity_smoother/transition_event [lifecycle_msgs/msg/TransitionEvent]\n/waypoint_follower/transition_event [lifecycle_msgs/msg/TransitionEvent]\n",
+          "timed_out": false
+        },
+        {
+          "command": [
+            "/opt/ros/jazzy/bin/ros2",
+            "lifecycle",
+            "get",
+            "/amcl"
+          ],
+          "duration_ms": 1543.899,
+          "label": "amcl_lifecycle",
+          "returncode": 0,
+          "stderr": "",
+          "stdout": "active [3]\n",
+          "timed_out": false
+        },
+        {
+          "available": true,
+          "command": [
+            "/opt/ros/jazzy/bin/ros2",
+            "run",
+            "tf2_ros",
+            "tf2_echo",
+            "odom",
+            "base_link"
+          ],
+          "duration_ms": 4447.221,
+          "label": "odom_to_base",
+          "observed_transform": true,
+          "output_tail": "[INFO] [1789917772.985523407] [tf2_echo]: Waiting for transform odom ->  base_link: Invalid frame ID \"odom\" passed to canTransform argument target_frame - frame does not exist\n[INFO] [1789917774.957583243] [tf2_echo]: Waiting for transform odom ->  base_link: Invalid frame ID \"odom\" passed to canTransform argument target_frame - frame does not exist\nAt time 1.512000000\n- Translation: [0.000, -0.000, 0.000]\n- Rotation: in Quaternion (xyzw) [0.000, 0.000, -0.000, 1.000]\n",
+          "source_frame": "base_link",
+          "target_frame": "odom",
+          "timed_out": false
+        },
+        {
+          "command": [
+            "/opt/ros/jazzy/bin/ros2",
+            "topic",
+            "pub",
+            "--once",
+            "/initialpose",
+            "geometry_msgs/msg/PoseWithCovarianceStamped",
+            "{header: {frame_id: map}, pose: {pose: {position: {x: -6.5, y: 0.0, z: 0.0}, orientation: {z: 0.0, w: 1.0}}, covariance: [0.25, 0, 0, 0, 0, 0, 0, 0.25, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]}}"
+          ],
+          "duration_ms": 2014.556,
+          "label": "initial_pose_publish",
+          "returncode": 0,
+          "stderr": "",
+          "stdout": "Waiting for at least 1 matching subscription(s)...\npublisher: beginning loop\npublishing #1: geometry_msgs.msg.PoseWithCovarianceStamped(header=std_msgs.msg.Header(stamp=builtin_interfaces.msg.Time(sec=0, nanosec=0), frame_id='map'), pose=geometry_msgs.msg.PoseWithCovariance(pose=geometry_msgs.msg.Pose(position=geometry_msgs.msg.Point(x=-6.5, y=0.0, z=0.0), orientation=geometry_msgs.msg.Quaternion(x=0.0, y=0.0, z=0.0, w=1.0)), covariance=array([0.25, 0.  , 0.  , 0.  , 0.  , 0.  , 0.  , 0.25, 0.  , 0.  , 0.  ,\n       0.  , 0.  , 0.  , 0.  , 0.  , 0.  , 0.  , 0.  , 0.  , 0.  , 0.  ,\n       0.  , 0.  , 0.  , 0.  , 0.  , 0.  , 0.  , 0.  , 0.  , 0.  , 0.  ,\n       0.  , 0.  , 0.  ])))\n\n",
+          "timed_out": false
+        },
+        {
+          "available": true,
+          "command": [
+            "/opt/ros/jazzy/bin/ros2",
+            "run",
+            "tf2_ros",
+            "tf2_echo",
+            "map",
+            "odom"
+          ],
+          "duration_ms": 4559.321,
+          "label": "map_to_odom",
+          "observed_transform": true,
+          "output_tail": "[INFO] [1789917779.553893566] [tf2_echo]: Waiting for transform map ->  odom: Invalid frame ID \"map\" passed to canTransform argument target_frame - frame does not exist\n[INFO] [1789917781.520598353] [tf2_echo]: Waiting for transform map ->  odom: Invalid frame ID \"map\" passed to canTransform argument target_frame - frame does not exist\nAt time 8.902000000\n- Translation: [-6.470, -0.003, 0.000]\n- Rotation: in Quaternion (xyzw) [0.000, 0.000, 0.000, 1.000]\n",
+          "source_frame": "odom",
+          "target_frame": "map",
+          "timed_out": false
+        },
+        {
+          "command": [
+            "/opt/ros/jazzy/bin/ros2",
+            "service",
+            "call",
+            "/lifecycle_manager_navigation/manage_nodes",
+            "nav2_msgs/srv/ManageLifecycleNodes",
+            "{command: 0}"
+          ],
+          "duration_ms": 9252.946,
+          "label": "navigation_lifecycle_start",
+          "returncode": 0,
+          "stderr": "",
+          "stdout": "waiting for service to become available...\nrequester: making request: nav2_msgs.srv.ManageLifecycleNodes_Request(command=0)\n\nresponse:\nnav2_msgs.srv.ManageLifecycleNodes_Response(success=True)\n\n",
+          "timed_out": false
+        },
+        {
+          "command": [
+            "/opt/ros/jazzy/bin/ros2",
+            "lifecycle",
+            "get",
+            "/bt_navigator"
+          ],
+          "duration_ms": 4051.713,
+          "label": "bt_navigator_lifecycle",
+          "returncode": 0,
+          "stderr": "",
+          "stdout": "active [3]\n",
+          "timed_out": false
+        },
+        {
+          "command": [
+            "/opt/ros/jazzy/bin/ros2",
+            "action",
+            "list",
+            "-t"
+          ],
+          "duration_ms": 1013.255,
+          "label": "navigate_to_pose_action",
+          "returncode": 0,
+          "stderr": "",
+          "stdout": "/assisted_teleop [nav2_msgs/action/AssistedTeleop]\n/backup [nav2_msgs/action/BackUp]\n/compute_and_track_route [nav2_msgs/action/ComputeAndTrackRoute]\n/compute_path_through_poses [nav2_msgs/action/ComputePathThroughPoses]\n/compute_path_to_pose [nav2_msgs/action/ComputePathToPose]\n/compute_route [nav2_msgs/action/ComputeRoute]\n/dock_robot [nav2_msgs/action/DockRobot]\n/drive_on_heading [nav2_msgs/action/DriveOnHeading]\n/follow_gps_waypoints [nav2_msgs/action/FollowGPSWaypoints]\n/follow_path [nav2_msgs/action/FollowPath]\n/follow_waypoints [nav2_msgs/action/FollowWaypoints]\n/navigate_through_poses [nav2_msgs/action/NavigateThroughPoses]\n/navigate_to_pose [nav2_msgs/action/NavigateToPose]\n/smooth_path [nav2_msgs/action/SmoothPath]\n/spin [nav2_msgs/action/Spin]\n/undock_robot [nav2_msgs/action/UndockRobot]\n/wait [nav2_msgs/action/Wait]\n",
+          "timed_out": false
+        },
+        {
+          "available": true,
+          "command": [
+            "/opt/ros/jazzy/bin/ros2",
+            "run",
+            "tf2_ros",
+            "tf2_echo",
+            "map",
+            "base_link"
+          ],
+          "duration_ms": 3468.894,
+          "label": "sim009_tf_baseline",
+          "observed_transform": true,
+          "output_tail": "[INFO] [1789917803.494259812] [tf2_echo]: Waiting for transform map ->  base_link: Invalid frame ID \"map\" passed to canTransform argument target_frame - frame does not exist\nAt time 22.536000000\n- Translation: [-6.154, 0.008, 0.000]\n- Rotation: in Quaternion (xyzw) [0.000, 0.000, -0.002, 1.000]\n",
+          "source_frame": "base_link",
+          "target_frame": "map",
+          "timed_out": false
+        },
+        {
+          "available": false,
+          "command": [
+            "/opt/ros/jazzy/bin/ros2",
+            "run",
+            "tf2_ros",
+            "tf2_echo",
+            "sim009_missing_tf_frame_4ff6ff2f-5355-4d37-8695-b74d536bc1f3",
+            "base_link"
+          ],
+          "duration_ms": 5009.056,
+          "label": "sim009_tf_injected_missing",
+          "observed_transform": false,
+          "output_tail": "[INFO] [1789917806.982009959] [tf2_echo]: Waiting for transform sim009_missing_tf_frame_4ff6ff2f-5355-4d37-8695-b74d536bc1f3 ->  base_link: Invalid frame ID \"sim009_missing_tf_frame_4ff6ff2f-5355-4d37-8695-b74d536bc1f3\" passed to canTransform argument target_frame - frame does not exist\n[INFO] [1789917808.944706627] [tf2_echo]: Waiting for transform sim009_missing_tf_frame_4ff6ff2f-5355-4d37-8695-b74d536bc1f3 ->  base_link: Invalid frame ID \"sim009_missing_tf_frame_4ff6ff2f-5355-4d37-8695-b74d536bc1f3\" passed to canTransform argument target_frame - frame does not exist\n[INFO] [1789917809.944822044] [tf2_echo]: Waiting for transform sim009_missing_tf_frame_4ff6ff2f-5355-4d37-8695-b74d536bc1f3 ->  base_link: Invalid frame ID \"sim009_missing_tf_frame_4ff6ff2f-5355-4d37-8695-b74d536bc1f3\" passed to canTransform argument target_frame - frame does not exist\n",
+          "source_frame": "base_link",
+          "target_frame": "sim009_missing_tf_frame_4ff6ff2f-5355-4d37-8695-b74d536bc1f3",
+          "timed_out": true
+        }
+      ]
+    },
+    "startup_measurements": [
+      {
+        "command": [
+          "/opt/ros/jazzy/bin/ros2",
+          "action",
+          "list",
+          "-t"
+        ],
+        "duration_ms": 520.226,
+        "navigate_to_pose": true,
+        "returncode": 0
+      },
+      {
+        "bt_navigator_active": true,
+        "navigate_to_pose": true
+      },
+      {
+        "sim009_private_action_client": true,
+        "timeout_seconds": 5.0
+      }
+    ],
+    "status": "SEMANTIC_READY"
+  },
+  "manifest_sha256": "d47b16bd2096c0f4d966f61768cca38e1571393d0346ebf5d1aa5f657ebef317",
+  "scenarios": [
+    {
+      "backend": "contract",
+      "cleanup_complete": true,
+      "decision": "FAIL_CLOSED",
+      "duration_ms": 12.179,
+      "expected_decision": "FAIL_CLOSED",
+      "id": "SIM009-L0-MALFORMED",
+      "injection": "timeout_ms=0 malformed request",
+      "layer": "L0",
+      "outcome_kind": "malformed",
+      "pass": true,
+      "result": {
+        "action_id": "587755f8-da50-4f9a-8e7b-9cd6a1aa820b",
+        "component_version": "sim004-navigation-backend-v2",
+        "error": {
+          "category": "VALIDATION",
+          "code": "INVALID_NAVIGATION_REQUEST",
+          "message": "{'operation': 'navigation.execute', 'message_type': 'request', 'schema_version': '1.0', 'mission_id': 'fbcde7a4-0d57-4b89-a2ad-53a24fbfbf5d', 'request_id': '66b88434-bd6a-4b03-b305-8ef4fcc4ed3e', 'trace_id': '70c8f951-555e-4606-b585-1cdc816f73bc', 'timestamp': '2026-09-20T15:23:19.623Z', 'deadline_at': '2026-09-20T15:23:21.623Z', 'timeout_ms': 0, 'component_version': 'sim009-failure-suite-v1', 'action_id': '587755f8-da50-4f9a-8e7b-9cd6a1aa820b', 'idempotency_key': 'sim009-navigation', 'attempt': 1, 'retry_budget_remaining': 1, 'robot_id': 'simulation-proxy-mobile-base', 'destination_id': 'line-b-drop', 'speed_profile_id': 'sim-safe-v1'} is not valid under any of the given schemas",
+          "retryable": false
+        },
+        "evidence_refs": [
+          {
+            "sha256": "fa6d52ff7f828391ee54cf778645955c779b448e7508a141f392e5b2c6b13bda",
+            "uri": "urn:factory-evidence:sim-004:587755f8-da50-4f9a-8e7b-9cd6a1aa820b"
+          }
+        ],
+        "message_type": "result",
+        "mission_id": "fbcde7a4-0d57-4b89-a2ad-53a24fbfbf5d",
+        "operation": "navigation.execute",
+        "request_id": "66b88434-bd6a-4b03-b305-8ef4fcc4ed3e",
+        "result": "failure",
+        "schema_version": "1.0",
+        "source_kind": "mock",
+        "status": "failed",
+        "timestamp": "2026-09-20T15:23:19.635Z",
+        "trace_id": "70c8f951-555e-4606-b585-1cdc816f73bc"
+      },
+      "within_budget": true
+    },
+    {
+      "backend": "navigation",
+      "cleanup_complete": true,
+      "decision": "FAIL_CLOSED",
+      "duration_ms": 1.854,
+      "expected_decision": "FAIL_CLOSED",
+      "id": "SIM009-L0-UNAVAILABLE",
+      "injection": "runtime unavailable",
+      "layer": "L0",
+      "outcome_kind": "unavailable",
+      "pass": true,
+      "result": {
+        "action_id": "a98fce05-da25-40ec-9a49-5134645696ac",
+        "component_version": "sim004-navigation-backend-v2",
+        "error": {
+          "category": "RESOURCE_UNAVAILABLE",
+          "code": "NAVIGATION_UNAVAILABLE",
+          "message": "Nav2 lifecycle is not ready",
+          "retryable": false
+        },
+        "evidence_refs": [
+          {
+            "sha256": "5118e799e4750c6cfe014bf16a6854545d956549ae634b3c2f905d241ebca73d",
+            "uri": "urn:factory-evidence:sim-004:a98fce05-da25-40ec-9a49-5134645696ac"
+          }
+        ],
+        "message_type": "result",
+        "mission_id": "eb7af7ea-4de6-4b15-b54c-3fdaa812043e",
+        "operation": "navigation.execute",
+        "request_id": "a10068c5-e7e1-4ba0-b4e9-06fece57cb87",
+        "result": "failure",
+        "schema_version": "1.0",
+        "source_kind": "mock",
+        "status": "failed",
+        "timestamp": "2026-09-20T15:23:19.637Z",
+        "trace_id": "dfbf0d03-d711-4862-916e-f827cfb926da"
+      },
+      "runtime_calls": 0,
+      "within_budget": true
+    },
+    {
+      "backend": "contract",
+      "cleanup_complete": true,
+      "decision": "FAIL_CLOSED",
+      "duration_ms": 7.116,
+      "expected_decision": "FAIL_CLOSED",
+      "id": "SIM009-L0-CONTRADICTORY",
+      "injection": "success result with failed status",
+      "layer": "L0",
+      "outcome_kind": "contradictory",
+      "pass": true,
+      "validation_error": "{'operation': 'navigation.execute', 'message_type': 'result', 'schema_version': '1.0', 'mission_id': '381b756b-4a92-48d0-bed2-0b9ba1469bcd', 'request_id': '3e8b19fc-cabd-4087-a391-8949bb570916', 'trace_id': '76d41535-e0ca-42b8-a16b-394568c52c71', 'action_id': '959961f0-5e0b-403e-9198-273e8f1bde2f', 'timestamp': '2026-09-20T15:23:19.637Z', 'component_version': 'sim009', 'source_kind': 'mock', 'status': 'failed', 'result': 'success'} is not valid under any of the given schemas",
+      "within_budget": true
+    },
+    {
+      "backend": "gazebo_navigation",
+      "cleanup_complete": true,
+      "decision": "FAIL_CLOSED",
+      "duration_ms": 42.716,
+      "expected_decision": "FAIL_CLOSED",
+      "goal_tracking": {
+        "cleanup": {
+          "bound_ms": 5000,
+          "complete": true,
+          "processes": [
+            {
+              "pid": 154097,
+              "returncode": -15
+            }
+          ]
+        },
+        "fault_arm_event": null,
+        "goal_attempts": [
+          {
+            "action_id": "8dad1b82-1231-4081-817d-15c0a2b06782",
+            "behavior_tree": "",
+            "cancellation_requested": false,
+            "destination_id": "blocked-bay",
+            "frame_id": "map",
+            "idempotency_key": "sim009-navigation",
+            "injection_kind": "none",
+            "mission_id": "7652f7e0-9454-4136-8564-cce94eb1a257",
+            "native_error_code": "204",
+            "native_error_message": null,
+            "nav2_goal_uuid": "536d59e7-3925-4046-aaac-e5f8950ec2a7",
+            "retryable_terminal_failure": false,
+            "scenario_execution_id": "7dd78c80-d0bb-42aa-9e96-00cc7baa4ff6",
+            "scenario_id": "SIM009-NAV-BLOCKED",
+            "server_log_attributed": true,
+            "server_log_end_offsets": {
+              "/tmp/sim004-ros-90cqgx44/gazebo_nav2_proxy.log": 43262
+            },
+            "server_log_start_offsets": {
+              "/tmp/sim004-ros-90cqgx44/gazebo_nav2_proxy.log": 42532
+            },
+            "server_log_tail": "[component_container_isolated-8] [INFO] [1789917799.650391623] [bt_navigator]: Begin navigating from current location (-6.47, -0.00) to (100.00, 100.00)\n[component_container_isolated-8] [WARN] [1789917799.651320574] [planner_server]: GridBased plugin failed to plan from (-6.47, -0.00) to (100.00, 100.00): \"Goal Coordinates of(100.000000, 100.000000) was outside bounds\"\n[component_container_isolated-8] [WARN] [1789917799.651395428] [planner_server]: [compute_path_to_pose] [ActionServer] Aborting handle.\n[component_container_isolated-8] [WARN] [1789917799.680745412] [bt_navigator]: [navigate_to_pose] [ActionServer] Aborting handle.\n[component_container_isolated-8] [ERROR] [1789917799.681317526] [bt_navigator]: Goal failed\n",
+            "terminal_goal_uuid": "536d59e7-3925-4046-aaac-e5f8950ec2a7",
+            "terminal_status": "6",
+            "timeout_fault": false
+          }
+        ],
+        "logical_side_effect_count": 0,
+        "runtime_calls": 1,
+        "scenario_execution_id": "7dd78c80-d0bb-42aa-9e96-00cc7baa4ff6",
+        "scenario_id": "SIM009-NAV-BLOCKED",
+        "tf_probes": []
+      },
+      "id": "SIM009-NAV-BLOCKED",
+      "injection": "outside-map blocked-bay goal with normal map frame and default behavior tree",
+      "layer": "L1-NAV",
+      "live_runtime_ready": true,
+      "native_failure": true,
+      "outcome_kind": "failure",
+      "pass": true,
+      "result": {
+        "action_id": "8dad1b82-1231-4081-817d-15c0a2b06782",
+        "component_version": "sim004-navigation-backend-v2",
+        "error": {
+          "category": "EXECUTION_FAILED",
+          "code": "NAVIGATION_ABORTED",
+          "message": "204",
+          "retryable": false
+        },
+        "evidence_refs": [
+          {
+            "sha256": "46257a24c6a7b569e525f75c1a442c232f390d6ba266aca3ae476fe469291db1",
+            "uri": "urn:factory-evidence:sim-004:8dad1b82-1231-4081-817d-15c0a2b06782"
+          }
+        ],
+        "message_type": "result",
+        "mission_id": "7652f7e0-9454-4136-8564-cce94eb1a257",
+        "operation": "navigation.execute",
+        "request_id": "845c17fb-ddcd-4399-af5e-4a4cc2d9c9ff",
+        "result": "failure",
+        "schema_version": "1.0",
+        "source_kind": "mock",
+        "status": "failed",
+        "timestamp": "2026-09-20T15:23:19.681Z",
+        "trace_id": "5a201f21-ae3f-40e6-aef2-cee615f966eb"
+      },
+      "runtime_calls": 1,
+      "scenario_local_provenance": true,
+      "within_budget": true
+    },
+    {
+      "backend": "gazebo_navigation",
+      "cleanup_complete": true,
+      "decision": "FAIL_CLOSED",
+      "duration_ms": 7.8,
+      "expected_decision": "FAIL_CLOSED",
+      "goal_tracking": {
+        "cleanup": {
+          "bound_ms": 5000,
+          "complete": true,
+          "processes": [
+            {
+              "pid": 154097,
+              "returncode": -15
+            }
+          ]
+        },
+        "fault_arm_event": {
+          "behavior_tree": "/tmp/sim009-missing-behavior-tree.xml",
+          "frame_id": "map",
+          "injection_kind": "missing_behavior_tree"
+        },
+        "goal_attempts": [
+          {
+            "action_id": "51d7b6b3-f3e0-4edb-bd1d-9da4e74427aa",
+            "behavior_tree": "/tmp/sim009-missing-behavior-tree.xml",
+            "cancellation_requested": false,
+            "destination_id": "line-b-drop",
+            "frame_id": "map",
+            "idempotency_key": "sim009-navigation",
+            "injection_kind": "missing_behavior_tree",
+            "mission_id": "ea180f2d-2a9c-4e43-8d84-977263e87680",
+            "native_error_code": "0",
+            "native_error_message": null,
+            "nav2_goal_uuid": "dc70978f-cf78-4981-b69e-ef9717fd5e03",
+            "retryable_terminal_failure": false,
+            "scenario_execution_id": "494f49bd-621b-4f25-a3b1-6a97db3c33ee",
+            "scenario_id": "SIM009-NAV-ABORTED",
+            "server_log_attributed": true,
+            "server_log_end_offsets": {
+              "/tmp/sim004-ros-90cqgx44/gazebo_nav2_proxy.log": 43699
+            },
+            "server_log_start_offsets": {
+              "/tmp/sim004-ros-90cqgx44/gazebo_nav2_proxy.log": 43262
+            },
+            "server_log_tail": "[component_container_isolated-8] [ERROR] [1789917799.690609501] [bt_navigator]: Couldn't open input XML file: /tmp/sim009-missing-behavior-tree.xml\n[component_container_isolated-8] [ERROR] [1789917799.690691651] [bt_navigator]: BT file not found: /tmp/sim009-missing-behavior-tree.xml. Navigation canceled.\n[component_container_isolated-8] [WARN] [1789917799.690704916] [bt_navigator]: [navigate_to_pose] [ActionServer] Aborting handle.\n",
+            "terminal_goal_uuid": "dc70978f-cf78-4981-b69e-ef9717fd5e03",
+            "terminal_status": "6",
+            "timeout_fault": false
+          }
+        ],
+        "logical_side_effect_count": 0,
+        "runtime_calls": 1,
+        "scenario_execution_id": "494f49bd-621b-4f25-a3b1-6a97db3c33ee",
+        "scenario_id": "SIM009-NAV-ABORTED",
+        "tf_probes": []
+      },
+      "id": "SIM009-NAV-ABORTED",
+      "injection": "line-b-drop goal with one-shot nonexistent private behavior-tree path",
+      "layer": "L1-NAV",
+      "live_runtime_ready": true,
+      "native_failure": true,
+      "outcome_kind": "failure",
+      "pass": true,
+      "result": {
+        "action_id": "51d7b6b3-f3e0-4edb-bd1d-9da4e74427aa",
+        "component_version": "sim004-navigation-backend-v2",
+        "error": {
+          "category": "EXECUTION_FAILED",
+          "code": "NAVIGATION_ABORTED",
+          "message": "0",
+          "retryable": false
+        },
+        "evidence_refs": [
+          {
+            "sha256": "2c0183d85e182f491e4eb5cbb4cbe36425105ace0f88b9d9a3203730a4e54166",
+            "uri": "urn:factory-evidence:sim-004:51d7b6b3-f3e0-4edb-bd1d-9da4e74427aa"
+          }
+        ],
+        "message_type": "result",
+        "mission_id": "ea180f2d-2a9c-4e43-8d84-977263e87680",
+        "operation": "navigation.execute",
+        "request_id": "7c3f793d-8951-4c1c-8340-5ecdbb6c26f4",
+        "result": "failure",
+        "schema_version": "1.0",
+        "source_kind": "mock",
+        "status": "failed",
+        "timestamp": "2026-09-20T15:23:19.692Z",
+        "trace_id": "60958352-4fa2-45b7-a431-8b48d1b752ea"
+      },
+      "runtime_calls": 1,
+      "scenario_local_provenance": true,
+      "within_budget": true
+    },
+    {
+      "backend": "gazebo_navigation",
+      "cleanup_complete": true,
+      "decision": "RETRY",
+      "duration_ms": 1495.569,
+      "expected_decision": "RETRY",
+      "first_result": {
+        "action_id": "ad08d656-cabc-4bb1-9bb7-616f5a8b7780",
+        "component_version": "sim004-navigation-backend-v2",
+        "error": {
+          "category": "DEPENDENCY_TIMEOUT",
+          "code": "NAVIGATION_TIMEOUT",
+          "message": "same Nav2 goal exceeded its bounded execution window",
+          "retryable": true
+        },
+        "evidence_refs": [
+          {
+            "sha256": "c11ad50203db430e0f12e392b3a7fb6d2830652ab9edaefc60d79cd19cde11f2",
+            "uri": "urn:factory-evidence:sim-004:ad08d656-cabc-4bb1-9bb7-616f5a8b7780"
+          }
+        ],
+        "message_type": "result",
+        "mission_id": "ac39f94a-02ba-488c-a0be-1ea287bcd52f",
+        "operation": "navigation.execute",
+        "request_id": "86e9bcb4-0ae2-4513-a6b2-4c1661addca0",
+        "result": "pending",
+        "schema_version": "1.0",
+        "source_kind": "mock",
+        "status": "unknown",
+        "timestamp": "2026-09-20T15:23:19.702Z",
+        "trace_id": "68130a6a-5369-40f0-b7b6-5854eb8944ce"
+      },
+      "goal_tracking": {
+        "cleanup": {
+          "bound_ms": 5000,
+          "complete": true,
+          "processes": [
+            {
+              "pid": 154097,
+              "returncode": -15
+            }
+          ]
+        },
+        "fault_arm_event": null,
+        "goal_attempts": [
+          {
+            "action_id": "ad08d656-cabc-4bb1-9bb7-616f5a8b7780",
+            "behavior_tree": "",
+            "cancellation_requested": true,
+            "destination_id": "line-b-drop",
+            "frame_id": "map",
+            "idempotency_key": "sim009-navigation",
+            "injection_kind": "none",
+            "mission_id": "ac39f94a-02ba-488c-a0be-1ea287bcd52f",
+            "native_error_code": "0",
+            "native_error_message": null,
+            "nav2_goal_uuid": "513d8135-eeef-481c-a64a-a78abb0a889b",
+            "retryable_terminal_failure": true,
+            "scenario_execution_id": "8fb250f4-8289-4b6b-a400-23d9013c0f41",
+            "scenario_id": "SIM009-NAV-TIMEOUT-RETRY",
+            "server_log_attributed": true,
+            "server_log_end_offsets": {
+              "/tmp/sim004-ros-90cqgx44/gazebo_nav2_proxy.log": 44104
+            },
+            "server_log_start_offsets": {
+              "/tmp/sim004-ros-90cqgx44/gazebo_nav2_proxy.log": 43699
+            },
+            "server_log_tail": "[component_container_isolated-8] [INFO] [1789917799.699495082] [bt_navigator]: Begin navigating from current location (-6.47, -0.00) to (-6.00, 0.00)\n[component_container_isolated-8] [INFO] [1789917799.720341336] [bt_navigator]: [navigate_to_pose] [ActionServer] Client requested to cancel the goal. Cancelling.\n[component_container_isolated-8] [INFO] [1789917799.720525724] [bt_navigator]: Goal canceled\n",
+            "terminal_goal_uuid": "513d8135-eeef-481c-a64a-a78abb0a889b",
+            "terminal_status": "5",
+            "timeout_fault": true
+          },
+          {
+            "action_id": "ad08d656-cabc-4bb1-9bb7-616f5a8b7780",
+            "behavior_tree": "",
+            "cancellation_requested": false,
+            "destination_id": "line-b-drop",
+            "frame_id": "map",
+            "idempotency_key": "sim009-navigation",
+            "injection_kind": "none",
+            "mission_id": "ac39f94a-02ba-488c-a0be-1ea287bcd52f",
+            "native_error_code": "0",
+            "native_error_message": null,
+            "nav2_goal_uuid": "f4d0018a-6342-4143-8652-fbc059876330",
+            "retryable_terminal_failure": false,
+            "scenario_execution_id": "8fb250f4-8289-4b6b-a400-23d9013c0f41",
+            "scenario_id": "SIM009-NAV-TIMEOUT-RETRY",
+            "server_log_attributed": true,
+            "server_log_end_offsets": {
+              "/tmp/sim004-ros-90cqgx44/gazebo_nav2_proxy.log": 45457
+            },
+            "server_log_start_offsets": {
+              "/tmp/sim004-ros-90cqgx44/gazebo_nav2_proxy.log": 44104
+            },
+            "server_log_tail": "[component_container_isolated-8] [INFO] [1789917799.735666091] [bt_navigator]: Begin navigating from current location (-6.47, -0.00) to (-6.00, 0.00)\n[component_container_isolated-8] [INFO] [1789917799.756868139] [controller_server]: Received a goal, begin computing control effort.\n[component_container_isolated-8] [WARN] [1789917799.756972272] [controller_server]: No goal checker was specified in parameter 'current_goal_checker'. Server will use only plugin loaded general_goal_checker . This warning will appear once.\n[component_container_isolated-8] [WARN] [1789917799.756999182] [controller_server]: No progress checker was specified in parameter 'current_progress_checker'. Server will use only plugin loaded progress_checker . This warning will appear once.\n[parameter_bridge-2] [INFO] [1789917799.825652305] [bridge_ros_gz]: Passing message from ROS geometry_msgs/msg/Twist to Gazebo gz.msgs.Twist (showing msg only once per type)\n[component_container_isolated-8] [INFO] [1789917800.807132987] [controller_server]: Passing new path to controller.\n[component_container_isolated-8] [INFO] [1789917801.164069457] [controller_server]: Reached the goal!\n[component_container_isolated-8] [INFO] [1789917801.165513860] [controller_server]: Optimizer reset\n[component_container_isolated-8] [INFO] [1789917801.186188138] [bt_navigator]: Goal succeeded\n",
+            "terminal_goal_uuid": "f4d0018a-6342-4143-8652-fbc059876330",
+            "terminal_status": "4",
+            "timeout_fault": false
+          }
+        ],
+        "logical_side_effect_count": 1,
+        "runtime_calls": 2,
+        "scenario_execution_id": "8fb250f4-8289-4b6b-a400-23d9013c0f41",
+        "scenario_id": "SIM009-NAV-TIMEOUT-RETRY",
+        "tf_probes": []
+      },
+      "id": "SIM009-NAV-TIMEOUT-RETRY",
+      "identity": {
+        "action_id_stable": true,
+        "attempt_incremented": true,
+        "idempotency_key_stable": true,
+        "mission_id_stable": true,
+        "retry_request_id_new": true
+      },
+      "injection": "accepted-goal bounded timeout/cancellation then authoritative retryable failure",
+      "layer": "L1-NAV",
+      "live_runtime_ready": true,
+      "logical_side_effect_count": 1,
+      "outcome_kind": "unknown",
+      "pass": true,
+      "reconciliation": {
+        "action_id": "ad08d656-cabc-4bb1-9bb7-616f5a8b7780",
+        "component_version": "sim004-navigation-backend-v2",
+        "evidence_refs": [
+          {
+            "sha256": "c11ad50203db430e0f12e392b3a7fb6d2830652ab9edaefc60d79cd19cde11f2",
+            "uri": "urn:factory-evidence:sim-004:ad08d656-cabc-4bb1-9bb7-616f5a8b7780"
+          }
+        ],
+        "message_type": "result",
+        "mission_id": "ac39f94a-02ba-488c-a0be-1ea287bcd52f",
+        "observed_at": "2026-09-20T15:23:19.721Z",
+        "observed_status": "failed",
+        "operation": "action_status.get",
+        "request_id": "eb7c8f36-5120-453d-8a75-ebcfaf327cf3",
+        "result": "success",
+        "schema_version": "1.0",
+        "source_kind": "mock",
+        "status": "succeeded",
+        "timestamp": "2026-09-20T15:23:19.721Z",
+        "trace_id": "68130a6a-5369-40f0-b7b6-5854eb8944ce"
+      },
+      "retry_authorization": {
+        "action_id": "ad08d656-cabc-4bb1-9bb7-616f5a8b7780",
+        "error": {
+          "category": "EXECUTION_FAILED",
+          "code": "NAVIGATION_ABORTED",
+          "message": "0",
+          "retryable": true
+        },
+        "idempotency_key": "sim009-navigation",
+        "mission_id": "ac39f94a-02ba-488c-a0be-1ea287bcd52f",
+        "new_request_id": "321ce483-a9fb-4a69-b201-044676455627",
+        "next_attempt": 2,
+        "previous_attempt": 1,
+        "previous_request_id": "86e9bcb4-0ae2-4513-a6b2-4c1661addca0",
+        "reconciliation_completed": true,
+        "record_type": "retry_authorization",
+        "resolved_status": "failed",
+        "retry_budget_remaining": 1
+      },
+      "retry_request": {
+        "action_id": "ad08d656-cabc-4bb1-9bb7-616f5a8b7780",
+        "attempt": 2,
+        "component_version": "sim009-failure-suite-v1",
+        "deadline_at": "2026-09-20T15:23:49.721Z",
+        "destination_id": "line-b-drop",
+        "idempotency_key": "sim009-navigation",
+        "message_type": "request",
+        "mission_id": "ac39f94a-02ba-488c-a0be-1ea287bcd52f",
+        "operation": "navigation.execute",
+        "request_id": "321ce483-a9fb-4a69-b201-044676455627",
+        "retry_budget_remaining": 0,
+        "robot_id": "simulation-proxy-mobile-base",
+        "schema_version": "1.0",
+        "speed_profile_id": "sim-safe-v1",
+        "timeout_ms": 30000,
+        "timestamp": "2026-09-20T15:23:19.721Z",
+        "trace_id": "68130a6a-5369-40f0-b7b6-5854eb8944ce"
+      },
+      "retry_result": {
+        "action_id": "ad08d656-cabc-4bb1-9bb7-616f5a8b7780",
+        "arrival": {
+          "destination_id": "line-b-drop",
+          "verified": true
+        },
+        "component_version": "sim004-navigation-backend-v2",
+        "evidence_refs": [
+          {
+            "sha256": "c11ad50203db430e0f12e392b3a7fb6d2830652ab9edaefc60d79cd19cde11f2",
+            "uri": "urn:factory-evidence:sim-004:ad08d656-cabc-4bb1-9bb7-616f5a8b7780"
+          }
+        ],
+        "message_type": "result",
+        "mission_id": "ac39f94a-02ba-488c-a0be-1ea287bcd52f",
+        "operation": "navigation.execute",
+        "request_id": "321ce483-a9fb-4a69-b201-044676455627",
+        "result": "success",
+        "schema_version": "1.0",
+        "source_kind": "mock",
+        "status": "succeeded",
+        "timestamp": "2026-09-20T15:23:21.187Z",
+        "trace_id": "68130a6a-5369-40f0-b7b6-5854eb8944ce"
+      },
+      "retry_suppressed": false,
+      "runtime_calls": 2,
+      "within_budget": true
+    },
+    {
+      "backend": "gazebo_navigation",
+      "cleanup_complete": true,
+      "decision": "FAIL_CLOSED",
+      "duration_ms": 8597.902,
+      "expected_decision": "FAIL_CLOSED",
+      "goal_tracking": {
+        "cleanup": {
+          "bound_ms": 5000,
+          "complete": true,
+          "processes": [
+            {
+              "pid": 154097,
+              "returncode": -15
+            }
+          ]
+        },
+        "fault_arm_event": {
+          "behavior_tree": "",
+          "frame_id": "sim009_missing_tf_frame_4ff6ff2f-5355-4d37-8695-b74d536bc1f3",
+          "injection_kind": "missing_goal_frame"
+        },
+        "goal_attempts": [
+          {
+            "action_id": "657a98c7-5478-4b74-93e2-0e4a2b7bd0c0",
+            "behavior_tree": "",
+            "cancellation_requested": false,
+            "destination_id": "line-b-drop",
+            "frame_id": "sim009_missing_tf_frame_4ff6ff2f-5355-4d37-8695-b74d536bc1f3",
+            "idempotency_key": "sim009-navigation",
+            "injection_kind": "missing_goal_frame",
+            "mission_id": "bbf3293b-1aa3-47d9-993e-3c5fdfe7e4bb",
+            "native_error_code": "0",
+            "native_error_message": null,
+            "nav2_goal_uuid": "ecdf5e2c-b0dd-4768-a16d-f53466836204",
+            "retryable_terminal_failure": false,
+            "scenario_execution_id": "4ff6ff2f-5355-4d37-8695-b74d536bc1f3",
+            "scenario_id": "SIM009-NAV-TF-UNAVAILABLE",
+            "server_log_attributed": true,
+            "server_log_end_offsets": {
+              "/tmp/sim004-ros-90cqgx44/gazebo_nav2_proxy.log": 46122
+            },
+            "server_log_start_offsets": {
+              "/tmp/sim004-ros-90cqgx44/gazebo_nav2_proxy.log": 45457
+            },
+            "server_log_tail": "[component_container_isolated-8] [ERROR] [1789917811.578742595] [transformPoseInTargetFrame]: No Transform available Error looking up target frame: \"sim009_missing_tf_frame_4ff6ff2f-5355-4d37-8695-b74d536bc1f3\" passed to lookupTransform argument source_frame does not exist. \n[component_container_isolated-8] \n[component_container_isolated-8] [ERROR] [1789917811.579042141] [bt_navigator]: Failed to transform a goal pose provided with frame_id 'sim009_missing_tf_frame_4ff6ff2f-5355-4d37-8695-b74d536bc1f3' to the global frame 'map'.\n[component_container_isolated-8] [WARN] [1789917811.579127779] [bt_navigator]: [navigate_to_pose] [ActionServer] Aborting handle.\n",
+            "terminal_goal_uuid": "ecdf5e2c-b0dd-4768-a16d-f53466836204",
+            "terminal_status": "6",
+            "timeout_fault": false
+          }
+        ],
+        "logical_side_effect_count": 0,
+        "runtime_calls": 1,
+        "scenario_execution_id": "4ff6ff2f-5355-4d37-8695-b74d536bc1f3",
+        "scenario_id": "SIM009-NAV-TF-UNAVAILABLE",
+        "tf_probes": [
+          {
+            "available": true,
+            "label": "sim009_tf_baseline",
+            "scenario_execution_id": "4ff6ff2f-5355-4d37-8695-b74d536bc1f3",
+            "scenario_id": "SIM009-NAV-TF-UNAVAILABLE",
+            "source_frame": "base_link",
+            "target_frame": "map"
+          },
+          {
+            "available": false,
+            "label": "sim009_tf_injected_missing",
+            "scenario_execution_id": "4ff6ff2f-5355-4d37-8695-b74d536bc1f3",
+            "scenario_id": "SIM009-NAV-TF-UNAVAILABLE",
+            "source_frame": "base_link",
+            "target_frame": "sim009_missing_tf_frame_4ff6ff2f-5355-4d37-8695-b74d536bc1f3"
+          }
+        ]
+      },
+      "id": "SIM009-NAV-TF-UNAVAILABLE",
+      "injection": "line-b-drop goal with one-shot execution-unique nonexistent goal frame after bounded map-to-base and injected-frame TF probes",
+      "layer": "L1-NAV",
+      "live_runtime_ready": true,
+      "native_failure": true,
+      "outcome_kind": "failure",
+      "pass": true,
+      "result": {
+        "action_id": "657a98c7-5478-4b74-93e2-0e4a2b7bd0c0",
+        "component_version": "sim004-navigation-backend-v2",
+        "error": {
+          "category": "EXECUTION_FAILED",
+          "code": "NAVIGATION_TF_UNAVAILABLE",
+          "message": "0",
+          "retryable": false
+        },
+        "evidence_refs": [
+          {
+            "sha256": "adef085ee56ddd3ffaf8d7d742630b51fa25ede5851d8a98753b32170e2ebe12",
+            "uri": "urn:factory-evidence:sim-004:657a98c7-5478-4b74-93e2-0e4a2b7bd0c0"
+          }
+        ],
+        "message_type": "result",
+        "mission_id": "bbf3293b-1aa3-47d9-993e-3c5fdfe7e4bb",
+        "operation": "navigation.execute",
+        "request_id": "b3131279-3c6b-4f2a-a676-0dc964574792",
+        "result": "failure",
+        "schema_version": "1.0",
+        "source_kind": "mock",
+        "status": "failed",
+        "timestamp": "2026-09-20T15:23:31.580Z",
+        "trace_id": "7dd90d8b-13f4-4ee3-aefd-0f0d9939ee0c"
+      },
+      "runtime_calls": 1,
+      "scenario_local_provenance": true,
+      "within_budget": true
+    },
+    {
+      "backend": "mujoco",
+      "cleanup_complete": true,
+      "decision": "FAIL_CLOSED",
+      "duration_ms": 31.295,
+      "expected_decision": "FAIL_CLOSED",
+      "id": "SIM009-VLA-GRASP-MISS",
+      "injection": "measured grasp miss",
+      "layer": "L1-VLA",
+      "outcome_kind": "failure",
+      "pass": true,
+      "result": {
+        "action_id": "72af3a60-8964-48dd-9809-35f59de73804",
+        "component_version": "sim005-mujoco-vla-backend-v1",
+        "error": {
+          "category": "EXECUTION_FAILED",
+          "code": "GRASP_MISS",
+          "message": "measured pusher/workpiece contact was absent",
+          "retryable": false
+        },
+        "latency_ms": 800,
+        "message_type": "result",
+        "mission_id": "cc63a4c9-ca2a-4668-9ca1-734c639980f4",
+        "operation": "vla.execute",
+        "request_id": "6fd97f23-3f3d-49db-9935-1058bc7bc28b",
+        "result": "failure",
+        "schema_version": "1.0",
+        "skill_outcome": "failed",
+        "source_kind": "mock",
+        "status": "failed",
+        "timestamp": "2026-09-20T15:23:31.611Z",
+        "trace_id": "97372976-e0b5-46c8-967b-4cc3a3cb5509"
+      },
+      "within_budget": true
+    },
+    {
+      "backend": "mujoco",
+      "cleanup_complete": true,
+      "decision": "FAIL_CLOSED",
+      "duration_ms": 16.004,
+      "expected_decision": "FAIL_CLOSED",
+      "id": "SIM009-VLA-CONTACT-LOSS",
+      "injection": "measured contact loss",
+      "layer": "L1-VLA",
+      "outcome_kind": "failure",
+      "pass": true,
+      "result": {
+        "action_id": "78f3e584-f123-4d2c-8388-5dfd87c3198b",
+        "component_version": "sim005-mujoco-vla-backend-v1",
+        "error": {
+          "category": "EXECUTION_FAILED",
+          "code": "CONTACT_LOSS",
+          "message": "measured pusher/workpiece contact was lost after transfer",
+          "retryable": false
+        },
+        "latency_ms": 800,
+        "message_type": "result",
+        "mission_id": "1c0f5a4b-158f-490e-bdef-1f4e72143c32",
+        "operation": "vla.execute",
+        "request_id": "a45e8862-7775-41c6-8b7a-2d080b60e90d",
+        "result": "failure",
+        "schema_version": "1.0",
+        "skill_outcome": "failed",
+        "source_kind": "mock",
+        "status": "failed",
+        "timestamp": "2026-09-20T15:23:31.627Z",
+        "trace_id": "52624b9b-2e08-4d0a-8f8c-75e4a7ff8e32"
+      },
+      "within_budget": true
+    },
+    {
+      "backend": "mujoco",
+      "cleanup_complete": true,
+      "decision": "FAIL_CLOSED",
+      "duration_ms": 5.602,
+      "expected_decision": "FAIL_CLOSED",
+      "id": "SIM009-VLA-WORKSPACE-LIMIT",
+      "injection": "workspace limit",
+      "layer": "L1-VLA",
+      "outcome_kind": "failure",
+      "pass": true,
+      "result": {
+        "action_id": "626a064b-1ba4-4bd2-bcd5-b116c1201d75",
+        "component_version": "sim005-mujoco-vla-backend-v1",
+        "error": {
+          "category": "SAFETY_POLICY",
+          "code": "WORKSPACE_LIMIT",
+          "message": "scripted command exceeds bounded workspace",
+          "retryable": false
+        },
+        "latency_ms": 800,
+        "message_type": "result",
+        "mission_id": "3d31ade6-761c-4585-b239-523b64d52d84",
+        "operation": "vla.execute",
+        "request_id": "e0dbd3cd-4672-4364-9e2a-22a64dd6de89",
+        "result": "failure",
+        "schema_version": "1.0",
+        "skill_outcome": "failed",
+        "source_kind": "mock",
+        "status": "failed",
+        "timestamp": "2026-09-20T15:23:31.633Z",
+        "trace_id": "c006eeac-3722-4000-8117-0e7f86334651"
+      },
+      "within_budget": true
+    },
+    {
+      "backend": "mujoco",
+      "cleanup_complete": true,
+      "decision": "RECONCILE",
+      "duration_ms": 9.995,
+      "expected_decision": "RECONCILE",
+      "id": "SIM009-VLA-TIMEOUT",
+      "injection": "bounded model timeout",
+      "layer": "L1-VLA",
+      "outcome_kind": "unknown",
+      "pass": true,
+      "reconciliation": {
+        "action_id": "d8f32438-7c96-485a-a966-bb41446c5bc3",
+        "component_version": "sim005-mujoco-vla-backend-v1",
+        "evidence_refs": [
+          {
+            "sha256": "ccb8e428638f666c0302610c99142cb7b9312c3adfcf80d0fe876f730cefcc9a",
+            "uri": "urn:factory-evidence:sim-005:6f5f39c8-b28f-47b7-b6c6-3af270f45467:d8f32438-7c96-485a-a966-bb41446c5bc3"
+          }
+        ],
+        "message_type": "result",
+        "mission_id": "6f5f39c8-b28f-47b7-b6c6-3af270f45467",
+        "observed_at": "2026-09-20T15:23:31.639Z",
+        "observed_status": "unknown",
+        "operation": "action_status.get",
+        "request_id": "37157f11-01c0-4650-a9a0-571b8e198de0",
+        "result": "success",
+        "schema_version": "1.0",
+        "source_kind": "mock",
+        "status": "succeeded",
+        "timestamp": "2026-09-20T15:23:31.645Z",
+        "trace_id": "feb94512-6b30-40b4-8334-61c5e37d44c7"
+      },
+      "result": {
+        "action_id": "d8f32438-7c96-485a-a966-bb41446c5bc3",
+        "component_version": "sim005-mujoco-vla-backend-v1",
+        "error": {
+          "category": "MODEL_TIMEOUT",
+          "code": "MUJOCO_TIMEOUT",
+          "message": "bounded physics budget expired",
+          "retryable": true
+        },
+        "latency_ms": 800,
+        "message_type": "result",
+        "mission_id": "6f5f39c8-b28f-47b7-b6c6-3af270f45467",
+        "operation": "vla.execute",
+        "request_id": "c2f3b88d-8781-4404-bc25-ddeabbfc3256",
+        "result": "pending",
+        "schema_version": "1.0",
+        "skill_outcome": "uncertain",
+        "source_kind": "mock",
+        "status": "unknown",
+        "timestamp": "2026-09-20T15:23:31.639Z",
+        "trace_id": "feb94512-6b30-40b4-8334-61c5e37d44c7"
+      },
+      "within_budget": true
+    },
+    {
+      "backend": "mujoco",
+      "cleanup_complete": true,
+      "decision": "FAIL_CLOSED",
+      "duration_ms": 6.874,
+      "expected_decision": "FAIL_CLOSED",
+      "id": "SIM009-VLA-AMBIGUOUS",
+      "injection": "ambiguous observation reference",
+      "layer": "L1-VLA",
+      "outcome_kind": "uncertain",
+      "pass": true,
+      "result": {
+        "action_id": "23641957-fa29-4ed6-b832-c820e6ff66b0",
+        "component_version": "sim005-mujoco-vla-backend-v1",
+        "error": {
+          "category": "VALIDATION",
+          "code": "INVALID_OBSERVATION",
+          "message": "observation identity is missing, stale, or ambiguous",
+          "retryable": false
+        },
+        "latency_ms": 800,
+        "message_type": "result",
+        "mission_id": "b8c19a7b-031f-4a5f-8121-7db8bab17f6e",
+        "operation": "vla.execute",
+        "request_id": "c9de7549-eaee-43b1-a91d-738d00840a35",
+        "result": "failure",
+        "schema_version": "1.0",
+        "skill_outcome": "failed",
+        "source_kind": "mock",
+        "status": "failed",
+        "timestamp": "2026-09-20T15:23:31.648Z",
+        "trace_id": "27d55dfa-2662-4c01-944a-2a35d21112bc"
+      },
+      "within_budget": true
+    },
+    {
+      "backend": "mujoco",
+      "cleanup_complete": true,
+      "decision": "RECONCILE",
+      "duration_ms": 9.853,
+      "expected_decision": "RECONCILE",
+      "id": "SIM009-VLA-UNKNOWN",
+      "injection": "unknown outcome with status lookup",
+      "layer": "L1-VLA",
+      "outcome_kind": "unknown",
+      "pass": true,
+      "reconciliation": {
+        "action_id": "8f8c4ae7-45fe-4e6f-ab33-01eee0350252",
+        "component_version": "sim005-mujoco-vla-backend-v1",
+        "evidence_refs": [
+          {
+            "sha256": "21bfc7574c00f0ff0a37991dd64e48db325e9c40816516cfdfe598a9b6bb8322",
+            "uri": "urn:factory-evidence:sim-005:428ffcb7-0969-4908-91ba-a4d209143bc0:8f8c4ae7-45fe-4e6f-ab33-01eee0350252"
+          }
+        ],
+        "message_type": "result",
+        "mission_id": "428ffcb7-0969-4908-91ba-a4d209143bc0",
+        "observed_at": "2026-09-20T15:23:31.656Z",
+        "observed_status": "succeeded",
+        "operation": "action_status.get",
+        "request_id": "30ae79a6-5044-4dd9-ab62-367e9b58e734",
+        "result": "success",
+        "schema_version": "1.0",
+        "source_kind": "mock",
+        "status": "succeeded",
+        "timestamp": "2026-09-20T15:23:31.662Z",
+        "trace_id": "df39caf6-b189-4991-bbf8-01d7e0bb6f6e"
+      },
+      "result": {
+        "action_id": "8f8c4ae7-45fe-4e6f-ab33-01eee0350252",
+        "component_version": "sim005-mujoco-vla-backend-v1",
+        "error": {
+          "category": "DEPENDENCY_TIMEOUT",
+          "code": "MUJOCO_OUTCOME_UNKNOWN",
+          "message": "result requires authoritative reconciliation",
+          "retryable": true
+        },
+        "latency_ms": 800,
+        "message_type": "result",
+        "mission_id": "428ffcb7-0969-4908-91ba-a4d209143bc0",
+        "operation": "vla.execute",
+        "request_id": "d590b07a-c051-4e82-99ac-4b6501b27a20",
+        "result": "pending",
+        "schema_version": "1.0",
+        "skill_outcome": "uncertain",
+        "source_kind": "mock",
+        "status": "unknown",
+        "timestamp": "2026-09-20T15:23:31.656Z",
+        "trace_id": "df39caf6-b189-4991-bbf8-01d7e0bb6f6e"
+      },
+      "within_budget": true
+    },
+    {
+      "backend": "verification",
+      "cleanup_complete": true,
+      "decision": "RECOVERY",
+      "duration_ms": 13.322,
+      "expected_decision": "RECOVERY",
+      "id": "SIM009-VERIFY-MISMATCH",
+      "injection": "skill success with observed-state mismatch",
+      "layer": "L2",
+      "mission": {
+        "mission_outcome": "in_progress",
+        "mission_state": "recovering",
+        "mission_success_committed": false,
+        "transition": {
+          "from": "executing",
+          "to": "recovering"
+        },
+        "transition_path": [
+          "executing",
+          "reconciling",
+          "recovering"
+        ],
+        "verification_verdict": "fail"
+      },
+      "outcome_kind": "failure",
+      "pass": true,
+      "route": "RECOVERY",
+      "skill_reported_success": true,
+      "verification": {
+        "action_id": "01640c7f-3ff2-47a0-b58a-1db244e61100",
+        "component_version": "sim006-verification-backend-v1",
+        "confidence": 0.0,
+        "evidence_refs": [
+          {
+            "sha256": "23c636b2a31e28ca8550847f608d029cfcf98aa7b118ec97ceaacfbfb1e28884",
+            "uri": "urn:factory-evidence:sim-006:deterministic:sim009-verify-mismatch-observation"
+          }
+        ],
+        "message_type": "result",
+        "mismatch_code": "EXPECTED_STATE_MISMATCH",
+        "mission_id": "4c1a165b-703b-41be-a673-d00a9372419a",
+        "operation": "verification.verify",
+        "request_id": "34cee341-91fc-449b-95a4-f52d3ab9c8f5",
+        "result": "success",
+        "schema_version": "1.0",
+        "source_kind": "mock",
+        "status": "succeeded",
+        "timestamp": "2026-09-20T15:23:31.668Z",
+        "trace_id": "97fc1639-30f1-43c9-850d-8b81bd35f7dd",
+        "verdict": "fail",
+        "verification_profile_version": "sim-exact-match-v1"
+      },
+      "within_budget": true
+    },
+    {
+      "backend": "verification",
+      "cleanup_complete": true,
+      "decision": "HITL",
+      "duration_ms": 14.037,
+      "expected_decision": "HITL",
+      "id": "SIM009-VERIFY-STALE",
+      "injection": "stale observation",
+      "layer": "L2",
+      "mission": {
+        "mission_outcome": "requires_human",
+        "mission_state": "escalated",
+        "mission_success_committed": false,
+        "transition": {
+          "from": "executing",
+          "to": "escalated"
+        },
+        "transition_path": [
+          "executing",
+          "escalated"
+        ],
+        "verification_verdict": null
+      },
+      "outcome_kind": "failure",
+      "pass": true,
+      "route": "HITL",
+      "verification": {
+        "action_id": "edc74dd1-71f4-474d-af46-cf2ef396d73f",
+        "component_version": "sim006-verification-backend-v1",
+        "error": {
+          "category": "DEPENDENCY_MALFORMED",
+          "code": "INVALID_VERIFICATION_EVIDENCE",
+          "message": "observation is stale or from the future",
+          "retryable": false
+        },
+        "message_type": "result",
+        "mission_id": "b8c52a0c-d835-4187-99a5-1c0246e0da4a",
+        "operation": "verification.verify",
+        "request_id": "8ce42688-2090-493b-a2dd-50580182b37f",
+        "result": "failure",
+        "schema_version": "1.0",
+        "source_kind": "mock",
+        "status": "failed",
+        "timestamp": "2026-09-20T15:23:31.680Z",
+        "trace_id": "14d3e338-c57b-4b2f-9723-9770e3470bdf",
+        "verification_profile_version": "sim-exact-match-v1"
+      },
+      "within_budget": true
+    },
+    {
+      "backend": "verification",
+      "cleanup_complete": true,
+      "decision": "RECONCILE",
+      "duration_ms": 12.83,
+      "expected_decision": "RECONCILE",
+      "id": "SIM009-VERIFY-UNCERTAIN",
+      "injection": "ambiguous normalized observation",
+      "layer": "L2",
+      "mission": {
+        "mission_outcome": "in_progress",
+        "mission_state": "reconciling",
+        "mission_success_committed": false,
+        "transition": {
+          "from": "executing",
+          "to": "reconciling"
+        },
+        "transition_path": [
+          "executing",
+          "reconciling"
+        ],
+        "verification_verdict": "uncertain"
+      },
+      "outcome_kind": "uncertain",
+      "pass": true,
+      "route": "RECONCILE",
+      "verification": {
+        "action_id": "5ebbffdb-9b69-4e73-ad0e-e6c013554e71",
+        "component_version": "sim006-verification-backend-v1",
+        "confidence": 0.0,
+        "evidence_refs": [
+          {
+            "sha256": "40f24ab7d9fe2cc1b24acc48861e9067147d2674b36ee952a94384060c4bc98f",
+            "uri": "urn:factory-evidence:sim-006:deterministic:sim009-verify-uncertain-observation"
+          }
+        ],
+        "message_type": "result",
+        "mismatch_code": "INSUFFICIENT_OR_AMBIGUOUS_EVIDENCE",
+        "mission_id": "621da653-5749-49aa-84ac-7f16e0e84636",
+        "operation": "verification.verify",
+        "request_id": "305ce6a4-12b2-4325-a62b-77343ffbfc8c",
+        "result": "success",
+        "schema_version": "1.0",
+        "source_kind": "mock",
+        "status": "succeeded",
+        "timestamp": "2026-09-20T15:23:31.695Z",
+        "trace_id": "654ff5a2-2e26-4e9b-8788-f769ec7ef658",
+        "verdict": "uncertain",
+        "verification_profile_version": "sim-exact-match-v1"
+      },
+      "within_budget": true
+    }
+  ],
+  "schema_version": "1.0",
+  "simulation_authority": {
+    "live_dual_world": false,
+    "manipulation_fault_bench": "mujoco",
+    "navigation_runtime": "GoalTrackedGazeboNav2Runtime",
+    "navigation_system_world": "gazebo_harmonic",
+    "physical_dependency": false
+  },
+  "task_id": "TASK-SIM-009",
+  "task_specific_result": "SIM_FAILURE_SUITE_READY"
+}

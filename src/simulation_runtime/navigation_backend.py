@@ -18,7 +18,9 @@ from .smoke import ContractViolation, validate_contract_message
 
 ROOT = Path(__file__).resolve().parents[2]
 COMPONENT_VERSION = "sim004-navigation-backend-v2"
-DESTINATIONS = {"line-b-drop", "blocked-bay"}
+# ``warehouse-a`` is the semantic source region used by the bounded SIM-008
+# supply mission.  It remains a destination identifier here--never a raw pose.
+DESTINATIONS = {"warehouse-a", "line-b-drop", "blocked-bay"}
 SPEED_PROFILES = {"sim-safe-v1"}
 
 
