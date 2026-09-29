@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import hashlib
+import importlib.util
 import json
 from copy import deepcopy
 from pathlib import Path
@@ -21,6 +22,14 @@ from simulation_runtime.observability_regression import (
     resolve_q01_qualification,
     validate_q01_chain,
 )
+
+RUNNER_SPEC = importlib.util.spec_from_file_location(
+    "run_simulation_observability_regression",
+    ROOT / "scripts/run_simulation_observability_regression.py",
+)
+assert RUNNER_SPEC and RUNNER_SPEC.loader
+RUNNER = importlib.util.module_from_spec(RUNNER_SPEC)
+RUNNER_SPEC.loader.exec_module(RUNNER)
 
 
 def _write_json(root: Path, relative_path: str, value: dict[str, object]) -> str:
@@ -537,3 +546,52 @@ def test_q01_rejects_duplicate_and_extra_subjects() -> None:
     evidence["qualification_subjects"].append(duplicate)  # type: ignore[index]
     with pytest.raises(ValueError):
         validate_q01_chain(ROOT, acceptance, evidence)
+
+
+def test_runner_binds_one_explicit_interpreter_to_identical_commands() -> None:
+    python = Path(sys.executable)
+    candidate = RUNNER.regression_command(python)
+    baseline = RUNNER.regression_command(python)
+
+    assert candidate == baseline
+    assert candidate == [str(python), "-m", "pytest", "-q", "-p", "no:cacheprovider"]
+
+
+def test_runner_rejects_missing_and_non_executable_interpreters(tmp_path: Path) -> None:
+    missing = tmp_path / "missing-python"
+    non_executable = tmp_path / "python"
+    non_executable.write_text("#!/bin/sh\n")
+
+    with pytest.raises(RuntimeError, match="QUALIFIED_PYTHON"):
+        RUNNER.resolve_qualified_python(missing)
+    with pytest.raises(RuntimeError, match="QUALIFIED_PYTHON"):
+        RUNNER.resolve_qualified_python(non_executable)
+
+
+def test_runner_dependency_preflight_and_source_probe_use_resolved_python() -> None:
+    python = RUNNER.resolve_qualified_python(Path(sys.executable))
+    preflight = RUNNER.preflight_environment(python)
+    probe = RUNNER.probe_worktree_environment(ROOT, python)
+
+    assert preflight["python_executable"] == str(python)
+    assert preflight["mujoco_version"] == "3.13.0"
+    assert probe["python_executable"] == str(python)
+    assert Path(probe["project_module_origin"]).is_relative_to(ROOT)
+
+
+def test_runner_dependency_preflight_failure_is_fail_closed(tmp_path: Path) -> None:
+    fake_python = tmp_path / "python"
+    fake_python.write_text("#!/bin/sh\nexit 7\n")
+    fake_python.chmod(0o755)
+
+    with pytest.raises(RuntimeError, match="DEPENDENCY_PREFLIGHT_FAILED"):
+        RUNNER.preflight_environment(fake_python)
+
+
+def test_environment_and_collection_failures_cannot_be_preexisting() -> None:
+    matching = {"tests/test_x.py::test_case": "signature"}
+
+    assert RUNNER.classify_execution(2, 2, matching, matching) == "POSSIBLY_TASK_RELATED"
+    assert RUNNER.classify_execution(1, 2, matching, matching) == "POSSIBLY_TASK_RELATED"
+    assert RUNNER.classify_execution(1, 1, matching, matching, "cleanup failed") == "POSSIBLY_TASK_RELATED"
+    assert RUNNER.classify_execution(1, 1, matching, matching) == "PROVEN_PREEXISTING"

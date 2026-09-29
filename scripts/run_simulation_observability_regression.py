@@ -2,9 +2,9 @@
 """Generate the TASK-SIM-010 accepted-evidence regression artifact."""
 from __future__ import annotations
 
+import argparse
 import json
 import os
-import shutil
 import subprocess
 import sys
 import tempfile
@@ -20,11 +20,100 @@ from simulation_runtime.observability_regression import (  # noqa: E402
 )
 
 BASELINE_COMMIT = "6909c6cceb727598570f6e170ae8d1d293418c9a"
-COMMAND = ["python3", "-m", "pytest", "-q", "-p", "no:cacheprovider"]
+EXPECTED_MUJOCO_VERSION = "3.13.0"
+PYTEST_ARGS = ["-m", "pytest", "-q", "-p", "no:cacheprovider"]
 
 
-def _run_regression(cwd: Path) -> subprocess.CompletedProcess[str]:
-    return subprocess.run(COMMAND, cwd=cwd, text=True, capture_output=True, check=False, env=os.environ | {"PYTHONDONTWRITEBYTECODE": "1"})
+def resolve_qualified_python(value: Path) -> Path:
+    """Retain a venv entry-point path while requiring an executable file."""
+    path = Path(os.path.abspath(value))
+    if not path.is_file() or not os.access(path, os.X_OK):
+        raise RuntimeError("QUALIFIED_PYTHON_INVALID")
+    return path
+
+
+def regression_command(python: Path) -> list[str]:
+    return [str(python), *PYTEST_ARGS]
+
+
+def _qualified_environment(cwd: Path) -> dict[str, str]:
+    return os.environ | {
+        "PYTHONDONTWRITEBYTECODE": "1",
+        "PYTHONPATH": str(cwd / "src"),
+    }
+
+
+def preflight_environment(python: Path) -> dict[str, str]:
+    code = (
+        "import json,sys,mujoco,pytest; "
+        "print(json.dumps({'python_executable':sys.executable,"
+        "'python_version':sys.version,'mujoco_version':mujoco.__version__,"
+        "'mujoco_file':mujoco.__file__,'pytest_file':pytest.__file__},sort_keys=True))"
+    )
+    result = subprocess.run(
+        [str(python), "-c", code], text=True, capture_output=True, check=False,
+        env=os.environ | {"PYTHONDONTWRITEBYTECODE": "1"},
+    )
+    if result.returncode:
+        raise RuntimeError("DEPENDENCY_PREFLIGHT_FAILED")
+    try:
+        details = json.loads(result.stdout)
+    except json.JSONDecodeError as exc:
+        raise RuntimeError("DEPENDENCY_PREFLIGHT_FAILED") from exc
+    if details.get("python_executable") != str(python) or details.get("mujoco_version") != EXPECTED_MUJOCO_VERSION:
+        raise RuntimeError("DEPENDENCY_PREFLIGHT_FAILED")
+    return details
+
+
+def probe_worktree_environment(cwd: Path, python: Path) -> dict[str, str]:
+    code = (
+        "import json,os,sys,mujoco,pytest; "
+        "import simulation_runtime.mujoco_vla_backend as project_module; "
+        "print(json.dumps({'cwd':os.getcwd(),'python_executable':sys.executable,"
+        "'python_version':sys.version,'mujoco_version':mujoco.__version__,"
+        "'mujoco_file':mujoco.__file__,'pytest_file':pytest.__file__,"
+        "'project_module_origin':project_module.__file__,'sys_path':sys.path},sort_keys=True))"
+    )
+    result = subprocess.run(
+        [str(python), "-c", code], cwd=cwd, text=True, capture_output=True,
+        check=False, env=_qualified_environment(cwd),
+    )
+    if result.returncode:
+        raise RuntimeError("SOURCE_ISOLATION_PROBE_FAILED")
+    try:
+        details = json.loads(result.stdout)
+        origin = Path(details["project_module_origin"]).resolve()
+    except (json.JSONDecodeError, KeyError, TypeError) as exc:
+        raise RuntimeError("SOURCE_ISOLATION_PROBE_FAILED") from exc
+    if (details.get("python_executable") != str(python)
+            or details.get("mujoco_version") != EXPECTED_MUJOCO_VERSION
+            or not origin.is_relative_to(cwd.resolve())):
+        raise RuntimeError("ENVIRONMENT_SOURCE_ISOLATION_FAILED")
+    return details
+
+
+def _run_regression(cwd: Path, python: Path) -> subprocess.CompletedProcess[str]:
+    return subprocess.run(
+        regression_command(python), cwd=cwd, text=True, capture_output=True,
+        check=False, env=_qualified_environment(cwd),
+    )
+
+
+def classify_execution(
+    current_exit: int,
+    baseline_exit: int,
+    current: dict[str, str],
+    baseline: dict[str, str],
+    infrastructure_error: str | None = None,
+) -> str:
+    """Only pytest PASS/failure exits are valid comparison executions."""
+    if infrastructure_error or current_exit not in {0, 1} or baseline_exit not in {0, 1}:
+        return "POSSIBLY_TASK_RELATED"
+    if current_exit == 0:
+        return "PASS"
+    if baseline_exit != 1:
+        return "POSSIBLY_TASK_RELATED"
+    return classify_regression_failures(current, baseline)
 
 
 def _detached_checkout(root: Path, commit: str, prefix: str) -> Path:
@@ -54,7 +143,16 @@ def _remove_checkout(root: Path, checkout_path: Path) -> None:
         raise RuntimeError("REGRESSION_WORKTREE_CLEANUP_FAILED")
 
 
-def main() -> int:
+def main(argv: list[str] | None = None) -> int:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--python", required=True, type=Path, help="qualified absolute Python interpreter")
+    args = parser.parse_args(argv)
+    try:
+        python = resolve_qualified_python(args.python)
+        environment = preflight_environment(python)
+    except RuntimeError as exc:
+        print(str(exc), file=sys.stderr)
+        return 2
     evidence = build_regression_evidence(ROOT)
     candidate_commit = subprocess.run(["git", "rev-parse", "HEAD"], cwd=ROOT, text=True, capture_output=True, check=False).stdout.strip()
     comparison_error = None
@@ -62,12 +160,15 @@ def main() -> int:
     validation = baseline_result = None
     current_failures: dict[str, str] = {}
     baseline_failures: dict[str, str] = {}
+    current_environment = baseline_environment = None
     try:
         current = _detached_checkout(ROOT, candidate_commit, "sim010-current-wt-")
         baseline = _detached_checkout(ROOT, BASELINE_COMMIT, "sim010-baseline-wt-")
-        validation = _run_regression(current)
+        current_environment = probe_worktree_environment(current, python)
+        baseline_environment = probe_worktree_environment(baseline, python)
+        validation = _run_regression(current, python)
         current_failures = failure_signatures(validation.stdout)
-        baseline_result = _run_regression(baseline)
+        baseline_result = _run_regression(baseline, python)
         baseline_failures = failure_signatures(baseline_result.stdout)
     except (OSError, RuntimeError) as exc:
         comparison_error = str(exc)
@@ -79,15 +180,24 @@ def main() -> int:
                 _remove_checkout(ROOT, checkout_path)
             except RuntimeError as exc:
                 comparison_error = str(exc)
-    classification = "POSSIBLY_TASK_RELATED" if comparison_error else classify_regression_failures(current_failures, baseline_failures)
+    classification = classify_execution(
+        validation.returncode if validation is not None else -1,
+        baseline_result.returncode if baseline_result is not None else -1,
+        current_failures,
+        baseline_failures,
+        comparison_error,
+    )
+    command = "PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=<detached>/src " + " ".join(regression_command(python))
     evidence["full_repository_regression"] = {
-        "command": "PYTHONDONTWRITEBYTECODE=1 python3 -m pytest -q -p no:cacheprovider",
+        "command": command,
         "candidate_commit": candidate_commit,
         "exit_code": validation.returncode if validation is not None else None,
         "result": "PASS" if validation is not None and validation.returncode == 0 else "FAIL",
         "baseline_commit": BASELINE_COMMIT,
-        "python_executable": shutil.which("python3"),
-        "virtual_env": os.environ.get("VIRTUAL_ENV"),
+        "python_executable": str(python),
+        "qualified_environment": environment,
+        "candidate_environment": current_environment,
+        "baseline_environment": baseline_environment,
         "failure_classification": classification,
         "failed_node_ids": sorted(current_failures),
         "failure_signatures": current_failures,
@@ -108,7 +218,7 @@ def main() -> int:
     path = ROOT / "results/simulation/SIM-010_observability_regression.json"
     path.write_text(json.dumps(evidence, indent=2, sort_keys=True) + "\n")
     print(json.dumps(evidence, sort_keys=True))
-    return 0 if evidence["task_specific_result"] == "SIM_OBSERVABILITY_REGRESSION_READY" and (validation.returncode == 0 or classification == "PROVEN_PREEXISTING") else 1
+    return 0 if evidence["task_specific_result"] == "SIM_OBSERVABILITY_REGRESSION_READY" and validation is not None and (validation.returncode == 0 or classification == "PROVEN_PREEXISTING") else 1
 
 
 if __name__ == "__main__":
