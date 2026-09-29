@@ -1,43 +1,80 @@
 {
-  "schema_version": 1,
-  "task_id": "TASK-SIM-009",
-  "proof_type": "consecutive_live_run_repeatability",
-  "created_at": "2026-09-19T15:44:31.171559+00:00",
-  "result": "PASS",
-  "requirements": {
-    "consecutive_successful_runs": 2,
-    "cleanup_required_each_run": true,
-    "canonical_matches_latest_run": true
+  "canonical": {
+    "cleanup_complete": true,
+    "failed_scenarios": [],
+    "generated_at": "2026-09-20T10:19:25.282Z",
+    "path": "results/simulation/SIM-009_failure_recovery.json",
+    "scenario_count": 16,
+    "sequence": 2,
+    "sha256": "9d056b859ab0ce7c81c10f833a563da9671a0911ad09eac78fd59fe218b4034e",
+    "task_specific_result": "SIM_FAILURE_SUITE_READY"
   },
+  "created_at": "2026-09-20T10:20:30.537315+00:00",
+  "navigation_signatures": {
+    "SIM009-NAV-ABORTED": {
+      "behavior_tree_kind": "missing_bt",
+      "destination_id": "line-b-drop",
+      "frame_id_kind": "map",
+      "injection_kind": "missing_behavior_tree",
+      "terminal_status": "6"
+    },
+    "SIM009-NAV-BLOCKED": {
+      "behavior_tree_kind": "",
+      "destination_id": "blocked-bay",
+      "frame_id_kind": "map",
+      "injection_kind": "none",
+      "terminal_status": "6"
+    },
+    "SIM009-NAV-TF-UNAVAILABLE": {
+      "behavior_tree_kind": "",
+      "destination_id": "line-b-drop",
+      "frame_id_kind": "missing_tf",
+      "injection_kind": "missing_goal_frame",
+      "terminal_status": "6"
+    }
+  },
+  "proof_type": "consecutive_live_run_repeatability",
+  "requirements": {
+    "canonical_matches_latest_run": true,
+    "cleanup_required_each_run": true,
+    "consecutive_successful_runs": 2,
+    "distinct_navigation_fault_signatures": true,
+    "nav2_goal_uuids_differ": true,
+    "scenario_execution_ids_differ": true
+  },
+  "result": "PASS",
   "runs": [
     {
-      "sequence": 1,
-      "path": "results/simulation/SIM-009_failure_recovery_run1.json",
-      "sha256": "af8ce56b823f4f9376ac7cf96e13f395fa923efb059d4458eea10c925bea9922",
-      "generated_at": "2026-09-19T15:41:59.843Z",
-      "task_specific_result": "SIM_FAILURE_SUITE_READY",
       "cleanup_complete": true,
+      "failed_scenarios": [],
+      "generated_at": "2026-09-20T10:17:57.257Z",
+      "path": "results/simulation/SIM-009_failure_recovery_run1.json",
       "scenario_count": 16,
-      "failed_scenarios": []
+      "sequence": 1,
+      "sha256": "a82fc49bbc2d872c2eae13596e03e01125d7008b005e3176af669ca502dc5dd4",
+      "task_specific_result": "SIM_FAILURE_SUITE_READY"
     },
     {
-      "sequence": 2,
-      "path": "results/simulation/SIM-009_failure_recovery_run2.json",
-      "sha256": "f1257e5616add50243b9d9fb1df8fcadb53fa7a3070a45f462ede2bf182351f2",
-      "generated_at": "2026-09-19T15:43:08.160Z",
-      "task_specific_result": "SIM_FAILURE_SUITE_READY",
       "cleanup_complete": true,
+      "failed_scenarios": [],
+      "generated_at": "2026-09-20T10:19:25.282Z",
+      "path": "results/simulation/SIM-009_failure_recovery_run2.json",
       "scenario_count": 16,
-      "failed_scenarios": []
+      "sequence": 2,
+      "sha256": "9d056b859ab0ce7c81c10f833a563da9671a0911ad09eac78fd59fe218b4034e",
+      "task_specific_result": "SIM_FAILURE_SUITE_READY"
     }
   ],
-  "canonical": {
-    "path": "results/simulation/SIM-009_failure_recovery.json",
-    "sha256": "f1257e5616add50243b9d9fb1df8fcadb53fa7a3070a45f462ede2bf182351f2",
-    "generated_at": "2026-09-19T15:43:08.160Z",
-    "task_specific_result": "SIM_FAILURE_SUITE_READY",
-    "cleanup_complete": true,
-    "scenario_count": 16,
-    "failed_scenarios": []
+  "schema_version": 1,
+  "task_id": "TASK-SIM-009",
+  "validation": {
+    "all_scenarios_pass": true,
+    "both_cleanup_complete": true,
+    "both_ready": true,
+    "canonical_matches_latest_run": true,
+    "distinct_navigation_fault_signatures": true,
+    "nav2_goal_uuids_differ": true,
+    "scenario_execution_ids_differ": true,
+    "semantic_navigation_signatures_equivalent": true
   }
 }

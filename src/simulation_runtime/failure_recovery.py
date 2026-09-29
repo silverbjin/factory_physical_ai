@@ -29,7 +29,10 @@ INTENTIONAL_FAULT_TIMEOUT_MS = 2_000
 NORMAL_RECOVERY_TIMEOUT_MS = EXECUTION_SECONDS * 1_000
 LIVE_RUNTIME_SCHEDULING_MARGIN_MS = 1_000
 LIVE_NAVIGATION_CALL_BUDGET_MS = (
-    INTENTIONAL_FAULT_TIMEOUT_MS + LIVE_RUNTIME_SCHEDULING_MARGIN_MS
+    # A live rclpy NavigateToPose call has three independently bounded waits:
+    # action-server discovery, goal acceptance, and the same goal's terminal
+    # result.  The scenario timer intentionally covers all three.
+    3 * INTENTIONAL_FAULT_TIMEOUT_MS + LIVE_RUNTIME_SCHEDULING_MARGIN_MS
 )
 LIVE_NAVIGATION_RETRY_BUDGET_MS = (
     INTENTIONAL_FAULT_TIMEOUT_MS
@@ -80,11 +83,13 @@ def _accepted_binding(task: str) -> dict[str, Any]:
 
 def _action_request(operation: str, *, task_id: str | None = None, mission_id: str | None = None,
                     action_id: str | None = None, idempotency_key: str | None = None,
-                    attempt: int = 1, timeout_ms: int = INTENTIONAL_FAULT_TIMEOUT_MS) -> dict[str, Any]:
+                    attempt: int = 1, timeout_ms: int = INTENTIONAL_FAULT_TIMEOUT_MS,
+                    scenario_id: str | None = None) -> dict[str, Any]:
     now = datetime.now(timezone.utc)
     request: dict[str, Any] = {"operation": operation, "message_type": "request", "schema_version": "1.0", "mission_id": mission_id or str(uuid.uuid4()), "request_id": str(uuid.uuid4()), "trace_id": str(uuid.uuid4()), "timestamp": _timestamp(now), "deadline_at": _timestamp(now + timedelta(milliseconds=timeout_ms)), "timeout_ms": timeout_ms, "component_version": "sim009-failure-suite-v1", "action_id": action_id or str(uuid.uuid4())}
     if operation == "navigation.execute":
-        request |= {"idempotency_key": idempotency_key or "sim009-navigation", "attempt": attempt, "retry_budget_remaining": 1, "robot_id": "simulation-proxy-mobile-base", "destination_id": "blocked-bay", "speed_profile_id": "sim-safe-v1"}
+        destination_id = "blocked-bay" if scenario_id == "SIM009-NAV-BLOCKED" else "line-b-drop"
+        request |= {"idempotency_key": idempotency_key or "sim009-navigation", "attempt": attempt, "retry_budget_remaining": 1, "robot_id": "simulation-proxy-mobile-base", "destination_id": destination_id, "speed_profile_id": "sim-safe-v1"}
     elif operation == "vla.execute":
         request |= {"idempotency_key": idempotency_key or "sim009-vla", "attempt": attempt, "retry_budget_remaining": 1, "robot_id": "generic-simulation-proxy", "task_id": task_id or "mujoco-place-nominal", "policy_version": "sim005-scripted-policy-v1", "observation_refs": [observation_ref()], "workspace_profile_id": "sim005-workspace-v1"}
     return request
@@ -201,6 +206,68 @@ def _base_row(scenario: dict[str, Any], *, decision: str, outcome_kind: str, det
     return {"id": scenario["id"], "layer": scenario["layer"], "backend": scenario["backend"], "injection": scenario["injection"], "expected_decision": scenario["expected_decision"], "decision": decision, "outcome_kind": outcome_kind, "cleanup_complete": True, "pass": decision == scenario["expected_decision"], **details}
 
 
+def _validate_live_navigation_evidence(
+    scenario_id: str, request: dict[str, Any], evidence: dict[str, Any],
+) -> bool:
+    """Reject cross-scenario or generic terminal evidence for an R3 fault."""
+    execution_id = evidence.get("scenario_execution_id")
+    attempts = evidence.get("goal_attempts", [])
+    if (
+        not isinstance(execution_id, str)
+        or evidence.get("scenario_id") != scenario_id
+        or len(attempts) < 1
+        or any(item.get("scenario_id") != scenario_id or item.get("scenario_execution_id") != execution_id for item in attempts)
+    ):
+        return False
+    matching = [item for item in attempts if item.get("action_id") == request["action_id"]]
+    if not matching:
+        return False
+    attempt = matching[0]
+    if (
+        attempt.get("destination_id") != request["destination_id"]
+        or not attempt.get("nav2_goal_uuid")
+        or attempt.get("terminal_goal_uuid") != attempt.get("nav2_goal_uuid")
+        or attempt.get("terminal_status") != "6"
+    ):
+        return False
+    native = " ".join(str(item) for item in (
+        attempt.get("native_error_code"), attempt.get("native_error_message"),
+        attempt.get("server_log_tail"),
+    ) if item)
+    if scenario_id == "SIM009-NAV-BLOCKED":
+        return (
+            attempt.get("injection_kind") == "none"
+            and attempt.get("frame_id") == "map"
+            and not attempt.get("behavior_tree")
+            and ("204" in native or "outside" in native.lower() or "no valid path" in native.lower())
+        )
+    if scenario_id == "SIM009-NAV-ABORTED":
+        behavior_tree = attempt.get("behavior_tree")
+        return (
+            attempt.get("injection_kind") == "missing_behavior_tree"
+            and attempt.get("frame_id") == "map"
+            and isinstance(behavior_tree, str)
+            and behavior_tree.startswith("/tmp/sim009-missing-behavior-tree")
+            and behavior_tree in native
+            and any(token in native.lower() for token in ("error", "fail", "load"))
+        )
+    if scenario_id == "SIM009-NAV-TF-UNAVAILABLE":
+        probes = evidence.get("tf_probes", [])
+        baseline = [item for item in probes if item.get("label") == "sim009_tf_baseline"]
+        injected = [item for item in probes if item.get("label") == "sim009_tf_injected_missing"]
+        return (
+            attempt.get("injection_kind") == "missing_goal_frame"
+            and isinstance(attempt.get("frame_id"), str)
+            and attempt["frame_id"].startswith("sim009_missing_tf_frame")
+            and not attempt.get("behavior_tree")
+            and len(baseline) == 1 and baseline[0].get("available") is True
+            and len(injected) == 1 and injected[0].get("available") is False
+            and all(item.get("scenario_execution_id") == execution_id for item in probes)
+            and ("202" in native or "tf" in native.lower() or "transform" in native.lower())
+        )
+    return False
+
+
 def _contract_scenario(scenario: dict[str, Any]) -> dict[str, Any]:
     if scenario["id"] == "SIM009-L0-MALFORMED":
         request = _action_request("navigation.execute"); request["timeout_ms"] = 0
@@ -223,9 +290,9 @@ def _navigation_scenario(
         return _base_row(
             scenario, decision="FAIL_CLOSED", outcome_kind="unavailable",
             details={"result": {"result": "failure", "error": "Gazebo/Nav2 runtime did not become ready"},
-                     "runtime_calls": 0, "goal_tracking": live_runtime.evidence(), "cleanup_complete": True},
+                     "runtime_calls": 0, "goal_tracking": {}, "cleanup_complete": True},
         )
-    if identifier in {"SIM009-L0-UNAVAILABLE", "SIM009-NAV-TF-UNAVAILABLE"}:
+    if identifier == "SIM009-L0-UNAVAILABLE":
         # L0 availability is a contract-boundary prerequisite check; the
         # L1-NAV cases below are the only paths that exercise live Gazebo.
         runtime = _ScriptedNavigationRuntime([RuntimeObservation("failed")], RuntimeObservation("failed"), ready=False)
@@ -237,26 +304,37 @@ def _navigation_scenario(
             RuntimeObservation("failed", error_code="NAV_RETRYABLE", error_message="authoritative retryable failure", error_category="EXECUTION_FAILED", retryable=True),
         )
         backend = NavigationBackend(runtime)
-        first = _action_request("navigation.execute")
+        context = live_runtime.begin_scenario(identifier) if live_runtime is not None else None
+        first = _action_request("navigation.execute", scenario_id=identifier)
         first["destination_id"] = "line-b-drop"
         if live_runtime is not None:
             # Inject after action-server readiness but before the first result
             # wait, preserving G1 for cancellation and reconciliation.
             live_runtime.inject_timeout_on_next_goal()
-        pending = backend.execute(first)
-        lookup_request = _status_request(first); reconciliation = backend.action_status_get(lookup_request)
-        resolved = runtime.reconcile(first["action_id"])
-        authorized_retry = _authorized_retry(
-            first, reconciliation=reconciliation, resolved=resolved,
-        )
+        try:
+            pending = backend.execute(first)
+            lookup_request = _status_request(first); reconciliation = backend.action_status_get(lookup_request)
+            resolved = runtime.reconcile(first["action_id"])
+            authorized_retry = _authorized_retry(
+                first, reconciliation=reconciliation, resolved=resolved,
+            )
+        except Exception:
+            if context is not None:
+                live_runtime.end_scenario(context)
+            raise
         retry: dict[str, Any] | None = None
         authorization: dict[str, Any] | None = None
         retried: dict[str, Any] | None = None
         identity: dict[str, bool] = {}
-        if authorized_retry is not None:
-            retry, authorization = authorized_retry
-            retried = backend.execute(retry)
-            identity = {"mission_id_stable": retry["mission_id"] == first["mission_id"], "action_id_stable": retry["action_id"] == first["action_id"], "idempotency_key_stable": retry["idempotency_key"] == first["idempotency_key"], "retry_request_id_new": retry["request_id"] != first["request_id"], "attempt_incremented": retry["attempt"] == first["attempt"] + 1}
+        try:
+            if authorized_retry is not None:
+                retry, authorization = authorized_retry
+                retried = backend.execute(retry)
+                identity = {"mission_id_stable": retry["mission_id"] == first["mission_id"], "action_id_stable": retry["action_id"] == first["action_id"], "idempotency_key_stable": retry["idempotency_key"] == first["idempotency_key"], "retry_request_id_new": retry["request_id"] != first["request_id"], "attempt_incremented": retry["attempt"] == first["attempt"] + 1}
+        except Exception:
+            if context is not None:
+                live_runtime.end_scenario(context)
+            raise
         valid_retry = (
             pending["status"] == "unknown"
             and authorization is not None
@@ -270,13 +348,34 @@ def _navigation_scenario(
         cleanup_complete = True if live_runtime is not None else runtime.close()
         attempts = getattr(runtime, "goal_attempts", [])
         successful_goals = sum(1 for item in attempts if item.terminal_status == "4") if attempts else runtime.side_effect_count
-        row = _base_row(scenario, decision="RETRY" if valid_retry else "FAIL_CLOSED", outcome_kind="unknown", details={"first_result": pending, "reconciliation": reconciliation, "retry_authorization": authorization, "retry_request": retry, "retry_result": retried, "retry_suppressed": authorized_retry is None, "identity": identity, "logical_side_effect_count": successful_goals, "runtime_calls": len(attempts) if attempts else runtime.calls, "goal_tracking": runtime.evidence() if live_runtime is not None else {}, "cleanup_complete": cleanup_complete})
+        local_evidence = runtime.evidence_for(context.scenario_execution_id) if context is not None else {}
+        if context is not None:
+            live_runtime.end_scenario(context)
+        row = _base_row(scenario, decision="RETRY" if valid_retry else "FAIL_CLOSED", outcome_kind="unknown", details={"first_result": pending, "reconciliation": reconciliation, "retry_authorization": authorization, "retry_request": retry, "retry_result": retried, "retry_suppressed": authorized_retry is None, "identity": identity, "logical_side_effect_count": successful_goals, "runtime_calls": len(attempts) if attempts else runtime.calls, "goal_tracking": local_evidence, "cleanup_complete": cleanup_complete})
         row["pass"] = valid_retry and row["expected_decision"] == "RETRY"
         return row
-    code = "PATH_BLOCKED" if identifier == "SIM009-NAV-BLOCKED" else "NAV_ABORTED"
+    request = _action_request("navigation.execute", scenario_id=identifier)
+    context = live_runtime.begin_scenario(identifier) if live_runtime is not None else None
+    if live_runtime is not None and identifier == "SIM009-NAV-ABORTED":
+        live_runtime.inject_abort_on_next_goal()
+    elif live_runtime is not None and identifier == "SIM009-NAV-TF-UNAVAILABLE":
+        live_runtime.inject_tf_unavailable_on_next_goal()
+    code = "PATH_BLOCKED" if identifier == "SIM009-NAV-BLOCKED" else (
+        "NAV_TF_UNAVAILABLE" if identifier == "SIM009-NAV-TF-UNAVAILABLE" else "NAV_ABORTED"
+    )
     runtime = live_runtime or runtime_factory([RuntimeObservation("failed", error_code=code, error_message="injected navigation failure")], RuntimeObservation("failed"))
-    result = NavigationBackend(runtime).execute(_action_request("navigation.execute"))
-    return _base_row(scenario, decision="FAIL_CLOSED", outcome_kind="failure", details={"result": result, "runtime_calls": len(getattr(runtime, "goal_attempts", [])) if live_runtime is not None else runtime.calls, "goal_tracking": runtime.evidence() if live_runtime is not None else {}, "cleanup_complete": True if live_runtime is not None else runtime.close()})
+    try:
+        result = NavigationBackend(runtime).execute(request)
+        local_evidence = runtime.evidence_for(context.scenario_execution_id) if context is not None else {}
+    finally:
+        if context is not None:
+            live_runtime.end_scenario(context)
+    native_failure = result["result"] == "failure"
+    local_attempts = local_evidence.get("goal_attempts", [])
+    local_provenance = live_runtime is None or _validate_live_navigation_evidence(identifier, request, local_evidence)
+    row = _base_row(scenario, decision="FAIL_CLOSED", outcome_kind="failure", details={"result": result, "runtime_calls": len(getattr(runtime, "goal_attempts", [])) if live_runtime is not None else runtime.calls, "goal_tracking": local_evidence, "cleanup_complete": True if live_runtime is not None else runtime.close(), "scenario_local_provenance": local_provenance, "native_failure": native_failure})
+    row["pass"] = bool(row["pass"] and native_failure and local_provenance)
+    return row
 
 
 def _vla_scenario(scenario: dict[str, Any]) -> dict[str, Any]:
@@ -345,7 +444,7 @@ def run_failure_suite(*, navigation_runtime_factory: Any = GoalTrackedGazeboNav2
             for row in rows:
                 if row["layer"] == "L1-NAV":
                     row["cleanup_complete"] = live_cleanup
-                    row["goal_tracking"] = live_runtime.evidence()
+                    row["goal_tracking"]["cleanup"] = live_runtime.measurements.get("cleanup", {})
                     row["pass"] = bool(row["pass"] and live_cleanup)
     ready = len(rows) == len(MANDATORY_SCENARIO_IDS) and all(row["pass"] for row in rows)
     return {

@@ -25,6 +25,7 @@ from simulation_runtime.failure_recovery import (  # noqa: E402
     _action_request,
     _authorized_retry,
     _mission_verification_route,
+    _validate_live_navigation_evidence,
     load_manifest,
     run_failure_suite,
 )
@@ -47,6 +48,21 @@ def test_manifest_has_stable_complete_bounded_scenarios() -> None:
         + NORMAL_RECOVERY_TIMEOUT_MS
         + LIVE_RUNTIME_SCHEDULING_MARGIN_MS
     )
+
+
+def test_blocked_budget_covers_bounded_goal_acceptance_and_terminal_waits() -> None:
+    manifest = load_manifest()
+    budgets = {scenario["id"]: scenario["budget_ms"] for scenario in manifest["scenarios"]}
+
+    assert LIVE_NAVIGATION_CALL_BUDGET_MS == (
+        3 * INTENTIONAL_FAULT_TIMEOUT_MS
+        + LIVE_RUNTIME_SCHEDULING_MARGIN_MS
+    )
+    assert budgets["SIM009-NAV-BLOCKED"] == LIVE_NAVIGATION_CALL_BUDGET_MS
+    assert 0 < budgets["SIM009-NAV-BLOCKED"] <= MAX_SCENARIO_BUDGET_MS
+    assert budgets["SIM009-NAV-ABORTED"] == 3000
+    assert budgets["SIM009-NAV-TIMEOUT-RETRY"] == LIVE_NAVIGATION_RETRY_BUDGET_MS
+    assert budgets["SIM009-NAV-TF-UNAVAILABLE"] == 12000
 
 
 def test_suite_fails_closed_reconciles_before_retry_and_cleans_up() -> None:
@@ -186,6 +202,320 @@ def test_timeout_fault_and_recovery_retry_use_distinct_request_deadlines() -> No
     assert (retry_deadline - retry_timestamp).total_seconds() * 1000 == NORMAL_RECOVERY_TIMEOUT_MS
 
 
+@pytest.mark.parametrize(
+    ("scenario_id", "destination_id"),
+    [
+        ("SIM009-NAV-BLOCKED", "blocked-bay"),
+        ("SIM009-NAV-ABORTED", "line-b-drop"),
+        ("SIM009-NAV-TF-UNAVAILABLE", "line-b-drop"),
+    ],
+)
+def test_live_navigation_faults_route_to_distinct_declared_destinations(
+    scenario_id: str, destination_id: str,
+) -> None:
+    request = _action_request("navigation.execute", scenario_id=scenario_id)
+
+    assert request["destination_id"] == destination_id
+
+
+def test_goal_tracker_records_one_shot_fault_and_filters_evidence_by_scenario() -> None:
+    from scripts.sim009_goal_tracked_navigation import (
+        GoalAttemptRecord,
+        GoalTrackedGazeboNav2Runtime,
+    )
+
+    runtime = object.__new__(GoalTrackedGazeboNav2Runtime)
+    runtime.goal_attempts = [
+        GoalAttemptRecord(
+            mission_id="11111111-1111-4111-8111-111111111111",
+            action_id="22222222-2222-4222-8222-222222222222",
+            idempotency_key="sim009-navigation",
+            destination_id="blocked-bay",
+            nav2_goal_uuid="33333333-3333-4333-8333-333333333333",
+            scenario_id="SIM009-NAV-BLOCKED",
+            scenario_execution_id="execution-blocked",
+            injection_kind="blocked_path",
+            frame_id="map",
+        ),
+        GoalAttemptRecord(
+            mission_id="44444444-4444-4444-8444-444444444444",
+            action_id="55555555-5555-4555-8555-555555555555",
+            idempotency_key="sim009-navigation",
+            destination_id="line-b-drop",
+            nav2_goal_uuid="66666666-6666-4666-8666-666666666666",
+            scenario_id="SIM009-NAV-ABORTED",
+            scenario_execution_id="execution-aborted",
+            injection_kind="missing_behavior_tree",
+            frame_id="map",
+            behavior_tree="/tmp/sim009-missing-tree.xml",
+        ),
+    ]
+    runtime.measurements = {"cleanup": {"bounded": True}}
+    runtime._tf_probe_records = []
+
+    evidence = runtime.evidence_for("execution-aborted")
+
+    assert [attempt["scenario_id"] for attempt in evidence["goal_attempts"]] == [
+        "SIM009-NAV-ABORTED",
+    ]
+    attempt = evidence["goal_attempts"][0]
+    assert attempt["destination_id"] == "line-b-drop"
+    assert attempt["behavior_tree"] == "/tmp/sim009-missing-tree.xml"
+    assert attempt["injection_kind"] == "missing_behavior_tree"
+
+
+def test_faulted_goal_cannot_classify_a_native_success_as_the_injected_failure() -> None:
+    from scripts.sim009_goal_tracked_navigation import (
+        GoalAttemptRecord,
+        GoalTrackedGazeboNav2Runtime,
+    )
+
+    class CompletedFuture:
+        def result(self) -> object:
+            return SimpleNamespace(status=4, result=SimpleNamespace(error_code=0, error_msg=""))
+
+    runtime = object.__new__(GoalTrackedGazeboNav2Runtime)
+    attempt = GoalAttemptRecord(
+        mission_id="11111111-1111-4111-8111-111111111111",
+        action_id="22222222-2222-4222-8222-222222222222",
+        idempotency_key="sim009-navigation",
+        destination_id="line-b-drop",
+        nav2_goal_uuid="33333333-3333-4333-8333-333333333333",
+        scenario_id="SIM009-NAV-ABORTED",
+        injection_kind="missing_behavior_tree",
+        behavior_tree="/tmp/sim009-missing-behavior-tree.xml",
+        result_future=CompletedFuture(),
+    )
+
+    observation = runtime._observation_from_result(attempt)
+
+    assert observation.observed_status == "failed"
+    assert observation.error_code == "SIM009_FAULT_NOT_OBSERVED"
+
+
+def test_unarmed_blocked_attempt_is_bound_to_its_scenario_execution() -> None:
+    from scripts.sim009_goal_tracked_navigation import (
+        GoalAttemptRecord,
+        GoalTrackedGazeboNav2Runtime,
+    )
+
+    runtime = object.__new__(GoalTrackedGazeboNav2Runtime)
+    runtime.goal_attempts = []
+    runtime._attempts_by_action_id = {}
+    runtime._tf_probe_records = []
+    runtime.measurements = {"cleanup": {}}
+    context = runtime.begin_scenario("SIM009-NAV-BLOCKED")
+    runtime._record_attempt(GoalAttemptRecord(
+        mission_id="11111111-1111-4111-8111-111111111111",
+        action_id="22222222-2222-4222-8222-222222222222",
+        idempotency_key="sim009-navigation",
+        destination_id="blocked-bay",
+        nav2_goal_uuid="33333333-3333-4333-8333-333333333333",
+    ))
+    runtime.end_scenario(context)
+
+    evidence = runtime.evidence_for(context.scenario_execution_id)
+
+    assert evidence["scenario_id"] == "SIM009-NAV-BLOCKED"
+    assert evidence["scenario_execution_id"] == context.scenario_execution_id
+    assert [item["nav2_goal_uuid"] for item in evidence["goal_attempts"]] == [
+        "33333333-3333-4333-8333-333333333333",
+    ]
+    assert evidence["goal_attempts"][0]["injection_kind"] == "none"
+
+
+def test_tf_probe_evidence_is_filtered_by_scenario_execution_id() -> None:
+    from scripts.sim009_goal_tracked_navigation import GoalTrackedGazeboNav2Runtime
+
+    runtime = object.__new__(GoalTrackedGazeboNav2Runtime)
+    runtime.goal_attempts = []
+    runtime._attempts_by_action_id = {}
+    runtime._tf_probe_records = []
+    runtime.measurements = {"cleanup": {}}
+    blocked = runtime.begin_scenario("SIM009-NAV-BLOCKED")
+    runtime._record_tf_probe("sim009_tf_baseline", "map", "base_link", True)
+    runtime.end_scenario(blocked)
+    tf_fault = runtime.begin_scenario("SIM009-NAV-TF-UNAVAILABLE")
+    runtime._record_tf_probe("sim009_tf_baseline", "map", "base_link", True)
+    runtime._record_tf_probe("sim009_tf_injected_missing", "sim009_missing_tf_frame", "base_link", False)
+    runtime.end_scenario(tf_fault)
+
+    assert [item["label"] for item in runtime.evidence_for(blocked.scenario_execution_id)["tf_probes"]] == [
+        "sim009_tf_baseline",
+    ]
+    assert [item["label"] for item in runtime.evidence_for(tf_fault.scenario_execution_id)["tf_probes"]] == [
+        "sim009_tf_baseline", "sim009_tf_injected_missing",
+    ]
+
+
+def test_tf_fault_rejects_unavailable_baseline_even_with_local_aborted_goal() -> None:
+    request = _action_request("navigation.execute", scenario_id="SIM009-NAV-TF-UNAVAILABLE")
+    evidence = {
+        "scenario_id": "SIM009-NAV-TF-UNAVAILABLE",
+        "scenario_execution_id": "execution-tf",
+        "goal_attempts": [{
+            "scenario_id": "SIM009-NAV-TF-UNAVAILABLE",
+            "scenario_execution_id": "execution-tf",
+            "action_id": request["action_id"],
+            "destination_id": "line-b-drop",
+            "nav2_goal_uuid": "goal-tf",
+            "terminal_goal_uuid": "goal-tf",
+            "terminal_status": "6",
+            "frame_id": "sim009_missing_tf_frame",
+            "behavior_tree": "",
+            "injection_kind": "missing_goal_frame",
+            "native_error_code": "202",
+            "native_error_message": "TF unavailable",
+        }],
+        "tf_probes": [
+            {"label": "sim009_tf_baseline", "available": False},
+            {"label": "sim009_tf_injected_missing", "available": False},
+        ],
+    }
+
+    assert not _validate_live_navigation_evidence(
+        "SIM009-NAV-TF-UNAVAILABLE", request, evidence,
+    )
+
+
+def test_navigation_fault_validator_rejects_reused_or_generic_aborted_evidence() -> None:
+    request = _action_request("navigation.execute", scenario_id="SIM009-NAV-ABORTED")
+    reused_blocked = {
+        "scenario_id": "SIM009-NAV-BLOCKED",
+        "scenario_execution_id": "execution-blocked",
+        "goal_attempts": [{
+            "scenario_id": "SIM009-NAV-BLOCKED",
+            "scenario_execution_id": "execution-blocked",
+            "action_id": request["action_id"],
+            "destination_id": "blocked-bay",
+            "nav2_goal_uuid": "goal-blocked",
+            "terminal_goal_uuid": "goal-blocked",
+            "terminal_status": "6",
+            "frame_id": "map",
+            "behavior_tree": "",
+            "injection_kind": "none",
+            "native_error_code": "204",
+            "native_error_message": "goal outside map",
+        }],
+        "tf_probes": [],
+    }
+    generic_abort = {
+        "scenario_id": "SIM009-NAV-ABORTED",
+        "scenario_execution_id": "execution-aborted",
+        "goal_attempts": [{
+            "scenario_id": "SIM009-NAV-ABORTED",
+            "scenario_execution_id": "execution-aborted",
+            "action_id": request["action_id"],
+            "destination_id": "line-b-drop",
+            "nav2_goal_uuid": "goal-aborted",
+            "terminal_goal_uuid": "goal-aborted",
+            "terminal_status": "6",
+            "frame_id": "map",
+            "behavior_tree": "/tmp/sim009-missing-behavior-tree.xml",
+            "injection_kind": "missing_behavior_tree",
+            "native_error_code": "0",
+            "native_error_message": None,
+            "server_log_tail": "",
+        }],
+        "tf_probes": [],
+    }
+
+    assert not _validate_live_navigation_evidence("SIM009-NAV-ABORTED", request, reused_blocked)
+    assert not _validate_live_navigation_evidence("SIM009-NAV-ABORTED", request, generic_abort)
+
+
+def test_tf_fault_requires_complete_local_live_proof() -> None:
+    request = _action_request("navigation.execute", scenario_id="SIM009-NAV-TF-UNAVAILABLE")
+    evidence = {
+        "scenario_id": "SIM009-NAV-TF-UNAVAILABLE",
+        "scenario_execution_id": "execution-tf",
+        "goal_attempts": [{
+            "scenario_id": "SIM009-NAV-TF-UNAVAILABLE",
+            "scenario_execution_id": "execution-tf",
+            "action_id": request["action_id"],
+            "destination_id": "line-b-drop",
+            "nav2_goal_uuid": "goal-tf",
+            "terminal_goal_uuid": "goal-tf",
+            "terminal_status": "6",
+            "frame_id": "sim009_missing_tf_frame",
+            "behavior_tree": "",
+            "injection_kind": "missing_goal_frame",
+            "native_error_code": "202",
+            "native_error_message": "TF unavailable",
+        }],
+        "tf_probes": [
+            {"scenario_execution_id": "execution-tf", "label": "sim009_tf_baseline", "available": True},
+            {"scenario_execution_id": "execution-tf", "label": "sim009_tf_injected_missing", "available": False},
+        ],
+    }
+
+    assert _validate_live_navigation_evidence("SIM009-NAV-TF-UNAVAILABLE", request, evidence)
+
+
+def test_blocked_fault_rejects_aborted_fault_evidence() -> None:
+    request = _action_request("navigation.execute", scenario_id="SIM009-NAV-BLOCKED")
+    evidence = {
+        "scenario_id": "SIM009-NAV-ABORTED",
+        "scenario_execution_id": "execution-aborted",
+        "goal_attempts": [{
+            "scenario_id": "SIM009-NAV-ABORTED",
+            "scenario_execution_id": "execution-aborted",
+            "action_id": request["action_id"],
+            "destination_id": "line-b-drop",
+            "nav2_goal_uuid": "goal-aborted",
+            "terminal_goal_uuid": "goal-aborted",
+            "terminal_status": "6",
+            "frame_id": "map",
+            "behavior_tree": "/tmp/sim009-missing-behavior-tree.xml",
+            "injection_kind": "missing_behavior_tree",
+            "native_error_code": "0",
+            "native_error_message": None,
+        }],
+        "tf_probes": [],
+    }
+
+    assert not _validate_live_navigation_evidence("SIM009-NAV-BLOCKED", request, evidence)
+
+
+def test_timeout_retry_attempts_share_only_its_scenario_execution() -> None:
+    from scripts.sim009_goal_tracked_navigation import (
+        GoalAttemptRecord,
+        GoalTrackedGazeboNav2Runtime,
+    )
+
+    runtime = object.__new__(GoalTrackedGazeboNav2Runtime)
+    runtime.goal_attempts = []
+    runtime._attempts_by_action_id = {}
+    runtime._tf_probe_records = []
+    runtime.measurements = {"cleanup": {}}
+    timeout = runtime.begin_scenario("SIM009-NAV-TIMEOUT-RETRY")
+    for goal_uuid in ("33333333-3333-4333-8333-333333333333", "44444444-4444-4444-8444-444444444444"):
+        runtime._record_attempt(GoalAttemptRecord(
+            mission_id="11111111-1111-4111-8111-111111111111",
+            action_id="22222222-2222-4222-8222-222222222222",
+            idempotency_key="sim009-navigation",
+            destination_id="line-b-drop",
+            nav2_goal_uuid=goal_uuid,
+        ))
+    runtime.end_scenario(timeout)
+    unrelated = runtime.begin_scenario("SIM009-NAV-BLOCKED")
+    runtime._record_attempt(GoalAttemptRecord(
+        mission_id="55555555-5555-4555-8555-555555555555",
+        action_id="66666666-6666-4666-8666-666666666666",
+        idempotency_key="sim009-navigation",
+        destination_id="blocked-bay",
+        nav2_goal_uuid="77777777-7777-4777-8777-777777777777",
+    ))
+    runtime.end_scenario(unrelated)
+
+    evidence = runtime.evidence_for(timeout.scenario_execution_id)
+
+    assert {item["nav2_goal_uuid"] for item in evidence["goal_attempts"]} == {
+        "33333333-3333-4333-8333-333333333333",
+        "44444444-4444-4444-8444-444444444444",
+    }
+
+
 def test_goal_attempt_record_binds_one_nav2_goal_to_its_terminal_result() -> None:
     from scripts.sim009_goal_tracked_navigation import GoalAttemptRecord
 
@@ -210,6 +540,7 @@ def test_goal_tracker_retains_each_nav2_goal_for_one_logical_effect() -> None:
     runtime = object.__new__(GoalTrackedGazeboNav2Runtime)
     runtime.goal_attempts = []
     runtime._attempts_by_action_id = {}
+    context = runtime.begin_scenario("SIM009-NAV-TIMEOUT-RETRY")
     first = GoalAttemptRecord(
         mission_id="11111111-1111-4111-8111-111111111111",
         action_id="22222222-2222-4222-8222-222222222222",
@@ -227,6 +558,7 @@ def test_goal_tracker_retains_each_nav2_goal_for_one_logical_effect() -> None:
 
     runtime._record_attempt(first)
     runtime._record_attempt(retry)
+    runtime.end_scenario(context)
 
     assert [attempt.nav2_goal_uuid for attempt in runtime.goal_attempts] == [
         first.nav2_goal_uuid,
