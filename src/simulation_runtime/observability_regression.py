@@ -71,6 +71,27 @@ Q01_SUPPORT_CLAIMS = {
     "TASK-SIM-005": {"mujoco_version", "model_scene_authority", "configuration_source_authority", "version_wide_seed_timestep_authority", "accepted_initial_state_authority"},
     "TASK-SIM-007": {"profile_identity", "profile_source_configuration_authority", "accepted_aggregate_outcome"},
 }
+Q01_PROVENANCE_BY_PROFILE = {
+    "gazebo_system": {
+        "configuration": {
+            "bridge_configuration": "b00fdf7c1c7b9b3a83ea211d88a05f7e6477b04d27d8fd5f9cded0733bce2d3d",
+            "launch_run_configuration": "1da47e9dd0a174a2124ee6493b534d295d0b93be77b5446c8661fd863888beb4",
+        },
+        "world": {
+            "system": "f7716c41100293446681213521e16974f6504b2a48e03e43b535dc7dcd59a7ad",
+            "world": "fff98b8a19feb8874a65c9dd66f029145ff0be46990dcfd668376df2b30b8ee1",
+        },
+    },
+    "gazebo": {
+        "configuration": {"run_local_configuration": "4df8805ce573247084b38f8ea98da4893e089e4e89a25466c1f86d7196df9002"},
+        "world": {"world_model": "c26bf7270026bce976abf4bce7f6b2a188885396281c2139970461db01486959"},
+    },
+    "mujoco": {
+        "configuration": {"run_local_configuration": "34c0900610d69e5f7500bcf0121490c984a62b20943e89dd3bc7d5c0c87b84a9"},
+        "world": {"world_model": "21fcb775690b058285480d77c96c788779bd8e7aaced663ba6eeda4691dfd160"},
+    },
+}
+Q01_NOT_APPLICABLE_JUSTIFICATION = "TERMINATED_BEFORE_SIMULATOR_PHYSICS"
 
 HISTORICAL_DIAGNOSTIC_FAILURES = {
     ("SIM-004", "success"): frozenset({"MISSING_SIMULATION_TIME"}),
@@ -208,6 +229,44 @@ def _q01_profile(value: Any) -> str | None:
     return {"gazebo": "gazebo", "gazebo_navigation": "gazebo", "mujoco": "mujoco"}.get(value)
 
 
+def _q01_provenance_profile(subject_id: str) -> str:
+    if subject_id == "q01-sim008-normal-system-authority":
+        return "gazebo_system"
+    expected = Q01_SUBJECTS.get(subject_id)
+    if expected is None:
+        _q01_fail("UNKNOWN_SUBJECT")
+    return expected[2]
+
+
+def _q01_expected_timing_source(subject_id: str, state: str) -> str:
+    if state == "NOT_APPLICABLE":
+        return "mujoco_no_physics_start"
+    if subject_id == "q01-sim008-normal-system-authority":
+        return "gazebo_authoritative_observation"
+    return "gz_stats" if _q01_provenance_profile(subject_id) == "gazebo" else "mujoco_steps_times_timestep"
+
+
+def _validate_q01_provenance(subject: Mapping[str, Any]) -> None:
+    subject_id = subject.get("subject_id")
+    if not isinstance(subject_id, str):
+        _q01_fail("INVALID_PROVENANCE")
+    expected = Q01_PROVENANCE_BY_PROFILE[_q01_provenance_profile(subject_id)]
+    if subject.get("configuration_provenance") != expected["configuration"] or subject.get("world_model_provenance") != expected["world"]:
+        _q01_fail("PROVENANCE_MISMATCH")
+
+
+def _q01_historical_scenario(short_id: str, evidence: Mapping[str, Any], scenario_id: str) -> Mapping[str, Any] | None:
+    if short_id == "SIM-008":
+        scenario = evidence.get("scenario")
+        return scenario if isinstance(scenario, Mapping) and scenario.get("scenario_id") == scenario_id else None
+    scenarios = evidence.get("scenarios")
+    matches = [
+        scenario for scenario in scenarios if isinstance(scenarios, list) and isinstance(scenario, Mapping)
+        and scenario.get("id") == scenario_id
+    ]
+    return matches[0] if len(matches) == 1 else None
+
+
 def _resolve_q01_predecessor(root: Path, short_id: str) -> dict[str, Any]:
     """Resolve a Q01 predecessor through its pinned Acceptance tree object."""
     acceptance_commit = Q01_PREDECESSOR_ACCEPTANCES[short_id]
@@ -233,6 +292,11 @@ def _validate_q01_applicability(subject: Mapping[str, Any]) -> None:
     timing = subject.get("timing")
     if not isinstance(applicability, Mapping) or not isinstance(timing, Mapping):
         _q01_fail("INVALID_APPLICABILITY")
+    subject_id = subject.get("subject_id")
+    if not isinstance(subject_id, str):
+        _q01_fail("INVALID_APPLICABILITY")
+    if timing.get("bounded_execution") is not True or timing.get("cleanup_complete") is not True:
+        _q01_fail("INVALID_STATE_INVARIANT")
     for field in ("physics_measurement", "structured_simulator_time"):
         claim = applicability.get(field)
         if not isinstance(claim, Mapping):
@@ -241,17 +305,19 @@ def _validate_q01_applicability(subject: Mapping[str, Any]) -> None:
         if state == "REQUIRED":
             observation = timing.get("physics_measurement") if field == "physics_measurement" else timing.get("simulation_time")
             source = observation.get("source") if isinstance(observation, Mapping) else timing.get("simulation_time_source")
-            if ((isinstance(observation, Mapping) and isinstance(observation.get("seconds"), (int, float))) or isinstance(observation, (int, float))) and isinstance(source, str) and source:
+            if ((isinstance(observation, Mapping) and isinstance(observation.get("seconds"), (int, float))) or isinstance(observation, (int, float))) and source == _q01_expected_timing_source(subject_id, state):
                 continue
             _q01_fail("MISSING_REQUIRED_OBSERVATION")
         if state == "NOT_APPLICABLE":
-            if not isinstance(claim.get("justification"), str) or not claim["justification"]:
+            if claim.get("justification") != Q01_NOT_APPLICABLE_JUSTIFICATION:
                 _q01_fail("MISSING_NOT_APPLICABLE_JUSTIFICATION")
             execution = claim.get("execution_state")
             if not isinstance(execution, Mapping):
                 execution = timing.get("execution_state")
             if not isinstance(execution, Mapping) or execution.get("simulator_started") is not False or execution.get("physics_started") is not False:
                 _q01_fail("INVALID_NOT_APPLICABLE")
+            if timing.get("simulation_time_source") != _q01_expected_timing_source(subject_id, state):
+                _q01_fail("INVALID_NOT_APPLICABLE_SOURCE")
             continue
         _q01_fail("INVALID_APPLICABILITY")
 
@@ -315,6 +381,7 @@ def validate_q01_chain(root: Path, acceptance: Mapping[str, Any], evidence: Mapp
                 _q01_fail("DUPLICATE_AUTHORITY")
             scenario_executions.add(execution_key)
         _validate_q01_applicability(subject)
+        _validate_q01_provenance(subject)
     immutable = evidence.get("immutable_authority_bindings")
     if not isinstance(immutable, Mapping):
         _q01_fail("INVALID_SUPPORT_AUTHORITY")
@@ -364,6 +431,9 @@ def resolve_q01_qualification(root: Path) -> dict[str, Any]:
         candidates = [run for run in extract_bound_runs(short_id, predecessor["evidence"]) if run["scenario_id"] == expected[1]]
         if len(candidates) != 1:
             _q01_fail("AMBIGUOUS_PREDECESSOR_SCENARIO")
+        historical_scenario = _q01_historical_scenario(short_id, predecessor["evidence"], expected[1])
+        if historical_scenario is None:
+            _q01_fail("MISSING_PREDECESSOR_SCENARIO")
         observation = dict(subject)
         observation.update({
             "authority_kind": "qualification_observation", "qualification_task_id": Q01_BINDING["acceptance_task_id"],
@@ -374,7 +444,7 @@ def resolve_q01_qualification(root: Path) -> dict[str, Any]:
         })
         normalized.append({
             "subject_id": subject["subject_id"],
-            "historical_oracle": {"task_id": binding["task_id"], "accepted_commit": predecessor["accepted_commit"], "evidence_path": predecessor["evidence_path"], "evidence_sha256": predecessor["evidence_sha256"], "scenario_source_path": candidates[0]["source_json_path"], "envelope": candidates[0]["envelope"]},
+            "historical_oracle": {"task_id": binding["task_id"], "accepted_commit": predecessor["accepted_commit"], "evidence_path": predecessor["evidence_path"], "evidence_sha256": predecessor["evidence_sha256"], "scenario_source_path": candidates[0]["source_json_path"], "envelope": candidates[0]["envelope"], "scenario": dict(historical_scenario)},
             "qualification_observation": observation,
             "replay_applicable": False,
         })
@@ -1160,6 +1230,73 @@ def _physics_semantic(evidences: list[Mapping[str, Any]]) -> dict[str, Any]:
     return {"status": "PASS" if rows and not failures else "BLOCKED", "criterion": "outcome, lifecycle, invariants, and declared tolerances", "failures": failures}
 
 
+def _q01_mapping_matches(actual: Any, expected: Mapping[str, Any], keys: tuple[str, ...]) -> bool:
+    return isinstance(actual, Mapping) and all(actual.get(key) == expected.get(key) for key in keys)
+
+
+def _q01_reconciliation_matches(actual: Any, expected: Mapping[str, Any]) -> bool:
+    if not _q01_mapping_matches(actual, expected, (
+        "operation", "message_type", "schema_version", "source_kind", "result", "status",
+        "observed_status", "component_version",
+    )):
+        return False
+    refs = actual.get("evidence_refs") if isinstance(actual, Mapping) else None
+    return isinstance(refs, list) and bool(refs) and all(
+        isinstance(ref, Mapping) and _valid_hash(ref.get("sha256")) and isinstance(ref.get("uri"), str) and ref["uri"]
+        for ref in refs
+    )
+
+
+def _q01_nested_semantic_mismatches(
+    scenario: Mapping[str, Any], observation: Mapping[str, Any],
+) -> list[str]:
+    semantic = observation.get("semantic_outcome")
+    timing = observation.get("timing")
+    if not isinstance(semantic, Mapping) or not isinstance(timing, Mapping):
+        return ["MISSING_SEMANTIC_OR_TIMING"]
+    mismatches: list[str] = []
+    if scenario.get("within_budget") is True and timing.get("bounded_execution") is not True:
+        mismatches.append("bounded_execution")
+    if scenario.get("cleanup_complete") is True and timing.get("cleanup_complete") is not True:
+        mismatches.append("cleanup_complete")
+    if "lifecycle" in semantic and semantic.get("lifecycle") != scenario.get("lifecycle"):
+        mismatches.append("lifecycle")
+    identity = scenario.get("identity")
+    if isinstance(identity, Mapping) and not _q01_mapping_matches(semantic.get("identity"), identity, tuple(identity)):
+        mismatches.append("identity")
+    if "logical_side_effect_count" in scenario and semantic.get("logical_side_effect_count") != scenario.get("logical_side_effect_count"):
+        mismatches.append("logical_side_effect_count")
+    reconciliation = scenario.get("reconciliation")
+    if isinstance(reconciliation, Mapping) and not _q01_reconciliation_matches(semantic.get("reconciliation"), reconciliation):
+        mismatches.append("reconciliation")
+    retry_authorization = scenario.get("retry_authorization")
+    if isinstance(retry_authorization, Mapping):
+        actual_retry = semantic.get("retry_authorization")
+        retry_keys = (
+            "reconciliation_completed", "resolved_status", "retry_budget_remaining", "next_attempt",
+            "previous_attempt", "record_type",
+        )
+        if not _q01_mapping_matches(actual_retry, retry_authorization, retry_keys):
+            mismatches.append("retry_authorization")
+        elif not _q01_mapping_matches(actual_retry.get("error"), retry_authorization.get("error", {}), ("category", "code", "retryable")):  # type: ignore[union-attr]
+            mismatches.append("retry_authorization_error")
+    retry_request = scenario.get("retry_request")
+    if isinstance(retry_request, Mapping) and not _q01_mapping_matches(
+        semantic.get("retry_request"), retry_request,
+        ("operation", "message_type", "schema_version", "robot_id", "destination_id", "speed_profile_id", "attempt", "retry_budget_remaining"),
+    ):
+        mismatches.append("retry_request")
+    retry_result = scenario.get("retry_result")
+    if isinstance(retry_result, Mapping) and not _q01_mapping_matches(
+        semantic.get("retry_result"), retry_result,
+        ("operation", "message_type", "schema_version", "source_kind", "component_version", "result", "status", "arrival"),
+    ):
+        mismatches.append("retry_result")
+    if "retry_suppressed" in scenario and semantic.get("retry_suppressed") != scenario.get("retry_suppressed"):
+        mismatches.append("retry_suppressed")
+    return mismatches
+
+
 def _q01_physics_rows(linked_rows: list[Mapping[str, Any]]) -> tuple[list[dict[str, Any]], list[str]]:
     """Compare Q01 actual observations to, but never coalesce with, historical oracles."""
     rows: list[dict[str, Any]] = []
@@ -1185,11 +1322,22 @@ def _q01_physics_rows(linked_rows: list[Mapping[str, Any]]) -> tuple[list[dict[s
         if mismatches:
             failures.append(f"Q01_SEMANTIC_MISMATCH:{linked.get('subject_id')}:{','.join(mismatches)}")
             continue
-        if not all(
-            isinstance(value, Mapping) and value
-            for value in (observation.get("configuration_provenance"), observation.get("world_model_provenance"))
-        ):
+        subject_id = linked.get("subject_id")
+        if not isinstance(subject_id, str):
+            failures.append("Q01_INVALID_SUBJECT")
+            continue
+        provenance = Q01_PROVENANCE_BY_PROFILE[_q01_provenance_profile(subject_id)]
+        if (observation.get("configuration_provenance") != provenance["configuration"]
+                or observation.get("world_model_provenance") != provenance["world"]):
             failures.append(f"Q01_PROVENANCE_MISMATCH:{linked.get('subject_id')}")
+            continue
+        scenario = oracle.get("scenario")
+        if not isinstance(scenario, Mapping):
+            failures.append(f"Q01_MISSING_HISTORICAL_SCENARIO:{linked.get('subject_id')}")
+            continue
+        nested_mismatches = _q01_nested_semantic_mismatches(scenario, observation)
+        if nested_mismatches:
+            failures.append(f"Q01_NESTED_SEMANTIC_MISMATCH:{linked.get('subject_id')}:{','.join(nested_mismatches)}")
             continue
         row = dict(observation)
         row.update({"scenario_id": oracle.get("envelope", {}).get("scenario_id"), "scenario_pass": True})

@@ -666,6 +666,101 @@ def test_q01_physics_rejects_contradictory_observation_semantics() -> None:
     assert any("Q01_SEMANTIC_MISMATCH" in failure for failure in failures)
 
 
+@pytest.mark.parametrize(
+    ("subject_id", "mutate"),
+    [
+        (
+            "q01-sim009-SIM009-NAV-TIMEOUT-RETRY",
+            lambda observation: observation["semantic_outcome"]["retry_authorization"].update({"reconciliation_completed": False}),
+        ),
+        (
+            "q01-sim009-SIM009-NAV-TIMEOUT-RETRY",
+            lambda observation: observation["semantic_outcome"].update({"logical_side_effect_count": 2}),
+        ),
+        (
+            "q01-sim009-SIM009-VLA-TIMEOUT",
+            lambda observation: observation["semantic_outcome"].pop("reconciliation"),
+        ),
+        (
+            "q01-sim009-SIM009-NAV-TIMEOUT-RETRY",
+            lambda observation: observation["semantic_outcome"]["reconciliation"].update({"observed_status": "succeeded"}),
+        ),
+        (
+            "q01-sim009-SIM009-NAV-ABORTED",
+            lambda observation: observation["semantic_outcome"].update({"lifecycle": ["created", "completed"]}),
+        ),
+        (
+            "q01-sim009-SIM009-NAV-ABORTED",
+            lambda observation: observation["timing"].update({"cleanup_complete": False}),
+        ),
+        (
+            "q01-sim009-SIM009-NAV-ABORTED",
+            lambda observation: observation.update({"configuration_provenance": {"bogus": "x"}}),
+        ),
+        (
+            "q01-sim009-SIM009-NAV-ABORTED",
+            lambda observation: observation["configuration_provenance"].pop("run_local_configuration"),
+        ),
+        (
+            "q01-sim009-SIM009-NAV-ABORTED",
+            lambda observation: observation["world_model_provenance"].update({"world_model": "0" * 64}),
+        ),
+    ],
+)
+def test_q01_physics_rejects_required_nested_semantic_and_provenance_mutations(
+    subject_id: str,
+    mutate: object,
+) -> None:
+    linked = deepcopy(next(
+        item for item in resolve_q01_qualification(ROOT)["qualification_subjects"]
+        if item["subject_id"] == subject_id
+    ))
+
+    mutate(linked["qualification_observation"])  # type: ignore[operator]
+    rows, failures = _q01_physics_rows([linked])
+
+    assert rows == []
+    assert failures
+
+
+@pytest.mark.parametrize(
+    ("subject_id", "mutate"),
+    [
+        (
+            "q01-sim009-SIM009-VLA-TIMEOUT",
+            lambda subject: subject["timing"].pop("simulation_time_source"),
+        ),
+        (
+            "q01-sim009-SIM009-VLA-TIMEOUT",
+            lambda subject: subject["timing"].update({"simulation_time_source": "gz_stats"}),
+        ),
+        (
+            "q01-sim009-SIM009-VLA-TIMEOUT",
+            lambda subject: subject["applicability"]["physics_measurement"].update({"justification": "WRONG_PAIRING"}),
+        ),
+        (
+            "q01-sim009-SIM009-VLA-TIMEOUT",
+            lambda subject: subject["applicability"]["physics_measurement"].update({"execution_state": {"simulator_started": True, "physics_started": False}}),
+        ),
+        (
+            "q01-sim009-SIM009-VLA-TIMEOUT",
+            lambda subject: subject["applicability"]["physics_measurement"].update({"execution_state": {"simulator_started": False, "physics_started": True}}),
+        ),
+    ],
+)
+def test_q01_not_applicable_requires_exact_frozen_source_and_execution_state(
+    subject_id: str,
+    mutate: object,
+) -> None:
+    acceptance, evidence = _q01_chain()
+    subject = next(item for item in evidence["qualification_subjects"] if item["subject_id"] == subject_id)  # type: ignore[index]
+
+    mutate(subject)  # type: ignore[operator]
+
+    with pytest.raises(ValueError):
+        validate_q01_chain(ROOT, acceptance, evidence)
+
+
 def test_runner_binds_one_explicit_interpreter_to_identical_commands() -> None:
     python = Path(sys.executable)
     candidate = RUNNER.regression_command(python)
