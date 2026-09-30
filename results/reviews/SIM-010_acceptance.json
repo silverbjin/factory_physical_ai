@@ -1,0 +1,11 @@
+{
+  "schema_version": 1,
+  "task_id": "TASK-SIM-010",
+  "status": "ACCEPT",
+  "accepted_commit": "7f0eb5200ccaabd8e2810d1d23aa6e969ea86216",
+  "review_record": "docs/task_history/TASK-SIM-010/30_review.md",
+  "evidence": {
+    "path": "results/simulation/SIM-010_observability_regression.json",
+    "sha256": "f634d1a8ad917b6711aa0c5d2af792ea6e44126cc8ba823a4d479abf8676834b"
+  }
+}
