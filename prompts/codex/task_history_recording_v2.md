@@ -1,38 +1,35 @@
-# TASK History Recording Policy v2
+# TASK History Recording Policy v2.1
 
 ## Purpose
 
-Persist a compact, chronological audit trail for each TASK.
+Persist a compact chronological audit trail for one TASK.
 
-Supported workflow events:
+Supported events:
 
 ```text
 Implementation
-Read-only Review
+Review
 Fix
-Re-review
 Diagnosis
 ```
 
-History is an **event log**, not a duplicate of TASK specifications, Evidence, or full workflow reports.
+Re-review is recorded as `Review`.
 
-Record only information newly established by the current workflow.
+History is an **event log**, not a copy of TASK specs, Evidence, test logs, or full workflow reports.
+
+Record only facts newly established by the current workflow.
 
 ---
 
-## 1. Core Rules
+# 1. Common Rules
 
-1. Store TASK history under:
+History directory:
 
 ```text
 docs/task_history/<TASK_ID>/
 ```
 
-2. History is append-only.
-
-3. Never overwrite, rename, delete, or renumber an existing event record.
-
-4. Use:
+Event files:
 
 ```text
 <SEQ>_implementation.md
@@ -41,45 +38,47 @@ docs/task_history/<TASK_ID>/
 <SEQ>_diagnosis.md
 ```
 
-5. Re-review uses the same `review` type.
+Rules:
 
-6. `diagnosis` is an auxiliary read-only lifecycle stage. It may occur before
-   Implementation, after a blocked/rejected Implementation/Review/Fix stage, or
-   before resuming Implementation/Fix. Do not require a fixed global ordering
-   between `diagnosis` and the existing lifecycle stages. Its `SEQ` uses the
-   same next-valid-sequence rule as every other event.
+1. History is append-only.
+2. Never overwrite, rename, delete, or renumber an existing event.
+3. Record only after the current workflow result is known.
+4. Use Korean for concise explanatory prose.
+5. Preserve exact technical identifiers:
 
-7. Use Korean for concise explanatory prose.
+   * TASK / Finding IDs;
+   * paths / symbols;
+   * commands / tests;
+   * contract/schema fields;
+   * states;
+   * hashes / commit IDs;
+   * PASS / FAIL;
+   * ACCEPT / REJECT;
+   * severity names.
+6. Reference authoritative artifacts instead of reproducing them.
+7. TASK History is not technical Evidence unless a frozen contract says otherwise.
+8. Do not stage or commit as part of history recording.
 
-8. Preserve exact technical identifiers, including:
+Allowed history writes are limited to:
 
 ```text
-TASK IDs
-Finding IDs
-paths
-symbols
-commands
-test names
-contract/schema fields
-state names
-hashes
-commit IDs
-PASS / FAIL
-ACCEPT / REJECT
-BLOCKER / HIGH / MEDIUM / LOW
+docs/task_history/<TASK_ID>/<SEQ>_<event>.md
+docs/task_history/<TASK_ID>/README.md
 ```
 
-9. TASK History is not technical Evidence unless a frozen contract explicitly defines otherwise.
+and, only when Section 6 requires it:
 
-10. Do not duplicate large TASK, Evidence, Review, or test contents.
+```text
+docs/task_history/README.md
+```
 
-11. Record the workflow only after its technical result has been determined.
+No source, test, Evidence, TASK specification, contract, schema, architecture, Acceptance JSON, Git index, or Git history may be modified.
 
 ---
 
-## 2. Sequence Resolution
+# 2. Sequence Resolution
 
-Determine the next `SEQ` using filenames only.
+Determine `SEQ` from filenames only.
 
 Inspect:
 
@@ -87,13 +86,13 @@ Inspect:
 docs/task_history/<TASK_ID>/
 ```
 
-for files matching:
+for:
 
 ```text
 NN_*.md
 ```
 
-Set:
+Then:
 
 ```text
 SEQ = highest existing NN + 1
@@ -101,61 +100,65 @@ SEQ = highest existing NN + 1
 
 Use two digits.
 
-If no event file exists:
+If none exists:
 
 ```text
 SEQ = 01
 ```
 
-Do not read prior event-file contents solely to determine `SEQ`.
+Do not read prior event contents merely to determine sequence.
 
-If an apparent sequence collision or malformed history is detected, stop normal recording and report the history integrity issue.
+If numbering is malformed or the next sequence would collide, stop and report a history-integrity failure.
 
 ---
 
-## 3. Source-of-Truth Boundary
+# 3. Source-of-Truth Boundary
 
-Do not restate information already authoritatively stored elsewhere unless necessary to explain the current event.
-
-Use these sources:
+Use authoritative sources as follows:
 
 ```text
-TASK specification
-→ objective, scope, non-goals, requirements, Exit Criteria
+TASK spec
+→ objective / scope / requirements / Exit Criteria
 
 Evidence
-→ test results, hashes, structured validation facts
+→ structured validation facts / hashes
 
 Review result
-→ findings, severity, Acceptance Gates, recommendation
+→ findings / gates / recommendation / acceptance handoff
 
 Fix result
-→ finding status, root cause, correction, regression proof
+→ finding status / correction / regression proof
 
 Diagnosis result
-→ read-only root-cause/contract-boundary resolution, authoritative sources,
-  modification scope, verification plan, and next action
+→ root cause / authority / contract boundary / correction scope / verification
 ```
 
-History should reference these results rather than reproducing them in full.
+History records only the event-specific delta.
+
+Do not duplicate:
+
+* full TASK scope;
+* full Exit Criteria;
+* Evidence payloads;
+* complete test logs;
+* full Review prose;
+* prior Findings already recorded.
 
 ---
 
-## 4. Event Recording
+# 4. Event Records
 
 Create exactly one event file for the completed workflow.
 
----
+## 4.1 Implementation
 
-### 4.1 Implementation Event
-
-Create:
+Path:
 
 ```text
 docs/task_history/<TASK_ID>/<SEQ>_implementation.md
 ```
 
-Record only:
+Compact format:
 
 ```markdown
 # Implementation — <TASK_ID>
@@ -163,35 +166,28 @@ Record only:
 - Result: COMPLETE | INCOMPLETE
 - Evidence: <path | NOT REQUIRED>
 - Changed areas: <concise paths/modules>
-- Key implementation delta: <1–5 concise bullets>
-- Validation: <concise PASS/FAIL summary>
-- Deviation from TASK: <NONE or concise description>
+- Validation: <concise PASS/FAIL>
+- Deviation: <NONE | concise>
 - Next: Independent Read-only Review | BLOCKED
+
+## Delta
+
+- <1–5 concise implementation changes>
 ```
 
-Do not copy:
-
-- full TASK Scope;
-- full Non-goals;
-- full Exit Criteria;
-- complete test logs;
-- Evidence contents.
-
-Implementation completion must not be recorded as independent acceptance.
+Do not represent Implementation completion as Review acceptance.
 
 ---
 
-### 4.2 Review Event
+## 4.2 Review / Re-review
 
-Create:
+Path:
 
 ```text
 docs/task_history/<TASK_ID>/<SEQ>_review.md
 ```
 
-#### ACCEPT
-
-Use compact form:
+### ACCEPT
 
 ```markdown
 # Review — <TASK_ID>
@@ -203,22 +199,19 @@ Use compact form:
 - Regression: PASS | NOT REQUIRED
 - Evidence: PASS | NOT APPLICABLE
 - Findings: BLOCKER <n>, HIGH <n>, MEDIUM <n>, LOW <n>
-- Conditional Sources loaded: <n>
 ```
 
-Do not reproduce the complete Traceability table when all requirements passed unless repository policy explicitly requires it.
+Do not reproduce full traceability when all requirements passed unless explicitly required.
 
-#### REJECT
-
-Record the blocking review delta:
+### REJECT
 
 ```markdown
 # Review — <TASK_ID>
 
 - Recommendation: REJECT
 - Failed Gates: <list>
-- Validation: <concise status>
-- Evidence: <concise status>
+- Validation: <concise>
+- Evidence: <concise>
 
 ## Blocking Findings
 
@@ -231,46 +224,38 @@ Record the blocking review delta:
 - Recommended remediation:
 ```
 
-Include only findings that materially affect acceptance or meaningful deferred risk.
+Record only acceptance-blocking findings or meaningful deferred risks.
 
-Do not duplicate unrelated review prose.
+If the Review output contains an Acceptance Recording Handoff, preserve it exactly as required by Section 9.
 
 ---
 
-### 4.3 Fix Event
+## 4.3 Fix
 
-Create:
+Path:
 
 ```text
 docs/task_history/<TASK_ID>/<SEQ>_fix.md
 ```
-
-Use Finding IDs as references to the prior Review.
-
-Record:
 
 ```markdown
 # Fix — <TASK_ID>
 
 - Result: READY FOR INDEPENDENT RE-REVIEW | NOT READY FOR INDEPENDENT RE-REVIEW
 - Based on Review: <SEQ/path>
+- Evidence: <PASS/path | NOT APPLICABLE>
+- Regression: PASS | NOT REQUIRED | FAIL
+- Git history: NO HISTORY ACTION REQUIRED | HISTORY ACTION REQUIRED
+- Next: Independent Read-only Review | BLOCKED
 
 ## Finding Results
 
 | Finding | Severity | Status | Correction | Regression |
 |---|---|---|---|---|
-| <ID> | HIGH | FIXED | <concise delta> | PASS |
-
-- Evidence: <PASS/path | NOT APPLICABLE>
-- Regression: <PASS | NOT REQUIRED | FAIL>
-- Git history: NO HISTORY ACTION REQUIRED | HISTORY ACTION REQUIRED
-- Conditional Sources loaded: <n>
-- Next: Independent Read-only Review | BLOCKED
+| <ID> | <severity> | FIXED | <concise delta> | PASS |
 ```
 
-Do not restate the original Finding in full.
-
-Use:
+Allowed finding statuses:
 
 ```text
 FIXED
@@ -278,88 +263,94 @@ NOT REPRODUCIBLE
 BLOCKED
 ```
 
-for each relevant Finding.
+Do not repeat the original Finding in full.
 
 ---
 
-### 4.4 Diagnosis Event
+## 4.4 Diagnosis
 
-Create:
+Path:
 
 ```text
 docs/task_history/<TASK_ID>/<SEQ>_diagnosis.md
 ```
 
-`diagnosis` is an auxiliary read-only event. It does not replace, rerun, or
-change the semantics of Implementation, Review, Fix, Re-review, or Acceptance.
+Diagnosis is read-only with respect to implementation/source-of-truth surfaces.
 
-Use only these statuses:
+Statuses:
 
 ```text
 RESOLVED
 UNRESOLVED
 ```
 
-Definitions:
+Meaning:
 
 ```text
 RESOLVED
-→ root cause, contract boundary, authoritative source, modification scope, and
-  verification plan are sufficiently established to proceed.
+→ authority, root cause, correction boundary, and verification are sufficient
+  for the next Implementation/Fix worker to proceed without guessing.
 
 UNRESOLVED
-→ an architectural or contract decision remains unresolved; implementation
-  must not proceed speculatively.
+→ architecture/contract/root-cause uncertainty remains;
+  speculative Implementation/Fix is not authorized.
 ```
 
-Record only facts established by the diagnosis. Omit an optional field when it
-was not supplied or established; do not invent missing facts.
+Compact format:
 
 ```markdown
 # Diagnosis — <TASK_ID>
 
-- Stage: diagnosis
 - Status: RESOLVED | UNRESOLVED
-- Read-only mode: YES
-- Trigger: <concise trigger>
-- Triggering lifecycle status: <status when supplied/applicable>
-- Blocking finding IDs: <IDs when supplied/applicable>
-- Diagnosis tier/model: <value when supplied>
+- Trigger: <concise blocker>
+- Triggering status: <optional>
+- Finding IDs: <optional>
+- Diagnosis tier/model: <optional>
 
 ## Root Cause
 
-<concise established cause>
+<established cause | UNPROVEN>
 
-## Violated or Missing Contract
+## Requirement / Contract
 
-<concise established contract boundary or gap>
+<violated or missing boundary>
 
 ## Authoritative Sources
 
-<paths, accepted artifacts, or contract sources actually used>
+<only sources actually used>
 
 ## Resolution
 
-<established resolution, or the remaining decision for UNRESOLVED>
+<resolved correction direction | remaining decision>
 
 ## Modification Scope
 
-<files/symbols that may change, when established>
+<allowed files/symbols, if established>
 
 ## Protected Scope
 
-<accepted predecessors, contracts, or surfaces that must not change>
+<must-not-change surfaces>
 
-## Verification Plan
+## Verification
 
-<focused commands/tests/evidence required before implementation is accepted>
+<minimum focused verification>
 
-## Handoff / Next Action
+## Next Action
 
-- Next action: <valid action>
+<valid next action>
+
+Final diagnosis status: RESOLVED
 ```
 
-Valid next actions for `RESOLVED` are:
+or:
+
+```text
+Final diagnosis status: UNRESOLVED
+```
+
+The exact final-status line is mandatory.
+
+Valid RESOLVED next actions:
 
 ```text
 IMPLEMENTATION
@@ -368,20 +359,28 @@ RESUME_IMPLEMENTATION
 RESUME_FIX
 ```
 
-Valid next actions for `UNRESOLVED` are:
+Valid UNRESOLVED next actions:
 
 ```text
 ESCALATION_REQUIRED
 MANUAL_ARCHITECTURE_DECISION
 ```
 
-Preserve an explicitly supplied valid next action exactly. A `RESOLVED`
-diagnosis is not Implementation completion, Review acceptance, Re-review
-acceptance, or TASK acceptance.
+Preserve a supplied valid next action exactly.
+
+`RESOLVED` does not mean Implementation complete, Review accepted, or TASK accepted.
+
+Diagnosis must never create or infer:
+
+```text
+acceptance_handoff
+Acceptance JSON
+ACCEPT
+```
 
 ---
 
-## 5. TASK README
+# 5. TASK README
 
 Maintain:
 
@@ -389,7 +388,7 @@ Maintain:
 docs/task_history/<TASK_ID>/README.md
 ```
 
-as a compact event index.
+Read only the current README, append one event row, and update `Current status` when applicable.
 
 Recommended form:
 
@@ -404,85 +403,45 @@ Current status: <STATE>
 | 02 | Review | REJECT | `02_review.md` |
 | 03 | Fix | READY FOR RE-REVIEW | `03_fix.md` |
 | 04 | Review | ACCEPT | `04_review.md` |
-| 05 | Diagnosis | RESOLVED | `05_diagnosis.md` |
 ```
 
-For each workflow:
+TASK-level states:
 
-1. read only the current TASK README;
-2. append one event row;
-3. update `Current status`;
-4. do not reread prior detailed history files unless an inconsistency requires investigation.
+| Event result                        | TASK status                                      |
+| ----------------------------------- | ------------------------------------------------ |
+| Implementation COMPLETE             | `IMPLEMENTED / REVIEW PENDING`                   |
+| Review REJECT                       | `REJECTED / FIX REQUIRED`                        |
+| Fix READY FOR INDEPENDENT RE-REVIEW | `FIXED / RE-REVIEW PENDING`                      |
+| Review ACCEPT                       | `ACCEPTED`                                       |
+| failed/incomplete workflow          | `INCOMPLETE` when no more specific state applies |
 
-Use these TASK-level states:
+Diagnosis always appears in the event index but **does not change TASK-level status**.
 
-```text
-IMPLEMENTED / REVIEW PENDING
-REJECTED / FIX REQUIRED
-FIXED / RE-REVIEW PENDING
-ACCEPTED
-INCOMPLETE
-```
+Retain the status established by the preceding lifecycle event.
 
-Mapping:
-
-```text
-Implementation COMPLETE
-→ IMPLEMENTED / REVIEW PENDING
-
-Review REJECT
-→ REJECTED / FIX REQUIRED
-
-Fix READY FOR INDEPENDENT RE-REVIEW
-→ FIXED / RE-REVIEW PENDING
-
-Review ACCEPT
-→ ACCEPTED
-
-failed/incomplete workflow
-→ INCOMPLETE when no more specific valid state applies
-```
-
-Diagnosis events must appear as rows in the TASK README event index. A
-`diagnosis RESOLVED` or `diagnosis UNRESOLVED` does not change the TASK-level
-status: retain the status established by the preceding lifecycle event. In
-particular, diagnosis never changes the TASK status to `ACCEPTED`; the TASK
-remains in progress until the normal Review/Re-review and Acceptance lifecycle
-succeeds.
+Do not reread detailed prior history unless the README/index is inconsistent.
 
 ---
 
-## 6. Final ACCEPT Enrichment
+# 6. Final ACCEPT and Global Index
 
-Only when an independent Review returns:
-
-```text
-ACCEPT <TASK_ID>
-```
-
-may the TASK README be enriched with:
+Only after an independent Review returns ACCEPT may the TASK README add:
 
 ```markdown
 ## Final Summary
 
-- Final validation: <concise summary>
+- Final validation: <concise>
 - Evidence: <path>
 - Final review: <review record>
 
 ## Portfolio Summary
 
-<3–5 sentences describing:
-the engineering problem,
-the most important implementation decision,
-any meaningful Review/Fix lesson,
-and the final quality gate achieved.>
+<3–5 concise sentences covering the engineering problem,
+main implementation decision, important Review/Fix lesson,
+and final quality gate.>
 ```
 
-Do not generate or repeatedly rewrite a Portfolio Summary before final ACCEPT.
-
----
-
-## 7. Global TASK Index
+Do not create or repeatedly rewrite this summary before final ACCEPT.
 
 The optional global index is:
 
@@ -490,167 +449,82 @@ The optional global index is:
 docs/task_history/README.md
 ```
 
-Do not update it after every workflow by default.
-
 Update it only when:
 
 ```text
-- a TASK reaches ACCEPTED; or
-- the user/repository explicitly requires an intermediate global status update.
+TASK reaches ACCEPTED
 ```
 
-When an intermediate global index update is required, include a Diagnosis
-event as the `Last Event` when it is the latest recorded event. Diagnosis does
-not alter the TASK `Status` or `Final Result` to ACCEPTED.
+or repository/user policy explicitly requires an intermediate update.
 
-When updating it:
+When updating:
 
-1. read the existing index only;
-2. update or add only the row for `TASK_ID`;
-3. do not scan every TASK history directory;
-4. preserve all unrelated rows.
+1. read the existing global index only;
+2. modify/add only the row for `TASK_ID`;
+3. preserve unrelated rows;
+4. do not scan all TASK-history directories.
 
-Recommended form:
-
-```markdown
-# TASK History
-
-| TASK | Status | Last Event | Final Result |
-|---|---|---|---|
-| TASK-MVP-001 | ACCEPTED | Review | ACCEPT |
-| TASK-MVP-002 | FIXED / RE-REVIEW PENDING | Fix | - |
-```
-
-For an ACCEPT Review, updating this file is an allowed audit-log write.
+Diagnosis may be shown as `Last Event`, but never changes `Status` or `Final Result` to ACCEPTED.
 
 ---
 
-## 8. Review Audit-write Boundary
+# 7. Verification and Failure
 
-Read-only Review remains read-only for implementation and source-of-truth surfaces.
+After recording:
 
-After the Review recommendation is fixed, History recording may modify only:
+1. confirm the expected event file exists;
+2. confirm TASK_ID, event type, and result;
+3. confirm no existing sequence was overwritten;
+4. confirm TASK README contains the event row;
+5. confirm TASK-level status mapping;
+6. run minimal repository integrity validation such as:
 
-```text
-docs/task_history/<TASK_ID>/<SEQ>_review.md
-docs/task_history/<TASK_ID>/README.md
+```bash
+git diff --check
 ```
 
-and, only when Section 7 requires it:
+If final ACCEPT updates the global index, verify only that TASK row.
+
+Do not reread all previous event files.
+
+If History recording fails:
 
 ```text
-docs/task_history/README.md
-```
-
-No source, test, Evidence, TASK specification, contract, schema, architecture, Git index, or Git history may be modified by the Review history step.
-
-### 8.1 Diagnosis Audit-write Boundary
-
-Diagnosis remains read-only for implementation and source-of-truth surfaces.
-After a diagnosis result is fixed, History recording may modify only:
-
-```text
-docs/task_history/<TASK_ID>/<SEQ>_diagnosis.md
-docs/task_history/<TASK_ID>/README.md
-```
-
-and, only when Section 7 requires it:
-
-```text
-docs/task_history/README.md
-```
-
-No source, test, Evidence, TASK specification, contract, schema, architecture,
-Git index, Git history, acceptance JSON, or `acceptance_handoff` may be
-created, inferred, or modified by the Diagnosis history step.
-
----
-
-## 9. History Verification
-
-Use minimal verification.
-
-Confirm:
-
-1. the expected event file exists;
-2. the correct `TASK_ID`, stage, and workflow result are recorded;
-3. `SEQ` does not overwrite an existing event;
-4. the TASK README contains the new event row;
-5. the TASK-level state matches the workflow result.
-
-When final ACCEPT updates the global index, also verify the `TASK_ID` row.
-
-Do not reread every prior event file solely for verification.
-
-If an inconsistency is detected, investigate only the affected history files.
-
----
-
-## 10. History Failure Policy
-
-If mandatory History recording fails:
-
-- do not alter implementation, tests, Evidence, or source-of-truth documents to hide the failure;
-- do not fabricate a successful write;
-- preserve the already-determined technical result;
-- report the History failure separately.
-
-Example:
-
-```text
-Technical result: READY FOR INDEPENDENT RE-REVIEW
+Technical result: <already determined result>
 History recording: FAIL
 Workflow completion: INCOMPLETE
 ```
 
-History failure must not rewrite or soften an already-determined Review recommendation.
+Do not change, weaken, or reinterpret the technical result to hide a History failure.
 
 ---
 
-## 11. Efficiency Rules
+# 8. Efficiency Rules
 
-Default recording path:
+Default path:
 
 ```text
-technical workflow result
+workflow result
 → determine SEQ from filenames
-→ create one compact event record
+→ create one compact event
 → update TASK README
-→ verify current event
+→ minimal verification
 ```
 
-For final ACCEPT only:
+Final ACCEPT only:
 
 ```text
-→ add final/portfolio summary
-→ update global TASK index
+→ Final Summary / Portfolio Summary
+→ global TASK index
 ```
 
-Do not default to:
+Never default to:
 
 ```text
-read all previous history events
-```
-
-Do not default to:
-
-```text
-rewrite the TASK README as a full summary
-```
-
-Do not default to:
-
-```text
-update the global TASK index after every event
-```
-
-Do not duplicate:
-
-```text
-TASK specification
-Evidence
-full test output
-full Review report
+read all history
+rewrite README as a full workflow summary
+update global index after every event
+copy TASK/Evidence/test/Review contents
 ```
 
 Prefer:
@@ -667,70 +541,51 @@ full snapshot duplication
 
 ---
 
-## 11.1 Diagnosis Acceptance Separation
+# 9. Acceptance Recording Handoff
 
-For `stage=diagnosis`:
+This section applies only to Review/Re-review history containing an Acceptance Recording Handoff.
+
+Persist the handoff **verbatim**, including its fenced YAML block.
+
+Do not recompute, reinterpret, normalize, or modify:
 
 ```text
-DO NOT require acceptance_handoff.
-DO NOT create acceptance_handoff.
-DO NOT infer acceptance_handoff.
-DO NOT create an acceptance JSON.
-DO NOT infer ACCEPT.
-RESOLVED does not mean TASK acceptance.
+review_decision
+reviewed_commit
+task_specific_decision
+TASK spec path/hash
+Evidence path/hash
+supporting artifact path/hash
+acceptance_recording_eligible
 ```
 
-Acceptance-specific requirements remain scoped to the lifecycle stages where
-repository policy requires them. Do not weaken existing Review, Re-review, or
-Acceptance fail-closed rules.
+For REJECT preserve:
 
----
+```text
+acceptance_recording_eligible: false
+```
 
-## 12. Acceptance Recording Handoff
+The persisted Review record:
 
-section verbatim, including the fenced YAML block.
+```text
+docs/task_history/<TASK_ID>/<SEQ>_review.md
+```
 
-**Rules:**
+is the source later hashed by `record_task_acceptance_v2.md`.
 
-1. Do not recompute or reinterpret the handoff while recording history.
+History recording must NOT create the Acceptance JSON.
 
-2. Do not change:
+Required flow:
 
-- review_decision;
-
-- reviewed_commit;
-
-- task_specific_decision;
-
-- TASK spec path/hash;
-
-- Evidence path/hash;
-
-- supporting artifact path/hash;
-
-- acceptance_recording_eligible.
-
-3. The history recorder may add its normal history metadata outside the preserved review content, but must not rewrite the handoff.
-
-4. For REJECT reviews, preserve:
-
-- acceptance_recording_eligible: false
-
-5. The persisted review record under:
-
-- docs/task_history/<TASK_ID>/<NN>_review.md
-becomes the source hashed by record_task_acceptance_v2.md.
-
-6. Do not create the acceptance JSON in the history-recording workflow.
-
-Recommended flow:
-
+```text
 read_only_review_v2.md
         ↓
-review output with handoff
+Review output + acceptance handoff
         ↓
-task_history_recording_v2.md
+task_history_recording.md
         ↓
-persisted <NN>_review.md with handoff unchanged
+persisted <SEQ>_review.md
+with handoff unchanged
         ↓
 record_task_acceptance_v2.md
+```
