@@ -1,6 +1,6 @@
 # TASK-SIM-010 History
 
-Current status: FIXED / RE-REVIEW PENDING
+Current status: G0-G5 PASS / G6-G7 AND INDEPENDENT G8 PENDING
 
 | Seq | Type | Result | Record | Primary fault domain | Architecture decision / next action |
 |---:|---|---|---|---|---|
@@ -30,3 +30,4 @@ Current status: FIXED / RE-REVIEW PENDING
 | 25 | Review | PASS — S10-G6 through S10-G7 | `25_review.md` | `SIM010_MANUAL_GATE_FINALIZATION` | `RUN_INDEPENDENT_S10_G8_REREVIEW` |
 | 26 | Review | REJECT | `26_review.md` | `SIM010_Q01_SEMANTIC_AND_APPLICABILITY_FAIL_OPEN` | resolve `SIM010-G8R-001`, `SIM010-G8R-002` before Acceptance |
 | 27 | Fix | COMPLETE | `27_fix.md` | `SIM010_Q01_SEMANTIC_AND_APPLICABILITY_FAIL_OPEN` | `RUN_MANUAL_S10_G0_THROUGH_G5` |
+| 28 | Review | PASS — S10-G0 through S10-G5 | `28_review.md` | `SIM010_MANUAL_GATE_VALIDATION` | `RUN_MANUAL_S10_G6_AND_G7` / fresh independent S10-G8 pending |
