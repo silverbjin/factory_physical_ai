@@ -1,6 +1,6 @@
 # TASK-SIM-010 History
 
-Current status: REJECTED / FIX REQUIRED
+Current status: FIXED / RE-REVIEW PENDING
 
 | Seq | Type | Result | Record | Primary fault domain | Architecture decision / next action |
 |---:|---|---|---|---|---|
@@ -29,3 +29,4 @@ Current status: REJECTED / FIX REQUIRED
 | 24 | Review | PASS — corrected S10-G0 through S10-G5 | `24_review.md` | `SIM010_G5_TEST_TREE_PROVENANCE_ERROR` | `PASS_PROVEN_PREEXISTING` / `RUN_MANUAL_S10_G6_AND_G7` |
 | 25 | Review | PASS — S10-G6 through S10-G7 | `25_review.md` | `SIM010_MANUAL_GATE_FINALIZATION` | `RUN_INDEPENDENT_S10_G8_REREVIEW` |
 | 26 | Review | REJECT | `26_review.md` | `SIM010_Q01_SEMANTIC_AND_APPLICABILITY_FAIL_OPEN` | resolve `SIM010-G8R-001`, `SIM010-G8R-002` before Acceptance |
+| 27 | Fix | COMPLETE | `27_fix.md` | `SIM010_Q01_SEMANTIC_AND_APPLICABILITY_FAIL_OPEN` | `RUN_MANUAL_S10_G0_THROUGH_G5` |
