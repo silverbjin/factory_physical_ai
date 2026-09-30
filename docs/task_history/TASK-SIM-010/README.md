@@ -1,6 +1,6 @@
 # TASK-SIM-010 History
 
-Current status: S10-G8 ACCEPT / CANONICAL ACCEPTANCE PENDING
+Current status: ACCEPTED / COMPLETE
 
 | Seq | Type | Result | Record | Primary fault domain | Architecture decision / next action |
 |---:|---|---|---|---|---|
@@ -33,3 +33,4 @@ Current status: S10-G8 ACCEPT / CANONICAL ACCEPTANCE PENDING
 | 28 | Review | PASS — S10-G0 through S10-G5 | `28_review.md` | `SIM010_MANUAL_GATE_VALIDATION` | `RUN_MANUAL_S10_G6_AND_G7` / fresh independent S10-G8 pending |
 | 29 | Review | PASS — S10-G6 through S10-G7 | `29_review.md` | `SIM010_MANUAL_GATE_FINALIZATION` | `RUN_INDEPENDENT_S10_G8_REREVIEW` |
 | 30 | Review | ACCEPT — S10-G8 independent rereview | `30_review.md` | `SIM010_Q01_SEMANTIC_AND_APPLICABILITY_FAIL_OPEN` | `RECORD_CANONICAL_TASK_SIM010_ACCEPTANCE` (Acceptance not recorded) |
+| 31 | Review | ACCEPTED — canonical Acceptance recorded | `31_review.md` | `SIM010_CANONICAL_ACCEPTANCE` | `TASK-SIM-010 COMPLETE — proceed to the next planned simulation task.` |
