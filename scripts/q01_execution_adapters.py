@@ -11,6 +11,8 @@ from typing import Any
 from collections.abc import Callable, Mapping
 
 ROOT = Path(__file__).resolve().parents[1]
+_GAZEBO_STATS_TIMEOUT_SECONDS = 15
+_SIM009_GAZEBO_STATS_ATTEMPTS = 2
 
 _SIM004_SCENARIOS: Mapping[str, Mapping[str, object]] = {
     "success": {"qualification_run_id": "q01-sim004-success-time", "destination": "line-b-drop", "timeout_ms": 30_000},
@@ -21,10 +23,14 @@ _SIM004_SCENARIOS: Mapping[str, Mapping[str, object]] = {
 
 def gazebo_clock(runtime: Any, world_name: str) -> dict[str, Any]:
     """Obtain one structured Gazebo stats response in the runtime transport partition."""
-    result = subprocess.run(
-        ["gz", "topic", "-e", "-n", "1", "--json-output", "-t", f"/world/{world_name}/stats"],
-        text=True, capture_output=True, timeout=5, check=False, env=runtime.environment,
-    )
+    try:
+        result = subprocess.run(
+            ["gz", "topic", "-e", "-n", "1", "--json-output", "-t", f"/world/{world_name}/stats"],
+            text=True, capture_output=True, timeout=_GAZEBO_STATS_TIMEOUT_SECONDS,
+            check=False, env=runtime.environment,
+        )
+    except (OSError, subprocess.TimeoutExpired) as exc:
+        raise RuntimeError("Gazebo stats sidecar timed out") from exc
     if result.returncode:
         raise RuntimeError("Gazebo stats sidecar failed")
     return json.loads(result.stdout)
@@ -188,6 +194,7 @@ def run_sim008_qualification(executor: Callable[[], Mapping[str, Any]] | None = 
 
 def run_sim009_qualification(executor: Callable[[], Mapping[str, Any]] | None = None) -> dict[str, dict[str, Any]]:
     """Wrap the accepted failure suite and retain its exact scenario identities."""
+    controlled = executor is not None
     if executor is None:
         from simulation_runtime.failure_recovery import run_failure_suite
         executor = lambda: run_failure_suite(scenario_observer=_sim009_sidecar_observation)
@@ -204,22 +211,42 @@ def run_sim009_qualification(executor: Callable[[], Mapping[str, Any]] | None = 
             raise ValueError("DUPLICATE_SCENARIO_ID")
         raw_result = row.get("result") or row.get("verification") or row.get("first_result")
         raw_result = raw_result if isinstance(raw_result, Mapping) else {}
+        attempt = row.get("qualification_attempt")
+        if not isinstance(attempt, Mapping) or not all(
+            isinstance(attempt.get(field), str) and attempt[field]
+            for field in ("qualification_run_id", "scenario_execution_id")
+        ):
+            if not controlled:
+                raise ValueError("MISSING_SIM009_ATTEMPT_IDENTITY")
+            attempt = {
+                "qualification_run_id": f"q01-sim009-controlled-{scenario_id}",
+                "scenario_execution_id": f"controlled-{scenario_id}",
+            }
         correlation = {
             field: raw_result[field]
             for field in ("mission_id", "request_id", "trace_id", "action_id")
             if isinstance(raw_result.get(field), str) and raw_result[field]
         }
+        semantic_outcome = {key: value for key, value in {
+            "decision": row.get("decision"), "outcome_kind": row.get("outcome_kind"),
+            "result": raw_result.get("result"), "status": raw_result.get("status"),
+        }.items() if value is not None}
+        for key in (
+            "reconciliation", "retry_authorization", "retry_request", "retry_result",
+            "retry_suppressed", "identity", "logical_side_effect_count", "recovery",
+            "verification", "route", "mission",
+        ):
+            if key in row:
+                semantic_outcome[key] = row[key]
         records[scenario_id] = {
-            "qualification_run_id": f"q01-sim009-{scenario_id}",
+            "qualification_run_id": attempt["qualification_run_id"],
             "scenario_id": scenario_id,
             "backend_id": row.get("backend"),
             "component_version": raw_result.get("component_version", "sim009-failure-suite-v1"),
             "correlation_identity": correlation,
+            "execution_identity": dict(attempt),
             "cleanup_complete": row.get("cleanup_complete"),
-            "semantic_outcome": {key: value for key, value in {
-                "decision": row.get("decision"), "outcome_kind": row.get("outcome_kind"),
-                "result": raw_result.get("result"), "status": raw_result.get("status"),
-            }.items() if value is not None},
+            "semantic_outcome": semantic_outcome,
             "raw_result": raw_result,
             "run_local_provenance": row.get("qualification_observation"),
         }
@@ -235,11 +262,16 @@ def _sim009_sidecar_observation(
     if backend == "gazebo_navigation":
         if runtime is None:
             return None
-        try:
-            stats = gazebo_clock(runtime, "sim004_navigation_proxy_world")
-            sim_time = stats["simTime"]
-            seconds = int(sim_time["sec"]) + int(sim_time.get("nsec", 0)) / 1_000_000_000
-        except (KeyError, TypeError, ValueError, RuntimeError):
+        seconds = None
+        for _attempt in range(_SIM009_GAZEBO_STATS_ATTEMPTS):
+            try:
+                stats = gazebo_clock(runtime, "sim004_navigation_proxy_world")
+                sim_time = stats["simTime"]
+                seconds = int(sim_time["sec"]) + int(sim_time.get("nsec", 0)) / 1_000_000_000
+            except (KeyError, TypeError, ValueError, RuntimeError):
+                continue
+            break
+        if seconds is None:
             return None
         world = ROOT / "data/simulation/sim004_navigation_proxy_world.sdf"
         return {

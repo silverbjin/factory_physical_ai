@@ -5,6 +5,7 @@ import subprocess
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any, Callable, Mapping
+from unittest.mock import patch
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
@@ -12,6 +13,7 @@ from simulation_runtime.normal_system_e2e import InMemoryGazeboWorld, NormalSyst
 from simulation_runtime.navigation_backend import RuntimeObservation
 from simulation_runtime.smoke import validate_contract_message
 from scripts import run_simulation_normal_system_e2e as system_runner
+from scripts import run_simulation_navigation as navigation_runner
 
 
 class AuthoritativeWorldDouble:
@@ -115,6 +117,38 @@ def test_scenario_identity_binds_task_owned_world_and_configuration() -> None:
     assert scenario["regions"]["source"]["id"] == "warehouse-a"
     assert scenario["regions"]["destination"]["id"] == "line-b-drop"
     assert all(len(identity[key]) == 64 for key in ("scenario_sha256", "world_sha256", "config_sha256"))
+
+
+def test_sim008_world_passes_scenario_source_pose_to_navigation_bootstrap() -> None:
+    base = load_scenario()
+    scenario = base | {"regions": {**base["regions"], "source": {"id": "scenario-source", "x": -1.25, "y": 2.5, "z": 0.2}}}
+    captured: dict[str, object] = {}
+
+    class RuntimeDouble:
+        def __init__(self, world_path, *, initial_pose=None, bounds=None) -> None:
+            captured["world_path"] = world_path
+            captured["initial_pose"] = initial_pose
+            captured["bounds"] = bounds
+
+    original = (
+        navigation_runner.STARTUP_SECONDS,
+        navigation_runner.EXECUTION_SECONDS,
+        navigation_runner.CLEANUP_SECONDS,
+    )
+    with patch("scripts.run_simulation_navigation.BoundedGazeboNav2Runtime", RuntimeDouble):
+        system_runner.GazeboSystemWorld(scenario)
+
+    assert captured["initial_pose"] == {
+        "frame_id": "map", "x": -1.25, "y": 2.5, "yaw": 0.0,
+        "source": "SIM-008 scenario.regions.source",
+    }
+    assert captured["bounds"].startup_seconds == 20
+    assert captured["bounds"].execution_seconds == 20
+    assert (
+        navigation_runner.STARTUP_SECONDS,
+        navigation_runner.EXECUTION_SECONDS,
+        navigation_runner.CLEANUP_SECONDS,
+    ) == original
 
 
 def test_surrogate_failure_cannot_complete_mission() -> None:

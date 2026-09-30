@@ -71,7 +71,9 @@ class MuJoCoVLABackend:
             self._record(request, "unknown", {"scenario": task, "physics_started": False, "reason": "bounded_timeout"})
             return self._result(request, "unknown", "pending", "uncertain", error=_error("MUJOCO_TIMEOUT", "bounded physics budget expired", "MODEL_TIMEOUT", True))
         if task == "mujoco-unknown":
-            self._record(request, "succeeded", {"scenario": task, "physics_started": True, "authoritative_outcome": "succeeded"})
+            measured = self._step_physics(task)
+            measured.update({"physics_started": True, "authoritative_outcome": "succeeded"})
+            self._record(request, "succeeded", measured)
             return self._result(request, "unknown", "pending", "uncertain", error=_error("MUJOCO_OUTCOME_UNKNOWN", "result requires authoritative reconciliation", "DEPENDENCY_TIMEOUT", True))
         if task == "mujoco-workspace-limit":
             self._record(request, "failed", {"scenario": task, "physics_started": False, "workspace_limit_enforced": True})
@@ -106,6 +108,7 @@ class MuJoCoVLABackend:
         workpiece_body = mujoco.mj_name2id(model, mujoco.mjtObj.mjOBJ_BODY, "workpiece")
         profiles = {
             "mujoco-place-nominal": (0.0, ((0.17, 400),)),
+            "mujoco-unknown": (0.0, ((0.17, 400),)),
             "mujoco-grasp-miss": (0.12, ((0.17, 400),)),
             "mujoco-contact-loss": (0.0, ((0.20, 200), (0.0, 200))),
         }

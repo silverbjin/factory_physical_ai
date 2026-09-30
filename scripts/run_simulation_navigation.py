@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import math
 import os
 import selectors
 import signal
@@ -17,9 +18,11 @@ import sys
 import tempfile
 import time
 import uuid
+from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
-from typing import Any
+from types import MappingProxyType
+from typing import Any, Mapping
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
@@ -28,6 +31,7 @@ from simulation_runtime.navigation_backend import (  # noqa: E402
 )
 
 ROS2 = "/opt/ros/jazzy/bin/ros2"
+ROS_SETUP = Path("/opt/ros/jazzy/setup.bash")
 STARTUP_SECONDS = 45
 EXECUTION_SECONDS = 30
 CLEANUP_SECONDS = 5
@@ -41,6 +45,71 @@ GOALS = {
     "line-b-drop": "{pose: {header: {frame_id: map}, pose: {position: {x: -6.0, y: 0.0, z: 0.0}, orientation: {w: 1.0}}}}",
     "blocked-bay": "{pose: {header: {frame_id: map}, pose: {position: {x: 100.0, y: 100.0, z: 0.0}, orientation: {w: 1.0}}}}",
 }
+
+
+@dataclass(frozen=True, slots=True)
+class NavigationRuntimeBounds:
+    """Immutable bounds owned by one navigation runtime instance."""
+
+    startup_seconds: float = STARTUP_SECONDS
+    localization_seconds: float = LOCALIZATION_SECONDS
+    execution_seconds: float = EXECUTION_SECONDS
+    cleanup_seconds: float = CLEANUP_SECONDS
+
+
+@dataclass(frozen=True, slots=True)
+class NavigationRuntimeContext:
+    """One run's immutable launch, localization, and isolation authority."""
+
+    world_path: Path
+    initial_pose: Mapping[str, object]
+    bounds: NavigationRuntimeBounds
+    environment: Mapping[str, str]
+    ros_domain_id: str
+    gazebo_partition: str
+    ros_log_dir: str
+
+    @classmethod
+    def create(
+        cls,
+        *,
+        world_path: Path,
+        initial_pose: Mapping[str, object],
+        bounds: NavigationRuntimeBounds,
+        base_environment: Mapping[str, str],
+    ) -> "NavigationRuntimeContext":
+        environment = ros_runtime_environment(base_environment)
+        log_dir = tempfile.mkdtemp(prefix="sim004-ros-", dir="/tmp")
+        run_token = uuid.uuid4().hex
+        ros_domain_id = str(1 + (int(run_token[:8], 16) % 232))
+        gazebo_partition = f"sim004-{run_token[:12]}"
+        environment.update({
+            "ROS_LOG_DIR": log_dir,
+            "ROS_DOMAIN_ID": ros_domain_id,
+            "ROS2CLI_USE_DAEMON": "0",
+            "GZ_PARTITION": gazebo_partition,
+        })
+        return cls(
+            world_path=world_path,
+            initial_pose=MappingProxyType(dict(initial_pose)),
+            bounds=bounds,
+            environment=MappingProxyType(environment),
+            ros_domain_id=ros_domain_id,
+            gazebo_partition=gazebo_partition,
+            ros_log_dir=log_dir,
+        )
+
+
+@dataclass(frozen=True, slots=True)
+class NavigationReadinessResult:
+    """Structured result for the shared Gazebo/Nav2 readiness lifecycle."""
+
+    ready: bool
+    stage: str
+    error: str | None = None
+
+    def as_dict(self) -> dict[str, object]:
+        return {"ready": self.ready, "stage": self.stage, "error": self.error}
 
 
 def now() -> str:
@@ -58,11 +127,58 @@ def transform_observed(output: str) -> bool:
     return "at time" in normalized and "translation:" in normalized and "rotation:" in normalized
 
 
+def clock_observed(output: str) -> bool:
+    """Require a structured ROS clock message, not process liveness."""
+    normalized = output.lower()
+    return "sec:" in normalized and ("nanosec:" in normalized or "nsec:" in normalized)
+
+
+def initial_pose_message(pose: Mapping[str, object]) -> str:
+    """Render the task-authoritative AMCL pose as a ROS 2 CLI message."""
+    try:
+        frame_id = str(pose["frame_id"])
+        x, y, yaw = (float(pose[name]) for name in ("x", "y", "yaw"))
+    except (KeyError, TypeError, ValueError) as exc:
+        raise ValueError("INVALID_LOCALIZATION_INITIAL_POSE") from exc
+    half_yaw = yaw / 2.0
+    return (
+        f"{{header: {{frame_id: {frame_id}}}, pose: {{pose: {{position: {{x: {x}, y: {y}, z: 0.0}}, "
+        f"orientation: {{z: {math.sin(half_yaw)}, w: {math.cos(half_yaw)}}}}}, covariance: "
+        "[0.25, 0, 0, 0, 0, 0, 0, 0.25, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]}}"
+    )
+
+
 def terminal_action_status(output: str) -> str | None:
     for status in ("SUCCEEDED", "ABORTED", "CANCELED"):
         if f"Goal finished with status: {status}" in output:
             return status
     return None
+
+
+def ros_runtime_environment(base_environment: Mapping[str, str]) -> dict[str, str]:
+    """Materialize the authoritative ROS installation environment.
+
+    The runtime is invoked by non-interactive workers whose parent shell is
+    not guaranteed to have sourced ROS.  Capturing ``setup.bash`` once gives
+    the launch process and every probe the same explicit ROS/Gazebo paths.
+    """
+    completed = subprocess.run(
+        [
+            "/bin/bash", "--noprofile", "--norc", "-c",
+            'source "$1" && env -0', "q01-ros-runtime", str(ROS_SETUP),
+        ],
+        env=dict(base_environment), capture_output=True, check=False,
+    )
+    if completed.returncode != 0:
+        error = completed.stderr.decode(errors="replace").strip()
+        raise RuntimeError(f"ROS_RUNTIME_ENVIRONMENT_UNAVAILABLE: {error or completed.returncode}")
+    environment: dict[str, str] = {}
+    for item in completed.stdout.split(b"\0"):
+        if b"=" not in item:
+            continue
+        key, value = item.split(b"=", 1)
+        environment[key.decode(errors="surrogateescape")] = value.decode(errors="surrogateescape")
+    return environment
 
 
 def request(destination: str = "line-b-drop", timeout_ms: int = 30000) -> dict[str, object]:
@@ -73,21 +189,36 @@ def request(destination: str = "line-b-drop", timeout_ms: int = 30000) -> dict[s
 class BoundedGazeboNav2Runtime:
     """Private ROS action implementation with process-group lifecycle control."""
 
-    def __init__(self, world_path: Path | None = None) -> None:
+    def __init__(
+        self,
+        world_path: Path | None = None,
+        *,
+        initial_pose: Mapping[str, object] | None = None,
+        bounds: NavigationRuntimeBounds | None = None,
+        context: NavigationRuntimeContext | None = None,
+    ) -> None:
+        if context is not None and any(value is not None for value in (world_path, initial_pose, bounds)):
+            raise ValueError("RUNTIME_CONTEXT_CONFLICT")
+        if context is None:
+            context = NavigationRuntimeContext.create(
+                world_path=world_path or ROOT / "data/simulation/sim004_navigation_proxy_world.sdf",
+                initial_pose=CANONICAL_START if initial_pose is None else initial_pose,
+                bounds=bounds or NavigationRuntimeBounds(),
+                base_environment=os.environ,
+            )
+        self.context = context
+        self.bounds = context.bounds
         self.processes: list[subprocess.Popen[str]] = []
         self.observations: dict[str, RuntimeObservation] = {}
         self.measurements: dict[str, Any] = {"started_at": now(), "processes": [], "readiness": [], "cleanup": {}}
-        self.environment = os.environ.copy()
-        # Codex workers cannot write the user's home directory.  ROS launch
-        # logs are task-local temporary runtime output, not Evidence inputs.
-        self.log_dir = tempfile.mkdtemp(prefix="sim004-ros-", dir="/tmp")
-        self.environment["ROS_LOG_DIR"] = self.log_dir
-        # Isolate DDS and Gazebo transport from prior/manual runs.
-        self.environment["ROS_DOMAIN_ID"] = "44"
-        self.environment["GZ_PARTITION"] = f"sim004-{uuid.uuid4().hex[:12]}"
+        self.environment = context.environment
+        self.log_dir = context.ros_log_dir
         self.log_files: list[Any] = []
         self._ready = False
-        self.world_path = world_path or ROOT / "data/simulation/sim004_navigation_proxy_world.sdf"
+        self.bootstrap_error: str | None = None
+        self.readiness_result: NavigationReadinessResult | None = None
+        self.initial_pose = context.initial_pose
+        self.world_path = context.world_path
 
     @property
     def ready(self) -> bool:
@@ -107,8 +238,8 @@ class BoundedGazeboNav2Runtime:
         # world, bridge, localization, and navigation topology.  Starting the
         # generic bringup separately leaves its map->odom transform unrelated
         # to the proxy robot and makes every goal fail closed.
-        self._start("gazebo_nav2_proxy", [ROS2, "launch", "nav2_bringup", "tb4_simulation_launch.py", "headless:=True", "use_rviz:=False", "autostart:=False", f"x_pose:={CANONICAL_START['x']}", f"y_pose:={CANONICAL_START['y']}", f"yaw:={CANONICAL_START['yaw']}", f"world:={self.world_path}"])
-        deadline = time.monotonic() + STARTUP_SECONDS
+        self._start("gazebo_nav2_proxy", [ROS2, "launch", "nav2_bringup", "tb4_simulation_launch.py", "headless:=True", "use_rviz:=False", "autostart:=False", f"x_pose:={self.initial_pose['x']}", f"y_pose:={self.initial_pose['y']}", f"yaw:={self.initial_pose['yaw']}", f"world:={self.world_path}"])
+        deadline = time.monotonic() + self.bounds.startup_seconds
         while time.monotonic() < deadline:
             probe_start = time.monotonic()
             try:
@@ -184,34 +315,117 @@ class BoundedGazeboNav2Runtime:
                         process.wait(timeout=2)
                 self.measurements.setdefault("localization", {}).setdefault("probes", []).append({"label": label, "command": command, "target_frame": target_frame, "source_frame": source_frame, "duration_ms": round((time.monotonic() - started) * 1000, 3), "available": transform_observed(output), "observed_transform": transform_observed(output), "timed_out": timed_out, "output_tail": output[-1000:]})
 
+    def _wait_for_tf(self, label: str, target_frame: str, source_frame: str, timeout: float) -> bool:
+        deadline = time.monotonic() + timeout
+        while time.monotonic() < deadline:
+            if self._probe_tf(label, target_frame, source_frame, min(5, max(0.1, deadline - time.monotonic()))):
+                return True
+            time.sleep(min(1, max(0, deadline - time.monotonic())))
+        return False
+
+    def _wait_for_clock(self, timeout: float) -> bool:
+        deadline = time.monotonic() + timeout
+        localization = self.measurements.setdefault("localization", {})
+        while time.monotonic() < deadline:
+            result = self._probe(
+                "simulation_clock",
+                [ROS2, "topic", "echo", "--once", "/clock", "rosgraph_msgs/msg/Clock"],
+                min(5, max(0.1, deadline - time.monotonic())),
+            )
+            available = result is not None and result.returncode == 0 and clock_observed(result.stdout)
+            localization["clock_available"] = available
+            if available:
+                return True
+            time.sleep(min(1, max(0, deadline - time.monotonic())))
+        return False
+
+    def _bootstrap_failed(self, reason: str) -> bool:
+        self.bootstrap_error = reason
+        self._ready = False
+        localization = self.measurements.setdefault("localization", {})
+        localization["failure"] = reason
+        self.measurements["readiness"].append({"localization_ready": False, "reason": reason})
+        return False
+
+    @staticmethod
+    def _readiness_stage(reason: str | None) -> str:
+        """Map a concrete bootstrap failure to its first failed lifecycle stage."""
+        if not reason:
+            return "BOOTSTRAP"
+        if "CLOCK" in reason:
+            return "CLOCK"
+        if reason.startswith(("ODOMETRY_", "LOCALIZATION_TOPICS_")):
+            return "ODOM"
+        if reason.startswith(("MAP_SERVER_", "AMCL_", "INITIAL_POSE_", "MAP_TO_ODOM_")):
+            return "LOCALIZATION"
+        if reason.startswith("SIM009_PRIVATE_ACTION_"):
+            return "PRIVATE_ACTION"
+        if reason.startswith(("NAVIGATION_LIFECYCLE_", "NAVIGATE_TO_POSE_")):
+            return "ACTION"
+        return "BOOTSTRAP"
+
+    def establish_readiness(self) -> NavigationReadinessResult:
+        """Run the one authoritative ENV→LAUNCH→CLOCK→ODOM→LOCALIZATION→ACTION path."""
+        try:
+            self.start()
+        except Exception as exc:  # preserve the launch cause as structured data
+            result = NavigationReadinessResult(
+                False, "LAUNCH", f"{type(exc).__name__}: {exc}",
+            )
+        else:
+            try:
+                ready = self.bootstrap_localization()
+            except Exception as exc:  # preserve the first bootstrap exception
+                result = NavigationReadinessResult(
+                    False, "BOOTSTRAP", f"{type(exc).__name__}: {exc}",
+                )
+            else:
+                error = None if ready else (self.bootstrap_error or "NAVIGATION_BOOTSTRAP_FAILED")
+                result = NavigationReadinessResult(
+                    bool(ready), "READY" if ready else self._readiness_stage(error), error,
+                )
+        self.readiness_result = result
+        self.measurements["session_readiness"] = result.as_dict()
+        return result
+
     def bootstrap_localization(self) -> bool:
         """Activate localization, publish the documented spawn pose, prove map->odom."""
-        loc = self.measurements.setdefault("localization", {"initial_pose": CANONICAL_START})
+        self.bootstrap_error = None
+        loc = self.measurements.setdefault("localization", {"initial_pose": dict(self.initial_pose)})
+        if not self._wait_for_clock(self.bounds.localization_seconds):
+            return self._bootstrap_failed("SIMULATION_CLOCK_UNAVAILABLE")
+        topics = self._probe("localization_topics", [ROS2, "topic", "list", "-t"])
+        if topics is None:
+            return self._bootstrap_failed("LOCALIZATION_TOPICS_UNAVAILABLE")
+        topic_text = topics.stdout
+        loc["prerequisites"] = {"map_available": "/map" in topic_text, "scan_available": "/scan" in topic_text, "odom_available": "/odom" in topic_text}
+        loc["prerequisites"]["odom_to_base_available"] = self._wait_for_tf("odom_to_base", "odom", "base_link", self.bounds.localization_seconds)
+        if not all(loc["prerequisites"].values()):
+            return self._bootstrap_failed("ODOMETRY_PREREQUISITES_UNAVAILABLE")
         for node in ("/map_server", "/amcl"):
             for transition in ("configure", "activate"):
                 result = self._probe(f"{node}:{transition}", [ROS2, "lifecycle", "set", node, transition])
                 if result is None or result.returncode != 0:
-                    return False
-        topics = self._probe("localization_topics", [ROS2, "topic", "list", "-t"])
-        if topics is None:
-            return False
-        topic_text = topics.stdout
-        loc["prerequisites"] = {"map_available": "/map" in topic_text, "scan_available": "/scan" in topic_text, "odom_available": "/odom" in topic_text}
-        amcl = self._probe("amcl_lifecycle", [ROS2, "lifecycle", "get", "/amcl"])
-        loc["amcl_active"] = amcl is not None and lifecycle_is_active(amcl.stdout)
-        loc["prerequisites"]["odom_to_base_available"] = self._probe_tf("odom_to_base", "odom", "base_link")
-        if not loc["amcl_active"] or not all(loc["prerequisites"].values()):
-            return False
-        pose = f"{{header: {{frame_id: map}}, pose: {{pose: {{position: {{x: {CANONICAL_START['x']}, y: {CANONICAL_START['y']}, z: 0.0}}, orientation: {{z: 0.0, w: 1.0}}}}, covariance: [0.25, 0, 0, 0, 0, 0, 0, 0.25, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]}}}}"
+                    return self._bootstrap_failed(f"{node.removeprefix('/').upper()}_{transition.upper()}_FAILED")
+        for node, key, label in (("/map_server", "map_server_active", "map_server_lifecycle"), ("/amcl", "amcl_active", "amcl_lifecycle")):
+            result = self._probe(label, [ROS2, "lifecycle", "get", node])
+            loc[key] = result is not None and lifecycle_is_active(result.stdout)
+        if not loc["map_server_active"]:
+            return self._bootstrap_failed("MAP_SERVER_NOT_ACTIVE")
+        if not loc["amcl_active"]:
+            return self._bootstrap_failed("AMCL_NOT_ACTIVE")
+        pose = initial_pose_message(self.initial_pose)
         published = self._probe("initial_pose_publish", [ROS2, "topic", "pub", "--once", "/initialpose", "geometry_msgs/msg/PoseWithCovarianceStamped", pose], 5)
-        loc["initial_pose"] = CANONICAL_START | {"published": published is not None and published.returncode == 0}
-        loc["map_to_odom_available"] = self._probe_tf("map_to_odom", "map", "odom", 5)
+        loc["initial_pose"] = dict(self.initial_pose) | {"published": published is not None and published.returncode == 0}
+        if not loc["initial_pose"]["published"]:
+            return self._bootstrap_failed("INITIAL_POSE_PUBLISH_FAILED")
+        loc["map_to_odom_available"] = self._wait_for_tf("map_to_odom", "map", "odom", self.bounds.localization_seconds)
         if not loc["initial_pose"]["published"] or not loc["map_to_odom_available"]:
-            return False
+            return self._bootstrap_failed("MAP_TO_ODOM_UNAVAILABLE")
         started = self._probe("navigation_lifecycle_start", [ROS2, "service", "call", "/lifecycle_manager_navigation/manage_nodes", "nav2_msgs/srv/ManageLifecycleNodes", "{command: 0}"], 10)
         if started is None or started.returncode != 0:
-            return False
-        deadline = time.monotonic() + LOCALIZATION_SECONDS
+            return self._bootstrap_failed("NAVIGATION_LIFECYCLE_START_FAILED")
+        deadline = time.monotonic() + self.bounds.localization_seconds
         while time.monotonic() < deadline:
             nav = self._probe("bt_navigator_lifecycle", [ROS2, "lifecycle", "get", "/bt_navigator"])
             actions = self._probe("navigate_to_pose_action", [ROS2, "action", "list", "-t"])
@@ -222,13 +436,13 @@ class BoundedGazeboNav2Runtime:
                 self._ready = True
                 return True
             time.sleep(1)
-        return False
+        return self._bootstrap_failed("NAVIGATE_TO_POSE_UNAVAILABLE")
 
     def navigate(self, request_data: dict[str, Any]) -> RuntimeObservation:
         action_id = request_data["action_id"]
         goal = GOALS[request_data["destination_id"]]
         started = time.monotonic()
-        execution_bound = min(EXECUTION_SECONDS, max(0.001, int(request_data["timeout_ms"]) / 1000))
+        execution_bound = min(self.bounds.execution_seconds, max(0.001, int(request_data["timeout_ms"]) / 1000))
         try:
             completed = subprocess.run([ROS2, "action", "send_goal", "/navigate_to_pose", "nav2_msgs/action/NavigateToPose", goal], text=True, capture_output=True, timeout=execution_bound, check=False, env=self.environment)
         except subprocess.TimeoutExpired:
@@ -247,17 +461,64 @@ class BoundedGazeboNav2Runtime:
         # a bounded timeout remains unknown because no terminal status was read.
         return self.observations[action_id]
 
+    def _owned_process_groups(self) -> set[int]:
+        """Capture launch descendants before their parent can orphan them.
+
+        ``ros2 launch`` commonly starts nodes in distinct process groups.  A
+        top-level ``killpg`` alone therefore leaves those groups reparented and
+        visible to the next bounded run.  The process table is sampled only
+        while the launch owner is still alive, so unrelated host processes are
+        never selected.
+        """
+        root_pids = {process.pid for process in self.processes if process.poll() is None}
+        groups = {os.getpgid(pid) for pid in root_pids}
+        if not root_pids:
+            return groups
+        try:
+            table = subprocess.run(
+                ["ps", "-eo", "pid=,ppid=,pgid="], text=True, capture_output=True,
+                timeout=1, check=False,
+            )
+        except (OSError, subprocess.TimeoutExpired):
+            return groups
+        if table.returncode != 0:
+            return groups
+        rows: dict[int, tuple[int, int]] = {}
+        for line in table.stdout.splitlines():
+            try:
+                pid, parent, group = (int(value) for value in line.split())
+            except ValueError:
+                continue
+            rows[pid] = (parent, group)
+        owned = set(root_pids)
+        changed = True
+        while changed:
+            changed = False
+            for pid, (parent, _group) in rows.items():
+                if parent in owned and pid not in owned:
+                    owned.add(pid)
+                    changed = True
+        groups.update(group for pid, (_parent, group) in rows.items() if pid in owned)
+        return groups
+
     def close(self) -> bool:
-        deadline = time.monotonic() + CLEANUP_SECONDS
+        deadline = time.monotonic() + self.bounds.cleanup_seconds
         terminated: list[dict[str, Any]] = []
-        for process in self.processes:
-            if process.poll() is None:
-                os.killpg(os.getpgid(process.pid), signal.SIGTERM)
+        owned_groups = self._owned_process_groups()
+        for group in owned_groups:
+            try:
+                os.killpg(group, signal.SIGTERM)
+            except ProcessLookupError:
+                continue
         while time.monotonic() < deadline and any(process.poll() is None for process in self.processes):
             time.sleep(0.1)
         for process in self.processes:
             if process.poll() is None:
-                os.killpg(os.getpgid(process.pid), signal.SIGKILL)
+                for group in owned_groups:
+                    try:
+                        os.killpg(group, signal.SIGKILL)
+                    except ProcessLookupError:
+                        continue
             terminated.append({"pid": process.pid, "returncode": process.wait(timeout=2)})
         complete = all(process.poll() is not None for process in self.processes)
         for process, log_file in zip(self.processes, self.log_files):
@@ -266,7 +527,7 @@ class BoundedGazeboNav2Runtime:
             tail = log_file.read()[-2000:]
             self.measurements["processes"][self.processes.index(process)]["log_tail"] = tail
             log_file.close()
-        self.measurements["cleanup"] = {"bound_ms": CLEANUP_SECONDS * 1000, "processes": terminated, "complete": complete}
+        self.measurements["cleanup"] = {"bound_ms": self.bounds.cleanup_seconds * 1000, "processes": terminated, "owned_process_groups": sorted(owned_groups), "complete": complete}
         return complete
 
 

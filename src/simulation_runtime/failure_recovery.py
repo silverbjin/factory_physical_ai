@@ -11,9 +11,9 @@ from typing import Any, Callable, Mapping
 
 from mission_runtime import MissionRecord, MissionStatus
 from scripts.sim009_goal_tracked_navigation import GoalTrackedGazeboNav2Runtime
-from scripts.run_simulation_navigation import EXECUTION_SECONDS
 from .mujoco_vla_backend import MuJoCoVLABackend, observation_ref
 from .navigation_backend import NavigationBackend, RuntimeObservation
+from .provenance_qualification import resolve_predecessor_binding
 from .smoke import ContractViolation, canonical_sha256, validate_contract_message
 from .verification_backend import VerificationBackend, normalize_deterministic_observation
 
@@ -26,7 +26,11 @@ MANDATORY_SCENARIO_IDS = (
     "SIM009-VERIFY-MISMATCH", "SIM009-VERIFY-STALE", "SIM009-VERIFY-UNCERTAIN",
 )
 INTENTIONAL_FAULT_TIMEOUT_MS = 2_000
-NORMAL_RECOVERY_TIMEOUT_MS = EXECUTION_SECONDS * 1_000
+# The accepted SIM-009 manifest fixes the retry scenario at 33 seconds:
+# 2 seconds intentional timeout + this 30 second recovery call + 1 second
+# scheduling margin.  It must not inherit SIM-008's per-instance 20 second
+# normal-E2E window when both qualifications share an interpreter.
+NORMAL_RECOVERY_TIMEOUT_MS = 30_000
 LIVE_RUNTIME_SCHEDULING_MARGIN_MS = 1_000
 LIVE_NAVIGATION_CALL_BUDGET_MS = (
     # A live rclpy NavigateToPose call has three independently bounded waits:
@@ -40,6 +44,37 @@ LIVE_NAVIGATION_RETRY_BUDGET_MS = (
     + LIVE_RUNTIME_SCHEDULING_MARGIN_MS
 )
 MAX_SCENARIO_BUDGET_MS = LIVE_NAVIGATION_RETRY_BUDGET_MS
+
+ACCEPTED_PREDECESSOR_BINDINGS = {
+    "SIM-004": {
+        "task_id": "TASK-SIM-004",
+        "accepted_commit": "b7e8266abd17f48c18cca94d9433db50fd55464d",
+        "evidence_path": "results/simulation/SIM-004_navigation_backend.json",
+        "evidence_sha256": "b4c0ce91dde6c2f92c57ea6a227149362279993dee0dec4fd1ab12877e73f1d9",
+        "task_specific_result": "SIM_NAVIGATION_BACKEND_READY",
+    },
+    "SIM-005": {
+        "task_id": "TASK-SIM-005",
+        "accepted_commit": "542514a4d10bc03087834e8a5f672d53afe6aa21",
+        "evidence_path": "results/simulation/SIM-005_mujoco_vla_backend.json",
+        "evidence_sha256": "f4d41fdb1f13978e1b1e5c91b95e31b38a69825a0d432a8284ff7731a3beb84f",
+        "task_specific_result": "SIM_MANIPULATION_BACKEND_READY",
+    },
+    "SIM-006": {
+        "task_id": "TASK-SIM-006",
+        "accepted_commit": "a10be6725d386e531f9cb0e00079c8d39ffdb1bf",
+        "evidence_path": "results/simulation/SIM-006_verification_backend.json",
+        "evidence_sha256": "6fe14dcdcee21c6f1e5be73add28afeba622d0a4497706d0ee3181f610008ffc",
+        "task_specific_result": "SIM_VERIFICATION_BACKEND_READY",
+    },
+    "SIM-008": {
+        "task_id": "TASK-SIM-008",
+        "accepted_commit": "ea91e0c16412e20c8cae66355a1a39129919dd42",
+        "evidence_path": "results/simulation/SIM-008_normal_system_e2e.json",
+        "evidence_sha256": "ebf0ef0a27114e3c04fa6bec05aa3eef792fdfc282d2be009640bac7ecc26290",
+        "task_specific_result": "SIM_NORMAL_E2E_READY",
+    },
+}
 
 
 def classify_repeatability_run(run: dict[str, Any]) -> str:
@@ -79,22 +114,21 @@ def _accepted_binding(task: str) -> dict[str, Any]:
     path = ROOT / f"results/reviews/{task}_acceptance.json"
     raw = path.read_bytes()
     record = json.loads(raw)
-    expected = {
-        "SIM-004": "SIM_NAVIGATION_BACKEND_READY",
-        "SIM-005": "SIM_MANIPULATION_BACKEND_READY",
-        "SIM-006": "SIM_VERIFICATION_BACKEND_READY",
-        "SIM-008": "SIM_NORMAL_E2E_READY",
-    }[task]
-    if record.get("status") != "ACCEPT":
-        raise ValueError(f"{task} is not accepted")
-    evidence = ROOT / record["evidence"]["path"]
-    evidence_raw = evidence.read_bytes()
-    if hashlib.sha256(evidence_raw).hexdigest() != record["evidence"]["sha256"]:
-        raise ValueError(f"{task} accepted evidence hash does not match")
-    evidence_payload = json.loads(evidence_raw)
-    if evidence_payload.get("task_specific_result", evidence_payload.get("result")) != expected:
-        raise ValueError(f"{task} accepted evidence does not report {expected}")
-    return {"acceptance": record, "acceptance_sha256": hashlib.sha256(raw).hexdigest()}
+    expected = ACCEPTED_PREDECESSOR_BINDINGS[task]
+    binding = resolve_predecessor_binding(
+        ROOT,
+        expected["task_id"],
+        record,
+        expected["evidence_path"],
+        expected_binding=expected,
+    )
+    return {
+        "acceptance": record,
+        "acceptance_sha256": hashlib.sha256(raw).hexdigest(),
+        "accepted_commit": binding.accepted_commit,
+        "evidence_path": binding.evidence_path,
+        "evidence_sha256": binding.evidence_sha256,
+    }
 
 
 def _action_request(operation: str, *, task_id: str | None = None, mission_id: str | None = None,
@@ -301,13 +335,19 @@ def _contract_scenario(scenario: dict[str, Any]) -> dict[str, Any]:
 def _navigation_scenario(
     scenario: dict[str, Any], *, runtime_factory: Any = _ScriptedNavigationRuntime,
     live_runtime: GoalTrackedGazeboNav2Runtime | None = None,
+    scenario_execution_id: str | None = None,
 ) -> dict[str, Any]:
     identifier = scenario["id"]
     if identifier.startswith("SIM009-NAV-") and live_runtime is not None and not live_runtime.ready:
         return _base_row(
             scenario, decision="FAIL_CLOSED", outcome_kind="unavailable",
             details={"result": {"result": "failure", "error": "Gazebo/Nav2 runtime did not become ready"},
-                     "runtime_calls": 0, "goal_tracking": {}, "cleanup_complete": True},
+                     "runtime_calls": 0, "goal_tracking": {}, "cleanup_complete": True,
+                     "execution_integrity": {
+                         "stage": getattr(getattr(live_runtime, "readiness_result", None), "stage", "BOOTSTRAP"),
+                         "error": getattr(getattr(live_runtime, "readiness_result", None), "error", "NAVIGATION_BOOTSTRAP_FAILED"),
+                         "pre_request": True,
+                     }},
         )
     if identifier == "SIM009-L0-UNAVAILABLE":
         # L0 availability is a contract-boundary prerequisite check; the
@@ -321,7 +361,7 @@ def _navigation_scenario(
             RuntimeObservation("failed", error_code="NAV_RETRYABLE", error_message="authoritative retryable failure", error_category="EXECUTION_FAILED", retryable=True),
         )
         backend = NavigationBackend(runtime)
-        context = live_runtime.begin_scenario(identifier) if live_runtime is not None else None
+        context = live_runtime.begin_scenario(identifier, scenario_execution_id) if live_runtime is not None else None
         first = _action_request("navigation.execute", scenario_id=identifier)
         first["destination_id"] = "line-b-drop"
         if live_runtime is not None:
@@ -375,7 +415,7 @@ def _navigation_scenario(
         row["pass"] = valid_retry and row["expected_decision"] == "RETRY"
         return row
     request = _action_request("navigation.execute", scenario_id=identifier)
-    context = live_runtime.begin_scenario(identifier) if live_runtime is not None else None
+    context = live_runtime.begin_scenario(identifier, scenario_execution_id) if live_runtime is not None else None
     if live_runtime is not None and identifier == "SIM009-NAV-ABORTED":
         live_runtime.inject_abort_on_next_goal()
     elif live_runtime is not None and identifier == "SIM009-NAV-TF-UNAVAILABLE":
@@ -443,25 +483,34 @@ def run_failure_suite(
     scenario_observer: Callable[[Mapping[str, Any], Mapping[str, Any], Any], Mapping[str, Any] | None] | None = None,
 ) -> dict[str, Any]:
     manifest = load_manifest(); rows: list[dict[str, Any]] = []
+    qualification_run_id = f"q01-sim009-{uuid.uuid4()}"
+    scenario_execution_ids = {
+        str(scenario["id"]): str(uuid.uuid4()) for scenario in manifest["scenarios"]
+    }
     live_runtime: GoalTrackedGazeboNav2Runtime | None = None
     live_ready = False
     if navigation_runtime_factory is GoalTrackedGazeboNav2Runtime:
         live_runtime = navigation_runtime_factory()
-        try:
-            live_runtime.start()
-            live_ready = live_runtime.bootstrap_localization()
-        except Exception:
-            live_ready = False
+        readiness = live_runtime.establish_readiness()
+        live_ready = readiness.ready
     try:
         for scenario in manifest["scenarios"]:
             started = time.monotonic()
             if scenario["layer"] == "L0": row = _contract_scenario(scenario) if scenario["id"] != "SIM009-L0-UNAVAILABLE" else _navigation_scenario(scenario, runtime_factory=navigation_runtime_factory)
             elif scenario["layer"] == "L1-NAV":
-                row = _navigation_scenario(scenario, runtime_factory=navigation_runtime_factory, live_runtime=live_runtime)
+                row = _navigation_scenario(
+                    scenario, runtime_factory=navigation_runtime_factory,
+                    live_runtime=live_runtime,
+                    scenario_execution_id=scenario_execution_ids[str(scenario["id"])],
+                )
                 row["live_runtime_ready"] = live_ready
             elif scenario["layer"] == "L1-VLA": row = _vla_scenario(scenario)
             else: row = _verification_scenario(scenario)
             row["duration_ms"] = round((time.monotonic() - started) * 1000, 3)
+            row["qualification_attempt"] = {
+                "qualification_run_id": qualification_run_id,
+                "scenario_execution_id": scenario_execution_ids[str(scenario["id"])],
+            }
             row["within_budget"] = row["duration_ms"] <= scenario["budget_ms"]
             row["pass"] = bool(row["pass"] and row["within_budget"] and row["cleanup_complete"] and (scenario["layer"] != "L1-NAV" or live_runtime is None or live_ready))
             if scenario_observer is not None:
@@ -488,6 +537,11 @@ def run_failure_suite(
     }
     suite["infrastructure"] = {
         "status": classify_repeatability_run(suite),
+        "navigation_readiness": (
+            live_runtime.readiness_result.as_dict()
+            if live_runtime is not None and live_runtime.readiness_result is not None
+            else None
+        ),
         "startup_measurements": (
             live_runtime.measurements.get("readiness", []) if live_runtime is not None else []
         ),

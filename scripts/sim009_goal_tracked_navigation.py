@@ -6,7 +6,9 @@ terminal result has been observed or reconciliation remains unknown.
 """
 from __future__ import annotations
 
-import os
+import json
+import select
+import subprocess
 import time
 import uuid
 from dataclasses import dataclass, field
@@ -25,6 +27,63 @@ _GOAL_POINTS = {
 _TIMEOUT_FAULT_SECONDS = 0.001
 _CANCELLATION_RECONCILIATION_SECONDS = 2.0
 _PRIVATE_ACTION_CLIENT_READY_SECONDS = 5.0
+_ROS_PYTHON = "/usr/bin/python3"
+_PRIVATE_ACTION_WORKER = Path(__file__).with_name("sim009_private_action_worker.py")
+
+
+class PrivateActionWorker:
+    """One bounded ROS-Python child using the immutable runtime environment."""
+
+    def __init__(self, *, environment: Any, ros_domain_id: str) -> None:
+        self.environment = environment
+        self.ros_domain_id = ros_domain_id
+        self.process = subprocess.Popen(
+            [_ROS_PYTHON, str(_PRIVATE_ACTION_WORKER)],
+            stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+            text=True, bufsize=1, env=environment, start_new_session=True,
+        )
+
+    def _request(self, payload: dict[str, Any], *, timeout: float = 6.0) -> dict[str, Any]:
+        if self.process.poll() is not None or self.process.stdin is None or self.process.stdout is None:
+            return {"error": "PRIVATE_ACTION_WORKER_NOT_RUNNING"}
+        self.process.stdin.write(json.dumps(payload) + "\n")
+        self.process.stdin.flush()
+        try:
+            readable, _, _ = select.select([self.process.stdout], [], [], timeout)
+        except (OSError, TypeError, ValueError):  # StringIO controlled-test transport
+            readable = [self.process.stdout]
+        if not readable:
+            return {"error": "PRIVATE_ACTION_WORKER_TIMEOUT"}
+        line = self.process.stdout.readline()
+        if not line:
+            return {"error": "PRIVATE_ACTION_WORKER_EOF"}
+        try:
+            return json.loads(line)
+        except json.JSONDecodeError:
+            return {"error": "PRIVATE_ACTION_WORKER_PROTOCOL_MALFORMED"}
+
+    def ready(self) -> bool:
+        response = self._request({"operation": "ready", "domain_id": int(self.ros_domain_id)})
+        return response.get("ready") is True
+
+    def execute(self, request: dict[str, Any]) -> dict[str, Any]:
+        return self._request({"operation": "execute", **request}, timeout=max(8.0, float(request["timeout_seconds"]) + 5.0))
+
+    def reconcile(self, action_id: str) -> dict[str, Any]:
+        return self._request({"operation": "reconcile", "action_id": action_id}, timeout=6.0)
+
+    def close(self) -> None:
+        if self.process.poll() is None:
+            self._request({"operation": "close"}, timeout=2.0)
+            try:
+                self.process.wait(timeout=2.0)
+            except subprocess.TimeoutExpired:
+                self.process.terminate()
+                try:
+                    self.process.wait(timeout=2.0)
+                except subprocess.TimeoutExpired:
+                    self.process.kill()
+                    self.process.wait(timeout=2.0)
 
 
 @dataclass(slots=True)
@@ -71,6 +130,7 @@ class GoalAttemptRecord:
     timeout_fault: bool = False
     cancellation_requested: bool = False
     retryable_terminal_failure: bool = False
+    terminal_observation: RuntimeObservation | None = field(default=None, repr=False)
 
     def __post_init__(self) -> None:
         # A terminal result, when it arrives, is required to carry this exact
@@ -93,16 +153,20 @@ class GoalTrackedGazeboNav2Runtime(BoundedGazeboNav2Runtime):
         self._node: Any = None
         self._action_client: Any = None
         self._rclpy: Any = None
+        self._rclpy_context: Any = None
+        self._private_worker: PrivateActionWorker | None = None
         self._next_goal_timeout_fault_seconds: float | None = None
         self._next_goal_fault: dict[str, str] | None = None
         self._active_scenario: ScenarioExecution | None = None
         self._scenario_contexts: dict[str, ScenarioExecution] = {}
         self._tf_probe_records: list[TFProbeRecord] = []
 
-    def begin_scenario(self, scenario_id: str) -> ScenarioExecution:
+    def begin_scenario(
+        self, scenario_id: str, scenario_execution_id: str | None = None,
+    ) -> ScenarioExecution:
         if getattr(self, "_active_scenario", None) is not None:
             raise RuntimeError("SIM-009 navigation scenario context is already active")
-        context = ScenarioExecution(scenario_id, str(uuid.uuid4()))
+        context = ScenarioExecution(scenario_id, scenario_execution_id or str(uuid.uuid4()))
         self._active_scenario = context
         if not hasattr(self, "_scenario_contexts"):
             self._scenario_contexts = {}
@@ -223,10 +287,12 @@ class GoalTrackedGazeboNav2Runtime(BoundedGazeboNav2Runtime):
 
     def _preflight_private_action_client(self) -> bool:
         """Bound private DDS discovery before any scenario timer starts."""
-        client_parts = self._client()
-        available = client_parts is not None and client_parts[2].wait_for_server(
-            timeout_sec=_PRIVATE_ACTION_CLIENT_READY_SECONDS,
-        )
+        if getattr(self, "_private_worker", None) is None:
+            self._private_worker = PrivateActionWorker(
+                environment=self.environment,
+                ros_domain_id=self.context.ros_domain_id,
+            )
+        available = self._private_worker.ready()
         self.measurements.setdefault("readiness", []).append({
             "sim009_private_action_client": available,
             "timeout_seconds": _PRIVATE_ACTION_CLIENT_READY_SECONDS,
@@ -238,6 +304,8 @@ class GoalTrackedGazeboNav2Runtime(BoundedGazeboNav2Runtime):
         if not super().bootstrap_localization():
             return False
         self._ready = self._preflight_private_action_client()
+        if not self._ready:
+            return self._bootstrap_failed("SIM009_PRIVATE_ACTION_CLIENT_UNAVAILABLE")
         return self._ready
 
     def _client(self) -> tuple[Any, Any, Any, Any] | None:
@@ -250,20 +318,14 @@ class GoalTrackedGazeboNav2Runtime(BoundedGazeboNav2Runtime):
             from rclpy.action import ActionClient
         except ImportError:
             return None
-        # SIM-004 launches into this private domain.  rclpy reads the setting
-        # when its context is initialized, so share that exact domain here.
-        previous_domain = os.environ.get("ROS_DOMAIN_ID")
-        os.environ["ROS_DOMAIN_ID"] = self.environment["ROS_DOMAIN_ID"]
-        try:
-            rclpy.init(args=None)
-        finally:
-            if previous_domain is None:
-                os.environ.pop("ROS_DOMAIN_ID", None)
-            else:
-                os.environ["ROS_DOMAIN_ID"] = previous_domain
-        node = rclpy.create_node("sim009_goal_tracker")
+        # Use an explicit private rclpy context in the same domain as the
+        # immutable runtime context.  Never mutate process-global ROS state.
+        context = rclpy.context.Context()
+        rclpy.init(args=None, context=context, domain_id=int(self.context.ros_domain_id))
+        node = rclpy.create_node("sim009_goal_tracker", context=context)
         client = ActionClient(node, NavigateToPose, "/navigate_to_pose")
         self._rclpy, self._node, self._action_client = rclpy, node, client
+        self._rclpy_context = context
         self._goal_type = (NavigateToPose, PoseStamped)
         return rclpy, node, client, self._goal_type
 
@@ -308,6 +370,99 @@ class GoalTrackedGazeboNav2Runtime(BoundedGazeboNav2Runtime):
             retryable=attempt.retryable_terminal_failure,
         )
 
+    def _observation_from_worker(
+        self, attempt: GoalAttemptRecord, response: dict[str, Any],
+    ) -> RuntimeObservation:
+        """Normalize the ROS-worker's same-goal terminal response."""
+        # A worker response is authoritative only when it names the exact
+        # goal the parent recorded for this action.  Do not let a terminal
+        # observation from a different worker-side goal acquire this goal's
+        # log boundary.
+        if str(response.get("goal_uuid", "")) != attempt.nav2_goal_uuid:
+            return RuntimeObservation(
+                "failed", error_code="NAV2_GOAL_IDENTITY_MISMATCH",
+                error_message="private action worker terminal identity differs from dispatched goal",
+                error_category="INTERNAL",
+            )
+        attempt.terminal_status = str(response["terminal_status"])
+        attempt.native_error_code = response.get("native_error_code")
+        attempt.native_error_message = response.get("native_error_message")
+        (
+            attempt.server_log_tail,
+            attempt.server_log_attributed,
+            attempt.server_log_end_offsets,
+        ) = self._read_server_log_window(attempt.server_log_start_offsets)
+        if attempt.terminal_status == "4" and attempt.injection_kind != "none":
+            observation = RuntimeObservation(
+                "failed", error_code="SIM009_FAULT_NOT_OBSERVED",
+                error_message="fault-injected Nav2 goal unexpectedly succeeded",
+                error_category="EXECUTION_FAILED",
+            )
+        elif attempt.terminal_status == "4":
+            observation = RuntimeObservation("succeeded", arrival_verified=True)
+        else:
+            error_code = (
+                "NAVIGATION_TF_UNAVAILABLE"
+                if attempt.injection_kind == "missing_goal_frame"
+                else "NAVIGATION_ABORTED"
+            )
+            native_detail = " ".join(
+                item for item in (attempt.native_error_code, attempt.native_error_message) if item
+            )
+            observation = RuntimeObservation(
+                "failed", error_code=error_code,
+                error_message=(native_detail or f"Nav2 terminal goal status {attempt.terminal_status}"),
+                retryable=attempt.retryable_terminal_failure,
+            )
+        attempt.terminal_observation = observation
+        return observation
+
+    def _navigate_with_worker(
+        self, request: dict[str, Any], context: ScenarioExecution,
+    ) -> RuntimeObservation:
+        fault = self._next_goal_fault
+        self._next_goal_fault = None
+        timeout_fault = self._next_goal_timeout_fault_seconds is not None
+        self._next_goal_timeout_fault_seconds = None
+        if fault and fault["injection_kind"] == "missing_goal_frame":
+            self._probe_scenario_tf("sim009_tf_baseline", "map", "base_link")
+            self._probe_scenario_tf("sim009_tf_injected_missing", fault["frame_id"], "base_link")
+        x, y = _GOAL_POINTS[request["destination_id"]]
+        # This parent owns the launch logs.  Snapshot them immediately before
+        # sending the worker request, then read only that same window after
+        # the worker has observed this goal's terminal result.
+        log_start_offsets = self._capture_log_offsets()
+        response = self._private_worker.execute({
+            "action_id": request["action_id"], "x": x, "y": y,
+            "frame_id": fault["frame_id"] if fault else "map",
+            "behavior_tree": fault["behavior_tree"] if fault else "",
+            "timeout_seconds": max(0.001, min(30.0, request["timeout_ms"] / 1000)),
+            "timeout_fault": timeout_fault,
+        })
+        if response.get("state") == "unavailable":
+            return RuntimeObservation("failed", error_code="NAV2_ACTION_UNAVAILABLE", error_message="NavigateToPose action server is unavailable", error_category="RESOURCE_UNAVAILABLE")
+        if response.get("state") == "rejected":
+            return RuntimeObservation("failed", error_code="NAVIGATION_REJECTED", error_message="Nav2 rejected the requested goal")
+        if "error" in response or "goal_uuid" not in response:
+            return RuntimeObservation("failed", error_code="NAV2_CLIENT_UNAVAILABLE", error_message=str(response.get("error", "private action worker produced no goal identity")), error_category="RESOURCE_UNAVAILABLE")
+        attempt = GoalAttemptRecord(
+            mission_id=request["mission_id"], action_id=request["action_id"],
+            idempotency_key=request["idempotency_key"], destination_id=request["destination_id"],
+            nav2_goal_uuid=str(response["goal_uuid"]), scenario_id=context.scenario_id,
+            scenario_execution_id=context.scenario_execution_id,
+            injection_kind=fault["injection_kind"] if fault else "none",
+            frame_id=fault["frame_id"] if fault else "map",
+            behavior_tree=fault["behavior_tree"] if fault else "",
+            server_log_start_offsets=log_start_offsets or {},
+            timeout_fault=timeout_fault,
+        )
+        self._record_attempt(attempt)
+        if response.get("state") == "pending":
+            return RuntimeObservation("unknown", error_code="NAVIGATION_TIMEOUT", error_message="same Nav2 goal exceeded the bounded execution window", error_category="DEPENDENCY_TIMEOUT", retryable=True)
+        if response.get("state") == "terminal":
+            return self._observation_from_worker(attempt, response)
+        return RuntimeObservation("failed", error_code="NAV2_CLIENT_UNAVAILABLE", error_message="private action worker returned an unknown state", error_category="RESOURCE_UNAVAILABLE")
+
     def _reconcile_timeout_attempt(self, attempt: GoalAttemptRecord) -> RuntimeObservation:
         """Cancel the timed-out ClientGoalHandle and read its terminal result."""
         attempt.cancellation_requested = True
@@ -342,6 +497,8 @@ class GoalTrackedGazeboNav2Runtime(BoundedGazeboNav2Runtime):
                 "failed", error_code="SIM009_SCENARIO_CONTEXT_MISSING",
                 error_message=str(exc), error_category="INTERNAL",
             )
+        if getattr(self, "_private_worker", None) is not None:
+            return self._navigate_with_worker(request, context)
         client_parts = self._client()
         if client_parts is None:
             return RuntimeObservation("failed", error_code="NAV2_CLIENT_UNAVAILABLE", error_message="rclpy/Nav2 client is unavailable", error_category="RESOURCE_UNAVAILABLE")
@@ -391,6 +548,20 @@ class GoalTrackedGazeboNav2Runtime(BoundedGazeboNav2Runtime):
 
     def reconcile(self, action_id: str) -> RuntimeObservation:
         attempt = self._attempts_by_action_id[action_id]
+        if getattr(self, "_private_worker", None) is not None:
+            if attempt.terminal_observation is not None:
+                return attempt.terminal_observation
+            if attempt.timeout_fault:
+                attempt.cancellation_requested = True
+            response = self._private_worker.reconcile(action_id)
+            if response.get("state") == "terminal":
+                attempt.retryable_terminal_failure = str(response["terminal_status"]) in {"5", "6"}
+                return self._observation_from_worker(attempt, response)
+            return RuntimeObservation(
+                "unknown", error_code="NAVIGATION_RECONCILIATION_PENDING",
+                error_message="same cancelled Nav2 goal has no terminal result",
+                error_category="DEPENDENCY_TIMEOUT", retryable=False,
+            )
         if not attempt.result_future.done():
             if attempt.timeout_fault:
                 return self._reconcile_timeout_attempt(attempt)
@@ -449,8 +620,12 @@ class GoalTrackedGazeboNav2Runtime(BoundedGazeboNav2Runtime):
                 "cleanup": self.measurements.get("cleanup", {}), "tf_probes": []}
 
     def close(self) -> bool:
+        if self._private_worker is not None:
+            self._private_worker.close()
+            self._private_worker = None
         if self._node is not None:
             self._node.destroy_node()
-            self._rclpy.shutdown()
+            self._rclpy.shutdown(context=self._rclpy_context)
             self._node = self._action_client = self._rclpy = None
+            self._rclpy_context = None
         return super().close()

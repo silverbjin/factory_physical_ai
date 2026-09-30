@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 import json
 import subprocess
 import sys
@@ -14,7 +15,7 @@ sys.path.insert(0, str(ROOT))
 from simulation_runtime.provenance_qualification import QualificationSubject, collect_sim009_execution_result, collect_sim008_execution_result, collect_sim005_execution_result, collect_sim004_execution_result, aggregate_qualification_evidence, read_gazebo_simulation_time, render_qualification_report, write_qualification_artifacts, collect_sim009_scenario_qualifications, collect_sim008_configuration_qualification, collect_sim007_profile_qualifications, build_mujoco_subject, build_gazebo_subject, resolve_predecessor_binding, validate_subject
 from scripts import q01_execution_adapters
 from scripts import run_simulation_provenance_qualification
-from scripts.q01_execution_adapters import gazebo_clock, run_sim005_qualification, run_sim008_qualification, run_sim009_qualification
+from scripts.q01_execution_adapters import _sim009_sidecar_observation, gazebo_clock, run_sim005_qualification, run_sim008_qualification, run_sim009_qualification
 from scripts.run_simulation_provenance_qualification import collect_qualification_subjects, required_subject_manifest
 
 
@@ -71,12 +72,63 @@ def test_min_q01_applicability_requires_explicit_structural_not_applicable_state
         validate_subject(QualificationSubject(**{**subject.__dict__, "applicability": {**subject.applicability, "structured_simulator_time": {"state": "NOT_APPLICABLE"}}}))
 
 
-def test_aggregator_blocks_extra_or_misbound_min_q01_subjects() -> None:
+def test_physics_executed_min_q01_subject_requires_actual_physics_measurement() -> None:
     subject = _operation(
         subject_id="q01-sim009-SIM009-NAV-BLOCKED",
         predecessor_binding={"task_id": "TASK-SIM-009", "accepted_commit": "a" * 40, "evidence_path": "results/simulation/SIM-009_failure_recovery.json", "evidence_sha256": "b" * 64},
         scenario_id="SIM009-NAV-BLOCKED",
         applicability={"structured_simulator_time": {"state": "REQUIRED"}, "physics_measurement": {"state": "OPTIONAL"}},
+    )
+    with pytest.raises(ValueError, match="INVALID_PHYSICS_APPLICABILITY"):
+        validate_subject(subject)
+    with pytest.raises(ValueError, match="MISSING_PHYSICS_MEASUREMENT"):
+        validate_subject(QualificationSubject(**{**subject.__dict__, "applicability": {"structured_simulator_time": {"state": "REQUIRED"}, "physics_measurement": {"state": "REQUIRED"}}}))
+
+
+def test_frozen_contract_b_binding_rejects_mutable_acceptance_pointer() -> None:
+    acceptance = json.loads((ROOT / "results/reviews/SIM-008_acceptance.json").read_text())
+    expected = run_simulation_provenance_qualification.FROZEN["TASK-SIM-008"]
+    with pytest.raises(ValueError, match="FROZEN_ACCEPTED_COMMIT_MISMATCH"):
+        resolve_predecessor_binding(
+            ROOT,
+            "TASK-SIM-008",
+            {**acceptance, "accepted_commit": "0" * 40},
+            expected["evidence_path"],
+            expected_binding=expected,
+        )
+    with pytest.raises(ValueError, match="FROZEN_EVIDENCE_PATH_MISMATCH"):
+        resolve_predecessor_binding(
+            ROOT,
+            "TASK-SIM-008",
+            {**acceptance, "evidence": {**acceptance["evidence"], "path": "results/simulation/other.json"}},
+            expected["evidence_path"],
+            expected_binding=expected,
+        )
+    with pytest.raises(ValueError, match="FROZEN_EVIDENCE_SHA256_MISMATCH"):
+        resolve_predecessor_binding(
+            ROOT,
+            "TASK-SIM-008",
+            {**acceptance, "evidence": {**acceptance["evidence"], "sha256": "0" * 64}},
+            expected["evidence_path"],
+            expected_binding=expected,
+        )
+    with pytest.raises(ValueError, match="FROZEN_TASK_RESULT_MISMATCH"):
+        resolve_predecessor_binding(
+            ROOT,
+            "TASK-SIM-008",
+            acceptance,
+            expected["evidence_path"],
+            expected_binding={**expected, "task_specific_result": "WRONG"},
+        )
+
+
+def test_aggregator_blocks_extra_or_misbound_min_q01_subjects() -> None:
+    subject = _operation(
+        subject_id="q01-sim009-SIM009-NAV-BLOCKED",
+        predecessor_binding={"task_id": "TASK-SIM-009", "accepted_commit": "a" * 40, "evidence_path": "results/simulation/SIM-009_failure_recovery.json", "evidence_sha256": "b" * 64},
+        scenario_id="SIM009-NAV-BLOCKED",
+        timing={"simulation_time": 1.0, "physics_measurement": {"source": "test", "seconds": 1.0}, "wall_time_ms": 2.0, "bounded_execution": True},
+        applicability={"structured_simulator_time": {"state": "REQUIRED"}, "physics_measurement": {"state": "REQUIRED"}},
     )
     evidence = aggregate_qualification_evidence(
         [subject], "a" * 40, required_subject_ids={subject.subject_id},
@@ -100,6 +152,42 @@ def test_resolver_reads_accepted_git_blob_not_mutated_worktree(tmp_path: Path) -
     path.write_text(json.dumps({"task_id": "TASK-SIM-004", "task_specific_result": "WRONG"}))
     binding = resolve_predecessor_binding(tmp_path, "TASK-SIM-004", {"task_id": "TASK-SIM-004", "status": "ACCEPT", "accepted_commit": commit}, "results/simulation/SIM-004_navigation_backend.json")
     assert binding.evidence["task_specific_result"] == "SIM_NAVIGATION_BACKEND_READY"
+
+
+def test_frozen_contract_b_acceptance_supports_minimal_and_validates_rich_binding(tmp_path: Path) -> None:
+    """The frozen Contract-B binding, not Acceptance duplication, authenticates Evidence."""
+    subprocess.run(["git", "init", "-q"], cwd=tmp_path, check=True)
+    subprocess.run(["git", "config", "user.email", "q01@example.invalid"], cwd=tmp_path, check=True)
+    subprocess.run(["git", "config", "user.name", "Q01"], cwd=tmp_path, check=True)
+    path = tmp_path / "results/simulation/SIM-004_navigation_backend.json"
+    path.parent.mkdir(parents=True)
+    evidence = {"task_id": "TASK-SIM-004", "task_specific_result": "SIM_NAVIGATION_BACKEND_READY"}
+    path.write_text(json.dumps(evidence))
+    subprocess.run(["git", "add", "results"], cwd=tmp_path, check=True)
+    subprocess.run(["git", "commit", "-qm", "accepted"], cwd=tmp_path, check=True)
+    commit = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=tmp_path, text=True).strip()
+    evidence_path = "results/simulation/SIM-004_navigation_backend.json"
+    evidence_sha256 = hashlib.sha256(path.read_bytes()).hexdigest()
+    expected = {
+        "task_id": "TASK-SIM-004", "accepted_commit": commit,
+        "evidence_path": evidence_path, "evidence_sha256": evidence_sha256,
+        "task_specific_result": "SIM_NAVIGATION_BACKEND_READY",
+    }
+    minimal = {"task_id": "TASK-SIM-004", "status": "ACCEPT", "accepted_commit": commit}
+
+    assert resolve_predecessor_binding(tmp_path, "TASK-SIM-004", minimal, evidence_path, expected_binding=expected).evidence == evidence
+    rich = {**minimal, "evidence": {"path": evidence_path, "sha256": evidence_sha256}}
+    assert resolve_predecessor_binding(tmp_path, "TASK-SIM-004", rich, evidence_path, expected_binding=expected).evidence == evidence
+    with pytest.raises(ValueError, match="FROZEN_EVIDENCE_PATH_MISMATCH"):
+        resolve_predecessor_binding(tmp_path, "TASK-SIM-004", {**rich, "evidence": {**rich["evidence"], "path": "results/other.json"}}, evidence_path, expected_binding=expected)
+    with pytest.raises(ValueError, match="FROZEN_EVIDENCE_SHA256_MISMATCH"):
+        resolve_predecessor_binding(tmp_path, "TASK-SIM-004", {**rich, "evidence": {**rich["evidence"], "sha256": "0" * 64}}, evidence_path, expected_binding=expected)
+    with pytest.raises(ValueError, match="FROZEN_EVIDENCE_SHA256_MISMATCH"):
+        resolve_predecessor_binding(tmp_path, "TASK-SIM-004", minimal, evidence_path, expected_binding={**expected, "evidence_sha256": "0" * 64})
+    with pytest.raises(ValueError, match="FROZEN_ACCEPTED_COMMIT_MISMATCH"):
+        resolve_predecessor_binding(tmp_path, "TASK-SIM-004", {**minimal, "accepted_commit": "0" * 40}, evidence_path, expected_binding=expected)
+    with pytest.raises(ValueError, match="FROZEN_TASK_RESULT_MISMATCH"):
+        resolve_predecessor_binding(tmp_path, "TASK-SIM-004", minimal, evidence_path, expected_binding={**expected, "task_specific_result": "WRONG"})
 
 
 def test_gazebo_collector_requires_structured_simulator_time() -> None:
@@ -202,12 +290,73 @@ def test_sim004_sidecar_uses_accepted_runtime_transport_partition(monkeypatch: p
     def run(command: list[str], **kwargs: object) -> Completed:
         captured["command"] = command
         captured["env"] = kwargs["env"]
+        captured["timeout"] = kwargs["timeout"]
         return Completed()
     monkeypatch.setattr("scripts.q01_execution_adapters.subprocess.run", run)
     runtime = type("Runtime", (), {"environment": {"GZ_PARTITION": "q01-test"}})()
     assert gazebo_clock(runtime, "sim004_navigation_proxy_world") == {"simTime": {"sec": 2, "nsec": 3}}
     assert captured["command"][-1] == "/world/sim004_navigation_proxy_world/stats"
     assert captured["env"] == {"GZ_PARTITION": "q01-test"}
+    assert captured["timeout"] == 15
+
+
+def test_sim009_gazebo_stats_timeout_becomes_missing_run_local_observation(monkeypatch: pytest.MonkeyPatch) -> None:
+    runtime = type("Runtime", (), {"environment": {"GZ_PARTITION": "q01-test"}})()
+
+    def timed_out(*_args: object, **_kwargs: object) -> None:
+        raise subprocess.TimeoutExpired(["gz", "topic"], 5)
+
+    monkeypatch.setattr("scripts.q01_execution_adapters.subprocess.run", timed_out)
+    with pytest.raises(RuntimeError, match="Gazebo stats sidecar"):
+        gazebo_clock(runtime, "sim004_navigation_proxy_world")
+    assert _sim009_sidecar_observation({"backend": "gazebo_navigation"}, {}, runtime) is None
+
+
+def test_sim009_sidecar_retries_transient_stats_discovery_for_same_scenario(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    runtime = type("Runtime", (), {"environment": {"GZ_PARTITION": "q01-same-run"}})()
+    observations: list[str] = []
+
+    def transient_clock(observed_runtime: object, world_name: str) -> dict[str, object]:
+        assert observed_runtime is runtime
+        assert world_name == "sim004_navigation_proxy_world"
+        observations.append(world_name)
+        if len(observations) == 1:
+            raise RuntimeError("Gazebo stats sidecar timed out")
+        return {"simTime": {"sec": 7, "nsec": 250_000_000}}
+
+    monkeypatch.setattr("scripts.q01_execution_adapters.gazebo_clock", transient_clock)
+    observation = _sim009_sidecar_observation(
+        {"backend": "gazebo_navigation", "id": "SIM009-NAV-BLOCKED"},
+        {"pass": True},
+        runtime,
+    )
+
+    assert len(observations) == 2
+    assert observation is not None
+    assert observation["simulation_time"] == {"source": "gz_stats", "seconds": 7.25}
+
+
+def test_sim009_unknown_reconciliation_retains_real_mujoco_simulation_time() -> None:
+    from simulation_runtime.failure_recovery import _vla_scenario, load_manifest
+
+    scenario = next(
+        row for row in load_manifest()["scenarios"]
+        if row["id"] == "SIM009-VLA-UNKNOWN"
+    )
+    row = _vla_scenario(scenario)
+
+    observation = _sim009_sidecar_observation(scenario, row, None)
+
+    assert row["result"]["status"] == "unknown"
+    assert row["reconciliation"]["observed_status"] == "succeeded"
+    assert row["measurement"]["scenario"] == "mujoco-unknown"
+    assert observation is not None
+    assert observation["simulation_time"] == {
+        "source": "mujoco_steps_times_timestep",
+        "seconds": 0.8,
+    }
 
 
 def test_sim004_actual_result_converts_to_subject_without_historical_time_backfill() -> None:
@@ -315,11 +464,11 @@ def test_canonical_routing_excludes_sim004_supplier() -> None:
     for short, evidence in (("SIM-004", "navigation_backend"), ("SIM-005", "mujoco_vla_backend"), ("SIM-007", "mission_integration"), ("SIM-008", "normal_system_e2e"), ("SIM-009", "failure_recovery")):
         acceptance = json.loads((ROOT / f"results/reviews/{short}_acceptance.json").read_text())
         bindings[f"TASK-{short}"] = resolve_predecessor_binding(ROOT, f"TASK-{short}", acceptance, f"results/simulation/{short}_{evidence}.json")
-    subjects = collect_qualification_subjects(
-        bindings,
-        run_simulation_provenance_qualification.live_adapters(sim008_supplier=lambda: None, sim009_supplier=lambda: None),
-    )
-    assert subjects == []
+    with pytest.raises(ValueError, match="MISSING_LIVE_QUALIFICATION_RESULT:SIM-008"):
+        collect_qualification_subjects(
+            bindings,
+            run_simulation_provenance_qualification.live_adapters(sim008_supplier=lambda: None, sim009_supplier=lambda: None),
+        )
 
 
 def test_canonical_routing_excludes_sim005_supplier_without_importing_mujoco() -> None:
@@ -327,11 +476,11 @@ def test_canonical_routing_excludes_sim005_supplier_without_importing_mujoco() -
     for short, evidence in (("SIM-004", "navigation_backend"), ("SIM-005", "mujoco_vla_backend"), ("SIM-007", "mission_integration"), ("SIM-008", "normal_system_e2e"), ("SIM-009", "failure_recovery")):
         acceptance = json.loads((ROOT / f"results/reviews/{short}_acceptance.json").read_text())
         bindings[f"TASK-{short}"] = resolve_predecessor_binding(ROOT, f"TASK-{short}", acceptance, f"results/simulation/{short}_{evidence}.json")
-    subjects = collect_qualification_subjects(
-        bindings,
-        run_simulation_provenance_qualification.live_adapters(sim008_supplier=lambda: None, sim009_supplier=lambda: None),
-    )
-    assert subjects == []
+    with pytest.raises(ValueError, match="MISSING_LIVE_QUALIFICATION_RESULT:SIM-008"):
+        collect_qualification_subjects(
+            bindings,
+            run_simulation_provenance_qualification.live_adapters(sim008_supplier=lambda: None, sim009_supplier=lambda: None),
+        )
 
 
 def test_canonical_routing_collects_sim008_from_its_live_supplier_without_authority_reconstruction() -> None:
@@ -344,22 +493,14 @@ def test_canonical_routing_collects_sim008_from_its_live_supplier_without_author
         "lifecycle": {"startup_attempted": True, "cleanup_complete": True},
         "steps": [{"result": {"simulation_time": {"sec": 3, "nsec": 0}}}],
     })
-    subjects = collect_qualification_subjects(
-        bindings,
-        run_simulation_provenance_qualification.live_adapters(
-            sim008_supplier=lambda: raw,
-            sim009_supplier=lambda: None,
-        ),
-    )
-    subject = next(item for item in subjects if item.subject_id == "q01-sim008-normal-system-authority")
-    assert subject.qualification_run_id == raw["qualification_run_id"]
-    assert subject.correlation_identity == raw["correlation_identity"]
-    assert subject.configuration_provenance == {
-        "bridge_configuration": raw["execution_authority"]["bridge_sha256"],
-        "launch_run_configuration": raw["execution_authority"]["launch_sha256"],
-    }
-    assert subject.world_model_provenance["world"] == raw["execution_authority"]["world_sha256"]
-    assert subject.timing["simulation_time_source"] == "gazebo_authoritative_observation"
+    with pytest.raises(ValueError, match="MISSING_LIVE_QUALIFICATION_RESULT:SIM009-NAV-BLOCKED"):
+        collect_qualification_subjects(
+            bindings,
+            run_simulation_provenance_qualification.live_adapters(
+                sim008_supplier=lambda: raw,
+                sim009_supplier=lambda: None,
+            ),
+        )
 
 
 def test_canonical_routing_collects_sim009_by_explicit_scenario_without_backfill() -> None:
@@ -372,18 +513,14 @@ def test_canonical_routing_collects_sim009_by_explicit_scenario_without_backfill
         "result": {"mission_id": "m-009", "request_id": "r-009", "trace_id": "t-009", "action_id": "a-009", "component_version": "sim005-mujoco-vla-backend-v1", "result": "failure", "status": "failed"},
         "qualification_observation": {"simulation_time": {"source": "mujoco_steps_times_timestep", "seconds": 0.8}, "configuration_sha256": "a" * 64, "world_model_sha256": "b" * 64, "source_paths": {"configuration": "configs/simulation/sim005_mujoco_manipulation.yaml", "world_model": "data/simulation/sim005_mujoco_manipulation.xml"}},
     }]})
-    subjects = collect_qualification_subjects(
-        bindings,
-        run_simulation_provenance_qualification.live_adapters(
-            sim008_supplier=lambda: None,
-            sim009_supplier=lambda: records,
-        ),
-    )
-    subject = next(item for item in subjects if item.subject_id == "q01-sim009-SIM009-VLA-GRASP-MISS")
-    assert subject.qualification_run_id == records["SIM009-VLA-GRASP-MISS"]["qualification_run_id"]
-    assert subject.correlation_identity == records["SIM009-VLA-GRASP-MISS"]["correlation_identity"]
-    assert subject.semantic_outcome["outcome_kind"] == "failure"
-    assert subject.timing["simulation_time_source"] == "mujoco_steps_times_timestep"
+    with pytest.raises(ValueError, match="MISSING_LIVE_QUALIFICATION_RESULT:SIM-008"):
+        collect_qualification_subjects(
+            bindings,
+            run_simulation_provenance_qualification.live_adapters(
+                sim008_supplier=lambda: None,
+                sim009_supplier=lambda: records,
+            ),
+        )
 
 
 def test_sim005_wrapper_creates_new_identity_and_extracts_same_run_measurement() -> None:
@@ -462,14 +599,33 @@ def test_sim008_actual_result_converts_to_subject_with_execution_bound_authority
 
 def test_sim009_wrapper_binds_rows_by_explicit_scenario_id_and_preserves_failure() -> None:
     suite = {"scenarios": [{"id": "SIM009-VLA-GRASP-MISS", "backend": "mujoco", "decision": "FAIL_CLOSED", "outcome_kind": "failure", "cleanup_complete": True,
+        "qualification_attempt": {"qualification_run_id": "q01-sim009-attempt-1", "scenario_execution_id": "scenario-execution-1"},
         "result": {"mission_id": "m-1", "request_id": "r-1", "trace_id": "t-1", "action_id": "a-1", "component_version": "sim005-mujoco-vla-backend-v1", "result": "failure", "status": "failed"},
         "qualification_observation": {"simulation_time": {"source": "mujoco_steps_times_timestep", "seconds": 0.8}, "configuration_sha256": "a" * 64, "world_model_sha256": "b" * 64, "source_paths": {"configuration": "configs/simulation/sim005_mujoco_manipulation.yaml", "world_model": "data/simulation/sim005_mujoco_manipulation.xml"}}}]}
     records = run_sim009_qualification(lambda: suite)
-    assert records["SIM009-VLA-GRASP-MISS"]["qualification_run_id"] == "q01-sim009-SIM009-VLA-GRASP-MISS"
+    assert records["SIM009-VLA-GRASP-MISS"]["qualification_run_id"] == "q01-sim009-attempt-1"
+    assert records["SIM009-VLA-GRASP-MISS"]["execution_identity"]["scenario_execution_id"] == "scenario-execution-1"
     assert records["SIM009-VLA-GRASP-MISS"]["semantic_outcome"]["outcome_kind"] == "failure"
     assert records["SIM009-VLA-GRASP-MISS"]["run_local_provenance"]["simulation_time"]["seconds"] == 0.8
     with pytest.raises(ValueError, match="DUPLICATE_SCENARIO_ID"):
         run_sim009_qualification(lambda: {"scenarios": suite["scenarios"] * 2})
+
+
+def test_sim009_timeout_wrapper_preserves_reconciliation_retry_and_identity_semantics() -> None:
+    reconciliation = {"result": "success", "observed_status": "failed", "action_id": "a-009"}
+    authorization = {"reconciliation_completed": True, "resolved_status": "failed", "error": {"retryable": True}}
+    suite = {"scenarios": [{
+        "id": "SIM009-NAV-TIMEOUT-RETRY", "backend": "gazebo_navigation", "decision": "RETRY", "outcome_kind": "unknown", "cleanup_complete": True,
+        "first_result": {"mission_id": "m-009", "request_id": "r-009", "trace_id": "t-009", "action_id": "a-009", "component_version": "sim009-failure-suite-v1", "result": "pending", "status": "unknown"},
+        "reconciliation": reconciliation, "retry_authorization": authorization,
+        "retry_request": {"request_id": "r-010", "action_id": "a-009"}, "retry_result": {"result": "success", "status": "succeeded"},
+        "identity": {"action_id_stable": True, "retry_request_id_new": True}, "logical_side_effect_count": 1,
+    }]}
+    record = run_sim009_qualification(lambda: suite)["SIM009-NAV-TIMEOUT-RETRY"]
+    assert record["semantic_outcome"]["reconciliation"] == reconciliation
+    assert record["semantic_outcome"]["retry_authorization"] == authorization
+    assert record["semantic_outcome"]["retry_request"]["action_id"] == "a-009"
+    assert record["semantic_outcome"]["identity"]["action_id_stable"] is True
 
 
 def test_sim009_actual_result_converts_to_subject_without_cross_scenario_backfill() -> None:
@@ -505,5 +661,52 @@ def test_canonical_routing_does_not_start_excluded_sim005_runtime() -> None:
     for short, evidence in (("SIM-004", "navigation_backend"), ("SIM-005", "mujoco_vla_backend"), ("SIM-007", "mission_integration"), ("SIM-008", "normal_system_e2e"), ("SIM-009", "failure_recovery")):
         acceptance = json.loads((ROOT / f"results/reviews/{short}_acceptance.json").read_text())
         bindings[f"TASK-{short}"] = resolve_predecessor_binding(ROOT, f"TASK-{short}", acceptance, f"results/simulation/{short}_{evidence}.json")
-    subjects = collect_qualification_subjects(bindings, {"TASK-SIM-005": lambda _scenario: (_ for _ in ()).throw(AssertionError("excluded supplier called"))})
-    assert subjects == []
+    with pytest.raises(ValueError, match="MISSING_LIVE_SUPPLIER:TASK-SIM-008"):
+        collect_qualification_subjects(bindings, {"TASK-SIM-005": lambda _scenario: (_ for _ in ()).throw(AssertionError("excluded supplier called"))})
+
+
+def test_canonical_routing_invokes_each_live_supplier_once(monkeypatch) -> None:
+    bindings = {}
+    for short, evidence in (("SIM-008", "normal_system_e2e"), ("SIM-009", "failure_recovery")):
+        acceptance = json.loads((ROOT / f"results/reviews/{short}_acceptance.json").read_text())
+        bindings[f"TASK-{short}"] = resolve_predecessor_binding(
+            ROOT, f"TASK-{short}", acceptance, f"results/simulation/{short}_{evidence}.json",
+        )
+    calls = {"sim008": 0, "sim009": 0}
+    required_sim009 = [
+        item.removeprefix("q01-sim009-")
+        for item in required_subject_manifest(bindings) if item.startswith("q01-sim009-")
+    ]
+
+    def sim008():
+        calls["sim008"] += 1
+        return {"kind": "sim008"}
+
+    def sim009():
+        calls["sim009"] += 1
+        return {scenario_id: {"scenario_id": scenario_id} for scenario_id in required_sim009}
+
+    monkeypatch.setattr(
+        run_simulation_provenance_qualification, "collect_sim008_execution_result",
+        lambda template, _raw: template,
+    )
+    monkeypatch.setattr(
+        run_simulation_provenance_qualification, "collect_sim009_execution_result",
+        lambda template, raw: template if raw["scenario_id"] == template.scenario_id else (_ for _ in ()).throw(ValueError("CROSS_SCENARIO_ASSOCIATION")),
+    )
+
+    subjects = collect_qualification_subjects(
+        bindings, {"TASK-SIM-008": sim008, "TASK-SIM-009": sim009},
+    )
+
+    assert calls == {"sim008": 1, "sim009": 1}
+    assert len(subjects) == 11
+
+
+def test_canonical_runner_imports_live_adapters_when_invoked_as_a_script(tmp_path: Path) -> None:
+    completed = subprocess.run(
+        [sys.executable, "scripts/run_simulation_provenance_qualification.py", "--help"],
+        cwd=ROOT, text=True, capture_output=True,
+    )
+    assert completed.returncode == 0
+    assert "No module named 'scripts'" not in completed.stderr
