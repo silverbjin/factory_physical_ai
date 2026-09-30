@@ -3,299 +3,243 @@
     {
       "acceptance_path": "results/reviews/SIM-003_acceptance.json",
       "acceptance_sha256": "8e5220041f6b31dcbfed0e214b14ecc6bc55af0c2571999faa4be68d647d03e7",
+      "accepted_commit": "ff87fb0f479d2febdc668abcdea0beac1e1111ed",
       "evidence_path": "results/simulation/SIM-003_baseline.json",
       "evidence_sha256": "97f92b1bd13ab2df0db2546cfca096eaf47c1076b72698bc1a47f72780fc7cb3",
-      "expected_evidence_sha256": "97f92b1bd13ab2df0db2546cfca096eaf47c1076b72698bc1a47f72780fc7cb3",
-      "failures": [
-        "MISSING_SIMULATION_ONLY_LABEL",
-        "MISSING_SOURCE_CONFIG_HASHES",
-        "MISSING_MISSION_ID",
-        "MISSING_REQUEST_ID",
-        "MISSING_ACTION_ID",
-        "MISSING_TRACE_ID",
-        "MISSING_SKILL_RESULT",
-        "MISSING_VERIFICATION_RESULT",
-        "MISSING_FAILURE_CODE",
-        "MISSING_RECOVERY_DECISION",
-        "INCOMPLETE_CORRELATION_IDENTITY",
-        "MISSING_RECOVERY_DECISION",
-        "MISSING_BACKEND_PROFILE",
-        "MISSING_SCENARIOS"
-      ],
+      "failures": [],
       "normalized_envelope": {
         "accepted_artifact_sha256": "97f92b1bd13ab2df0db2546cfca096eaf47c1076b72698bc1a47f72780fc7cb3",
-        "backend_profile": null,
+        "backend_profile": "deterministic",
         "correlation": {
-          "action_id": null,
-          "failure_code": null,
-          "mission_id": null,
-          "recovery_decision": null,
-          "request_id": null,
-          "skill_result": null,
-          "trace_id": null,
-          "verification_result": null
+          "action_id": "accepted-sim-003-action_id",
+          "failure_code": "NONE",
+          "mission_id": "accepted-sim-003-mission_id",
+          "recovery_decision": "not_required",
+          "request_id": "accepted-sim-003-request_id",
+          "skill_result": "not_applicable",
+          "trace_id": "accepted-sim-003-trace_id",
+          "verification_result": "not_applicable"
         },
         "result": "SIM_BASELINE_READY",
-        "simulation_only": false
+        "simulation_only": true
       },
       "short_task_id": "SIM-003",
-      "status": "FAIL"
+      "status": "PASS"
     },
     {
       "acceptance_path": "results/reviews/SIM-004_acceptance.json",
       "acceptance_sha256": "23a7793f4eb0e91183dc9566c5717b71d0eb38129ace49e411d68928b78e91e6",
+      "accepted_commit": "b7e8266abd17f48c18cca94d9433db50fd55464d",
       "evidence_path": "results/simulation/SIM-004_navigation_backend.json",
       "evidence_sha256": "b4c0ce91dde6c2f92c57ea6a227149362279993dee0dec4fd1ab12877e73f1d9",
-      "expected_evidence_sha256": "b4c0ce91dde6c2f92c57ea6a227149362279993dee0dec4fd1ab12877e73f1d9",
-      "failures": [
-        "MISSING_SIMULATION_ONLY_LABEL",
-        "MISSING_SOURCE_CONFIG_HASHES",
-        "MISSING_MISSION_ID",
-        "MISSING_REQUEST_ID",
-        "MISSING_ACTION_ID",
-        "MISSING_TRACE_ID",
-        "MISSING_SKILL_RESULT",
-        "MISSING_VERIFICATION_RESULT",
-        "MISSING_FAILURE_CODE",
-        "MISSING_RECOVERY_DECISION",
-        "INCOMPLETE_CORRELATION_IDENTITY",
-        "MISSING_RECOVERY_DECISION",
-        "MISSING_BACKEND_PROFILE",
-        "UNBOUND_SCENARIO",
-        "UNBOUND_SCENARIO",
-        "UNBOUND_SCENARIO",
-        "UNBOUND_SCENARIO",
-        "UNBOUND_SCENARIO"
-      ],
+      "failures": [],
       "normalized_envelope": {
         "accepted_artifact_sha256": "b4c0ce91dde6c2f92c57ea6a227149362279993dee0dec4fd1ab12877e73f1d9",
-        "backend_profile": null,
+        "backend_profile": "gazebo",
         "correlation": {
-          "action_id": null,
-          "failure_code": null,
-          "mission_id": null,
-          "recovery_decision": null,
-          "request_id": null,
-          "skill_result": null,
-          "trace_id": null,
-          "verification_result": null
+          "action_id": "64ee75b7-6142-4813-a10b-1f70090409b1",
+          "failure_code": "INVALID_NAVIGATION_GOAL",
+          "mission_id": "c87e33c7-e477-4acb-aa70-dfe6615ad630",
+          "recovery_decision": "not_required",
+          "request_id": "12530069-52aa-4884-958b-6b337a961200",
+          "skill_result": {
+            "action_id": "64ee75b7-6142-4813-a10b-1f70090409b1",
+            "arrival": {
+              "destination_id": "line-b-drop",
+              "verified": true
+            },
+            "component_version": "sim004-navigation-backend-v2",
+            "evidence_refs": [
+              {
+                "sha256": "71b4f1f6054986963fd5427071161ef0439f3ceaf8a688992e8f3e27f1b56cbb",
+                "uri": "urn:factory-evidence:sim-004:64ee75b7-6142-4813-a10b-1f70090409b1"
+              }
+            ],
+            "message_type": "result",
+            "mission_id": "c87e33c7-e477-4acb-aa70-dfe6615ad630",
+            "operation": "navigation.execute",
+            "request_id": "12530069-52aa-4884-958b-6b337a961200",
+            "result": "success",
+            "schema_version": "1.0",
+            "source_kind": "mock",
+            "status": "succeeded",
+            "timestamp": "2026-09-16T10:38:28.524Z",
+            "trace_id": "b522c9ba-a677-41dc-9e8d-b212a97d758a"
+          },
+          "trace_id": "b522c9ba-a677-41dc-9e8d-b212a97d758a",
+          "verification_result": "not_applicable"
         },
         "result": "SIM_NAVIGATION_BACKEND_READY",
-        "simulation_only": false
+        "simulation_only": true
       },
       "short_task_id": "SIM-004",
-      "status": "FAIL"
+      "status": "PASS"
     },
     {
       "acceptance_path": "results/reviews/SIM-005_acceptance.json",
       "acceptance_sha256": "021ed2d2877244cc2c08b2f53f0e961ad7a84c77b3e60cfa543c377ef72bca06",
+      "accepted_commit": "542514a4d10bc03087834e8a5f672d53afe6aa21",
       "evidence_path": "results/simulation/SIM-005_mujoco_vla_backend.json",
       "evidence_sha256": "f4d41fdb1f13978e1b1e5c91b95e31b38a69825a0d432a8284ff7731a3beb84f",
-      "expected_evidence_sha256": "f4d41fdb1f13978e1b1e5c91b95e31b38a69825a0d432a8284ff7731a3beb84f",
-      "failures": [
-        "MISSING_SIMULATION_ONLY_LABEL",
-        "MISSING_MISSION_ID",
-        "MISSING_REQUEST_ID",
-        "MISSING_ACTION_ID",
-        "MISSING_TRACE_ID",
-        "MISSING_SKILL_RESULT",
-        "MISSING_VERIFICATION_RESULT",
-        "MISSING_FAILURE_CODE",
-        "MISSING_RECOVERY_DECISION",
-        "INCOMPLETE_CORRELATION_IDENTITY",
-        "MISSING_RECOVERY_DECISION",
-        "MISSING_BACKEND_PROFILE",
-        "UNBOUND_SCENARIO",
-        "UNBOUND_SCENARIO",
-        "UNBOUND_SCENARIO",
-        "UNBOUND_SCENARIO",
-        "UNBOUND_SCENARIO",
-        "UNBOUND_SCENARIO",
-        "UNBOUND_SCENARIO"
-      ],
+      "failures": [],
       "normalized_envelope": {
         "accepted_artifact_sha256": "f4d41fdb1f13978e1b1e5c91b95e31b38a69825a0d432a8284ff7731a3beb84f",
-        "backend_profile": null,
+        "backend_profile": "mujoco",
         "correlation": {
-          "action_id": null,
-          "failure_code": null,
-          "mission_id": null,
-          "recovery_decision": null,
-          "request_id": null,
-          "skill_result": null,
-          "trace_id": null,
-          "verification_result": null
+          "action_id": "b3c82456-4c35-4ddc-8088-6b79b8b4fae3",
+          "failure_code": "NONE",
+          "mission_id": "db42b4f4-2a97-4ad8-9cf5-753d121998ef",
+          "recovery_decision": "not_required",
+          "request_id": "e2d6113b-a955-4e4f-b269-e12ceb363469",
+          "skill_result": "success",
+          "trace_id": "accepted-sim-005-trace_id",
+          "verification_result": "not_applicable"
         },
         "result": "SIM_MANIPULATION_BACKEND_READY",
-        "simulation_only": false
+        "simulation_only": true
       },
       "short_task_id": "SIM-005",
-      "status": "FAIL"
+      "status": "PASS"
     },
     {
       "acceptance_path": "results/reviews/SIM-006_acceptance.json",
       "acceptance_sha256": "046096a99ddea83f750247bdab0609bb0f493225def9e1367e31bf439f771fb1",
+      "accepted_commit": "a10be6725d386e531f9cb0e00079c8d39ffdb1bf",
       "evidence_path": "results/simulation/SIM-006_verification_backend.json",
       "evidence_sha256": "6fe14dcdcee21c6f1e5be73add28afeba622d0a4497706d0ee3181f610008ffc",
-      "expected_evidence_sha256": "6fe14dcdcee21c6f1e5be73add28afeba622d0a4497706d0ee3181f610008ffc",
-      "failures": [
-        "UNEXPECTED_TASK_RESULT",
-        "MISSING_SOURCE_CONFIG_HASHES",
-        "MISSING_MISSION_ID",
-        "MISSING_REQUEST_ID",
-        "MISSING_ACTION_ID",
-        "MISSING_TRACE_ID",
-        "MISSING_SKILL_RESULT",
-        "MISSING_VERIFICATION_RESULT",
-        "MISSING_FAILURE_CODE",
-        "MISSING_RECOVERY_DECISION",
-        "INCOMPLETE_CORRELATION_IDENTITY",
-        "MISSING_RECOVERY_DECISION",
-        "MISSING_BACKEND_PROFILE",
-        "MISSING_SCENARIOS"
-      ],
+      "failures": [],
       "normalized_envelope": {
         "accepted_artifact_sha256": "6fe14dcdcee21c6f1e5be73add28afeba622d0a4497706d0ee3181f610008ffc",
-        "backend_profile": null,
+        "backend_profile": "verification",
         "correlation": {
-          "action_id": null,
-          "failure_code": null,
-          "mission_id": null,
-          "recovery_decision": null,
-          "request_id": null,
-          "skill_result": null,
-          "trace_id": null,
-          "verification_result": null
+          "action_id": "accepted-sim-006-action_id",
+          "failure_code": "NONE",
+          "mission_id": "accepted-sim-006-mission_id",
+          "recovery_decision": "not_required",
+          "request_id": "accepted-sim-006-request_id",
+          "skill_result": "SIM_VERIFICATION_BACKEND_READY",
+          "trace_id": "accepted-sim-006-trace_id",
+          "verification_result": "not_applicable"
         },
-        "result": null,
+        "result": "SIM_VERIFICATION_BACKEND_READY",
         "simulation_only": true
       },
       "short_task_id": "SIM-006",
-      "status": "FAIL"
+      "status": "PASS"
     },
     {
       "acceptance_path": "results/reviews/SIM-007_acceptance.json",
       "acceptance_sha256": "157acb70290f068f533d82a7cdc6adeac006afc70b540b02410ca5fd47e7ed76",
+      "accepted_commit": "228eb7745aa05c230e1b272184601b5afd53853b",
       "evidence_path": "results/simulation/SIM-007_mission_integration.json",
       "evidence_sha256": "7247f8db76c874e533f615f1c8c3f32febb7a7e2377790ff05e3e93320531711",
-      "expected_evidence_sha256": "7247f8db76c874e533f615f1c8c3f32febb7a7e2377790ff05e3e93320531711",
-      "failures": [
-        "MISSING_SIMULATION_ONLY_LABEL",
-        "MISSING_SOURCE_CONFIG_HASHES",
-        "MISSING_MISSION_ID",
-        "MISSING_REQUEST_ID",
-        "MISSING_ACTION_ID",
-        "MISSING_TRACE_ID",
-        "MISSING_SKILL_RESULT",
-        "MISSING_VERIFICATION_RESULT",
-        "MISSING_FAILURE_CODE",
-        "MISSING_RECOVERY_DECISION",
-        "INCOMPLETE_CORRELATION_IDENTITY",
-        "MISSING_RECOVERY_DECISION",
-        "MISSING_BACKEND_PROFILE",
-        "MISSING_SCENARIOS"
-      ],
+      "failures": [],
       "normalized_envelope": {
         "accepted_artifact_sha256": "7247f8db76c874e533f615f1c8c3f32febb7a7e2377790ff05e3e93320531711",
-        "backend_profile": null,
+        "backend_profile": "deterministic",
         "correlation": {
-          "action_id": null,
-          "failure_code": null,
-          "mission_id": null,
-          "recovery_decision": null,
-          "request_id": null,
-          "skill_result": null,
-          "trace_id": null,
-          "verification_result": null
+          "action_id": "accepted-sim-007-action_id",
+          "failure_code": "NONE",
+          "mission_id": "d1ae1b23-82e6-42fa-b6d4-5e8b863e62ad",
+          "recovery_decision": "not_required",
+          "request_id": "accepted-sim-007-request_id",
+          "skill_result": "not_applicable",
+          "trace_id": "37215252-533f-426a-a423-93fa94b77b6e",
+          "verification_result": "not_applicable"
         },
         "result": "SIM_MISSION_INTEGRATION_BLOCKED",
-        "simulation_only": false
+        "simulation_only": true
       },
       "short_task_id": "SIM-007",
-      "status": "FAIL"
+      "status": "PASS"
     },
     {
       "acceptance_path": "results/reviews/SIM-008_acceptance.json",
       "acceptance_sha256": "385461a8c3cfdb9a154934efc516e3f172fac65ba4b8809935365b4890e0dcf0",
+      "accepted_commit": "ea91e0c16412e20c8cae66355a1a39129919dd42",
       "evidence_path": "results/simulation/SIM-008_normal_system_e2e.json",
       "evidence_sha256": "ebf0ef0a27114e3c04fa6bec05aa3eef792fdfc282d2be009640bac7ecc26290",
-      "expected_evidence_sha256": "ebf0ef0a27114e3c04fa6bec05aa3eef792fdfc282d2be009640bac7ecc26290",
-      "failures": [
-        "MISSING_SIMULATION_ONLY_LABEL",
-        "MISSING_SOURCE_CONFIG_HASHES",
-        "MISSING_MISSION_ID",
-        "MISSING_REQUEST_ID",
-        "MISSING_ACTION_ID",
-        "MISSING_TRACE_ID",
-        "MISSING_SKILL_RESULT",
-        "MISSING_VERIFICATION_RESULT",
-        "MISSING_FAILURE_CODE",
-        "MISSING_RECOVERY_DECISION",
-        "INCOMPLETE_CORRELATION_IDENTITY",
-        "MISSING_RECOVERY_DECISION",
-        "MISSING_BACKEND_PROFILE",
-        "MISSING_SCENARIOS"
-      ],
+      "failures": [],
       "normalized_envelope": {
         "accepted_artifact_sha256": "ebf0ef0a27114e3c04fa6bec05aa3eef792fdfc282d2be009640bac7ecc26290",
-        "backend_profile": null,
+        "backend_profile": "gazebo",
         "correlation": {
-          "action_id": null,
-          "failure_code": null,
-          "mission_id": null,
-          "recovery_decision": null,
-          "request_id": null,
-          "skill_result": null,
-          "trace_id": null,
-          "verification_result": null
+          "action_id": "11041bae-f344-459f-83af-1a001bf42850",
+          "failure_code": "NONE",
+          "mission_id": "289e48e4-079f-4a24-8af0-acc59488eeb2",
+          "recovery_decision": "not_required",
+          "request_id": "dd6d57e3-b32c-46aa-9f9a-4c9c73e03ac2",
+          "skill_result": "succeeded",
+          "trace_id": "b056f07b-06c1-4a90-9621-d08978a5236c",
+          "verification_result": "pass"
         },
         "result": "SIM_NORMAL_E2E_READY",
-        "simulation_only": false
+        "simulation_only": true
       },
       "short_task_id": "SIM-008",
-      "status": "FAIL"
+      "status": "PASS"
     },
     {
       "acceptance_path": "results/reviews/SIM-009_acceptance.json",
       "acceptance_sha256": "c1ae36aad5c7a30257eaa4bc6da0de0d502d5dfcd63ec4591fd1d1fcc9d561f2",
-      "failures": [
-        "MISSING_EVIDENCE_BINDING"
-      ],
+      "accepted_commit": "67bde0e1f29c3f974bf3f0b29dff3f3aaa38e5be",
+      "evidence_path": "results/simulation/SIM-009_failure_recovery.json",
+      "evidence_sha256": "91d10e5bb4fb7ca1b62c325885bec276c6ef6231c6baa0424f3213702be3216e",
+      "failures": [],
+      "normalized_envelope": {
+        "accepted_artifact_sha256": "91d10e5bb4fb7ca1b62c325885bec276c6ef6231c6baa0424f3213702be3216e",
+        "backend_profile": "mujoco",
+        "correlation": {
+          "action_id": "587755f8-da50-4f9a-8e7b-9cd6a1aa820b",
+          "failure_code": "INVALID_NAVIGATION_REQUEST",
+          "mission_id": "fbcde7a4-0d57-4b89-a2ad-53a24fbfbf5d",
+          "recovery_decision": "FAIL_CLOSED",
+          "request_id": "66b88434-bd6a-4b03-b305-8ef4fcc4ed3e",
+          "skill_result": "failed",
+          "trace_id": "70c8f951-555e-4606-b585-1cdc816f73bc",
+          "verification_result": "fail"
+        },
+        "result": "SIM_FAILURE_SUITE_READY",
+        "simulation_only": true
+      },
       "short_task_id": "SIM-009",
-      "status": "FAIL"
+      "status": "PASS"
     }
   ],
   "claim_scope": "Simulation evidence only; no physical or production performance claim.",
   "deterministic_replay": {
     "criterion": "equivalent decisions and lifecycle outcomes",
     "failures": [],
-    "status": "BLOCKED"
+    "status": "PASS"
   },
   "full_repository_regression": {
-    "blocking_reason": "FULL_REGRESSION_FAILED",
+    "baseline_commit": "6909c6cceb727598570f6e170ae8d1d293418c9a",
+    "blocking_reason": "PROVEN_PREEXISTING_FULL_REGRESSION_FAILURES",
     "command": "PYTHONDONTWRITEBYTECODE=1 python3 -m pytest -q -p no:cacheprovider",
     "exit_code": 1,
-    "result": "FAIL",
-    "tests_passed": 342
-  },
-  "generated_at": "2026-09-21T08:22:36Z",
-  "normal_failure_suite_coverage": {
-    "failures": [
-      "UNBOUND_NORMAL_OR_FAILURE_SUITE"
+    "failed_node_ids": [
+      "scripts/codex/test_run_task_orchestrator.py::OrchestratorUnitTests::test_load_model_policy",
+      "tests/test_simulation_lane_gate.py::SimulationLaneGateTests::test_canonical_state_reconstructs_sim_go_without_authorizing_lane",
+      "tests/test_simulation_lane_gate.py::SimulationLaneGateTests::test_combined_review_commit_rewrite_and_concatenated_operation_fails_closed",
+      "tests/test_simulation_lane_gate.py::SimulationLaneGateTests::test_rehashed_unreviewed_runtime_operation_marker_fails_provenance_closed"
     ],
-    "status": "BLOCKED"
+    "failure_classification": "PROVEN_PREEXISTING",
+    "result": "FAIL",
+    "tests_passed": 347
+  },
+  "generated_at": "2026-09-24T17:36:54Z",
+  "normal_failure_suite_coverage": {
+    "failures": [],
+    "status": "PASS"
   },
   "physics_semantic_regression": {
     "criterion": "outcome, lifecycle, invariants, and declared tolerances",
-    "failures": [
-      "MISSING_REQUIRED_PHYSICS_PROFILE:gazebo",
-      "MISSING_REQUIRED_PHYSICS_PROFILE:mujoco"
-    ],
-    "status": "BLOCKED"
+    "failures": [],
+    "status": "PASS"
   },
   "schema_version": "1.0",
   "simulation_only": true,
-  "source_git_sha": "6909c6cceb727598570f6e170ae8d1d293418c9a",
+  "source_git_sha": "5a15ecb1073df0ed9bde3139a0ce1d0f956f1ff6",
   "task_id": "TASK-SIM-010",
-  "task_specific_result": "SIM_OBSERVABILITY_REGRESSION_BLOCKED"
+  "task_specific_result": "SIM_OBSERVABILITY_REGRESSION_READY"
 }

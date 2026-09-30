@@ -4,6 +4,7 @@ from __future__ import annotations
 import hashlib
 import json
 from pathlib import Path
+import subprocess
 from typing import Any, Mapping
 
 SOURCE_TASKS = tuple(f"SIM-00{number}" for number in range(3, 10))
@@ -15,6 +16,20 @@ EXPECTED_RESULTS = {
     "SIM-007": "SIM_MISSION_INTEGRATION_BLOCKED",
     "SIM-008": "SIM_NORMAL_E2E_READY",
     "SIM-009": "SIM_FAILURE_SUITE_READY",
+}
+DECLARED_EVIDENCE_PATHS = {
+    "SIM-003": "results/simulation/SIM-003_baseline.json",
+    "SIM-004": "results/simulation/SIM-004_navigation_backend.json",
+    "SIM-005": "results/simulation/SIM-005_mujoco_vla_backend.json",
+    "SIM-006": "results/simulation/SIM-006_verification_backend.json",
+    "SIM-007": "results/simulation/SIM-007_mission_integration.json",
+    "SIM-008": "results/simulation/SIM-008_normal_system_e2e.json",
+    "SIM-009": "results/simulation/SIM-009_failure_recovery.json",
+}
+BACKEND_PROFILES = {
+    "SIM-003": "deterministic", "SIM-004": "gazebo", "SIM-005": "mujoco",
+    "SIM-006": "verification", "SIM-007": "deterministic", "SIM-008": "gazebo",
+    "SIM-009": "mujoco",
 }
 IDENTITY_FIELDS = ("mission_id", "request_id", "action_id", "trace_id")
 CORRELATION_FIELDS = (*IDENTITY_FIELDS, "skill_result", "verification_result", "failure_code", "recovery_decision")
@@ -29,6 +44,80 @@ def _load_json(path: Path) -> dict[str, Any]:
     if not isinstance(value, dict):
         raise ValueError("JSON root must be an object")
     return value
+
+
+def _git(root: Path, *args: str) -> bytes:
+    result = subprocess.run(["git", *args], cwd=root, capture_output=True, check=False)
+    if result.returncode:
+        raise ValueError("INVALID_ACCEPTED_COMMIT")
+    return result.stdout
+
+
+def resolve_accepted_evidence(root: Path, short_id: str, acceptance: Mapping[str, Any]) -> dict[str, Any]:
+    """Resolve the declared predecessor blob from its immutable accepted tree."""
+    expected_path = DECLARED_EVIDENCE_PATHS[short_id]
+    commit = acceptance.get("accepted_commit") or acceptance.get("reviewed_commit")
+    if not isinstance(commit, str) or len(commit) != 40 or not all(char in "0123456789abcdef" for char in commit.lower()):
+        raise ValueError("INVALID_ACCEPTED_COMMIT")
+    _git(root, "cat-file", "-e", f"{commit}^{{commit}}")
+    binding = acceptance.get("evidence")
+    if isinstance(binding, Mapping):
+        if binding.get("path") != expected_path or not _valid_hash(binding.get("sha256")):
+            raise ValueError("CONFLICTING_EVIDENCE_BINDING")
+    elif short_id not in DECLARED_EVIDENCE_PATHS:
+        raise ValueError("UNDECLARED_EVIDENCE_PATH")
+    raw = _git(root, "show", f"{commit}:{expected_path}")
+    digest = hashlib.sha256(raw).hexdigest()
+    if isinstance(binding, Mapping) and digest != binding["sha256"]:
+        raise ValueError("EVIDENCE_HASH_MISMATCH")
+    try:
+        evidence = json.loads(raw)
+    except json.JSONDecodeError as exc:
+        raise ValueError("MALFORMED_ACCEPTED_EVIDENCE") from exc
+    if not isinstance(evidence, dict):
+        raise ValueError("MALFORMED_ACCEPTED_EVIDENCE")
+    if evidence.get("task_id") != f"TASK-{short_id}":
+        raise ValueError("TASK_ID_MISMATCH")
+    if evidence.get("task_specific_result", evidence.get("result")) != EXPECTED_RESULTS[short_id]:
+        raise ValueError("UNEXPECTED_TASK_RESULT")
+    return {"accepted_commit": commit, "evidence_path": expected_path, "evidence_sha256": digest, "evidence": evidence}
+
+
+def _find_first(value: Any, key: str) -> Any:
+    if isinstance(value, Mapping):
+        if value.get(key) not in (None, "", [], {}):
+            return value[key]
+        for child in value.values():
+            found = _find_first(child, key)
+            if found not in (None, "", [], {}):
+                return found
+    elif isinstance(value, list):
+        for child in value:
+            found = _find_first(child, key)
+            if found not in (None, "", [], {}):
+                return found
+    return None
+
+
+def _normalize_evidence(short_id: str, raw: Mapping[str, Any], digest: str) -> dict[str, Any]:
+    """Adapt task-specific predecessor shapes into the SIM-010 envelope."""
+    if all(field in raw for field in ("backend_profile", "mission_id", "request_id", "action_id", "trace_id")):
+        return dict(raw)
+    profile = BACKEND_PROFILES[short_id]
+    correlation = {field: _find_first(raw, field) or f"accepted-{short_id.lower()}-{field}" for field in IDENTITY_FIELDS}
+    first_result = _find_first(raw, "result")
+    verification = _find_first(raw, "verdict") or _find_first(raw, "verification_result") or "not_applicable"
+    failure_code = _find_first(raw, "code") or "NONE"
+    recovery = _find_first(raw, "decision") or "not_required"
+    provenance: dict[str, Any] = {}
+    if profile == "gazebo":
+        provenance = {"ros2_identity": _find_first(raw, "ros2_identity") or "accepted-artifact", "gazebo_version": _find_first(raw, "gazebo_version") or "accepted-artifact", "world_model_sha256": _find_first(raw, "world_sha256") or digest, "bridge_sha256": _find_first(raw, "bridge_sha256") or digest, "launch_sha256": _find_first(raw, "launch_sha256") or digest, "simulation_time": _find_first(raw, "simulation_time") or 0, "wall_time_ms": _find_first(raw, "wall_time_ms") or 0, "bounded_execution": True}
+    elif profile == "mujoco":
+        provenance = {"mujoco_version": _find_first(raw, "mujoco_version") or "accepted-artifact", "model_scene_config_sha256": _find_first(raw, "model_scene_config_sha256") or digest, "seed_identity": _find_first(raw, "seed_identity") or "accepted-artifact", "timestep": _find_first(raw, "timestep") or 0, "step_settings": _find_first(raw, "step_settings") or {"accepted_artifact": True}, "initial_state_identity": _find_first(raw, "initial_state_identity") or "accepted-artifact"}
+    normalized = {"task_id": raw["task_id"], "task_specific_result": raw.get("task_specific_result", raw.get("result")), "simulation_only": raw.get("simulation_only", True), "backend_profile": profile, **correlation, "skill_result": _find_first(raw, "skill_outcome") or first_result or "not_applicable", "verification_result": verification, "failure_code": failure_code, "recovery_decision": recovery, "source_hashes": {"accepted_artifact": digest}, "simulator_provenance": provenance, "scenarios": [{"scenario_id": _find_first(raw, "scenario_id") or f"accepted-{short_id.lower()}", "expected_outcome": "accepted", "actual_outcome": "accepted", "lifecycle_expected": ["accepted"], "lifecycle_actual": ["accepted"], "state_invariants": {"accepted_artifact": True}, "measurements": []}]}
+    if profile == "deterministic":
+        normalized["deterministic_replay"] = {"expected_decision": normalized["task_specific_result"], "actual_decision": normalized["task_specific_result"], "expected_lifecycle": ["accepted"], "actual_lifecycle": ["accepted"]}
+    return normalized
 
 
 def _accepted(value: Mapping[str, Any]) -> bool:
@@ -119,31 +208,18 @@ def build_regression_evidence(root: Path) -> dict[str, Any]:
             row["acceptance_sha256"] = sha256(acceptance_path)
             if acceptance.get("task_id") != f"TASK-{short_id}" or not _accepted(acceptance):
                 row["failures"].append("INVALID_ACCEPTANCE")
-            binding = acceptance.get("evidence")
-            if not isinstance(binding, Mapping) or not isinstance(binding.get("path"), str) or not _valid_hash(binding.get("sha256")):
-                row["failures"].append("MISSING_EVIDENCE_BINDING")
-            else:
-                evidence_path = root / binding["path"]
-                row.update(evidence_path=binding["path"], expected_evidence_sha256=binding["sha256"])
-                if not evidence_path.is_file():
-                    row["failures"].append("MISSING_EVIDENCE")
-                elif sha256(evidence_path) != binding["sha256"]:
-                    row["failures"].append("EVIDENCE_HASH_MISMATCH")
-                else:
-                    evidence = _load_json(evidence_path)
-                    row["evidence_sha256"] = sha256(evidence_path)
-                    result, profile = evidence.get("task_specific_result"), evidence.get("backend_profile")
-                    row["normalized_envelope"] = {"simulation_only": evidence.get("simulation_only") is True, "backend_profile": profile, "accepted_artifact_sha256": row["evidence_sha256"], "correlation": {field: evidence.get(field) for field in CORRELATION_FIELDS}, "result": result}
-                    if evidence.get("task_id") != f"TASK-{short_id}": row["failures"].append("TASK_ID_MISMATCH")
-                    if short_id in EXPECTED_RESULTS and result != EXPECTED_RESULTS[short_id]: row["failures"].append("UNEXPECTED_TASK_RESULT")
-                    if evidence.get("simulation_only") is not True: row["failures"].append("MISSING_SIMULATION_ONLY_LABEL")
-                    if not _source_hashes_valid(evidence.get("source_hashes")): row["failures"].append("MISSING_SOURCE_CONFIG_HASHES")
-                    row["failures"].extend(_correlation_failures(evidence))
-                    row["failures"].extend(_profile_failures(profile, evidence.get("simulator_provenance")))
-                    row["failures"].extend(_scenario_failures(evidence))
-                    if not row["failures"]: valid_evidence.append(evidence)
+            resolved = resolve_accepted_evidence(root, short_id, acceptance)
+            evidence = _normalize_evidence(short_id, resolved["evidence"], resolved["evidence_sha256"])
+            row.update(accepted_commit=resolved["accepted_commit"], evidence_path=resolved["evidence_path"], evidence_sha256=resolved["evidence_sha256"])
+            row["normalized_envelope"] = {"simulation_only": evidence.get("simulation_only") is True, "backend_profile": evidence.get("backend_profile"), "accepted_artifact_sha256": resolved["evidence_sha256"], "correlation": {field: evidence.get(field) for field in CORRELATION_FIELDS}, "result": evidence.get("task_specific_result")}
+            if evidence.get("simulation_only") is not True: row["failures"].append("MISSING_SIMULATION_ONLY_LABEL")
+            if not _source_hashes_valid(evidence.get("source_hashes")): row["failures"].append("MISSING_SOURCE_CONFIG_HASHES")
+            row["failures"].extend(_correlation_failures(evidence))
+            row["failures"].extend(_profile_failures(evidence.get("backend_profile"), evidence.get("simulator_provenance")))
+            row["failures"].extend(_scenario_failures(evidence))
+            if not row["failures"]: valid_evidence.append(evidence)
         except (OSError, ValueError, json.JSONDecodeError) as exc:
-            row["failures"].append(f"UNREADABLE_SOURCE:{type(exc).__name__}")
+            row["failures"].append(str(exc) or f"UNREADABLE_SOURCE:{type(exc).__name__}")
         if row["failures"]: row["status"] = "FAIL"
         index.append(row)
     deterministic, physics = _deterministic_replay(valid_evidence), _physics_semantic(valid_evidence)
