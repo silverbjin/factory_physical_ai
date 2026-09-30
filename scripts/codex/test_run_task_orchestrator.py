@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
+import io
 import json
+import os
 import subprocess
 import tempfile
 import unittest
@@ -34,12 +36,106 @@ from run_task_orchestrator import (
     parse_workflow_result,
     task_scope,
     run_task,
+    run_codex_text,
     validate_acceptance_write,
     write_reports,
 )
 
 
 class OrchestratorUnitTests(unittest.TestCase):
+    def _capture_codex_command(self, sandbox: str | None) -> tuple[list[str], list[tuple[str, str]]]:
+        """Run the real child-command path with a completed in-memory child."""
+        class CompletedChild:
+            pid = 12345
+
+            def __init__(self) -> None:
+                self.stdout = io.StringIO("")
+
+            def poll(self) -> int:
+                return 0
+
+            def wait(self) -> int:
+                return 0
+
+        commands: list[list[str]] = []
+
+        def fake_popen(command, **_kwargs):
+            commands.append(command)
+            return CompletedChild()
+
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            repo = root / "repo"
+            repo.mkdir()
+            ctx = RunContext(
+                repo=repo, target="TASK-SIM-008", report_base=root / "state",
+                verbose=False, show_tail=0, heartbeat_seconds=0,
+            )
+            messages: list[tuple[str, str]] = []
+            ctx.progress = lambda kind, message: messages.append((kind, message))
+            environment = {} if sandbox is None else {"CODEX_RUNTIME_SANDBOX": sandbox}
+            with (
+                patch.dict(os.environ, environment, clear=True),
+                patch("run_task_orchestrator.shutil.which", return_value="/fake/codex"),
+                patch("run_task_orchestrator.subprocess.Popen", side_effect=fake_popen),
+            ):
+                run_codex_text(
+                    "worker prompt", repo, ModelConfig("fake", "low"), ctx=ctx,
+                    task_id="TASK-SIM-008", role="fix",
+                )
+        return commands[0], messages
+
+    def test_runtime_sandbox_override_is_opt_in_for_child_command(self):
+        command, messages = self._capture_codex_command(None)
+
+        self.assertNotIn("-s", command)
+        self.assertFalse(any(kind == "SANDBOX" for kind, _ in messages))
+
+    def test_runtime_sandbox_override_adds_workspace_write_mode(self):
+        command, messages = self._capture_codex_command("workspace-write")
+
+        self.assertIn(["-s", "workspace-write"], [command[index:index + 2] for index in range(len(command) - 1)])
+        self.assertIn(("SANDBOX", "TASK-SIM-008 FIX — workspace-write"), messages)
+
+    def test_runtime_sandbox_override_adds_danger_full_access_mode(self):
+        command, messages = self._capture_codex_command("danger-full-access")
+
+        self.assertIn(["-s", "danger-full-access"], [command[index:index + 2] for index in range(len(command) - 1)])
+        self.assertIn(("SANDBOX", "TASK-SIM-008 FIX — danger-full-access"), messages)
+
+    def test_runtime_sandbox_override_rejects_unknown_mode(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            repo = root / "repo"
+            repo.mkdir()
+            ctx = RunContext(
+                repo=repo, target="TASK-SIM-008", report_base=root / "state",
+                verbose=False, show_tail=0, heartbeat_seconds=0,
+            )
+            class CompletedChild:
+                pid = 12345
+
+                def __init__(self) -> None:
+                    self.stdout = io.StringIO("")
+
+                def poll(self) -> int:
+                    return 0
+
+                def wait(self) -> int:
+                    return 0
+
+            with (
+                patch.dict(os.environ, {"CODEX_RUNTIME_SANDBOX": "unrestricted"}, clear=True),
+                patch("run_task_orchestrator.shutil.which", return_value="/fake/codex"),
+                patch("run_task_orchestrator.subprocess.Popen", return_value=CompletedChild()) as popen,
+            ):
+                with self.assertRaisesRegex(OrchestratorError, "CODEX_RUNTIME_SANDBOX"):
+                    run_codex_text(
+                        "worker prompt", repo, ModelConfig("fake", "low"), ctx=ctx,
+                        task_id="TASK-SIM-008", role="fix",
+                    )
+                popen.assert_not_called()
+
     def _init_resume_repo(self, repo: Path) -> str:
         subprocess.run(["git", "init", "-q"], cwd=repo, check=True)
         subprocess.run(["git", "config", "user.name", "Test User"], cwd=repo, check=True)

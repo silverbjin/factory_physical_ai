@@ -55,6 +55,37 @@ def test_minimal_valid_subjects_cover_all_record_kinds() -> None:
     assert validate_subject(version) is None
 
 
+def test_min_q01_applicability_requires_explicit_structural_not_applicable_state() -> None:
+    subject = _operation(
+        subject_id="q01-sim009-SIM009-VLA-UNKNOWN",
+        predecessor_binding={"task_id": "TASK-SIM-009", "accepted_commit": "a" * 40, "evidence_path": "results/simulation/SIM-009_failure_recovery.json", "evidence_sha256": "b" * 64},
+        scenario_id="SIM009-VLA-UNKNOWN",
+        timing={"simulation_time_source": "mujoco_no_physics_start", "execution_state": {"simulator_started": False, "physics_started": False}},
+        applicability={
+            "structured_simulator_time": {"state": "NOT_APPLICABLE", "justification": "TERMINATED_BEFORE_SIMULATOR_PHYSICS", "execution_state": {"simulator_started": False, "physics_started": False}},
+            "physics_measurement": {"state": "NOT_APPLICABLE", "justification": "TERMINATED_BEFORE_SIMULATOR_PHYSICS", "execution_state": {"simulator_started": False, "physics_started": False}},
+        },
+    )
+    assert validate_subject(subject) is None
+    with pytest.raises(ValueError, match="INVALID_NOT_APPLICABLE_EXECUTION_STATE"):
+        validate_subject(QualificationSubject(**{**subject.__dict__, "applicability": {**subject.applicability, "structured_simulator_time": {"state": "NOT_APPLICABLE"}}}))
+
+
+def test_aggregator_blocks_extra_or_misbound_min_q01_subjects() -> None:
+    subject = _operation(
+        subject_id="q01-sim009-SIM009-NAV-BLOCKED",
+        predecessor_binding={"task_id": "TASK-SIM-009", "accepted_commit": "a" * 40, "evidence_path": "results/simulation/SIM-009_failure_recovery.json", "evidence_sha256": "b" * 64},
+        scenario_id="SIM009-NAV-BLOCKED",
+        applicability={"structured_simulator_time": {"state": "REQUIRED"}, "physics_measurement": {"state": "OPTIONAL"}},
+    )
+    evidence = aggregate_qualification_evidence(
+        [subject], "a" * 40, required_subject_ids={subject.subject_id},
+        required_subject_bindings={subject.subject_id: {"task_id": "TASK-SIM-009", "scenario_id": "WRONG"}},
+    )
+    assert evidence["task_specific_result"] == "SIM_PROVENANCE_QUALIFICATION_BLOCKED"
+    assert evidence["validation"]["binding_error_subject_ids"] == [subject.subject_id]
+
+
 def test_resolver_reads_accepted_git_blob_not_mutated_worktree(tmp_path: Path) -> None:
     subprocess.run(["git", "init", "-q"], cwd=tmp_path, check=True)
     subprocess.run(["git", "config", "user.email", "q01@example.invalid"], cwd=tmp_path, check=True)
@@ -260,12 +291,7 @@ def test_sim004_live_supplier_reuses_sidecar_execution_for_every_required_scenar
         assert raw["semantic_outcome"]["result"] in {"success", "failure", "pending"}
 
 
-def test_live_adapter_map_dispatches_all_wired_tasks_by_explicit_task_identity() -> None:
-    def sim004_supplier(scenario_id: str) -> dict[str, object]:
-        return {"scenario_id": scenario_id}
-
-    def sim005_supplier(scenario_id: str) -> dict[str, object]:
-        return {"scenario_id": scenario_id, "new_run": True}
+def test_live_adapter_map_dispatches_only_min_q01_tasks() -> None:
 
     def sim008_supplier() -> dict[str, object]:
         return {"qualification_run_id": "q01-sim008-normal-system-authority"}
@@ -275,87 +301,37 @@ def test_live_adapter_map_dispatches_all_wired_tasks_by_explicit_task_identity()
 
     adapter_factory = getattr(run_simulation_provenance_qualification, "live_adapters", None)
     assert callable(adapter_factory), "canonical runner must expose its live adapter dispatcher"
-    adapters = adapter_factory(
-        sim004_supplier=sim004_supplier,
-        sim005_supplier=sim005_supplier,
-        sim008_supplier=sim008_supplier,
-        sim009_supplier=sim009_supplier,
-    )
+    adapters = adapter_factory(sim008_supplier=sim008_supplier, sim009_supplier=sim009_supplier)
     assert adapters == {
-        "TASK-SIM-004": sim004_supplier,
-        "TASK-SIM-005": sim005_supplier,
         "TASK-SIM-008": sim008_supplier,
         "TASK-SIM-009": sim009_supplier,
-    }
-    assert adapters["TASK-SIM-004"]("blocked") == {"scenario_id": "blocked"}
-    assert adapters["TASK-SIM-005"]("mujoco-place-nominal") == {
-        "scenario_id": "mujoco-place-nominal", "new_run": True,
     }
     assert adapters["TASK-SIM-008"]() == {"qualification_run_id": "q01-sim008-normal-system-authority"}
     assert adapters["TASK-SIM-009"]()["SIM009-VLA-GRASP-MISS"] == {"scenario_id": "SIM009-VLA-GRASP-MISS"}
 
 
-def test_canonical_routing_collects_sim004_from_its_live_supplier() -> None:
+def test_canonical_routing_excludes_sim004_supplier() -> None:
     bindings = {}
     for short, evidence in (("SIM-004", "navigation_backend"), ("SIM-005", "mujoco_vla_backend"), ("SIM-007", "mission_integration"), ("SIM-008", "normal_system_e2e"), ("SIM-009", "failure_recovery")):
         acceptance = json.loads((ROOT / f"results/reviews/{short}_acceptance.json").read_text())
         bindings[f"TASK-{short}"] = resolve_predecessor_binding(ROOT, f"TASK-{short}", acceptance, f"results/simulation/{short}_{evidence}.json")
-    run_ids = {
-        "success": "q01-sim004-success-time",
-        "blocked": "q01-sim004-blocked-time",
-        "timeout_reconciliation": "q01-sim004-timeout-reconciliation-time",
-    }
-    calls: list[str] = []
-
-    def supplier(scenario_id: str) -> dict[str, object]:
-        calls.append(scenario_id)
-        return {
-            "qualification_run_id": run_ids[scenario_id], "scenario_id": scenario_id,
-            "simulation_time": {"source": "gz_stats", "seconds": 1.0},
-            "world_sha256": "a" * 64, "bridge_sha256": "b" * 64, "launch_sha256": "c" * 64,
-            "cleanup_complete": True, "semantic_outcome": {"result": "failure" if scenario_id == "blocked" else "success"},
-        }
-
     subjects = collect_qualification_subjects(
         bindings,
-        run_simulation_provenance_qualification.live_adapters(
-            sim004_supplier=supplier,
-            sim005_supplier=lambda _scenario: None,
-            sim008_supplier=lambda: None,
-            sim009_supplier=lambda: None,
-        ),
+        run_simulation_provenance_qualification.live_adapters(sim008_supplier=lambda: None, sim009_supplier=lambda: None),
     )
-    assert calls == ["blocked", "success", "timeout_reconciliation"]
-    assert {subject.subject_id for subject in subjects if subject.subject_id.startswith("q01-sim004-")} == set(run_ids.values())
+    assert subjects == []
 
 
-def test_canonical_routing_collects_sim005_from_its_live_supplier_without_backfill() -> None:
+def test_canonical_routing_excludes_sim005_supplier_without_importing_mujoco() -> None:
     bindings = {}
     for short, evidence in (("SIM-004", "navigation_backend"), ("SIM-005", "mujoco_vla_backend"), ("SIM-007", "mission_integration"), ("SIM-008", "normal_system_e2e"), ("SIM-009", "failure_recovery")):
         acceptance = json.loads((ROOT / f"results/reviews/{short}_acceptance.json").read_text())
         bindings[f"TASK-{short}"] = resolve_predecessor_binding(ROOT, f"TASK-{short}", acceptance, f"results/simulation/{short}_{evidence}.json")
-    raw = run_sim005_qualification("mujoco-place-nominal")
-    calls: list[str] = []
-
-    def supplier(scenario_id: str) -> dict[str, object] | None:
-        calls.append(scenario_id)
-        return raw if scenario_id == "mujoco-place-nominal" else None
-
     subjects = collect_qualification_subjects(
         bindings,
-        run_simulation_provenance_qualification.live_adapters(
-            sim004_supplier=lambda _scenario: None,
-            sim005_supplier=supplier,
-            sim008_supplier=lambda: None,
-            sim009_supplier=lambda: None,
-        ),
+        run_simulation_provenance_qualification.live_adapters(sim008_supplier=lambda: None, sim009_supplier=lambda: None),
     )
-    qualified = next(subject for subject in subjects if subject.subject_id == "q01-sim005-mujoco-place-nominal")
-    assert qualified.correlation_identity == raw["correlation_identity"]
-    assert qualified.timing["mujoco_version"] == raw["provenance"]["mujoco_version"]
-    assert qualified.timing["seed"] == raw["provenance"]["seed"]
-    assert qualified.timing["initial_state_id"] == raw["provenance"]["initial_state_id"]
-    assert "mujoco-place-nominal" in calls
+    assert subjects == []
 
 
 def test_canonical_routing_collects_sim008_from_its_live_supplier_without_authority_reconstruction() -> None:
@@ -371,8 +347,6 @@ def test_canonical_routing_collects_sim008_from_its_live_supplier_without_author
     subjects = collect_qualification_subjects(
         bindings,
         run_simulation_provenance_qualification.live_adapters(
-            sim004_supplier=lambda _scenario: None,
-            sim005_supplier=lambda _scenario: None,
             sim008_supplier=lambda: raw,
             sim009_supplier=lambda: None,
         ),
@@ -401,8 +375,6 @@ def test_canonical_routing_collects_sim009_by_explicit_scenario_without_backfill
     subjects = collect_qualification_subjects(
         bindings,
         run_simulation_provenance_qualification.live_adapters(
-            sim004_supplier=lambda _scenario: None,
-            sim005_supplier=lambda _scenario: None,
             sim008_supplier=lambda: None,
             sim009_supplier=lambda: records,
         ),
@@ -415,6 +387,7 @@ def test_canonical_routing_collects_sim009_by_explicit_scenario_without_backfill
 
 
 def test_sim005_wrapper_creates_new_identity_and_extracts_same_run_measurement() -> None:
+    pytest.importorskip("mujoco")
     record = run_sim005_qualification("mujoco-place-nominal")
     assert record["qualification_run_id"].startswith("q01-sim005-")
     assert record["new_run"] is True
@@ -424,6 +397,7 @@ def test_sim005_wrapper_creates_new_identity_and_extracts_same_run_measurement()
 
 
 def test_sim005_actual_result_converts_to_subject_with_same_run_provenance() -> None:
+    pytest.importorskip("mujoco")
     raw = run_sim005_qualification("mujoco-place-nominal")
     template = _operation(
         subject_id="q01-sim005-mujoco-place-nominal",
@@ -518,28 +492,18 @@ def test_sim009_actual_result_converts_to_subject_without_cross_scenario_backfil
         collect_sim009_execution_result(template, {**raw, "run_local_provenance": {}})
 
 
-def test_canonical_manifest_derives_all_sim005_and_applicable_sim009_subjects() -> None:
-    bindings = {}
-    for short in ("SIM-005", "SIM-009"):
-        acceptance = json.loads((ROOT / f"results/reviews/{short}_acceptance.json").read_text())
-        bindings[f"TASK-{short}"] = resolve_predecessor_binding(ROOT, f"TASK-{short}", acceptance, f"results/simulation/{short}_{'mujoco_vla_backend' if short == 'SIM-005' else 'failure_recovery'}.json")
-    bindings["TASK-SIM-007"] = bindings["TASK-SIM-005"]
-    manifest = required_subject_manifest(bindings)
-    assert "q01-sim005-mujoco-place-nominal" in manifest
+def test_canonical_manifest_is_exactly_the_frozen_min_q01_subject_set() -> None:
+    manifest = required_subject_manifest()
+    assert len(manifest) == 11
+    assert manifest.count("q01-sim008-normal-system-authority") == 1
     assert "q01-sim009-SIM009-NAV-BLOCKED" in manifest
-    assert "q01-sim009-SIM009-VERIFY-MISMATCH" not in manifest
-    assert manifest == tuple(sorted(manifest))
+    assert not any(subject.startswith(("q01-sim004-", "q01-sim005-", "q01-sim007-")) for subject in manifest)
 
 
-def test_canonical_routing_uses_task_specific_collector_for_controlled_sim005_result() -> None:
+def test_canonical_routing_does_not_start_excluded_sim005_runtime() -> None:
     bindings = {}
     for short, evidence in (("SIM-004", "navigation_backend"), ("SIM-005", "mujoco_vla_backend"), ("SIM-007", "mission_integration"), ("SIM-008", "normal_system_e2e"), ("SIM-009", "failure_recovery")):
         acceptance = json.loads((ROOT / f"results/reviews/{short}_acceptance.json").read_text())
         bindings[f"TASK-{short}"] = resolve_predecessor_binding(ROOT, f"TASK-{short}", acceptance, f"results/simulation/{short}_{evidence}.json")
-    raw = run_sim005_qualification("mujoco-place-nominal")
-    subjects = collect_qualification_subjects(bindings, {"TASK-SIM-005": lambda scenario_id: raw if scenario_id == "mujoco-place-nominal" else None})
-    qualified = next(subject for subject in subjects if subject.subject_id == "q01-sim005-mujoco-place-nominal")
-    assert qualified.correlation_identity == raw["correlation_identity"]
-    assert {subject.subject_id for subject in subjects if subject.record_kind == "profile_aggregate"} == {
-        "q01-sim007-deterministic", "q01-sim007-navigation_physics", "q01-sim007-manipulation_physics", "q01-sim007-system",
-    }
+    subjects = collect_qualification_subjects(bindings, {"TASK-SIM-005": lambda _scenario: (_ for _ in ()).throw(AssertionError("excluded supplier called"))})
+    assert subjects == []

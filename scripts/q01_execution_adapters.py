@@ -259,7 +259,10 @@ def _sim009_sidecar_observation(
     if isinstance(steps, int) and isinstance(timestep, (int, float)):
         simulation_time = {"source": "mujoco_steps_times_timestep", "seconds": steps * timestep}
     elif measurement.get("physics_started") is False:
-        simulation_time = {"source": "mujoco_no_physics_start", "seconds": 0.0}
+        simulation_time = {
+            "source": "mujoco_no_physics_start",
+            "execution_state": {"simulator_started": False, "physics_started": False},
+        }
     else:
         return None
     assets = {item.get("path"): item.get("sha256") for item in provenance().get("assets", []) if isinstance(item, Mapping)}

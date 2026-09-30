@@ -36,6 +36,7 @@ ACCEPTANCE_RESULT_PREFIX = "ACCEPTANCE_RESULT_JSON:"
 TASK_RE = re.compile(r"^(?P<prefix>TASK-[A-Z0-9]+-)(?P<num>\d+)$")
 PROTECTED_BRANCHES = {"main", "master"}
 DEFAULT_MODEL_POLICY_PATH = Path("config/codex_model_policy.json")
+CODEX_SANDBOX_MODES = frozenset({"read-only", "workspace-write", "danger-full-access"})
 SIGNAL_RE = re.compile(
     r"(status|result|evidence|error|fail|failed|failure|blocked|blocker|"
     r"incomplete|reject|missing|cannot|unable|next|deviation|reason|token|context|limit|quota|credit|"
@@ -273,6 +274,19 @@ def default_report_base() -> Path:
     if xdg:
         return Path(xdg) / "codex-task-orchestrator"
     return Path.home() / ".local" / "state" / "codex-task-orchestrator"
+
+
+def runtime_sandbox_override() -> str | None:
+    """Return the explicit child sandbox override, preserving Codex defaults otherwise."""
+    value = os.environ.get("CODEX_RUNTIME_SANDBOX")
+    if value in (None, ""):
+        return None
+    if value not in CODEX_SANDBOX_MODES:
+        allowed = ", ".join(sorted(CODEX_SANDBOX_MODES))
+        raise OrchestratorError(
+            f"Invalid CODEX_RUNTIME_SANDBOX={value!r}; expected one of: {allowed}."
+        )
+    return value
 
 
 def run_git(repo: Path, *args: str, check: bool = True) -> subprocess.CompletedProcess[str]:
@@ -1428,6 +1442,7 @@ def run_codex_text(
 ) -> tuple[str, StageRunRecord]:
     if shutil.which("codex") is None:
         raise OrchestratorError("`codex` executable was not found on PATH.")
+    sandbox = runtime_sandbox_override()
 
     record = ctx.new_stage(task_id, role, config)
     log_path = Path(record.log_path or "")
@@ -1435,6 +1450,8 @@ def run_codex_text(
     prompt_path = Path(record.prompt_path or "")
     prompt_path.write_text(prompt, encoding="utf-8")
     ctx.progress("START", f"{task_id} {role.upper()} — {config.model} / {config.reasoning_effort}")
+    if sandbox is not None:
+        ctx.progress("SANDBOX", f"{task_id} {role.upper()} — {sandbox}")
 
     with tempfile.NamedTemporaryFile(
         mode="w", encoding="utf-8", prefix="codex-last-", suffix=".txt", delete=False
@@ -1446,6 +1463,7 @@ def run_codex_text(
         cmd = [
             "codex",
             "exec",
+            *(["-s", sandbox] if sandbox is not None else []),
             "--model",
             config.model,
             "--config",
