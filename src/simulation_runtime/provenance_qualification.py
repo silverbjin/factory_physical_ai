@@ -96,6 +96,17 @@ def _canonical_sha256(value: Any) -> str:
     return hashlib.sha256(json.dumps(value, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
 
 
+def read_gazebo_simulation_time(stats_json: str) -> dict[str, Any]:
+    """Decode only Gazebo's structured stats response; never parse log prose."""
+    try:
+        stats = json.loads(stats_json)
+        value = stats["simTime"]
+        seconds = int(value["sec"]) + int(value.get("nsec", 0)) / 1_000_000_000
+    except (TypeError, ValueError, KeyError, json.JSONDecodeError) as exc:
+        raise ValueError("MISSING_STRUCTURED_SIMULATION_TIME") from exc
+    return {"source": "gz_stats", "seconds": seconds}
+
+
 def _accepted_blob(root: Path, commit: str, path: str) -> bytes:
     blob = subprocess.run(["git", "show", f"{commit}:{path}"], cwd=root, capture_output=True)
     if blob.returncode:

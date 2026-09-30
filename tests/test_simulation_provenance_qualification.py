@@ -10,7 +10,7 @@ import pytest
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
-from simulation_runtime.provenance_qualification import QualificationSubject, aggregate_qualification_evidence, render_qualification_report, write_qualification_artifacts, collect_sim009_scenario_qualifications, collect_sim008_configuration_qualification, collect_sim007_profile_qualifications, build_mujoco_subject, build_gazebo_subject, resolve_predecessor_binding, validate_subject
+from simulation_runtime.provenance_qualification import QualificationSubject, aggregate_qualification_evidence, read_gazebo_simulation_time, render_qualification_report, write_qualification_artifacts, collect_sim009_scenario_qualifications, collect_sim008_configuration_qualification, collect_sim007_profile_qualifications, build_mujoco_subject, build_gazebo_subject, resolve_predecessor_binding, validate_subject
 
 
 def _operation(**changes: object) -> QualificationSubject:
@@ -150,3 +150,9 @@ def test_artifact_writer_derives_json_and_report_from_blocked_evidence(tmp_path:
     assert json.loads(json_path.read_text()) == evidence
     assert "SIM_PROVENANCE_QUALIFICATION_BLOCKED" in report_path.read_text()
     assert render_qualification_report(evidence) == report_path.read_text()
+
+
+def test_gazebo_sidecar_accepts_only_structured_stats_json() -> None:
+    assert read_gazebo_simulation_time('{"simTime":{"sec":2,"nsec":3}}') == {"source": "gz_stats", "seconds": 2.000000003}
+    with pytest.raises(ValueError, match="MISSING_STRUCTURED_SIMULATION_TIME"):
+        read_gazebo_simulation_time('sim time=2')
