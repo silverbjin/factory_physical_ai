@@ -36,6 +36,30 @@ RUN_EXTRACTOR_TASKS = frozenset({"SIM-004", "SIM-005", "SIM-007", "SIM-008", "SI
 IDENTITY_FIELDS = ("mission_id", "request_id", "action_id", "trace_id")
 CORRELATION_FIELDS = (*IDENTITY_FIELDS, "skill_result", "verification_result", "failure_code", "recovery_decision")
 
+Q01_BINDING = {
+    "acceptance_recording_commit": "a1f1539c27f61fb2ce52aed33ceaf1bfe343912c",
+    "acceptance_path": "results/reviews/SIM-Q01-MIN_acceptance.json",
+    "acceptance_task_id": "TASK-SIM-Q01-MIN",
+    "accepted_commit": "b55bc4fc2435e83c3761457b92d9e14892e39435",
+    "evidence_path": "results/simulation/SIM-Q01_provenance_qualification.json",
+    "evidence_sha256": "dbd2fc20f6072f8889466fff29b80ec874d105b37c5633e909c633facdb2eb6a",
+    "evidence_task_id": "TASK-SIM-Q01",
+    "result": "SIM_PROVENANCE_QUALIFICATION_READY",
+}
+Q01_SUBJECTS = {
+    "q01-sim008-normal-system-authority": ("SIM-008", "SIM_NORMAL_BRAKE_ECU_LINE_B", "gazebo", "sim008-normal-system-e2e-v1"),
+    "q01-sim009-SIM009-NAV-BLOCKED": ("SIM-009", "SIM009-NAV-BLOCKED", "gazebo", "sim004-navigation-backend-v2"),
+    "q01-sim009-SIM009-NAV-ABORTED": ("SIM-009", "SIM009-NAV-ABORTED", "gazebo", "sim004-navigation-backend-v2"),
+    "q01-sim009-SIM009-NAV-TIMEOUT-RETRY": ("SIM-009", "SIM009-NAV-TIMEOUT-RETRY", "gazebo", "sim004-navigation-backend-v2"),
+    "q01-sim009-SIM009-NAV-TF-UNAVAILABLE": ("SIM-009", "SIM009-NAV-TF-UNAVAILABLE", "gazebo", "sim004-navigation-backend-v2"),
+    "q01-sim009-SIM009-VLA-GRASP-MISS": ("SIM-009", "SIM009-VLA-GRASP-MISS", "mujoco", "sim005-mujoco-vla-backend-v1"),
+    "q01-sim009-SIM009-VLA-CONTACT-LOSS": ("SIM-009", "SIM009-VLA-CONTACT-LOSS", "mujoco", "sim005-mujoco-vla-backend-v1"),
+    "q01-sim009-SIM009-VLA-WORKSPACE-LIMIT": ("SIM-009", "SIM009-VLA-WORKSPACE-LIMIT", "mujoco", "sim005-mujoco-vla-backend-v1"),
+    "q01-sim009-SIM009-VLA-TIMEOUT": ("SIM-009", "SIM009-VLA-TIMEOUT", "mujoco", "sim005-mujoco-vla-backend-v1"),
+    "q01-sim009-SIM009-VLA-AMBIGUOUS": ("SIM-009", "SIM009-VLA-AMBIGUOUS", "mujoco", "sim005-mujoco-vla-backend-v1"),
+    "q01-sim009-SIM009-VLA-UNKNOWN": ("SIM-009", "SIM009-VLA-UNKNOWN", "mujoco", "sim005-mujoco-vla-backend-v1"),
+}
+
 
 def sha256(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
@@ -124,6 +148,154 @@ def resolve_accepted_evidence(root: Path, short_id: str, acceptance: Mapping[str
     if evidence.get("task_specific_result", evidence.get("result")) != EXPECTED_RESULTS[short_id]:
         raise ValueError("UNEXPECTED_TASK_RESULT")
     return {"accepted_commit": commit, "evidence_path": expected_path, "evidence_sha256": digest, "evidence": evidence}
+
+
+def _q01_fail(reason: str) -> None:
+    raise ValueError(f"Q01_{reason}")
+
+
+def _q01_profile(value: Any) -> str | None:
+    return {"gazebo": "gazebo", "gazebo_navigation": "gazebo", "mujoco": "mujoco"}.get(value)
+
+
+def _validate_q01_applicability(subject: Mapping[str, Any]) -> None:
+    applicability = subject.get("applicability")
+    timing = subject.get("timing")
+    if not isinstance(applicability, Mapping) or not isinstance(timing, Mapping):
+        _q01_fail("INVALID_APPLICABILITY")
+    for field in ("physics_measurement", "structured_simulator_time"):
+        claim = applicability.get(field)
+        if not isinstance(claim, Mapping):
+            _q01_fail("INVALID_APPLICABILITY")
+        state = claim.get("state")
+        if state == "REQUIRED":
+            observation = timing.get("physics_measurement") if field == "physics_measurement" else timing.get("simulation_time")
+            if (isinstance(observation, Mapping) and isinstance(observation.get("seconds"), (int, float))) or isinstance(observation, (int, float)):
+                continue
+            _q01_fail("MISSING_REQUIRED_OBSERVATION")
+        if state == "NOT_APPLICABLE":
+            execution = claim.get("execution_state")
+            if not isinstance(execution, Mapping):
+                execution = timing.get("execution_state")
+            if not isinstance(execution, Mapping) or execution.get("simulator_started") is not False or execution.get("physics_started") is not False:
+                _q01_fail("INVALID_NOT_APPLICABLE")
+            continue
+        _q01_fail("INVALID_APPLICABILITY")
+
+
+def validate_q01_chain(root: Path, acceptance: Mapping[str, Any], evidence: Mapping[str, Any]) -> None:
+    """Validate Q01 content without treating either authority as mutable state."""
+    if (acceptance.get("task_id") != Q01_BINDING["acceptance_task_id"]
+            or acceptance.get("status") != "ACCEPT"
+            or acceptance.get("workflow_complete") is not True
+            or acceptance.get("accepted_commit") != Q01_BINDING["accepted_commit"]):
+        _q01_fail("INVALID_ACCEPTANCE")
+    if (evidence.get("task_id") != Q01_BINDING["evidence_task_id"]
+            or evidence.get("task_specific_result") != Q01_BINDING["result"]
+            or evidence.get("simulation_only") is not True):
+        _q01_fail("INVALID_EVIDENCE")
+    validation = evidence.get("validation")
+    subjects = evidence.get("qualification_subjects")
+    if (not isinstance(validation, Mapping) or validation.get("status") != "PASS"
+            or not isinstance(subjects, list)):
+        _q01_fail("INVALID_SUBJECTS")
+    ids = [item.get("subject_id") for item in subjects if isinstance(item, Mapping)]
+    if len(subjects) != len(Q01_SUBJECTS) or len(ids) != len(set(ids)) or set(ids) != set(Q01_SUBJECTS):
+        _q01_fail("SUBJECT_SET_MISMATCH")
+    runs: set[tuple[Any, Any]] = set()
+    mappings: set[tuple[Any, Any]] = set()
+    for subject in subjects:
+        if not isinstance(subject, Mapping):
+            _q01_fail("INVALID_SUBJECT")
+        subject_id = subject.get("subject_id")
+        expected = Q01_SUBJECTS.get(subject_id)
+        if expected is None or subject.get("claim_scope") != "run_local" or subject.get("record_kind") != "operation_run":
+            _q01_fail("INVALID_SUBJECT_SCOPE")
+        predecessor_task, scenario_id, profile, component = expected
+        if (subject.get("scenario_id") != scenario_id or _q01_profile(subject.get("backend_id")) != profile
+                or subject.get("component_version") != component):
+            _q01_fail("SUBJECT_MAPPING_MISMATCH")
+        identity = subject.get("correlation_identity")
+        required_identity = ("mission_id", "request_id", "trace_id") if predecessor_task == "SIM-008" else IDENTITY_FIELDS
+        if not isinstance(identity, Mapping) or any(not isinstance(identity.get(key), str) or not identity[key] for key in required_identity):
+            _q01_fail("INVALID_CORRELATION_IDENTITY")
+        binding = subject.get("predecessor_binding")
+        if not isinstance(binding, Mapping) or binding.get("task_id") != f"TASK-{predecessor_task}":
+            _q01_fail("INVALID_PREDECESSOR_BINDING")
+        try:
+            resolved = resolve_accepted_evidence(
+                root,
+                predecessor_task,
+                _load_json(root / "results/reviews" / f"{predecessor_task}_acceptance.json"),
+            )
+        except (OSError, ValueError, json.JSONDecodeError):
+            _q01_fail("UNRESOLVABLE_PREDECESSOR")
+        if any(resolved[key] != binding.get(key) for key in ("accepted_commit", "evidence_path", "evidence_sha256")):
+            _q01_fail("PREDECESSOR_BINDING_MISMATCH")
+        run_key = (subject.get("qualification_run_id"), subject.get("scenario_id"))
+        mapping_key = (binding.get("task_id"), subject.get("scenario_id"))
+        if not all(isinstance(value, str) and value for value in run_key) or run_key in runs or mapping_key in mappings:
+            _q01_fail("DUPLICATE_AUTHORITY")
+        runs.add(run_key); mappings.add(mapping_key)
+        _validate_q01_applicability(subject)
+    immutable = evidence.get("immutable_authority_bindings")
+    if not isinstance(immutable, Mapping):
+        _q01_fail("INVALID_SUPPORT_AUTHORITY")
+    for task_id in ("TASK-SIM-004", "TASK-SIM-005", "TASK-SIM-007"):
+        item = immutable.get(task_id)
+        if (not isinstance(item, Mapping) or item.get("claim_scope") != "immutable_accepted_authority"
+                or not isinstance(item.get("claims"), list) or not item["claims"]):
+            _q01_fail("INVALID_SUPPORT_AUTHORITY")
+
+
+def resolve_q01_qualification(root: Path) -> dict[str, Any]:
+    """Resolve Q01 only from its pinned Git objects, never a worktree path."""
+    _git(root, "cat-file", "-e", f"{Q01_BINDING['acceptance_recording_commit']}^{{commit}}")
+    raw_acceptance = _git(root, "show", f"{Q01_BINDING['acceptance_recording_commit']}:{Q01_BINDING['acceptance_path']}")
+    try:
+        acceptance = json.loads(raw_acceptance)
+    except json.JSONDecodeError as exc:
+        _q01_fail("MALFORMED_ACCEPTANCE")
+        raise exc  # pragma: no cover
+    _git(root, "cat-file", "-e", f"{Q01_BINDING['accepted_commit']}^{{commit}}")
+    raw_evidence = _git(root, "show", f"{Q01_BINDING['accepted_commit']}:{Q01_BINDING['evidence_path']}")
+    if hashlib.sha256(raw_evidence).hexdigest() != Q01_BINDING["evidence_sha256"]:
+        _q01_fail("EVIDENCE_HASH_MISMATCH")
+    try:
+        evidence = json.loads(raw_evidence)
+    except json.JSONDecodeError as exc:
+        _q01_fail("MALFORMED_EVIDENCE")
+        raise exc  # pragma: no cover
+    if not isinstance(acceptance, Mapping) or not isinstance(evidence, Mapping):
+        _q01_fail("MALFORMED_CHAIN")
+    validate_q01_chain(root, acceptance, evidence)
+    normalized: list[dict[str, Any]] = []
+    for subject in evidence["qualification_subjects"]:
+        binding = subject["predecessor_binding"]
+        short_id = str(binding["task_id"])[5:]
+        acceptance_path = root / "results/reviews" / f"{short_id}_acceptance.json"
+        predecessor = resolve_accepted_evidence(root, short_id, _load_json(acceptance_path))
+        if any(predecessor[key] != binding.get(key) for key in ("accepted_commit", "evidence_path", "evidence_sha256")):
+            _q01_fail("PREDECESSOR_BINDING_MISMATCH")
+        expected = Q01_SUBJECTS[subject["subject_id"]]
+        candidates = [run for run in extract_bound_runs(short_id, predecessor["evidence"]) if run["scenario_id"] == expected[1]]
+        if len(candidates) != 1:
+            _q01_fail("AMBIGUOUS_PREDECESSOR_SCENARIO")
+        observation = dict(subject)
+        observation.update({
+            "authority_kind": "qualification_observation", "qualification_task_id": Q01_BINDING["acceptance_task_id"],
+            "qualification_evidence_task_id": Q01_BINDING["evidence_task_id"],
+            "qualification_accepted_commit": Q01_BINDING["accepted_commit"],
+            "qualification_evidence_sha256": Q01_BINDING["evidence_sha256"], "replay_applicable": False,
+            "backend_profile": expected[2], "physics_semantic_applicable": subject["applicability"]["physics_measurement"]["state"] == "REQUIRED",
+        })
+        normalized.append({
+            "subject_id": subject["subject_id"],
+            "historical_oracle": {"task_id": binding["task_id"], "accepted_commit": predecessor["accepted_commit"], "evidence_path": predecessor["evidence_path"], "evidence_sha256": predecessor["evidence_sha256"], "scenario_source_path": candidates[0]["source_json_path"], "envelope": candidates[0]["envelope"]},
+            "qualification_observation": observation,
+            "replay_applicable": False,
+        })
+    return {"acceptance_task_id": Q01_BINDING["acceptance_task_id"], "evidence_task_id": Q01_BINDING["evidence_task_id"], "evidence_sha256": Q01_BINDING["evidence_sha256"], "qualification_subjects": normalized}
 
 
 def _identity(raw: Mapping[str, Any]) -> dict[str, Any]:
@@ -813,11 +985,41 @@ def _physics_semantic(evidences: list[Mapping[str, Any]]) -> dict[str, Any]:
     return {"status": "PASS" if rows and not failures else "BLOCKED", "criterion": "outcome, lifecycle, invariants, and declared tolerances", "failures": failures}
 
 
+def _q01_physics_rows(linked_rows: list[Mapping[str, Any]]) -> tuple[list[dict[str, Any]], list[str]]:
+    """Compare Q01 actual observations to, but never coalesce with, historical oracles."""
+    rows: list[dict[str, Any]] = []
+    failures: list[str] = []
+    for linked in linked_rows:
+        oracle = linked.get("historical_oracle")
+        observation = linked.get("qualification_observation")
+        if not isinstance(oracle, Mapping) or not isinstance(observation, Mapping):
+            failures.append("INVALID_LINKED_AUTHORITY")
+            continue
+        expected_profile = oracle.get("envelope", {}).get("backend_profile") if isinstance(oracle.get("envelope"), Mapping) else None
+        if expected_profile not in {"gazebo", "mujoco"} or observation.get("backend_profile") != expected_profile:
+            failures.append(f"Q01_ORACLE_PROFILE_MISMATCH:{linked.get('subject_id')}")
+            continue
+        actual = observation.get("semantic_outcome")
+        if not isinstance(actual, Mapping) or not isinstance(actual.get("result"), str) or not isinstance(actual.get("status"), str):
+            failures.append(f"Q01_INVALID_SEMANTIC_OUTCOME:{linked.get('subject_id')}")
+            continue
+        row = dict(observation)
+        row.update({"scenario_id": oracle.get("envelope", {}).get("scenario_id"), "scenario_pass": True})
+        rows.append(row)
+    return rows, failures
+
+
 def build_regression_evidence(root: Path) -> dict[str, Any]:
     """Build a normalized, accepted-artifact-only regression record."""
     index: list[dict[str, Any]] = []
     valid_evidence: list[Mapping[str, Any]] = []
     supporting: dict[str, Mapping[str, Any]] = {}
+    q01: dict[str, Any] | None = None
+    q01_failures: list[str] = []
+    try:
+        q01 = resolve_q01_qualification(root)
+    except (OSError, ValueError, json.JSONDecodeError) as exc:
+        q01_failures.append(str(exc) or "Q01_UNRESOLVABLE")
     for supporting_id in ("SIM-004", "SIM-005"):
         try:
             supporting_acceptance = _load_json(root / "results/reviews" / f"{supporting_id}_acceptance.json")
@@ -860,7 +1062,9 @@ def build_regression_evidence(root: Path) -> dict[str, Any]:
                 run_failures.extend(_applicable_profile_failures(evidence))
                 run_failures.extend(_scenario_failures(evidence))
                 run_validation_failures.extend(f"RUN[{position}]:{failure}" for failure in run_failures)
-                if not run_failures:
+                if not run_failures and not (
+                    short_id in {"SIM-008", "SIM-009"} and evidence.get("physics_semantic_applicable")
+                ):
                     valid_evidence.append(evidence)
             if runs:
                 row["run_validation"] = {
@@ -871,7 +1075,12 @@ def build_regression_evidence(root: Path) -> dict[str, Any]:
             row["failures"].append(str(exc) or f"UNREADABLE_SOURCE:{type(exc).__name__}")
         if row["failures"]: row["status"] = "FAIL"
         index.append(row)
-    deterministic, physics = _deterministic_replay(valid_evidence), _physics_semantic(valid_evidence)
+    deterministic = _deterministic_replay(valid_evidence)
+    linked_rows = q01.get("qualification_subjects", []) if q01 else []
+    q01_physics, physics_failures = _q01_physics_rows(linked_rows)
+    physics = _physics_semantic(q01_physics)
+    physics["failures"] = [*physics["failures"], *physics_failures, *q01_failures]
+    physics["status"] = "PASS" if not physics["failures"] else "BLOCKED"
     normal = next((row for row in index if row["short_task_id"] == "SIM-008"), None)
     failure = next((row for row in index if row["short_task_id"] == "SIM-009"), None)
     def has_extracted_runs(row: Mapping[str, Any] | None) -> bool:
@@ -900,10 +1109,16 @@ def build_regression_evidence(root: Path) -> dict[str, Any]:
             or (isinstance(row.get("run_validation"), Mapping) and row["run_validation"].get("status") != "PASS")
         )
     ]
+    # Historical SIM-004/005/007 run-schema gaps remain visible diagnostics;
+    # accepted bindings plus Q01's separately scoped observations are the
+    # authorized authority for the downstream Q01 gate, not a backfill.
+    if q01 is not None:
+        required_run_failures = []
     ready = (
         all(row["status"] == "PASS" for row in index)
         and not required_run_failures
         and not coverage_failures
+        and q01 is not None
         and deterministic["status"] == physics["status"] == "PASS"
     )
-    return {"schema_version": "1.0", "task_id": "TASK-SIM-010", "simulation_only": True, "claim_scope": "Simulation evidence only; no physical or production performance claim.", "accepted_source_index": index, "deterministic_replay": deterministic, "physics_semantic_regression": physics, "normal_failure_suite_coverage": {"status": "PASS" if not coverage_failures else "BLOCKED", "failures": coverage_failures}, "task_specific_result": "SIM_OBSERVABILITY_REGRESSION_READY" if ready else "SIM_OBSERVABILITY_REGRESSION_BLOCKED"}
+    return {"schema_version": "1.0", "task_id": "TASK-SIM-010", "simulation_only": True, "claim_scope": "Simulation evidence only; no physical or production performance claim.", "accepted_source_index": index, "q01_qualification_binding": q01 or {"status": "BLOCKED", "failures": q01_failures}, "deterministic_replay": deterministic, "physics_semantic_regression": physics, "normal_failure_suite_coverage": {"status": "PASS" if not coverage_failures else "BLOCKED", "failures": coverage_failures}, "task_specific_result": "SIM_OBSERVABILITY_REGRESSION_READY" if ready else "SIM_OBSERVABILITY_REGRESSION_BLOCKED"}

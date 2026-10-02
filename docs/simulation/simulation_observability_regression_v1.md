@@ -1,30 +1,22 @@
-# Simulation observability and regression v1
+# SIM-010 observability regression
 
-`TASK-SIM-010` produces `results/simulation/SIM-010_observability_regression.json`.
-It is a Simulation-evidence-only index: it makes no physical, safety, latency,
-reliability, or production claim.
+- Task: `TASK-SIM-010`
+- Canonical source authority: `2ec859845628992b02686a6d8bcdbcb77985a5a2`
+- Result: `SIM_OBSERVABILITY_REGRESSION_READY`
+- Scope: simulation-only regression evidence; no physical or production-performance claim.
 
-The runner binds each SIM-003 through SIM-009 acceptance record to the exact
-SHA-256 of its declared evidence. Rich Acceptance manifests bind that hash
-directly; deterministic minimal manifests resolve only the task-declared
-Evidence path from their immutable `accepted_commit` Git tree, recompute the
-blob hash, and fail closed on any conflict. The current worktree is never used
-as predecessor Evidence.
+## Authority and qualification
 
-Only a complete, source-declared run envelope is admitted to the run/scenario
-collection. Aggregate or provenance-only predecessor artifacts remain valid
-accepted-source bindings with run extraction `NOT_REQUIRED`; an execution
-source that lacks its declared run fails closed with `NO_EXTRACTABLE_RUNS`.
-The aggregator never invents identities, provenance, scenarios, or replay
-outcomes by mixing unrelated subtrees. Deterministic results compare replay
-decisions and lifecycle outcomes; Gazebo and MuJoCo compare scenario outcomes,
-lifecycle, invariants, and declared measurement tolerances rather than
-bitwise physics traces.
+Historical accepted authority remains the semantic oracle. Q01 (`TASK-SIM-Q01-MIN` acceptance, compatibility Evidence task `TASK-SIM-Q01`) is a separately preserved qualification observation. The canonical Evidence records the immutable acceptance/Evidence tuple, exact eleven operation subjects, claim scopes, predecessor bindings, applicability, and duplicate-authority checks. It does not backfill Q01 values into historical rows.
 
-The index fails closed for an invalid accepted commit, undeclared/missing
-artifact, malformed blob, task/result mismatch, direct-binding conflict, or
-hash mismatch. A blocked result remains auditable and never updates accepted
-outcomes automatically. The runner records the full pytest command, exit code,
-source Git SHA, and baseline classification; `PROVEN_PREEXISTING` requires the
-same full pytest command to run against an isolated baseline checkout with
-matching node IDs and stable failure signatures.
+## Results
+
+- Deterministic replay: `PASS`; it uses validated historical deterministic authority only. All eleven Q01 rows are explicitly non-replay authority.
+- Physics semantic regression: `PASS`; historical semantics are compared with qualified actual observations, including validated applicable Gazebo and MuJoCo observations. This is not a bitwise-identity or real-world-performance claim.
+- Full repository regression: `PROVEN_PREEXISTING`. Candidate `2ec859845628992b02686a6d8bcdbcb77985a5a2` and baseline `6909c6cceb727598570f6e170ae8d1d293418c9a` used `/home/jinho/projects/factory_physical_ai/.venv-sim/bin/python` (MuJoCo `3.13.0`) in clean detached worktrees with detached project-module imports. Both exited 1 with the same complete four-node failure set and the same non-empty stable signature for every node.
+
+The detailed machine-verifiable record is [SIM-010_observability_regression.json](../../results/simulation/SIM-010_observability_regression.json).
+
+## Repeatability and finalization
+
+A fresh G7 execution from the same immutable candidate and baseline used the same explicitly resolved interpreter and clean detached worktrees. Its historical/Q01 bindings, subject mapping, claim scopes, applicability decisions, replay and physics decisions, final task result, complete failed-node set, and stable failure signatures were semantically equivalent to G6. Fresh worktree paths and raw-output hashes were intentionally not required to match.

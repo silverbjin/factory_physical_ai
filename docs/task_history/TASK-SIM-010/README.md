@@ -1,6 +1,6 @@
 # TASK-SIM-010 History
 
-Current status: INCOMPLETE / Q01 INTEGRATION CORRECTION REQUIRED
+Current status: IMPLEMENTED / INDEPENDENT REVIEW PENDING
 
 | Seq | Type | Result | Record | Primary fault domain | Architecture decision / next action |
 |---:|---|---|---|---|---|
@@ -16,3 +16,7 @@ Current status: INCOMPLETE / Q01 INTEGRATION CORRECTION REQUIRED
 | 11 | Diagnosis | RESOLVED | `11_diagnosis.md` | `COMBINED_PROVENANCE_ARCHITECTURE_DEFECT` | `PREDECESSOR_QUALIFICATION_TASK_REQUIRED` / `IMPLEMENT_RESOLVED_FIX` |
 | 12 | Fix | NOT READY FOR INDEPENDENT RE-REVIEW | `12_fix.md` | `TRUE_PREDECESSOR_EVIDENCE_GAP` | `PREDECESSOR_QUALIFICATION_TASK_APPROVAL` |
 | 13 | Diagnosis | RESOLVED | `13_diagnosis.md` | `SIM010_Q01_INTEGRATION_GAP` | `ADDITIVE_Q01_BINDING_REQUIRED` / narrow TASK addendum, then bounded correction |
+| 14 | Implementation | IN PROGRESS | `14_implementation.md` | `SIM010_Q01_INTEGRATION_GAP` | bounded Q01 consumer correction plan |
+| 15 | Implementation | INCOMPLETE | `15_implementation.md` | `FULL_REGRESSION_EXECUTION_FAILURE` | `S10-G5` BLOCKED / diagnose declared regression environment |
+| 16 | Implementation | COMPLETE | `16_implementation.md` | `SIM010_G5_ENVIRONMENT_BINDING_DEFECT` | `S10-G0`–`S10-G5` PASS / generate canonical Evidence and run repeatability |
+| 17 | Implementation | COMPLETE | `17_implementation.md` | `SIM010_Q01_INTEGRATION_GAP` | `S10-G6`–`S10-G7` PASS / Independent Read-only Review |
