@@ -11,9 +11,11 @@ import sys
 import pytest
 
 ROOT = Path(__file__).resolve().parents[1]
+QUALIFIED_PYTHON = Path("/home/jinho/projects/factory_physical_ai/.venv-sim/bin/python")
 sys.path.insert(0, str(ROOT / "src"))
 
 from simulation_runtime.observability_regression import (
+    _q01_physics_rows,
     build_regression_evidence,
     classify_regression_failures,
     extract_bound_runs,
@@ -22,6 +24,7 @@ from simulation_runtime.observability_regression import (
     resolve_q01_qualification,
     validate_q01_chain,
 )
+import simulation_runtime.observability_regression as OBS
 
 RUNNER_SPEC = importlib.util.spec_from_file_location(
     "run_simulation_observability_regression",
@@ -473,6 +476,92 @@ def test_q01_binding_replaces_only_downstream_gate_blockers_not_history() -> Non
     assert result["task_specific_result"] == "SIM_OBSERVABILITY_REGRESSION_READY"
 
 
+def test_requirement_scoped_classification_preserves_current_historical_diagnostics() -> None:
+    result = build_regression_evidence(ROOT)
+
+    classification = result["required_run_failure_classification"]
+    counts = classification["counts"]
+
+    assert counts == {
+        "HISTORICAL_DIAGNOSTIC_ONLY_NON_GATING": 21,
+        "EXPLICITLY_QUALIFIED_BY_Q01": 32,
+        "STILL_BLOCKING": 0,
+    }
+    assert len(classification["entries"]) == 53
+    assert any(
+        entry["source_task"] == "SIM-005"
+        and entry["classification"] == "HISTORICAL_DIAGNOSTIC_ONLY_NON_GATING"
+        and entry["failure"] == "MISSING_TRACE_ID"
+        for entry in classification["entries"]
+    )
+    assert any(
+        entry["source_task"] == "SIM-009"
+        and entry["classification"] == "EXPLICITLY_QUALIFIED_BY_Q01"
+        and entry["failure"] == "MISSING_SIMULATION_TIME"
+        for entry in classification["entries"]
+    )
+
+
+def test_requirement_scoped_classification_rejects_unmapped_failure_despite_valid_q01() -> None:
+    index = [{
+        "short_task_id": "SIM-008",
+        "run_sources": [{"scenario_id": "SIM_NORMAL_BRAKE_ECU_LINE_B"}],
+        "run_validation": {"failures": ["RUN[0]:MISSING_UNMAPPED_PROVENANCE"]},
+    }]
+
+    classification = OBS.classify_required_run_failures(index, resolve_q01_qualification(ROOT))
+
+    assert classification["counts"]["STILL_BLOCKING"] == 1
+    assert classification["entries"][0]["classification"] == "STILL_BLOCKING"
+
+
+def test_requirement_scoped_classification_rejects_wrong_q01_subject_mapping() -> None:
+    q01 = resolve_q01_qualification(ROOT)
+    q01["qualification_subjects"] = deepcopy(q01["qualification_subjects"])
+    subject = next(item for item in q01["qualification_subjects"] if item["subject_id"] == "q01-sim008-normal-system-authority")
+    subject["historical_oracle"] = dict(subject["historical_oracle"])
+    subject["historical_oracle"]["task_id"] = "TASK-SIM-009"
+    index = [{
+        "short_task_id": "SIM-008",
+        "run_sources": [{"scenario_id": "SIM_NORMAL_BRAKE_ECU_LINE_B"}],
+        "run_validation": {"failures": ["RUN[0]:MISSING_BRIDGE_SHA256"]},
+    }]
+
+    classification = OBS.classify_required_run_failures(index, q01)
+
+    assert classification["counts"]["STILL_BLOCKING"] == 1
+
+
+def test_support_authority_cannot_satisfy_run_local_failure_claims() -> None:
+    index = [{
+        "short_task_id": "SIM-008",
+        "run_sources": [{"scenario_id": "SIM_NORMAL_BRAKE_ECU_LINE_B"}],
+        "run_validation": {"failures": [
+            "RUN[0]:MISSING_TRACE_ID",
+            "RUN[0]:MISSING_SIMULATION_TIME",
+            "RUN[0]:MISSING_BRIDGE_SHA256",
+        ]},
+    }]
+    support_only_q01 = {"immutable_authority_bindings": {"TASK-SIM-004": {"claim_scope": "immutable_accepted_authority"}}}
+
+    classification = OBS.classify_required_run_failures(index, support_only_q01)
+
+    assert classification["counts"]["STILL_BLOCKING"] == 3
+
+
+def test_unrelated_failure_blocks_ready_even_when_q01_is_valid(monkeypatch: pytest.MonkeyPatch) -> None:
+    original = OBS._source_hash_failures
+
+    def unrelated_failure(envelope: object) -> list[str]:
+        return [*original(envelope), "MISSING_UNRELATED_PROVENANCE"]  # type: ignore[arg-type]
+
+    monkeypatch.setattr(OBS, "_source_hash_failures", unrelated_failure)
+    result = build_regression_evidence(ROOT)
+
+    assert result["required_run_failure_classification"]["counts"]["STILL_BLOCKING"] > 0
+    assert result["task_specific_result"] == "SIM_OBSERVABILITY_REGRESSION_BLOCKED"
+
+
 def _q01_chain() -> tuple[dict[str, object], dict[str, object]]:
     acceptance = json.loads(
         subprocess.run(
@@ -548,6 +637,35 @@ def test_q01_rejects_duplicate_and_extra_subjects() -> None:
         validate_q01_chain(ROOT, acceptance, evidence)
 
 
+@pytest.mark.parametrize(
+    ("mutate",),
+    [
+        (lambda evidence: evidence["immutable_authority_bindings"]["TASK-SIM-004"].update({"claims": ["request_id"]}),),
+        (lambda evidence: evidence["immutable_authority_bindings"]["TASK-SIM-004"]["predecessor_binding"].update({"evidence_sha256": "0" * 64}),),
+        (lambda evidence: evidence["qualification_subjects"][4]["applicability"]["physics_measurement"].update({"state": "NOT_APPLICABLE", "execution_state": {"simulator_started": False, "physics_started": False}}),),
+        (lambda evidence: evidence["qualification_subjects"][1]["semantic_outcome"]["execution_identity"].update({"scenario_execution_id": evidence["qualification_subjects"][2]["semantic_outcome"]["execution_identity"]["scenario_execution_id"]}),),
+    ],
+)
+def test_q01_rejects_support_scope_binding_applicability_and_execution_identity_bypasses(mutate: object) -> None:
+    acceptance, evidence = _q01_chain()
+    mutate(evidence)  # type: ignore[operator]
+    with pytest.raises(ValueError):
+        validate_q01_chain(ROOT, acceptance, evidence)
+
+
+def test_q01_physics_rejects_contradictory_observation_semantics() -> None:
+    linked = resolve_q01_qualification(ROOT)["qualification_subjects"]
+    contradictory = deepcopy(next(item for item in linked if item["subject_id"] == "q01-sim009-SIM009-NAV-ABORTED"))
+    contradictory["qualification_observation"]["semantic_outcome"].update(  # type: ignore[index]
+        {"decision": "CONTRADICTORY_DECISION", "result": "success", "status": "completed"}
+    )
+
+    rows, failures = _q01_physics_rows([contradictory])
+
+    assert rows == []
+    assert any("Q01_SEMANTIC_MISMATCH" in failure for failure in failures)
+
+
 def test_runner_binds_one_explicit_interpreter_to_identical_commands() -> None:
     python = Path(sys.executable)
     candidate = RUNNER.regression_command(python)
@@ -569,7 +687,7 @@ def test_runner_rejects_missing_and_non_executable_interpreters(tmp_path: Path) 
 
 
 def test_runner_dependency_preflight_and_source_probe_use_resolved_python() -> None:
-    python = RUNNER.resolve_qualified_python(Path(sys.executable))
+    python = RUNNER.resolve_qualified_python(QUALIFIED_PYTHON)
     preflight = RUNNER.preflight_environment(python)
     probe = RUNNER.probe_worktree_environment(ROOT, python)
 
@@ -588,6 +706,21 @@ def test_runner_dependency_preflight_failure_is_fail_closed(tmp_path: Path) -> N
         RUNNER.preflight_environment(fake_python)
 
 
+def test_runner_falls_back_to_clean_detached_clone_when_worktree_admin_is_unwritable() -> None:
+    commit = subprocess.run(
+        ["git", "rev-parse", "HEAD"], cwd=ROOT, text=True, capture_output=True, check=True,
+    ).stdout.strip()
+    checkout = RUNNER._detached_checkout(ROOT, commit, "sim010-test-wt-")
+    try:
+        assert (checkout / ".git").is_file() or (checkout / ".git").is_dir()
+        assert subprocess.run(
+            ["git", "rev-parse", "--is-inside-work-tree"], cwd=checkout,
+            text=True, capture_output=True, check=True,
+        ).stdout.strip() == "true"
+    finally:
+        RUNNER._remove_checkout(ROOT, checkout)
+
+
 def test_environment_and_collection_failures_cannot_be_preexisting() -> None:
     matching = {"tests/test_x.py::test_case": "signature"}
 
@@ -595,3 +728,41 @@ def test_environment_and_collection_failures_cannot_be_preexisting() -> None:
     assert RUNNER.classify_execution(1, 2, matching, matching) == "POSSIBLY_TASK_RELATED"
     assert RUNNER.classify_execution(1, 1, matching, matching, "cleanup failed") == "POSSIBLY_TASK_RELATED"
     assert RUNNER.classify_execution(1, 1, matching, matching) == "PROVEN_PREEXISTING"
+
+
+def test_runner_rejects_dirty_candidate_and_returns_the_clean_head(tmp_path: Path) -> None:
+    subprocess.run(["git", "init", str(tmp_path)], text=True, capture_output=True, check=True)
+    (tmp_path / "tracked.txt").write_text("clean\n")
+    subprocess.run(["git", "add", "tracked.txt"], cwd=tmp_path, text=True, capture_output=True, check=True)
+    subprocess.run(
+        ["git", "-c", "user.name=SIM010", "-c", "user.email=sim010@example.invalid", "commit", "-m", "fixture"],
+        cwd=tmp_path, text=True, capture_output=True, check=True,
+    )
+    expected = subprocess.run(
+        ["git", "rev-parse", "HEAD"], cwd=tmp_path, text=True, capture_output=True, check=True,
+    ).stdout.strip()
+
+    assert RUNNER.immutable_candidate_commit(tmp_path) == expected
+
+    (tmp_path / "dirty.txt").write_text("dirty\n")
+    with pytest.raises(RuntimeError, match="DIRTY_CANDIDATE_WORKTREE"):
+        RUNNER.immutable_candidate_commit(tmp_path)
+
+
+def test_runner_records_complete_test_summary_and_separates_gate_result() -> None:
+    failed = subprocess.CompletedProcess(
+        args=["pytest"], returncode=1, stdout="4 failed, 385 passed in 38.15s\n", stderr="",
+    )
+
+    assert RUNNER.test_result_summary(failed) == {
+        "result": "FAIL",
+        "total": 389,
+        "passed": 385,
+        "failed": 4,
+        "errors": 0,
+        "skipped": 0,
+        "xfailed": 0,
+        "xpassed": 0,
+    }
+    assert RUNNER.gate_result("PROVEN_PREEXISTING") == "PASS"
+    assert RUNNER.gate_result("POSSIBLY_TASK_RELATED") == "BLOCKED"

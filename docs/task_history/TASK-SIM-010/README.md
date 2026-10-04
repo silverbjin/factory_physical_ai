@@ -1,6 +1,6 @@
 # TASK-SIM-010 History
 
-Current status: IMPLEMENTED / INDEPENDENT REVIEW PENDING
+Current status: REJECTED / FIX REQUIRED
 
 | Seq | Type | Result | Record | Primary fault domain | Architecture decision / next action |
 |---:|---|---|---|---|---|
@@ -20,3 +20,10 @@ Current status: IMPLEMENTED / INDEPENDENT REVIEW PENDING
 | 15 | Implementation | INCOMPLETE | `15_implementation.md` | `FULL_REGRESSION_EXECUTION_FAILURE` | `S10-G5` BLOCKED / diagnose declared regression environment |
 | 16 | Implementation | COMPLETE | `16_implementation.md` | `SIM010_G5_ENVIRONMENT_BINDING_DEFECT` | `S10-G0`–`S10-G5` PASS / generate canonical Evidence and run repeatability |
 | 17 | Implementation | COMPLETE | `17_implementation.md` | `SIM010_Q01_INTEGRATION_GAP` | `S10-G6`–`S10-G7` PASS / Independent Read-only Review |
+| 18 | Review | REJECT | `18_review.md` | `SIM010_G4_FAIL_OPEN` | resolve `SIM010-G8-001` through `SIM010-G8-003` before Acceptance |
+| 19 | Fix | READY FOR INDEPENDENT RE-REVIEW | `19_fix.md` | `SIM010_G4_FAIL_OPEN` | Independent Read-only Review |
+| 20 | Review | REJECT | `20_review.md` | `SIM010_EVIDENCE_FAIL_OPEN` | resolve `SIM010-RR-001` and `SIM010-RR-002` before Acceptance |
+| 21 | Diagnosis | RESOLVED | `21_diagnosis.md` | `SIM010_REQUIREMENT_SCOPED_AUTHORITY_GATING_DEFECT` / `SIM010_IMMUTABLE_CANDIDATE_LIFECYCLE_DEFECT` | `MANUAL_BOUNDED_FIX_THEN_MANUAL_REGATE_AND_REREVIEW` / `IMPLEMENT_RESOLVED_FIX` |
+| 22 | Review | PASS — S10-G0 through S10-G5 | `22_review.md` | `SIM010_MANUAL_GATE_VALIDATION` | `RUN_MANUAL_S10_G6_AND_G7` |
+| 23 | Diagnosis | RESOLVED | `23_diagnosis.md` | `SIM010_G5_TEST_TREE_PROVENANCE_ERROR` | `22_review.md` baseline summary superseded / `RESUME_IMPLEMENTATION` |
+| 24 | Review | PASS — corrected S10-G0 through S10-G5 | `24_review.md` | `SIM010_G5_TEST_TREE_PROVENANCE_ERROR` | `PASS_PROVEN_PREEXISTING` / `RUN_MANUAL_S10_G6_AND_G7` |

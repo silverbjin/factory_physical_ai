@@ -59,6 +59,56 @@ Q01_SUBJECTS = {
     "q01-sim009-SIM009-VLA-AMBIGUOUS": ("SIM-009", "SIM009-VLA-AMBIGUOUS", "mujoco", "sim005-mujoco-vla-backend-v1"),
     "q01-sim009-SIM009-VLA-UNKNOWN": ("SIM-009", "SIM009-VLA-UNKNOWN", "mujoco", "sim005-mujoco-vla-backend-v1"),
 }
+Q01_PREDECESSOR_ACCEPTANCES = {
+    "SIM-004": "ebf84580f141f9d8ea0962d008ef35a5d14b7dd6",
+    "SIM-005": "ebf84580f141f9d8ea0962d008ef35a5d14b7dd6",
+    "SIM-007": "8ecca674f2e5c39df175362f98d43f174e44923b",
+    "SIM-008": "162ffaa4e78b255630cd1204aa43fa2d7c229108",
+    "SIM-009": "2e85d275277b3c2bbc331b04f8b6c3a9c81fe8a3",
+}
+Q01_SUPPORT_CLAIMS = {
+    "TASK-SIM-004": {"component_version", "runtime_identity", "world_authority", "bridge_authority", "runner_authority"},
+    "TASK-SIM-005": {"mujoco_version", "model_scene_authority", "configuration_source_authority", "version_wide_seed_timestep_authority", "accepted_initial_state_authority"},
+    "TASK-SIM-007": {"profile_identity", "profile_source_configuration_authority", "accepted_aggregate_outcome"},
+}
+
+HISTORICAL_DIAGNOSTIC_FAILURES = {
+    ("SIM-004", "success"): frozenset({"MISSING_SIMULATION_TIME"}),
+    ("SIM-004", "blocked"): frozenset({"MISSING_SIMULATION_TIME"}),
+    ("SIM-004", "timeout_reconciliation"): frozenset({"MISSING_SIMULATION_TIME"}),
+    **{("SIM-005", scenario): frozenset({"MISSING_TRACE_ID", "INCOMPLETE_CORRELATION_IDENTITY"}) for scenario in (
+        "mujoco-place-nominal", "mujoco-grasp-miss", "mujoco-contact-loss",
+        "mujoco-workspace-limit", "mujoco-invalid-observation", "mujoco-timeout", "mujoco-unknown",
+    )},
+    **{("SIM-007", scenario): frozenset({"MISSING_SOURCE_CONFIG_HASHES"}) for scenario in (
+        "deterministic", "navigation_physics", "manipulation_physics", "system",
+    )},
+}
+QUALIFIED_RUN_FAILURES = {
+    ("SIM-008", "SIM_NORMAL_BRAKE_ECU_LINE_B"): (
+        "q01-sim008-normal-system-authority",
+        frozenset({"MISSING_BRIDGE_SHA256", "MISSING_LAUNCH_SHA256"}),
+    ),
+    **{("SIM-009", scenario): (subject_id, frozenset({
+        "MISSING_SOURCE_HASH:run_config_sha256", "MISSING_WORLD_MODEL_SHA256", "MISSING_SIMULATION_TIME",
+    })) for subject_id, scenario in (
+        ("q01-sim009-SIM009-NAV-BLOCKED", "SIM009-NAV-BLOCKED"),
+        ("q01-sim009-SIM009-NAV-ABORTED", "SIM009-NAV-ABORTED"),
+        ("q01-sim009-SIM009-NAV-TIMEOUT-RETRY", "SIM009-NAV-TIMEOUT-RETRY"),
+        ("q01-sim009-SIM009-NAV-TF-UNAVAILABLE", "SIM009-NAV-TF-UNAVAILABLE"),
+        ("q01-sim009-SIM009-VLA-GRASP-MISS", "SIM009-VLA-GRASP-MISS"),
+        ("q01-sim009-SIM009-VLA-CONTACT-LOSS", "SIM009-VLA-CONTACT-LOSS"),
+        ("q01-sim009-SIM009-VLA-WORKSPACE-LIMIT", "SIM009-VLA-WORKSPACE-LIMIT"),
+        ("q01-sim009-SIM009-VLA-TIMEOUT", "SIM009-VLA-TIMEOUT"),
+        ("q01-sim009-SIM009-VLA-AMBIGUOUS", "SIM009-VLA-AMBIGUOUS"),
+        ("q01-sim009-SIM009-VLA-UNKNOWN", "SIM009-VLA-UNKNOWN"),
+    )},
+}
+REQUIRED_RUN_FAILURE_CLASSES = (
+    "HISTORICAL_DIAGNOSTIC_ONLY_NON_GATING",
+    "EXPLICITLY_QUALIFIED_BY_Q01",
+    "STILL_BLOCKING",
+)
 
 
 def sha256(path: Path) -> str:
@@ -158,6 +208,26 @@ def _q01_profile(value: Any) -> str | None:
     return {"gazebo": "gazebo", "gazebo_navigation": "gazebo", "mujoco": "mujoco"}.get(value)
 
 
+def _resolve_q01_predecessor(root: Path, short_id: str) -> dict[str, Any]:
+    """Resolve a Q01 predecessor through its pinned Acceptance tree object."""
+    acceptance_commit = Q01_PREDECESSOR_ACCEPTANCES[short_id]
+    acceptance_path = f"results/reviews/{short_id}_acceptance.json"
+    _git(root, "cat-file", "-e", f"{acceptance_commit}^{{commit}}")
+    try:
+        acceptance = json.loads(_git(root, "show", f"{acceptance_commit}:{acceptance_path}"))
+    except json.JSONDecodeError as exc:
+        _q01_fail("MALFORMED_PREDECESSOR_ACCEPTANCE")
+        raise exc  # pragma: no cover
+    if (not isinstance(acceptance, Mapping) or acceptance.get("task_id") != f"TASK-{short_id}"
+            or acceptance.get("status") != "ACCEPT"):
+        _q01_fail("INVALID_PREDECESSOR_ACCEPTANCE")
+    try:
+        return resolve_accepted_evidence(root, short_id, acceptance)
+    except (OSError, ValueError, json.JSONDecodeError):
+        _q01_fail("UNRESOLVABLE_PREDECESSOR")
+    raise AssertionError("unreachable")  # pragma: no cover
+
+
 def _validate_q01_applicability(subject: Mapping[str, Any]) -> None:
     applicability = subject.get("applicability")
     timing = subject.get("timing")
@@ -170,10 +240,13 @@ def _validate_q01_applicability(subject: Mapping[str, Any]) -> None:
         state = claim.get("state")
         if state == "REQUIRED":
             observation = timing.get("physics_measurement") if field == "physics_measurement" else timing.get("simulation_time")
-            if (isinstance(observation, Mapping) and isinstance(observation.get("seconds"), (int, float))) or isinstance(observation, (int, float)):
+            source = observation.get("source") if isinstance(observation, Mapping) else timing.get("simulation_time_source")
+            if ((isinstance(observation, Mapping) and isinstance(observation.get("seconds"), (int, float))) or isinstance(observation, (int, float))) and isinstance(source, str) and source:
                 continue
             _q01_fail("MISSING_REQUIRED_OBSERVATION")
         if state == "NOT_APPLICABLE":
+            if not isinstance(claim.get("justification"), str) or not claim["justification"]:
+                _q01_fail("MISSING_NOT_APPLICABLE_JUSTIFICATION")
             execution = claim.get("execution_state")
             if not isinstance(execution, Mapping):
                 execution = timing.get("execution_state")
@@ -204,6 +277,7 @@ def validate_q01_chain(root: Path, acceptance: Mapping[str, Any], evidence: Mapp
         _q01_fail("SUBJECT_SET_MISMATCH")
     runs: set[tuple[Any, Any]] = set()
     mappings: set[tuple[Any, Any]] = set()
+    scenario_executions: set[tuple[Any, Any]] = set()
     for subject in subjects:
         if not isinstance(subject, Mapping):
             _q01_fail("INVALID_SUBJECT")
@@ -222,14 +296,7 @@ def validate_q01_chain(root: Path, acceptance: Mapping[str, Any], evidence: Mapp
         binding = subject.get("predecessor_binding")
         if not isinstance(binding, Mapping) or binding.get("task_id") != f"TASK-{predecessor_task}":
             _q01_fail("INVALID_PREDECESSOR_BINDING")
-        try:
-            resolved = resolve_accepted_evidence(
-                root,
-                predecessor_task,
-                _load_json(root / "results/reviews" / f"{predecessor_task}_acceptance.json"),
-            )
-        except (OSError, ValueError, json.JSONDecodeError):
-            _q01_fail("UNRESOLVABLE_PREDECESSOR")
+        resolved = _resolve_q01_predecessor(root, predecessor_task)
         if any(resolved[key] != binding.get(key) for key in ("accepted_commit", "evidence_path", "evidence_sha256")):
             _q01_fail("PREDECESSOR_BINDING_MISMATCH")
         run_key = (subject.get("qualification_run_id"), subject.get("scenario_id"))
@@ -237,15 +304,32 @@ def validate_q01_chain(root: Path, acceptance: Mapping[str, Any], evidence: Mapp
         if not all(isinstance(value, str) and value for value in run_key) or run_key in runs or mapping_key in mappings:
             _q01_fail("DUPLICATE_AUTHORITY")
         runs.add(run_key); mappings.add(mapping_key)
+        semantic = subject.get("semantic_outcome")
+        execution_identity = semantic.get("execution_identity") if isinstance(semantic, Mapping) else None
+        if predecessor_task == "SIM-009":
+            scenario_execution_id = execution_identity.get("scenario_execution_id") if isinstance(execution_identity, Mapping) else None
+            if not isinstance(scenario_execution_id, str) or not scenario_execution_id:
+                _q01_fail("INVALID_SCENARIO_EXECUTION_IDENTITY")
+            execution_key = (subject.get("qualification_run_id"), scenario_execution_id)
+            if execution_key in scenario_executions:
+                _q01_fail("DUPLICATE_AUTHORITY")
+            scenario_executions.add(execution_key)
         _validate_q01_applicability(subject)
     immutable = evidence.get("immutable_authority_bindings")
     if not isinstance(immutable, Mapping):
         _q01_fail("INVALID_SUPPORT_AUTHORITY")
-    for task_id in ("TASK-SIM-004", "TASK-SIM-005", "TASK-SIM-007"):
+    for task_id, allowed_claims in Q01_SUPPORT_CLAIMS.items():
         item = immutable.get(task_id)
         if (not isinstance(item, Mapping) or item.get("claim_scope") != "immutable_accepted_authority"
-                or not isinstance(item.get("claims"), list) or not item["claims"]):
+                or not isinstance(item.get("claims"), list) or set(item["claims"]) != allowed_claims):
             _q01_fail("INVALID_SUPPORT_AUTHORITY")
+        binding = item.get("predecessor_binding")
+        short_id = task_id[5:]
+        if not isinstance(binding, Mapping):
+            _q01_fail("INVALID_SUPPORT_AUTHORITY")
+        resolved = _resolve_q01_predecessor(root, short_id)
+        if any(resolved[key] != binding.get(key) for key in ("accepted_commit", "evidence_path", "evidence_sha256")):
+            _q01_fail("SUPPORT_PREDECESSOR_BINDING_MISMATCH")
 
 
 def resolve_q01_qualification(root: Path) -> dict[str, Any]:
@@ -273,8 +357,7 @@ def resolve_q01_qualification(root: Path) -> dict[str, Any]:
     for subject in evidence["qualification_subjects"]:
         binding = subject["predecessor_binding"]
         short_id = str(binding["task_id"])[5:]
-        acceptance_path = root / "results/reviews" / f"{short_id}_acceptance.json"
-        predecessor = resolve_accepted_evidence(root, short_id, _load_json(acceptance_path))
+        predecessor = _resolve_q01_predecessor(root, short_id)
         if any(predecessor[key] != binding.get(key) for key in ("accepted_commit", "evidence_path", "evidence_sha256")):
             _q01_fail("PREDECESSOR_BINDING_MISMATCH")
         expected = Q01_SUBJECTS[subject["subject_id"]]
@@ -296,6 +379,83 @@ def resolve_q01_qualification(root: Path) -> dict[str, Any]:
             "replay_applicable": False,
         })
     return {"acceptance_task_id": Q01_BINDING["acceptance_task_id"], "evidence_task_id": Q01_BINDING["evidence_task_id"], "evidence_sha256": Q01_BINDING["evidence_sha256"], "qualification_subjects": normalized}
+
+
+def _valid_qualified_subjects(q01: Mapping[str, Any] | None) -> dict[tuple[str, str], str]:
+    """Return only exact, separately-namespaced Q01 subject mappings."""
+    if not isinstance(q01, Mapping):
+        return {}
+    linked_subjects = q01.get("qualification_subjects")
+    if not isinstance(linked_subjects, list):
+        return {}
+    mappings: dict[tuple[str, str], str] = {}
+    for linked in linked_subjects:
+        if not isinstance(linked, Mapping):
+            continue
+        subject_id = linked.get("subject_id")
+        expected = Q01_SUBJECTS.get(subject_id)
+        historical = linked.get("historical_oracle")
+        observation = linked.get("qualification_observation")
+        if not isinstance(expected, tuple) or not isinstance(historical, Mapping) or not isinstance(observation, Mapping):
+            continue
+        predecessor_task, scenario_id, _, _ = expected
+        envelope = historical.get("envelope")
+        if (
+            historical.get("task_id") != f"TASK-{predecessor_task}"
+            or not isinstance(envelope, Mapping)
+            or envelope.get("scenario_id") != scenario_id
+            or observation.get("subject_id") != subject_id
+            or observation.get("scenario_id") != scenario_id
+            or observation.get("claim_scope") != "run_local"
+        ):
+            continue
+        mappings[(predecessor_task, scenario_id)] = subject_id
+    return mappings
+
+
+def classify_required_run_failures(
+    index: list[Mapping[str, Any]], q01: Mapping[str, Any] | None,
+) -> dict[str, Any]:
+    """Classify each retained historical failure without backfilling its source row."""
+    qualified_subjects = _valid_qualified_subjects(q01)
+    entries: list[dict[str, Any]] = []
+    failure_pattern = re.compile(r"^RUN\[(?P<index>\d+)\]:(?P<failure>.+)$")
+    for row in index:
+        short_id = row.get("short_task_id")
+        if not isinstance(short_id, str) or short_id not in RUN_EXTRACTOR_TASKS:
+            continue
+        sources = row.get("run_sources")
+        validation = row.get("run_validation")
+        failures = validation.get("failures") if isinstance(validation, Mapping) else []
+        if not isinstance(sources, list) or not isinstance(failures, list):
+            continue
+        for raw_failure in failures:
+            if not isinstance(raw_failure, str):
+                continue
+            match = failure_pattern.match(raw_failure)
+            position = int(match.group("index")) if match else None
+            failure = match.group("failure") if match else raw_failure
+            source = sources[position] if position is not None and position < len(sources) and isinstance(sources[position], Mapping) else {}
+            scenario_id = source.get("scenario_id") if isinstance(source.get("scenario_id"), str) else None
+            historical_allowed = HISTORICAL_DIAGNOSTIC_FAILURES.get((short_id, scenario_id))
+            qualified = QUALIFIED_RUN_FAILURES.get((short_id, scenario_id))
+            subject_id = qualified_subjects.get((short_id, scenario_id))
+            if historical_allowed is not None and failure in historical_allowed:
+                classification = "HISTORICAL_DIAGNOSTIC_ONLY_NON_GATING"
+            elif qualified is not None and subject_id == qualified[0] and failure in qualified[1]:
+                classification = "EXPLICITLY_QUALIFIED_BY_Q01"
+            else:
+                classification = "STILL_BLOCKING"
+            entries.append({
+                "source_task": short_id,
+                "run_index": position,
+                "scenario_id": scenario_id,
+                "failure": failure,
+                "classification": classification,
+                "qualification_subject_id": subject_id,
+            })
+    counts = {kind: sum(entry["classification"] == kind for entry in entries) for kind in REQUIRED_RUN_FAILURE_CLASSES}
+    return {"entries": entries, "counts": counts, "status": "PASS" if counts["STILL_BLOCKING"] == 0 else "BLOCKED"}
 
 
 def _identity(raw: Mapping[str, Any]) -> dict[str, Any]:
@@ -594,6 +754,17 @@ def _normalized_run(
     )
     row["record_kind"] = "operation_run"
     row["requires_operation_identity"] = True
+    row["semantic_outcome"] = {
+        key: value for key, value in {
+            "result": result.get("result"),
+            "status": result.get("status"),
+            "decision": scenario.get("expected_decision") or scenario.get("decision"),
+            "outcome_kind": scenario.get("outcome_kind"),
+            "lifecycle": scenario.get("expected_lifecycle"),
+            "state_invariants": scenario.get("state_invariants"),
+            "tolerances": scenario.get("measurements"),
+        }.items() if value not in (None, "", [], {})
+    }
     row["replay_applicable"] = short_id == "SIM-009" and scenario.get("backend") == "contract"
     row["physics_semantic_applicable"] = row.get("backend_profile") in {"gazebo", "mujoco", "mixed"}
     if row["replay_applicable"]:
@@ -833,6 +1004,10 @@ def extract_bound_runs(
             "source_json_path": "/execution",
             "scenario_source_path": "/execution",
             "scenario_pass": final_result.get("verdict") == "pass",
+            "semantic_outcome": {
+                "result": mission.get("result"),
+                "status": mission.get("status"),
+            },
             "requires_failure_recovery": False,
             "requires_skill": True,
             "requires_verification": True,
@@ -1000,8 +1175,21 @@ def _q01_physics_rows(linked_rows: list[Mapping[str, Any]]) -> tuple[list[dict[s
             failures.append(f"Q01_ORACLE_PROFILE_MISMATCH:{linked.get('subject_id')}")
             continue
         actual = observation.get("semantic_outcome")
-        if not isinstance(actual, Mapping) or not isinstance(actual.get("result"), str) or not isinstance(actual.get("status"), str):
+        expected = oracle.get("envelope", {}).get("semantic_outcome") if isinstance(oracle.get("envelope"), Mapping) else None
+        if (not isinstance(actual, Mapping) or not isinstance(expected, Mapping)
+                or not isinstance(actual.get("result"), str) or not isinstance(actual.get("status"), str)):
             failures.append(f"Q01_INVALID_SEMANTIC_OUTCOME:{linked.get('subject_id')}")
+            continue
+        comparable = ("result", "status", "decision", "outcome_kind", "lifecycle", "state_invariants", "tolerances")
+        mismatches = [key for key in comparable if expected.get(key) not in (None, "", [], {}) and actual.get(key) != expected.get(key)]
+        if mismatches:
+            failures.append(f"Q01_SEMANTIC_MISMATCH:{linked.get('subject_id')}:{','.join(mismatches)}")
+            continue
+        if not all(
+            isinstance(value, Mapping) and value
+            for value in (observation.get("configuration_provenance"), observation.get("world_model_provenance"))
+        ):
+            failures.append(f"Q01_PROVENANCE_MISMATCH:{linked.get('subject_id')}")
             continue
         row = dict(observation)
         row.update({"scenario_id": oracle.get("envelope", {}).get("scenario_id"), "scenario_pass": True})
@@ -1100,20 +1288,18 @@ def build_regression_evidence(root: Path) -> dict[str, Any]:
         }
         for missing in sorted(declared - extracted):
             coverage_failures.append(f"MISSING_MANDATORY_SCENARIO:{coverage_row['short_task_id']}:{missing}")
+    required_failure_classification = classify_required_run_failures(index, q01)
     required_run_failures = [
-        row["short_task_id"]
-        for row in index
-        if row["short_task_id"] in RUN_EXTRACTOR_TASKS
-        and (
-            not has_extracted_runs(row)
-            or (isinstance(row.get("run_validation"), Mapping) and row["run_validation"].get("status") != "PASS")
-        )
+        entry for entry in required_failure_classification["entries"]
+        if entry["classification"] == "STILL_BLOCKING"
     ]
-    # Historical SIM-004/005/007 run-schema gaps remain visible diagnostics;
-    # accepted bindings plus Q01's separately scoped observations are the
-    # authorized authority for the downstream Q01 gate, not a backfill.
-    if q01 is not None:
-        required_run_failures = []
+    for row in index:
+        if row["short_task_id"] in RUN_EXTRACTOR_TASKS and not has_extracted_runs(row):
+            required_run_failures.append({
+                "source_task": row["short_task_id"],
+                "failure": "NO_EXTRACTABLE_RUNS",
+                "classification": "STILL_BLOCKING",
+            })
     ready = (
         all(row["status"] == "PASS" for row in index)
         and not required_run_failures
@@ -1121,4 +1307,4 @@ def build_regression_evidence(root: Path) -> dict[str, Any]:
         and q01 is not None
         and deterministic["status"] == physics["status"] == "PASS"
     )
-    return {"schema_version": "1.0", "task_id": "TASK-SIM-010", "simulation_only": True, "claim_scope": "Simulation evidence only; no physical or production performance claim.", "accepted_source_index": index, "q01_qualification_binding": q01 or {"status": "BLOCKED", "failures": q01_failures}, "deterministic_replay": deterministic, "physics_semantic_regression": physics, "normal_failure_suite_coverage": {"status": "PASS" if not coverage_failures else "BLOCKED", "failures": coverage_failures}, "task_specific_result": "SIM_OBSERVABILITY_REGRESSION_READY" if ready else "SIM_OBSERVABILITY_REGRESSION_BLOCKED"}
+    return {"schema_version": "1.0", "task_id": "TASK-SIM-010", "simulation_only": True, "claim_scope": "Simulation evidence only; no physical or production performance claim.", "accepted_source_index": index, "required_run_failure_classification": required_failure_classification, "q01_qualification_binding": q01 or {"status": "BLOCKED", "failures": q01_failures}, "deterministic_replay": deterministic, "physics_semantic_regression": physics, "normal_failure_suite_coverage": {"status": "PASS" if not coverage_failures else "BLOCKED", "failures": coverage_failures}, "task_specific_result": "SIM_OBSERVABILITY_REGRESSION_READY" if ready else "SIM_OBSERVABILITY_REGRESSION_BLOCKED"}

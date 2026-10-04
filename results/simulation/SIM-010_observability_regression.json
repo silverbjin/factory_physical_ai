@@ -1467,41 +1467,6 @@
       "status": "PASS"
     }
   ],
-  "canonical_gate_results": {
-    "S10-G0": {
-      "gate": "Q01_ACCEPTANCE_BINDING",
-      "status": "PASS"
-    },
-    "S10-G1": {
-      "gate": "SUBJECT_MAPPING",
-      "status": "PASS"
-    },
-    "S10-G2": {
-      "gate": "NORMAL_FAILURE_TRACEABILITY",
-      "status": "PASS"
-    },
-    "S10-G3": {
-      "gate": "DETERMINISTIC_REPLAY",
-      "status": "PASS"
-    },
-    "S10-G4": {
-      "gate": "PHYSICS_SEMANTIC_REGRESSION",
-      "status": "PASS"
-    },
-    "S10-G5": {
-      "classification": "PROVEN_PREEXISTING",
-      "gate": "FULL_REGRESSION_CLASSIFICATION",
-      "status": "PASS"
-    },
-    "S10-G6": {
-      "gate": "CANONICAL_SIM010_EVIDENCE",
-      "status": "PASS"
-    },
-    "S10-G7": {
-      "gate": "REPEATABILITY_AND_FINALIZATION",
-      "status": "PASS"
-    }
-  },
   "claim_scope": "Simulation evidence only; no physical or production performance claim.",
   "deterministic_replay": {
     "criterion": "equivalent decisions and lifecycle outcomes",
@@ -1510,91 +1475,81 @@
   },
   "full_repository_regression": {
     "baseline_commit": "6909c6cceb727598570f6e170ae8d1d293418c9a",
-    "baseline_execution": {
-      "commit": "6909c6cceb727598570f6e170ae8d1d293418c9a",
-      "detached_worktree_path": "/tmp/sim010-g6b-20260929T074135Z-baseline-oI6v2r",
-      "exit_code": 1,
-      "failed_node_set": [
-        "scripts/codex/test_run_task_orchestrator.py::OrchestratorUnitTests::test_load_model_policy",
-        "tests/test_simulation_lane_gate.py::SimulationLaneGateTests::test_canonical_state_reconstructs_sim_go_without_authorizing_lane",
-        "tests/test_simulation_lane_gate.py::SimulationLaneGateTests::test_combined_review_commit_rewrite_and_concatenated_operation_fails_closed",
-        "tests/test_simulation_lane_gate.py::SimulationLaneGateTests::test_rehashed_unreviewed_runtime_operation_marker_fails_provenance_closed"
-      ],
-      "failure_signatures": {
-        "scripts/codex/test_run_task_orchestrator.py::OrchestratorUnitTests::test_load_model_policy": "7305ef81303173de1137ce866aff5bff0ced5edd15c44f84bfd16ed13eb53b04",
-        "tests/test_simulation_lane_gate.py::SimulationLaneGateTests::test_canonical_state_reconstructs_sim_go_without_authorizing_lane": "1e9c0d4ab987b547e72dffd7db684d9ff251636a27ad76ca7dbd1db0ce4beeb2",
-        "tests/test_simulation_lane_gate.py::SimulationLaneGateTests::test_combined_review_commit_rewrite_and_concatenated_operation_fails_closed": "71149efcf3e8cb3a7c89e4c00a54a807f6f2618412f8c97b4a4fc34de6b3cef4",
-        "tests/test_simulation_lane_gate.py::SimulationLaneGateTests::test_rehashed_unreviewed_runtime_operation_marker_fails_provenance_closed": "71149efcf3e8cb3a7c89e4c00a54a807f6f2618412f8c97b4a4fc34de6b3cef4"
-      },
-      "output_sha256": "a30ab30e92afcb32f4785bcda71495f96e206c0e5a0375736d93115b64e79cb8",
-      "probe": {
-        "cwd": "/tmp/sim010-g6b-20260929T074135Z-baseline-oI6v2r",
-        "mujoco_file": "/home/jinho/projects/factory_physical_ai/.venv-sim/lib/python3.12/site-packages/mujoco/__init__.py",
-        "mujoco_version": "3.13.0",
-        "project_module_origin": "/tmp/sim010-g6b-20260929T074135Z-baseline-oI6v2r/src/simulation_runtime/mujoco_vla_backend.py",
-        "pytest_file": "/usr/lib/python3/dist-packages/pytest/__init__.py",
-        "python": "/home/jinho/projects/factory_physical_ai/.venv-sim/bin/python",
-        "python_version": "3.12.3 (main, Aug 31 2026, 10:18:26) [GCC 13.3.0]",
-        "sys_path": [
-          "",
-          "/tmp/sim010-g6b-20260929T074135Z-baseline-oI6v2r/src",
-          "/usr/lib/python312.zip",
-          "/usr/lib/python3.12",
-          "/usr/lib/python3.12/lib-dynload",
-          "/home/jinho/projects/factory_physical_ai/.venv-sim/lib/python3.12/site-packages",
-          "/usr/local/lib/python3.12/dist-packages",
-          "/usr/lib/python3/dist-packages",
-          "/usr/lib/python3.12/dist-packages"
-        ]
-      }
+    "baseline_environment": {
+      "cwd": "/tmp/sim010-baseline-wt-btz4cjm7",
+      "mujoco_file": "/home/jinho/projects/factory_physical_ai/.venv-sim/lib/python3.12/site-packages/mujoco/__init__.py",
+      "mujoco_version": "3.13.0",
+      "project_module_origin": "/tmp/sim010-baseline-wt-btz4cjm7/src/simulation_runtime/mujoco_vla_backend.py",
+      "pytest_file": "/usr/lib/python3/dist-packages/pytest/__init__.py",
+      "python_executable": "/home/jinho/projects/factory_physical_ai/.venv-sim/bin/python3",
+      "python_version": "3.12.3 (main, Aug 31 2026, 10:18:26) [GCC 13.3.0]",
+      "sys_path": [
+        "",
+        "/tmp/sim010-baseline-wt-btz4cjm7/src",
+        "/usr/lib/python312.zip",
+        "/usr/lib/python3.12",
+        "/usr/lib/python3.12/lib-dynload",
+        "/home/jinho/projects/factory_physical_ai/.venv-sim/lib/python3.12/site-packages",
+        "/usr/local/lib/python3.12/dist-packages",
+        "/usr/lib/python3/dist-packages",
+        "/usr/lib/python3.12/dist-packages"
+      ]
     },
-    "candidate_commit": "2ec859845628992b02686a6d8bcdbcb77985a5a2",
-    "candidate_execution": {
-      "commit": "2ec859845628992b02686a6d8bcdbcb77985a5a2",
-      "detached_worktree_path": "/tmp/sim010-g6b-20260929T074135Z-candidate-WxTV14",
-      "exit_code": 1,
-      "failed_node_set": [
-        "scripts/codex/test_run_task_orchestrator.py::OrchestratorUnitTests::test_load_model_policy",
-        "tests/test_simulation_lane_gate.py::SimulationLaneGateTests::test_canonical_state_reconstructs_sim_go_without_authorizing_lane",
-        "tests/test_simulation_lane_gate.py::SimulationLaneGateTests::test_combined_review_commit_rewrite_and_concatenated_operation_fails_closed",
-        "tests/test_simulation_lane_gate.py::SimulationLaneGateTests::test_rehashed_unreviewed_runtime_operation_marker_fails_provenance_closed"
-      ],
-      "failure_signatures": {
-        "scripts/codex/test_run_task_orchestrator.py::OrchestratorUnitTests::test_load_model_policy": "7305ef81303173de1137ce866aff5bff0ced5edd15c44f84bfd16ed13eb53b04",
-        "tests/test_simulation_lane_gate.py::SimulationLaneGateTests::test_canonical_state_reconstructs_sim_go_without_authorizing_lane": "1e9c0d4ab987b547e72dffd7db684d9ff251636a27ad76ca7dbd1db0ce4beeb2",
-        "tests/test_simulation_lane_gate.py::SimulationLaneGateTests::test_combined_review_commit_rewrite_and_concatenated_operation_fails_closed": "71149efcf3e8cb3a7c89e4c00a54a807f6f2618412f8c97b4a4fc34de6b3cef4",
-        "tests/test_simulation_lane_gate.py::SimulationLaneGateTests::test_rehashed_unreviewed_runtime_operation_marker_fails_provenance_closed": "71149efcf3e8cb3a7c89e4c00a54a807f6f2618412f8c97b4a4fc34de6b3cef4"
-      },
-      "output_sha256": "581bb94909f828175cf9f5c34f29d5342beb5cfbc431ef0e8ac6df07d817be28",
-      "probe": {
-        "cwd": "/tmp/sim010-g6b-20260929T074135Z-candidate-WxTV14",
-        "mujoco_file": "/home/jinho/projects/factory_physical_ai/.venv-sim/lib/python3.12/site-packages/mujoco/__init__.py",
-        "mujoco_version": "3.13.0",
-        "project_module_origin": "/tmp/sim010-g6b-20260929T074135Z-candidate-WxTV14/src/simulation_runtime/mujoco_vla_backend.py",
-        "pytest_file": "/usr/lib/python3/dist-packages/pytest/__init__.py",
-        "python": "/home/jinho/projects/factory_physical_ai/.venv-sim/bin/python",
-        "python_version": "3.12.3 (main, Aug 31 2026, 10:18:26) [GCC 13.3.0]",
-        "sys_path": [
-          "",
-          "/tmp/sim010-g6b-20260929T074135Z-candidate-WxTV14/src",
-          "/usr/lib/python312.zip",
-          "/usr/lib/python3.12",
-          "/usr/lib/python3.12/lib-dynload",
-          "/home/jinho/projects/factory_physical_ai/.venv-sim/lib/python3.12/site-packages",
-          "/usr/local/lib/python3.12/dist-packages",
-          "/usr/lib/python3/dist-packages",
-          "/usr/lib/python3.12/dist-packages"
-        ]
-      }
+    "baseline_exit_code": 1,
+    "baseline_failure_signatures": {
+      "scripts/codex/test_run_task_orchestrator.py::OrchestratorUnitTests::test_load_model_policy": "7305ef81303173de1137ce866aff5bff0ced5edd15c44f84bfd16ed13eb53b04",
+      "tests/test_simulation_lane_gate.py::SimulationLaneGateTests::test_canonical_state_reconstructs_sim_go_without_authorizing_lane": "1e9c0d4ab987b547e72dffd7db684d9ff251636a27ad76ca7dbd1db0ce4beeb2",
+      "tests/test_simulation_lane_gate.py::SimulationLaneGateTests::test_combined_review_commit_rewrite_and_concatenated_operation_fails_closed": "71149efcf3e8cb3a7c89e4c00a54a807f6f2618412f8c97b4a4fc34de6b3cef4",
+      "tests/test_simulation_lane_gate.py::SimulationLaneGateTests::test_rehashed_unreviewed_runtime_operation_marker_fails_provenance_closed": "71149efcf3e8cb3a7c89e4c00a54a807f6f2618412f8c97b4a4fc34de6b3cef4"
     },
-    "classification_rule": "PROVEN_PREEXISTING requires identical complete non-empty failed-node set and identical non-empty stable signature for every node.",
-    "cleanup_result": "PASS: detached worktrees removed without --force",
+    "blocking_reason": "PROVEN_PREEXISTING_FULL_REGRESSION_FAILURES",
+    "candidate_commit": "0dc8e71c3b2aec56557fdfb54de83d3e446cd0a7",
+    "candidate_environment": {
+      "cwd": "/tmp/sim010-current-wt-peyj7fvo",
+      "mujoco_file": "/home/jinho/projects/factory_physical_ai/.venv-sim/lib/python3.12/site-packages/mujoco/__init__.py",
+      "mujoco_version": "3.13.0",
+      "project_module_origin": "/tmp/sim010-current-wt-peyj7fvo/src/simulation_runtime/mujoco_vla_backend.py",
+      "pytest_file": "/usr/lib/python3/dist-packages/pytest/__init__.py",
+      "python_executable": "/home/jinho/projects/factory_physical_ai/.venv-sim/bin/python3",
+      "python_version": "3.12.3 (main, Aug 31 2026, 10:18:26) [GCC 13.3.0]",
+      "sys_path": [
+        "",
+        "/tmp/sim010-current-wt-peyj7fvo/src",
+        "/usr/lib/python312.zip",
+        "/usr/lib/python3.12",
+        "/usr/lib/python3.12/lib-dynload",
+        "/home/jinho/projects/factory_physical_ai/.venv-sim/lib/python3.12/site-packages",
+        "/usr/local/lib/python3.12/dist-packages",
+        "/usr/lib/python3/dist-packages",
+        "/usr/lib/python3.12/dist-packages"
+      ]
+    },
+    "command": "PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=<detached>/src /home/jinho/projects/factory_physical_ai/.venv-sim/bin/python3 -m pytest -q -p no:cacheprovider",
+    "exit_code": 1,
+    "failed_node_ids": [
+      "scripts/codex/test_run_task_orchestrator.py::OrchestratorUnitTests::test_load_model_policy",
+      "tests/test_simulation_lane_gate.py::SimulationLaneGateTests::test_canonical_state_reconstructs_sim_go_without_authorizing_lane",
+      "tests/test_simulation_lane_gate.py::SimulationLaneGateTests::test_combined_review_commit_rewrite_and_concatenated_operation_fails_closed",
+      "tests/test_simulation_lane_gate.py::SimulationLaneGateTests::test_rehashed_unreviewed_runtime_operation_marker_fails_provenance_closed"
+    ],
     "failure_classification": "PROVEN_PREEXISTING",
-    "mujoco_version": "3.13.0",
-    "pytest_command": "PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=<detached-worktree>/src /home/jinho/projects/factory_physical_ai/.venv-sim/bin/python -m pytest -q -p no:cacheprovider",
-    "qualified_python": "/home/jinho/projects/factory_physical_ai/.venv-sim/bin/python"
+    "failure_signatures": {
+      "scripts/codex/test_run_task_orchestrator.py::OrchestratorUnitTests::test_load_model_policy": "7305ef81303173de1137ce866aff5bff0ced5edd15c44f84bfd16ed13eb53b04",
+      "tests/test_simulation_lane_gate.py::SimulationLaneGateTests::test_canonical_state_reconstructs_sim_go_without_authorizing_lane": "1e9c0d4ab987b547e72dffd7db684d9ff251636a27ad76ca7dbd1db0ce4beeb2",
+      "tests/test_simulation_lane_gate.py::SimulationLaneGateTests::test_combined_review_commit_rewrite_and_concatenated_operation_fails_closed": "71149efcf3e8cb3a7c89e4c00a54a807f6f2618412f8c97b4a4fc34de6b3cef4",
+      "tests/test_simulation_lane_gate.py::SimulationLaneGateTests::test_rehashed_unreviewed_runtime_operation_marker_fails_provenance_closed": "71149efcf3e8cb3a7c89e4c00a54a807f6f2618412f8c97b4a4fc34de6b3cef4"
+    },
+    "python_executable": "/home/jinho/projects/factory_physical_ai/.venv-sim/bin/python3",
+    "qualified_environment": {
+      "mujoco_file": "/home/jinho/projects/factory_physical_ai/.venv-sim/lib/python3.12/site-packages/mujoco/__init__.py",
+      "mujoco_version": "3.13.0",
+      "pytest_file": "/usr/lib/python3/dist-packages/pytest/__init__.py",
+      "python_executable": "/home/jinho/projects/factory_physical_ai/.venv-sim/bin/python3",
+      "python_version": "3.12.3 (main, Aug 31 2026, 10:18:26) [GCC 13.3.0]"
+    },
+    "result": "FAIL"
   },
-  "generated_at": "2026-09-29T07:44:47Z",
+  "generated_at": "2026-09-29T08:35:16Z",
   "normal_failure_suite_coverage": {
     "failures": [],
     "status": "PASS"
@@ -1603,22 +1558,6 @@
     "criterion": "outcome, lifecycle, invariants, and declared tolerances",
     "failures": [],
     "status": "PASS"
-  },
-  "protected_scope_integrity": {
-    "checked_against_addendum_commit": "527c7cf236fbe0143748964ae312f9d919f06bb6",
-    "protected_mutations_detected": [],
-    "status": "PASS"
-  },
-  "q01_accepted_authority": {
-    "acceptance_path": "results/reviews/SIM-Q01-MIN_acceptance.json",
-    "acceptance_recording_commit": "a1f1539c27f61fb2ce52aed33ceaf1bfe343912c",
-    "acceptance_task_id": "TASK-SIM-Q01-MIN",
-    "accepted_commit": "b55bc4fc2435e83c3761457b92d9e14892e39435",
-    "compatibility_evidence_task_id": "TASK-SIM-Q01",
-    "evidence_path": "results/simulation/SIM-Q01_provenance_qualification.json",
-    "evidence_sha256": "dbd2fc20f6072f8889466fff29b80ec874d105b37c5633e909c633facdb2eb6a",
-    "expected_result": "SIM_PROVENANCE_QUALIFICATION_READY",
-    "validation": "PASS"
   },
   "q01_qualification_binding": {
     "acceptance_task_id": "TASK-SIM-Q01-MIN",
@@ -1639,6 +1578,10 @@
             "scenario_id": "SIM_NORMAL_BRAKE_ECU_LINE_B",
             "scenario_pass": true,
             "scenario_source_path": "/execution",
+            "semantic_outcome": {
+              "result": "success",
+              "status": "completed"
+            },
             "simulation_only": true,
             "simulator_provenance": {
               "bounded_execution": true,
@@ -1776,6 +1719,12 @@
             "scenario_id": "SIM009-NAV-ABORTED",
             "scenario_pass": true,
             "scenario_source_path": "/scenarios/4",
+            "semantic_outcome": {
+              "decision": "FAIL_CLOSED",
+              "outcome_kind": "failure",
+              "result": "failure",
+              "status": "failed"
+            },
             "simulation_only": true,
             "simulator_provenance": {},
             "skill_result": null,
@@ -1907,6 +1856,12 @@
             "scenario_id": "SIM009-NAV-BLOCKED",
             "scenario_pass": true,
             "scenario_source_path": "/scenarios/3",
+            "semantic_outcome": {
+              "decision": "FAIL_CLOSED",
+              "outcome_kind": "failure",
+              "result": "failure",
+              "status": "failed"
+            },
             "simulation_only": true,
             "simulator_provenance": {},
             "skill_result": null,
@@ -2038,6 +1993,12 @@
             "scenario_id": "SIM009-NAV-TF-UNAVAILABLE",
             "scenario_pass": true,
             "scenario_source_path": "/scenarios/6",
+            "semantic_outcome": {
+              "decision": "FAIL_CLOSED",
+              "outcome_kind": "failure",
+              "result": "failure",
+              "status": "failed"
+            },
             "simulation_only": true,
             "simulator_provenance": {},
             "skill_result": null,
@@ -2169,6 +2130,12 @@
             "scenario_id": "SIM009-NAV-TIMEOUT-RETRY",
             "scenario_pass": true,
             "scenario_source_path": "/scenarios/5",
+            "semantic_outcome": {
+              "decision": "RETRY",
+              "outcome_kind": "unknown",
+              "result": "pending",
+              "status": "unknown"
+            },
             "simulation_only": true,
             "simulator_provenance": {},
             "skill_result": null,
@@ -2393,6 +2360,12 @@
             "scenario_id": "SIM009-VLA-AMBIGUOUS",
             "scenario_pass": true,
             "scenario_source_path": "/scenarios/11",
+            "semantic_outcome": {
+              "decision": "FAIL_CLOSED",
+              "outcome_kind": "uncertain",
+              "result": "failure",
+              "status": "failed"
+            },
             "simulation_only": true,
             "simulator_provenance": {},
             "skill_result": "failed",
@@ -2533,6 +2506,12 @@
             "scenario_id": "SIM009-VLA-CONTACT-LOSS",
             "scenario_pass": true,
             "scenario_source_path": "/scenarios/8",
+            "semantic_outcome": {
+              "decision": "FAIL_CLOSED",
+              "outcome_kind": "failure",
+              "result": "failure",
+              "status": "failed"
+            },
             "simulation_only": true,
             "simulator_provenance": {},
             "skill_result": "failed",
@@ -2664,6 +2643,12 @@
             "scenario_id": "SIM009-VLA-GRASP-MISS",
             "scenario_pass": true,
             "scenario_source_path": "/scenarios/7",
+            "semantic_outcome": {
+              "decision": "FAIL_CLOSED",
+              "outcome_kind": "failure",
+              "result": "failure",
+              "status": "failed"
+            },
             "simulation_only": true,
             "simulator_provenance": {},
             "skill_result": "failed",
@@ -2795,6 +2780,12 @@
             "scenario_id": "SIM009-VLA-TIMEOUT",
             "scenario_pass": true,
             "scenario_source_path": "/scenarios/10",
+            "semantic_outcome": {
+              "decision": "RECONCILE",
+              "outcome_kind": "unknown",
+              "result": "pending",
+              "status": "unknown"
+            },
             "simulation_only": true,
             "simulator_provenance": {},
             "skill_result": "uncertain",
@@ -2957,6 +2948,12 @@
             "scenario_id": "SIM009-VLA-UNKNOWN",
             "scenario_pass": true,
             "scenario_source_path": "/scenarios/12",
+            "semantic_outcome": {
+              "decision": "RECONCILE",
+              "outcome_kind": "unknown",
+              "result": "pending",
+              "status": "unknown"
+            },
             "simulation_only": true,
             "simulator_provenance": {},
             "skill_result": "uncertain",
@@ -3110,6 +3107,12 @@
             "scenario_id": "SIM009-VLA-WORKSPACE-LIMIT",
             "scenario_pass": true,
             "scenario_source_path": "/scenarios/9",
+            "semantic_outcome": {
+              "decision": "FAIL_CLOSED",
+              "outcome_kind": "failure",
+              "result": "failure",
+              "status": "failed"
+            },
             "simulation_only": true,
             "simulator_provenance": {},
             "skill_result": "failed",
@@ -3208,132 +3211,9 @@
       }
     ]
   },
-  "repeatability": {
-    "fresh_execution": {
-      "baseline": {
-        "commit": "6909c6cceb727598570f6e170ae8d1d293418c9a",
-        "detached_worktree_path": "/tmp/sim010-g7-20260929T074541Z-baseline-e7TiTG",
-        "exit_code": 1,
-        "failed_node_set": [
-          "scripts/codex/test_run_task_orchestrator.py::OrchestratorUnitTests::test_load_model_policy",
-          "tests/test_simulation_lane_gate.py::SimulationLaneGateTests::test_canonical_state_reconstructs_sim_go_without_authorizing_lane",
-          "tests/test_simulation_lane_gate.py::SimulationLaneGateTests::test_combined_review_commit_rewrite_and_concatenated_operation_fails_closed",
-          "tests/test_simulation_lane_gate.py::SimulationLaneGateTests::test_rehashed_unreviewed_runtime_operation_marker_fails_provenance_closed"
-        ],
-        "failure_signatures": {
-          "scripts/codex/test_run_task_orchestrator.py::OrchestratorUnitTests::test_load_model_policy": "7305ef81303173de1137ce866aff5bff0ced5edd15c44f84bfd16ed13eb53b04",
-          "tests/test_simulation_lane_gate.py::SimulationLaneGateTests::test_canonical_state_reconstructs_sim_go_without_authorizing_lane": "1e9c0d4ab987b547e72dffd7db684d9ff251636a27ad76ca7dbd1db0ce4beeb2",
-          "tests/test_simulation_lane_gate.py::SimulationLaneGateTests::test_combined_review_commit_rewrite_and_concatenated_operation_fails_closed": "71149efcf3e8cb3a7c89e4c00a54a807f6f2618412f8c97b4a4fc34de6b3cef4",
-          "tests/test_simulation_lane_gate.py::SimulationLaneGateTests::test_rehashed_unreviewed_runtime_operation_marker_fails_provenance_closed": "71149efcf3e8cb3a7c89e4c00a54a807f6f2618412f8c97b4a4fc34de6b3cef4"
-        },
-        "output_sha256": "6025c84a2041c47db8d39c82f556bf8d5c2ec2cfec0368186654082a66e6798f",
-        "probe": {
-          "cwd": "/tmp/sim010-g7-20260929T074541Z-baseline-e7TiTG",
-          "mujoco_file": "/home/jinho/projects/factory_physical_ai/.venv-sim/lib/python3.12/site-packages/mujoco/__init__.py",
-          "mujoco_version": "3.13.0",
-          "project_module_origin": "/tmp/sim010-g7-20260929T074541Z-baseline-e7TiTG/src/simulation_runtime/mujoco_vla_backend.py",
-          "pytest_file": "/usr/lib/python3/dist-packages/pytest/__init__.py",
-          "python": "/home/jinho/projects/factory_physical_ai/.venv-sim/bin/python",
-          "python_version": "3.12.3 (main, Aug 31 2026, 10:18:26) [GCC 13.3.0]",
-          "sys_path": [
-            "",
-            "/tmp/sim010-g7-20260929T074541Z-baseline-e7TiTG/src",
-            "/usr/lib/python312.zip",
-            "/usr/lib/python3.12",
-            "/usr/lib/python3.12/lib-dynload",
-            "/home/jinho/projects/factory_physical_ai/.venv-sim/lib/python3.12/site-packages",
-            "/usr/local/lib/python3.12/dist-packages",
-            "/usr/lib/python3/dist-packages",
-            "/usr/lib/python3.12/dist-packages"
-          ]
-        },
-        "pytest_summary": "4 failed, 337 passed in 50.51s"
-      },
-      "candidate": {
-        "commit": "2ec859845628992b02686a6d8bcdbcb77985a5a2",
-        "detached_worktree_path": "/tmp/sim010-g7-20260929T074541Z-candidate-PxkfGM",
-        "exit_code": 1,
-        "failed_node_set": [
-          "scripts/codex/test_run_task_orchestrator.py::OrchestratorUnitTests::test_load_model_policy",
-          "tests/test_simulation_lane_gate.py::SimulationLaneGateTests::test_canonical_state_reconstructs_sim_go_without_authorizing_lane",
-          "tests/test_simulation_lane_gate.py::SimulationLaneGateTests::test_combined_review_commit_rewrite_and_concatenated_operation_fails_closed",
-          "tests/test_simulation_lane_gate.py::SimulationLaneGateTests::test_rehashed_unreviewed_runtime_operation_marker_fails_provenance_closed"
-        ],
-        "failure_signatures": {
-          "scripts/codex/test_run_task_orchestrator.py::OrchestratorUnitTests::test_load_model_policy": "7305ef81303173de1137ce866aff5bff0ced5edd15c44f84bfd16ed13eb53b04",
-          "tests/test_simulation_lane_gate.py::SimulationLaneGateTests::test_canonical_state_reconstructs_sim_go_without_authorizing_lane": "1e9c0d4ab987b547e72dffd7db684d9ff251636a27ad76ca7dbd1db0ce4beeb2",
-          "tests/test_simulation_lane_gate.py::SimulationLaneGateTests::test_combined_review_commit_rewrite_and_concatenated_operation_fails_closed": "71149efcf3e8cb3a7c89e4c00a54a807f6f2618412f8c97b4a4fc34de6b3cef4",
-          "tests/test_simulation_lane_gate.py::SimulationLaneGateTests::test_rehashed_unreviewed_runtime_operation_marker_fails_provenance_closed": "71149efcf3e8cb3a7c89e4c00a54a807f6f2618412f8c97b4a4fc34de6b3cef4"
-        },
-        "output_sha256": "38967ef7ee82f1210fce4b5acbb98e7d6651bd28b55d765766f440fc2113b875",
-        "probe": {
-          "cwd": "/tmp/sim010-g7-20260929T074541Z-candidate-PxkfGM",
-          "mujoco_file": "/home/jinho/projects/factory_physical_ai/.venv-sim/lib/python3.12/site-packages/mujoco/__init__.py",
-          "mujoco_version": "3.13.0",
-          "project_module_origin": "/tmp/sim010-g7-20260929T074541Z-candidate-PxkfGM/src/simulation_runtime/mujoco_vla_backend.py",
-          "pytest_file": "/usr/lib/python3/dist-packages/pytest/__init__.py",
-          "python": "/home/jinho/projects/factory_physical_ai/.venv-sim/bin/python",
-          "python_version": "3.12.3 (main, Aug 31 2026, 10:18:26) [GCC 13.3.0]",
-          "sys_path": [
-            "",
-            "/tmp/sim010-g7-20260929T074541Z-candidate-PxkfGM/src",
-            "/usr/lib/python312.zip",
-            "/usr/lib/python3.12",
-            "/usr/lib/python3.12/lib-dynload",
-            "/home/jinho/projects/factory_physical_ai/.venv-sim/lib/python3.12/site-packages",
-            "/usr/local/lib/python3.12/dist-packages",
-            "/usr/lib/python3/dist-packages",
-            "/usr/lib/python3.12/dist-packages"
-          ]
-        },
-        "pytest_summary": "4 failed, 379 passed in 55.18s"
-      },
-      "classification": "PROVEN_PREEXISTING",
-      "cleanup": "git worktree remove (without --force) via EXIT trap",
-      "pytest_command": "PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=<detached-worktree>/src /home/jinho/projects/factory_physical_ai/.venv-sim/bin/python -m pytest -q -p no:cacheprovider",
-      "run_id": "g7-20260929T074541Z"
-    },
-    "gate": "S10-G7 REPEATABILITY_AND_FINALIZATION",
-    "qualified_python": "/home/jinho/projects/factory_physical_ai/.venv-sim/bin/python",
-    "repeat_source_commit": "2ec859845628992b02686a6d8bcdbcb77985a5a2",
-    "semantic_authority_comparison": {
-      "compared_fields": [
-        "accepted_source_index",
-        "q01_qualification_binding",
-        "deterministic_replay",
-        "physics_semantic_regression",
-        "normal_failure_suite_coverage",
-        "task_specific_result",
-        "full_repository_regression.failure_classification",
-        "full_repository_regression.failed_node_set",
-        "full_repository_regression.failure_signatures"
-      ],
-      "runtime_identity_comparison": "not required; fresh detached-worktree paths and output hashes differ by design",
-      "status": "PASS"
-    },
-    "status": "PASS"
-  },
   "schema_version": "1.0",
   "simulation_only": true,
-  "source_authority": {
-    "candidate_commit": "2ec859845628992b02686a6d8bcdbcb77985a5a2",
-    "implementation_files": [
-      {
-        "path": "src/simulation_runtime/observability_regression.py",
-        "sha256": "ea1053a78241f98108f698d4d92c06115e72f1e6220fb4b9a88d11d217cbe23b"
-      },
-      {
-        "path": "scripts/run_simulation_observability_regression.py",
-        "sha256": "ef710ea41cbcd956a1d04c6ee47158ba370b4bde8638caf3123ff6a34318c71b"
-      },
-      {
-        "path": "tests/test_simulation_observability_regression.py",
-        "sha256": "8e05767547f364cc363d662bb867ed40f7ea6658451bdc2403f32cb52a593082"
-      }
-    ],
-    "validated_against_immutable_git_objects": true
-  },
-  "source_git_sha": "2ec859845628992b02686a6d8bcdbcb77985a5a2",
+  "source_git_sha": "0dc8e71c3b2aec56557fdfb54de83d3e446cd0a7",
   "task_id": "TASK-SIM-010",
   "task_specific_result": "SIM_OBSERVABILITY_REGRESSION_READY"
 }

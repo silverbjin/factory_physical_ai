@@ -1,7 +1,7 @@
 # SIM-010 observability regression
 
 - Task: `TASK-SIM-010`
-- Canonical source authority: `2ec859845628992b02686a6d8bcdbcb77985a5a2`
+- Canonical source authority: `0dc8e71c3b2aec56557fdfb54de83d3e446cd0a7`
 - Result: `SIM_OBSERVABILITY_REGRESSION_READY`
 - Scope: simulation-only regression evidence; no physical or production-performance claim.
 
@@ -13,7 +13,7 @@ Historical accepted authority remains the semantic oracle. Q01 (`TASK-SIM-Q01-MI
 
 - Deterministic replay: `PASS`; it uses validated historical deterministic authority only. All eleven Q01 rows are explicitly non-replay authority.
 - Physics semantic regression: `PASS`; historical semantics are compared with qualified actual observations, including validated applicable Gazebo and MuJoCo observations. This is not a bitwise-identity or real-world-performance claim.
-- Full repository regression: `PROVEN_PREEXISTING`. Candidate `2ec859845628992b02686a6d8bcdbcb77985a5a2` and baseline `6909c6cceb727598570f6e170ae8d1d293418c9a` used `/home/jinho/projects/factory_physical_ai/.venv-sim/bin/python` (MuJoCo `3.13.0`) in clean detached worktrees with detached project-module imports. Both exited 1 with the same complete four-node failure set and the same non-empty stable signature for every node.
+- Full repository regression: `PROVEN_PREEXISTING`. Candidate `0dc8e71c3b2aec56557fdfb54de83d3e446cd0a7` and baseline `6909c6cceb727598570f6e170ae8d1d293418c9a` used `/home/jinho/projects/factory_physical_ai/.venv-sim/bin/python3` (MuJoCo `3.13.0`) in clean detached checkouts with detached project-module imports. Both exited 1 with the same complete four-node failure set and the same non-empty stable signature for every node.
 
 The detailed machine-verifiable record is [SIM-010_observability_regression.json](../../results/simulation/SIM-010_observability_regression.json).
 

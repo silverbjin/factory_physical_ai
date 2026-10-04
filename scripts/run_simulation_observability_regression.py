@@ -5,6 +5,8 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import re
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -34,6 +36,38 @@ def resolve_qualified_python(value: Path) -> Path:
 
 def regression_command(python: Path) -> list[str]:
     return [str(python), *PYTEST_ARGS]
+
+
+def immutable_candidate_commit(root: Path) -> str:
+    """Require the aggregation worktree to exactly match the candidate commit."""
+    status = subprocess.run(
+        ["git", "status", "--porcelain"], cwd=root, text=True, capture_output=True, check=False,
+    )
+    if status.returncode or status.stdout.strip():
+        raise RuntimeError("DIRTY_CANDIDATE_WORKTREE")
+    commit = subprocess.run(
+        ["git", "rev-parse", "HEAD"], cwd=root, text=True, capture_output=True, check=False,
+    )
+    if commit.returncode or not re.fullmatch(r"[0-9a-f]{40}", commit.stdout.strip()):
+        raise RuntimeError("IMMUTABLE_CANDIDATE_UNRESOLVABLE")
+    return commit.stdout.strip()
+
+
+def test_result_summary(result: subprocess.CompletedProcess[str]) -> dict[str, int | str]:
+    """Capture the complete pytest outcome counts without inferring a gate result."""
+    counts = {"passed": 0, "failed": 0, "errors": 0, "skipped": 0, "xfailed": 0, "xpassed": 0}
+    aliases = {"error": "errors", "errors": "errors"}
+    for count, label in re.findall(r"(\d+)\s+(passed|failed|error|errors|skipped|xfailed|xpassed)", result.stdout):
+        normalized = aliases.get(label, label)
+        counts[normalized] = int(count)
+    if not any(counts.values()):
+        raise RuntimeError("REGRESSION_TEST_SUMMARY_MISSING")
+    return {"result": "PASS" if result.returncode == 0 else "FAIL", "total": sum(counts.values()), **counts}
+
+
+def gate_result(classification: str) -> str:
+    """Translate an immutable comparison classification into the S10-G5 gate state."""
+    return "PASS" if classification in {"PASS", "PROVEN_PREEXISTING"} else "BLOCKED"
 
 
 def _qualified_environment(cwd: Path) -> dict[str, str]:
@@ -127,11 +161,28 @@ def _detached_checkout(root: Path, commit: str, prefix: str) -> Path:
         check=False,
     )
     if checkout.returncode:
-        raise RuntimeError("REGRESSION_WORKTREE_CREATE_FAILED")
+        # Some sandboxed runners can read the shared Git directory but cannot
+        # create its worktree-admin entry.  A local shared clone remains a
+        # clean detached checkout of the same immutable object without using
+        # mutable source files from the active worktree.
+        clone = subprocess.run(
+            ["git", "clone", "--shared", "--no-checkout", str(root), str(temporary)],
+            cwd=root, text=True, capture_output=True, check=False,
+        )
+        detached = subprocess.run(
+            ["git", "checkout", "--detach", commit], cwd=temporary,
+            text=True, capture_output=True, check=False,
+        ) if clone.returncode == 0 else None
+        if clone.returncode or detached is None or detached.returncode:
+            shutil.rmtree(temporary, ignore_errors=True)
+            raise RuntimeError("REGRESSION_WORKTREE_CREATE_FAILED")
     return temporary
 
 
 def _remove_checkout(root: Path, checkout_path: Path) -> None:
+    if (checkout_path / ".git").is_dir():
+        shutil.rmtree(checkout_path)
+        return
     removal = subprocess.run(
         ["git", "worktree", "remove", "--force", str(checkout_path)],
         cwd=root,
@@ -150,11 +201,11 @@ def main(argv: list[str] | None = None) -> int:
     try:
         python = resolve_qualified_python(args.python)
         environment = preflight_environment(python)
+        candidate_commit = immutable_candidate_commit(ROOT)
     except RuntimeError as exc:
         print(str(exc), file=sys.stderr)
         return 2
     evidence = build_regression_evidence(ROOT)
-    candidate_commit = subprocess.run(["git", "rev-parse", "HEAD"], cwd=ROOT, text=True, capture_output=True, check=False).stdout.strip()
     comparison_error = None
     current = baseline = None
     validation = baseline_result = None
@@ -187,13 +238,25 @@ def main(argv: list[str] | None = None) -> int:
         baseline_failures,
         comparison_error,
     )
+    try:
+        current_summary = test_result_summary(validation) if validation is not None else None
+        baseline_summary = test_result_summary(baseline_result) if baseline_result is not None else None
+    except RuntimeError as exc:
+        comparison_error = str(exc)
+        classification = "POSSIBLY_TASK_RELATED"
+        current_summary = baseline_summary = None
+    regression_gate = gate_result(classification)
     command = "PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=<detached>/src " + " ".join(regression_command(python))
     evidence["full_repository_regression"] = {
         "command": command,
         "candidate_commit": candidate_commit,
         "exit_code": validation.returncode if validation is not None else None,
         "result": "PASS" if validation is not None and validation.returncode == 0 else "FAIL",
+        "execution_result": "PASS" if validation is not None and validation.returncode == 0 else "FAIL",
+        "gate_result": regression_gate,
+        "test_summary": current_summary,
         "baseline_commit": BASELINE_COMMIT,
+        "baseline_test_summary": baseline_summary,
         "python_executable": str(python),
         "qualified_environment": environment,
         "candidate_environment": current_environment,
@@ -207,12 +270,11 @@ def main(argv: list[str] | None = None) -> int:
         evidence["full_repository_regression"]["baseline_exit_code"] = baseline_result.returncode
     if comparison_error:
         evidence["full_repository_regression"]["comparison_error"] = comparison_error
-    if validation is None or validation.returncode != 0:
-        if classification == "PROVEN_PREEXISTING":
-            evidence["full_repository_regression"]["blocking_reason"] = "PROVEN_PREEXISTING_FULL_REGRESSION_FAILURES"
-        else:
-            evidence["task_specific_result"] = "SIM_OBSERVABILITY_REGRESSION_BLOCKED"
-            evidence["full_repository_regression"]["blocking_reason"] = "FULL_REGRESSION_FAILED"
+    if regression_gate == "PASS" and classification == "PROVEN_PREEXISTING":
+        evidence["full_repository_regression"]["gate_reason"] = "PROVEN_PREEXISTING"
+    if regression_gate != "PASS":
+        evidence["task_specific_result"] = "SIM_OBSERVABILITY_REGRESSION_BLOCKED"
+        evidence["full_repository_regression"]["blocking_reason"] = "FULL_REGRESSION_FAILED"
     evidence["generated_at"] = datetime.now(timezone.utc).isoformat(timespec="seconds").replace("+00:00", "Z")
     evidence["source_git_sha"] = candidate_commit
     path = ROOT / "results/simulation/SIM-010_observability_regression.json"
