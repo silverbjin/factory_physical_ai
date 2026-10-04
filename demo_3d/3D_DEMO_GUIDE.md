@@ -119,3 +119,32 @@ Gate:
 
 마지막 메시지:
 “3D로 잘 움직이는 것과 검증된 시스템은 다릅니다. 이 프로젝트는 실제 3D 실행, 장애 의미, Evidence integrity, Independent Review까지 하나로 묶었습니다.”
+
+
+---
+
+# Runtime-owned GUI attach 확인
+
+Normal E2E 실행:
+
+```bash
+./demo_3d/scripts/01_normal_e2e_3d.sh
+```
+
+정상 attach 시 터미널에 다음 형식이 출력됩니다.
+
+```text
+[3D DEMO] attached GUI to runtime-owned server \
+pid=<PID> partition=sim004-... ROS_DOMAIN_ID=<N>
+```
+
+이 출력이 보이면 별도의 `SERVER_PID` 수동 지정이나 `/proc` 명령은 필요하지 않습니다.
+
+문제가 있을 때 확인:
+
+```bash
+pgrep -af 'gz sim|ign gazebo'
+```
+
+GUI와 server의 partition을 수동으로 맞추는 대신 `results/demo/logs/normal_runner.log`와
+`results/demo/logs/gazebo_gui_normal.log`를 확인하십시오.

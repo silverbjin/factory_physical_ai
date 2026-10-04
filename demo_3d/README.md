@@ -131,3 +131,71 @@ HUD에 다음 disclosure가 표시됩니다:
 4. Final Qualification + paused 3D context
 
 각 장면은 Enter 후 다음으로 넘어갑니다.
+
+
+---
+
+## v1.1 — Runtime-owned Gazebo server attach
+
+이 패키지는 더 이상 Demo가 먼저 `GZ_PARTITION`을 만들고 `gz sim -g`를 실행하지 않습니다.
+
+실제 실행 순서:
+
+```text
+canonical runner start
+        ↓
+new `gz sim ... -s ...` server 자동 탐지
+        ↓
+같은 polling iteration에서 /proc/<PID>/environ 캡처
+        ↓
+GZ_PARTITION / ROS_DOMAIN_ID / GZ_* / IGN_* 추출
+        ↓
+동일 transport 환경으로 `gz sim -g`
+```
+
+따라서 SIM-008/SIM-009 runner가 매 실행마다 동적으로 만드는 partition/domain을 GUI가 그대로 따라갑니다.
+
+예:
+
+```text
+server:
+  GZ_PARTITION=sim004-xxxxxxxxxxxx
+  ROS_DOMAIN_ID=125
+
+GUI:
+  GZ_PARTITION=sim004-xxxxxxxxxxxx
+  ROS_DOMAIN_ID=125
+```
+
+### 이전 오류가 해결되는 이유
+
+이전 버전:
+
+```text
+GUI partition = sim-first-demo-...
+server partition = sim004-...
+→ 서로 다른 Transport graph
+→ 검은 Gazebo viewport
+```
+
+수정 버전:
+
+```text
+server 생성
+→ server 환경 캡처
+→ GUI가 server partition을 상속
+→ 동일 world 표시
+```
+
+`/proc/<PID>/environ`은 server 발견 즉시 읽으므로 짧은 실행이 끝난 뒤 PID가 사라지는 race도 줄였습니다.
+
+### 실제 저장소 failure runner
+
+다음 두 이름을 자동 탐지합니다.
+
+```text
+scripts/run_simulation_failure_recovery.py
+scripts/run_simulation_failure_suite.py
+```
+
+둘 다 존재하면 임의 선택하지 않고 `DEMO_FAILURE_RUNNER` 지정이 필요합니다.
