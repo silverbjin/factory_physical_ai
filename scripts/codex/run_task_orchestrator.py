@@ -33,9 +33,11 @@ from typing import Any
 
 WORKFLOW_RESULT_PREFIX = "WORKFLOW_RESULT_JSON:"
 ACCEPTANCE_RESULT_PREFIX = "ACCEPTANCE_RESULT_JSON:"
+GATE_RESULT_PREFIX = "GATE_RESULT_JSON:"
 TASK_RE = re.compile(r"^(?P<prefix>TASK-[A-Z0-9]+-)(?P<num>\d+)$")
 PROTECTED_BRANCHES = {"main", "master"}
 DEFAULT_MODEL_POLICY_PATH = Path("config/codex_model_policy.json")
+CODEX_SANDBOX_MODES = frozenset({"read-only", "workspace-write", "danger-full-access"})
 SIGNAL_RE = re.compile(
     r"(status|result|evidence|error|fail|failed|failure|blocked|blocker|"
     r"incomplete|reject|missing|cannot|unable|next|deviation|reason|token|context|limit|quota|credit|"
@@ -120,6 +122,135 @@ class ModelPolicy:
     task_classes: dict[str, TaskClassConfig]
     classification: ClassificationConfig
     acceptance_mode: str
+
+
+@dataclass(frozen=True)
+class TaskOrchestratorContract:
+    task_id: str
+    profile: str
+    gates: tuple[dict[str, Any], ...]
+    protected_paths: tuple[str, ...]
+    source_paths: tuple[str, ...]
+    finalization_paths: tuple[str, ...]
+    canonical_command: tuple[str, ...]
+    canonical_evidence_paths: tuple[str, ...]
+    literal_validation: tuple[tuple[str, ...], ...]
+
+
+def _string_argv(value: Any, *, label: str, allow_empty: bool = False) -> tuple[str, ...]:
+    if not isinstance(value, list) or (not value and not allow_empty) or not all(isinstance(x, str) and x for x in value):
+        raise OrchestratorError(f"Invalid {label}; expected a non-empty argv string list.")
+    return tuple(value)
+
+
+def load_task_orchestrator_contract(repo: Path, task_id: str) -> TaskOrchestratorContract | None:
+    path = repo / "tasks" / "orchestrator" / f"{task_id}.json"
+    if not path.is_file():
+        return None
+    try:
+        raw = json.loads(path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError as exc:
+        raise OrchestratorError(f"Invalid orchestrator task contract JSON: {path}") from exc
+    if raw.get("schema_version") != 1 or raw.get("task_id") != task_id:
+        raise OrchestratorError(f"Invalid orchestrator task contract identity/schema: {path}")
+    if raw.get("profile") != "staged_integration_v1":
+        raise OrchestratorError(f"Unsupported orchestrator task profile: {raw.get('profile')!r}")
+    gates_raw = raw.get("gates")
+    if not isinstance(gates_raw, list):
+        raise OrchestratorError("Task orchestrator contract gates must be a list.")
+    gates: list[dict[str, Any]] = []
+    seen: set[str] = set()
+    for item in gates_raw:
+        if not isinstance(item, dict) or not isinstance(item.get("id"), str) or not item["id"]:
+            raise OrchestratorError("Every gate requires a non-empty id.")
+        gate_id = item["id"]
+        if gate_id in seen:
+            raise OrchestratorError(f"Duplicate gate id: {gate_id}")
+        seen.add(gate_id)
+        gates.append({**item, "command": list(_string_argv(item.get("command"), label=f"gate {gate_id} command"))})
+    canonical = raw.get("canonical") or {}
+    if not isinstance(canonical, dict):
+        raise OrchestratorError("canonical must be an object.")
+    canonical_command = _string_argv(canonical.get("command"), label="canonical command")
+    evidence_paths = canonical.get("evidence_paths")
+    if not isinstance(evidence_paths, list) or not evidence_paths or not all(isinstance(x, str) and x for x in evidence_paths):
+        raise OrchestratorError("canonical.evidence_paths must be a non-empty string list.")
+    literal_raw = raw.get("literal_validation") or []
+    if not isinstance(literal_raw, list):
+        raise OrchestratorError("literal_validation must be a list of argv arrays.")
+    literal = tuple(_string_argv(cmd, label="literal validation command") for cmd in literal_raw)
+    def string_list(name: str) -> tuple[str, ...]:
+        value = raw.get(name) or []
+        if not isinstance(value, list) or not all(isinstance(x, str) and x for x in value):
+            raise OrchestratorError(f"{name} must be a string list.")
+        return tuple(value)
+    source_paths = string_list("source_paths")
+    finalization_raw = raw.get("finalization_paths")
+    finalization_paths = source_paths if finalization_raw is None else string_list("finalization_paths")
+    if not source_paths:
+        raise OrchestratorError("source_paths must be a non-empty string list.")
+    if not finalization_paths:
+        raise OrchestratorError("finalization_paths must be a non-empty string list.")
+    missing_source_scopes = [p for p in source_paths if not _path_within_scopes(p, finalization_paths)]
+    if missing_source_scopes:
+        raise OrchestratorError(
+            "finalization_paths must include every source_paths scope: " + ", ".join(missing_source_scopes)
+        )
+    return TaskOrchestratorContract(
+        task_id=task_id,
+        profile="staged_integration_v1",
+        gates=tuple(gates),
+        protected_paths=string_list("protected_paths"),
+        source_paths=source_paths,
+        finalization_paths=finalization_paths,
+        canonical_command=canonical_command,
+        canonical_evidence_paths=tuple(evidence_paths),
+        literal_validation=literal,
+    )
+
+
+def upgrade_checkpoint_state(state: dict[str, Any], *, staged: bool) -> dict[str, Any]:
+    upgraded = dict(state)
+    upgraded["schema_version"] = 3
+    upgraded.setdefault("qualification_profile", "staged_integration_v1" if staged else None)
+    upgraded.setdefault("review_return_phase", "review")
+    upgraded.setdefault("gate_state", {
+        "current_gate_index": 0,
+        "attempt_id": 1,
+        "passed_gates": {},
+        "current_blocker": None,
+        "blocker_attempt_counts": {},
+        "gate_resolution_cycles": 0,
+        "supplier_cache": {},
+    })
+    upgraded.setdefault("finalization", {
+        "source_commit": None,
+        "source_hashes": {},
+        "canonical_results": [],
+        "binding_verified": False,
+    })
+    upgraded.setdefault("protected_artifacts", {})
+    upgraded.setdefault("literal_validation", {"results": []})
+    upgraded.setdefault("aggregate_counted_runs", [])
+    upgraded.setdefault("aggregate", {
+        "orchestrator_runs": 0,
+        "codex_calls": 0,
+        "reported_tokens_total": 0,
+        "diagnosis_calls": 0,
+        "gate_fix_calls": 0,
+        "review_fix_calls": 0,
+        "review_calls": 0,
+        "gate_resolution_cycles": 0,
+    })
+    return upgraded
+
+
+def phase_after_implementation(*, staged: bool) -> str:
+    return "gate_resolution" if staged else "review"
+
+
+def phase_after_review_fix(*, staged: bool) -> str:
+    return "gate_resolution" if staged else "rereview"
 
 
 @dataclass(frozen=True)
@@ -275,6 +406,19 @@ def default_report_base() -> Path:
     return Path.home() / ".local" / "state" / "codex-task-orchestrator"
 
 
+def runtime_sandbox_override() -> str | None:
+    """Return the explicit child sandbox override, preserving Codex defaults otherwise."""
+    value = os.environ.get("CODEX_RUNTIME_SANDBOX")
+    if value in (None, ""):
+        return None
+    if value not in CODEX_SANDBOX_MODES:
+        allowed = ", ".join(sorted(CODEX_SANDBOX_MODES))
+        raise OrchestratorError(
+            f"Invalid CODEX_RUNTIME_SANDBOX={value!r}; expected one of: {allowed}."
+        )
+    return value
+
+
 def run_git(repo: Path, *args: str, check: bool = True) -> subprocess.CompletedProcess[str]:
     proc = subprocess.run(
         ["git", *args],
@@ -314,7 +458,7 @@ def ensure_automation_branch(repo: Path, allow_protected_branch: bool = False) -
 
 
 def worktree_status(repo: Path) -> str:
-    return run_git(repo, "status", "--porcelain", "--untracked-files=all").stdout.strip()
+    return run_git(repo, "status", "--porcelain", "--untracked-files=all").stdout.rstrip("\n")
 
 
 def changed_paths(repo: Path) -> list[str]:
@@ -791,8 +935,13 @@ def bind_latest_resolved_diagnosis(
     should_bind = current is None or latest.sequence > current.sequence
 
     # A transient Codex final output is intentionally superseded once durable
-    # task history contains a current RESOLVED diagnosis.
-    if not should_bind and state.get("diagnosis_binding_source") != "task_history":
+    # task history contains a current RESOLVED diagnosis. Rebind if any
+    # checkpoint metadata disagrees with the durable record.
+    if not should_bind and (
+        state.get("diagnosis_binding_source") != "task_history"
+        or state.get("diagnosis_sequence") != latest.sequence
+        or current.path != latest.path
+    ):
         should_bind = True
 
     if not should_bind:
@@ -817,6 +966,596 @@ def bind_latest_resolved_diagnosis(
                 f"source=task_history seq={latest.sequence} status=RESOLVED",
             )
     return True
+
+
+GATE_BLOCKER_CLASSIFICATIONS = frozenset({
+    "SAME_GATE",
+    "REGRESSION",
+    "NEW_EXTERNAL_FAULT_DOMAIN",
+    "CONTRACT_OR_ARCHITECTURE_CONTRADICTION",
+})
+
+
+def normalize_gate_blocker(payload: dict[str, Any], *, gate_id: str | None = None) -> dict[str, str]:
+    required = (
+        "finding_id",
+        "root_cause_class",
+        "first_failing_invariant",
+        "affected_boundary",
+        "classification",
+    )
+    normalized: dict[str, str] = {"gate_id": str(payload.get("gate_id") or gate_id or "")}
+    if not normalized["gate_id"]:
+        raise OrchestratorError("Gate blocker is missing gate_id.")
+    for key in required:
+        value = payload.get(key)
+        if not isinstance(value, str) or not value.strip():
+            raise OrchestratorError(f"Gate blocker is missing/invalid {key}.")
+        normalized[key] = value.strip()
+    if normalized["classification"] not in GATE_BLOCKER_CLASSIFICATIONS:
+        raise OrchestratorError(
+            f"Unsupported gate blocker classification: {normalized['classification']}"
+        )
+    return normalized
+
+
+def gate_blocker_signature(blocker: dict[str, Any]) -> str:
+    normalized = normalize_gate_blocker(blocker, gate_id=str(blocker.get("gate_id") or ""))
+    identity = {
+        key: normalized[key]
+        for key in (
+            "gate_id",
+            "finding_id",
+            "root_cause_class",
+            "first_failing_invariant",
+            "affected_boundary",
+        )
+    }
+    encoded = json.dumps(identity, sort_keys=True, separators=(",", ":"), ensure_ascii=True)
+    return hashlib.sha256(encoded.encode("utf-8")).hexdigest()
+
+
+def register_gate_failure(
+    gate_state: dict[str, Any],
+    blocker: dict[str, Any],
+    *,
+    max_attempts: int = 3,
+) -> str:
+    normalized = normalize_gate_blocker(blocker, gate_id=str(blocker.get("gate_id") or ""))
+    gate_state["current_blocker"] = normalized
+    classification = normalized["classification"]
+    if classification in {"NEW_EXTERNAL_FAULT_DOMAIN", "CONTRACT_OR_ARCHITECTURE_CONTRADICTION"}:
+        return "STOP"
+    signature = gate_blocker_signature(normalized)
+    counts = gate_state.setdefault("blocker_attempt_counts", {})
+    attempts = int(counts.get(signature) or 0) + 1
+    counts[signature] = attempts
+    if attempts >= max_attempts:
+        return "ARCHITECTURE_REVIEW_REQUIRED"
+    return "FIX"
+
+
+def mark_gate_pass(gate_state: dict[str, Any], gate_id: str, record: dict[str, Any]) -> None:
+    frozen = dict(record)
+    frozen["status"] = "PASS"
+    gate_state.setdefault("passed_gates", {})[gate_id] = frozen
+    gate_state["current_blocker"] = None
+    gate_state["current_gate_index"] = int(gate_state.get("current_gate_index") or 0) + 1
+
+
+def begin_new_gate_attempt(gate_state: dict[str, Any]) -> None:
+    gate_state["attempt_id"] = int(gate_state.get("attempt_id") or 1) + 1
+    gate_state["supplier_cache"] = {}
+    gate_state["current_blocker"] = None
+
+
+def supplier_cache_key(gate_state: dict[str, Any], supplier_id: str) -> str:
+    return f"attempt-{int(gate_state.get('attempt_id') or 1)}:{supplier_id}"
+
+
+def supplier_cache_get(gate_state: dict[str, Any], supplier_id: str) -> Any:
+    return gate_state.setdefault("supplier_cache", {}).get(supplier_cache_key(gate_state, supplier_id))
+
+
+def supplier_cache_put(gate_state: dict[str, Any], supplier_id: str, value: Any) -> None:
+    gate_state.setdefault("supplier_cache", {})[supplier_cache_key(gate_state, supplier_id)] = value
+
+
+def _parse_prefixed_json(text: str, prefix: str) -> dict[str, Any] | None:
+    candidates = [line.split(prefix, 1)[1].strip() for line in text.splitlines() if prefix in line]
+    if not candidates:
+        return None
+    try:
+        payload = json.loads(candidates[-1])
+    except json.JSONDecodeError as exc:
+        raise OrchestratorError(f"Invalid {prefix} JSON: {candidates[-1]}") from exc
+    if not isinstance(payload, dict):
+        raise OrchestratorError(f"{prefix} payload must be a JSON object.")
+    return payload
+
+
+def _resolve_command_executable(repo: Path, command0: str) -> str | None:
+    if os.sep in command0:
+        candidate = Path(command0)
+        if not candidate.is_absolute():
+            candidate = repo / candidate
+        return str(candidate.resolve()) if candidate.exists() else None
+    resolved = shutil.which(command0)
+    return str(Path(resolved).resolve()) if resolved else None
+
+
+def _detect_command_interpreter(resolved_executable: str | None) -> str | None:
+    if not resolved_executable:
+        return None
+    path = Path(resolved_executable)
+    name = path.name.lower()
+    if name.startswith("python") or name.startswith("pypy"):
+        return str(path.resolve())
+    try:
+        first = path.open("rb").readline(4096).decode("utf-8", errors="replace").strip()
+    except OSError:
+        return None
+    if not first.startswith("#!"):
+        return None
+    shebang = first[2:].strip().split()
+    if not shebang:
+        return None
+    if Path(shebang[0]).name == "env" and len(shebang) > 1:
+        resolved = shutil.which(shebang[1])
+        return str(Path(resolved).resolve()) if resolved else shebang[1]
+    return str(Path(shebang[0]).resolve()) if Path(shebang[0]).exists() else shebang[0]
+
+
+def _extract_test_count(text: str) -> int | None:
+    patterns = (
+        r"(?:^|\s)(\d+)\s+passed(?:\s|,|$)",
+        r"collected\s+(\d+)\s+items?",
+        r"Ran\s+(\d+)\s+tests?",
+    )
+    for pattern in patterns:
+        matches = re.findall(pattern, text, re.IGNORECASE | re.MULTILINE)
+        if matches:
+            try:
+                return int(matches[-1])
+            except ValueError:
+                pass
+    return None
+
+
+def run_literal_validation(repo: Path, argv: tuple[str, ...]) -> dict[str, Any]:
+    command = _string_argv(list(argv), label="literal validation command")
+    resolved = _resolve_command_executable(repo, command[0])
+    record = run_exact_argv(repo, command)
+    combined = record["stdout"] + "\n" + record["stderr"]
+    return {
+        "requested_command": list(command),
+        "resolved_executable": resolved,
+        "interpreter": _detect_command_interpreter(resolved),
+        "exit_code": record["exit_code"],
+        "test_count": _extract_test_count(combined),
+        "git_sha": record["head"],
+        "duration_seconds": record["duration_seconds"],
+        "recorded_at": record["recorded_at"],
+        "stdout_sha256": hashlib.sha256(record["stdout"].encode("utf-8", errors="replace")).hexdigest(),
+        "stderr_sha256": hashlib.sha256(record["stderr"].encode("utf-8", errors="replace")).hexdigest(),
+    }
+
+
+def accumulate_stage_record(
+    state: dict[str, Any],
+    record: StageRunRecord,
+    *,
+    logical_role: str | None = None,
+) -> None:
+    aggregate = state.setdefault("aggregate", {})
+    for key in (
+        "orchestrator_runs", "codex_calls", "reported_tokens_total", "diagnosis_calls",
+        "gate_fix_calls", "review_fix_calls", "review_calls", "gate_resolution_cycles",
+    ):
+        aggregate.setdefault(key, 0)
+    aggregate["codex_calls"] = int(aggregate["codex_calls"] or 0) + 1
+    aggregate["reported_tokens_total"] = int(aggregate["reported_tokens_total"] or 0) + int(record.tokens_reported or 0)
+    role = logical_role or record.role
+    if role in {"diagnosis", "diagnosis_escalated"}:
+        aggregate["diagnosis_calls"] = int(aggregate["diagnosis_calls"] or 0) + 1
+    elif role == "gate_fix":
+        aggregate["gate_fix_calls"] = int(aggregate["gate_fix_calls"] or 0) + 1
+    elif role == "fix":
+        aggregate["review_fix_calls"] = int(aggregate["review_fix_calls"] or 0) + 1
+    elif role in {"review", "rereview"}:
+        aggregate["review_calls"] = int(aggregate["review_calls"] or 0) + 1
+
+
+def merge_run_stage_metrics(state: dict[str, Any], records: list[StageRunRecord], *, run_id: str) -> bool:
+    counted = state.setdefault("aggregate_counted_runs", [])
+    if run_id in counted:
+        return False
+    for record in records:
+        accumulate_stage_record(state, record, logical_role=record.role)
+    counted.append(run_id)
+    return True
+
+
+def invalidate_staged_proof(state: dict[str, Any]) -> None:
+    gate_state = state.setdefault("gate_state", {})
+    gate_state["current_gate_index"] = 0
+    gate_state["attempt_id"] = int(gate_state.get("attempt_id") or 1) + 1
+    gate_state["passed_gates"] = {}
+    gate_state["current_blocker"] = None
+    gate_state["blocker_attempt_counts"] = {}
+    gate_state["supplier_cache"] = {}
+    state["finalization"] = {
+        "source_commit": None,
+        "source_hashes": {},
+        "canonical_results": [],
+        "binding_verified": False,
+    }
+    state["literal_validation"] = {"results": []}
+    state["review_status"] = None
+    state["accepted_commit"] = None
+    state["acceptance_path"] = None
+    state["acceptance_commit"] = None
+
+
+def run_exact_argv(repo: Path, argv: tuple[str, ...] | list[str]) -> dict[str, Any]:
+    command = [str(x) for x in argv]
+    if not command:
+        raise OrchestratorError("Cannot execute an empty command.")
+    started = time.monotonic()
+    proc = subprocess.run(
+        command,
+        cwd=repo,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        check=False,
+    )
+    ended = time.monotonic()
+    combined = proc.stdout + "\n" + proc.stderr
+    return {
+        "command": command,
+        "exit_code": proc.returncode,
+        "stdout": proc.stdout,
+        "stderr": proc.stderr,
+        "duration_seconds": round(ended - started, 3),
+        "head": run_git(repo, "rev-parse", "HEAD").stdout.strip(),
+        "result_sha256": hashlib.sha256(combined.encode("utf-8", errors="replace")).hexdigest(),
+        "recorded_at": iso_now(),
+    }
+
+
+def _porcelain_changed_paths(repo: Path) -> list[str]:
+    proc = subprocess.run(
+        ["git", "status", "--porcelain=v1", "-z", "--untracked-files=all"],
+        cwd=repo, stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=False,
+    )
+    if proc.returncode != 0:
+        raise OrchestratorError(
+            "git status --porcelain failed: " + proc.stderr.decode("utf-8", errors="replace").strip()
+        )
+    fields = proc.stdout.decode("utf-8", errors="surrogateescape").split("\0")
+    paths: list[str] = []
+    i = 0
+    while i < len(fields):
+        field = fields[i]
+        if not field:
+            i += 1
+            continue
+        if len(field) < 4:
+            i += 1
+            continue
+        status = field[:2]
+        paths.append(field[3:])
+        if "R" in status or "C" in status:
+            if i + 1 < len(fields) and fields[i + 1]:
+                paths.append(fields[i + 1])
+                i += 1
+        i += 1
+    return sorted(set(paths))
+
+
+def _tracked_files_at_commit(repo: Path, commit: str, scopes: tuple[str, ...]) -> list[str]:
+    files: set[str] = set()
+    for scope in scopes:
+        proc = run_git(repo, "ls-tree", "-r", "--name-only", commit, "--", scope, check=False)
+        if proc.returncode != 0:
+            raise OrchestratorError(f"Unable to enumerate protected path at {commit}: {scope}")
+        for line in proc.stdout.splitlines():
+            if line.strip():
+                files.add(line.strip())
+        if not proc.stdout.strip():
+            exists = run_git(repo, "cat-file", "-e", f"{commit}:{scope}", check=False)
+            if exists.returncode == 0:
+                files.add(scope)
+    return sorted(files)
+
+
+def snapshot_protected_artifacts(
+    repo: Path,
+    protected_paths: tuple[str, ...],
+    *,
+    authority_commit: str | None = None,
+) -> dict[str, dict[str, str]]:
+    if not protected_paths:
+        return {}
+    commit = authority_commit or run_git(repo, "rev-parse", "HEAD").stdout.strip()
+    files = _tracked_files_at_commit(repo, commit, protected_paths)
+    if not files:
+        raise OrchestratorError(
+            "PROTECTED_ARTIFACT_VIOLATION: declared protected paths resolve to no tracked files."
+        )
+    snapshot: dict[str, dict[str, str]] = {}
+    for path in files:
+        oid_proc = run_git(repo, "rev-parse", f"{commit}:{path}", check=False)
+        if oid_proc.returncode != 0:
+            raise OrchestratorError(f"PROTECTED_ARTIFACT_VIOLATION: cannot resolve {commit}:{path}")
+        snapshot[path] = {
+            "authority_commit": commit,
+            "git_blob_oid": oid_proc.stdout.strip(),
+            "sha256": git_path_sha256(repo, commit, path),
+        }
+    return snapshot
+
+
+def assert_protected_artifacts_unchanged(
+    repo: Path,
+    protected_paths: tuple[str, ...],
+    snapshot: dict[str, Any],
+) -> None:
+    if not protected_paths:
+        return
+    dirty = [p for p in _porcelain_changed_paths(repo) if _path_within_scopes(p, protected_paths)]
+    if dirty:
+        raise OrchestratorError(
+            "PROTECTED_ARTIFACT_VIOLATION: protected paths are dirty: " + ", ".join(dirty)
+        )
+    head = run_git(repo, "rev-parse", "HEAD").stdout.strip()
+    current_files = set(_tracked_files_at_commit(repo, head, protected_paths))
+    expected_files = set(snapshot)
+    if current_files != expected_files:
+        added = sorted(current_files - expected_files)
+        removed = sorted(expected_files - current_files)
+        raise OrchestratorError(
+            "PROTECTED_ARTIFACT_VIOLATION: protected tracked set changed; "
+            f"added={added}, removed={removed}"
+        )
+    for path, record_any in snapshot.items():
+        if not isinstance(record_any, dict):
+            raise OrchestratorError("PROTECTED_ARTIFACT_VIOLATION: invalid protected snapshot record.")
+        record = record_any
+        oid_proc = run_git(repo, "rev-parse", f"{head}:{path}", check=False)
+        current_oid = oid_proc.stdout.strip() if oid_proc.returncode == 0 else None
+        current_sha = git_path_sha256(repo, head, path) if current_oid else None
+        if current_oid != record.get("git_blob_oid") or current_sha != record.get("sha256"):
+            raise OrchestratorError(
+                f"PROTECTED_ARTIFACT_VIOLATION: immutable predecessor changed at {path}."
+            )
+
+
+def _path_within_scopes(path: str, scopes: tuple[str, ...] | list[str]) -> bool:
+    normalized = Path(path).as_posix().rstrip("/")
+    for raw in scopes:
+        scope = Path(str(raw)).as_posix().rstrip("/")
+        if normalized == scope or normalized.startswith(scope + "/"):
+            return True
+    return False
+
+
+def _git_blob_bytes(repo: Path, commit: str, path: str) -> bytes:
+    proc = subprocess.run(
+        ["git", "show", f"{commit}:{path}"], cwd=repo,
+        stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=False,
+    )
+    if proc.returncode != 0:
+        raise OrchestratorError(
+            f"Cannot reproduce source path from immutable Git state: {commit}:{path}: "
+            + proc.stderr.decode("utf-8", errors="replace").strip()
+        )
+    return proc.stdout
+
+
+def git_path_sha256(repo: Path, commit: str, path: str) -> str:
+    return hashlib.sha256(_git_blob_bytes(repo, commit, path)).hexdigest()
+
+
+def _source_files_at_commit(repo: Path, commit: str, source_paths: tuple[str, ...]) -> list[str]:
+    files: set[str] = set()
+    for source in source_paths:
+        proc = run_git(repo, "ls-tree", "-r", "--name-only", commit, "--", source, check=False)
+        if proc.returncode != 0:
+            raise OrchestratorError(f"Unable to enumerate source path at {commit}: {source}")
+        for line in proc.stdout.splitlines():
+            if line.strip():
+                files.add(line.strip())
+        if not proc.stdout.strip():
+            # A direct file may still be absent; fail closed rather than hash worktree bytes.
+            exists = run_git(repo, "cat-file", "-e", f"{commit}:{source}", check=False)
+            if exists.returncode == 0:
+                files.add(source)
+    return sorted(files)
+
+
+def commit_source_finalization(
+    repo: Path,
+    *,
+    task_id: str,
+    source_paths: tuple[str, ...],
+    finalization_paths: tuple[str, ...] | None = None,
+    ctx: RunContext | None = None,
+    protected_paths: tuple[str, ...] = (),
+    protected_snapshot: dict[str, Any] | None = None,
+) -> tuple[str, dict[str, str]]:
+    if protected_paths:
+        assert_protected_artifacts_unchanged(repo, protected_paths, protected_snapshot or {})
+    if not source_paths:
+        raise OrchestratorError("SOURCE_FINALIZATION_SCOPE_VIOLATION: source_paths is empty.")
+    commit_paths = finalization_paths or source_paths
+    if not commit_paths:
+        raise OrchestratorError("SOURCE_FINALIZATION_SCOPE_VIOLATION: finalization_paths is empty.")
+    missing_source_scopes = [path for path in source_paths if not _path_within_scopes(path, commit_paths)]
+    if missing_source_scopes:
+        raise OrchestratorError(
+            "SOURCE_FINALIZATION_SCOPE_VIOLATION: finalization_paths do not include source scope: "
+            + ", ".join(missing_source_scopes)
+        )
+    dirty = changed_paths(repo)
+    outside = [path for path in dirty if not _path_within_scopes(path, commit_paths)]
+    if outside:
+        raise OrchestratorError(
+            "SOURCE_FINALIZATION_SCOPE_VIOLATION: dirty paths outside declared finalization scope: "
+            + ", ".join(outside)
+        )
+    if ctx:
+        ctx.progress("FINALIZE", f"{task_id} immutable source boundary")
+    run_git(repo, "add", "--", *commit_paths)
+    run_git(repo, "diff", "--cached", "--check")
+    staged = run_git(repo, "diff", "--cached", "--quiet", check=False)
+    if staged.returncode != 0:
+        scope = task_scope(task_id)
+        subject = f"chore({scope}): {task_id} source finalized"
+        body = "\n".join([
+            f"Task: {task_id}",
+            "Workflow-Stage: source-finalization",
+            "Automation: codex-task-orchestrator",
+        ])
+        run_git(repo, "commit", "-m", subject, "-m", body)
+    source_commit = run_git(repo, "rev-parse", "HEAD").stdout.strip()
+    if worktree_status(repo):
+        raise OrchestratorError("SOURCE_FINALIZATION_SCOPE_VIOLATION: worktree not clean after source commit.")
+    files = _source_files_at_commit(repo, source_commit, source_paths)
+    source_hashes = {path: git_path_sha256(repo, source_commit, path) for path in files}
+    return source_commit, source_hashes
+
+
+def verify_canonical_evidence_bindings(
+    repo: Path,
+    source_commit: str,
+    evidence_paths: tuple[str, ...],
+) -> dict[str, Any]:
+    verified: dict[str, Any] = {}
+    for rel in evidence_paths:
+        path = repo / rel
+        if not path.is_file():
+            raise OrchestratorError(f"Canonical evidence missing: {rel}")
+        try:
+            payload = json.loads(path.read_text(encoding="utf-8"))
+        except json.JSONDecodeError as exc:
+            raise OrchestratorError(f"Canonical evidence is invalid JSON: {rel}") from exc
+        if not isinstance(payload, dict):
+            raise OrchestratorError(f"Canonical evidence must be a JSON object: {rel}")
+        actual_source = payload.get("source_git_sha")
+        if actual_source != source_commit:
+            raise OrchestratorError(
+                f"Canonical evidence source_git_sha mismatch for {rel}: "
+                f"expected {source_commit}, got {actual_source}"
+            )
+        declared_hashes = payload.get("source_hashes") or {}
+        if not isinstance(declared_hashes, dict):
+            raise OrchestratorError(f"Canonical evidence source_hashes must be an object: {rel}")
+        reproduced: dict[str, str] = {}
+        for source_path, declared in declared_hashes.items():
+            if not isinstance(source_path, str) or not isinstance(declared, str):
+                raise OrchestratorError(f"Invalid source_hashes entry in {rel}")
+            actual = git_path_sha256(repo, source_commit, source_path)
+            if actual != declared:
+                raise OrchestratorError(
+                    f"Canonical evidence source hash mismatch for {rel}:{source_path}: "
+                    f"expected {actual}, got {declared}"
+                )
+            reproduced[source_path] = actual
+        verified[rel] = {
+            "source_git_sha": source_commit,
+            "source_hashes": reproduced,
+            "evidence_sha256": hashlib.sha256(path.read_bytes()).hexdigest(),
+        }
+    return verified
+
+
+def assert_finalization_authority_unchanged(
+    repo: Path,
+    *,
+    finalization: dict[str, Any],
+    source_paths: tuple[str, ...],
+    evidence_paths: tuple[str, ...],
+    literal_results: tuple[dict[str, Any], ...] | list[dict[str, Any]],
+) -> None:
+    if not bool(finalization.get("binding_verified")):
+        raise OrchestratorError("FINALIZATION_AUTHORITY_VIOLATION: binding is not verified.")
+    source_commit = finalization.get("source_commit")
+    if not isinstance(source_commit, str) or not source_commit:
+        raise OrchestratorError("FINALIZATION_AUTHORITY_VIOLATION: source_commit is missing.")
+    head = run_git(repo, "rev-parse", "HEAD").stdout.strip()
+    if head != source_commit:
+        raise OrchestratorError(
+            f"FINALIZATION_AUTHORITY_VIOLATION: HEAD changed after source finalization: {head} != {source_commit}"
+        )
+    dirty_source = [p for p in _porcelain_changed_paths(repo) if _path_within_scopes(p, source_paths)]
+    if dirty_source:
+        raise OrchestratorError(
+            "FINALIZATION_AUTHORITY_VIOLATION: source paths changed after source_commit: "
+            + ", ".join(dirty_source)
+        )
+    binding = finalization.get("binding")
+    if not isinstance(binding, dict):
+        raise OrchestratorError("FINALIZATION_AUTHORITY_VIOLATION: canonical binding record is missing.")
+    verify_canonical_evidence_bindings(repo, source_commit, evidence_paths)
+    for rel in evidence_paths:
+        record = binding.get(rel)
+        if not isinstance(record, dict) or not isinstance(record.get("evidence_sha256"), str):
+            raise OrchestratorError(
+                f"FINALIZATION_AUTHORITY_VIOLATION: recorded evidence hash missing for {rel}."
+            )
+        path = repo / rel
+        if not path.is_file():
+            raise OrchestratorError(f"FINALIZATION_AUTHORITY_VIOLATION: evidence missing: {rel}")
+        current_sha = hashlib.sha256(path.read_bytes()).hexdigest()
+        if current_sha != record["evidence_sha256"]:
+            raise OrchestratorError(
+                f"FINALIZATION_AUTHORITY_VIOLATION: canonical evidence changed after binding: {rel}"
+            )
+    for result in literal_results:
+        if result.get("exit_code") != 0 or result.get("git_sha") != source_commit:
+            raise OrchestratorError(
+                "FINALIZATION_AUTHORITY_VIOLATION: literal validation is not bound to source_commit."
+            )
+
+
+def run_gate_command(repo: Path, gate: dict[str, Any]) -> tuple[bool, dict[str, Any], dict[str, str] | None]:
+    gate_id = str(gate.get("id") or "")
+    if not gate_id:
+        raise OrchestratorError("Gate is missing id.")
+    argv = _string_argv(gate.get("command"), label=f"gate {gate_id} command")
+    record = run_exact_argv(repo, argv)
+    record["gate_id"] = gate_id
+    payload = _parse_prefixed_json(record["stdout"] + "\n" + record["stderr"], GATE_RESULT_PREFIX)
+    if record["exit_code"] == 0:
+        if payload is not None and str(payload.get("status") or "PASS").upper() not in {"PASS", "COMPLETE"}:
+            raise OrchestratorError(f"Gate {gate_id} exited 0 but reported non-PASS status.")
+        return True, record, None
+    if payload is None:
+        payload = {
+            "gate_id": gate_id,
+            "finding_id": f"{gate_id}-PROTOCOL",
+            "root_cause_class": "GATE_RESULT_PROTOCOL",
+            "first_failing_invariant": "machine_readable_gate_result",
+            "affected_boundary": "gate_runner",
+            "classification": "CONTRACT_OR_ARCHITECTURE_CONTRADICTION",
+        }
+    blocker = normalize_gate_blocker(payload, gate_id=gate_id)
+    return False, record, blocker
+
+
+def gate_fix_child_prompt(task_id: str, gate: dict[str, Any], blocker: dict[str, Any]) -> str:
+    base = child_prompt(task_id=task_id, worker_role="gate_fix")
+    context = [
+        "",
+        "GATE_FIX_CONTEXT:",
+        f"gate_id={gate.get('id')}",
+        "gate_command_json=" + json.dumps(gate.get("command"), ensure_ascii=False),
+        "blocker_json=" + json.dumps(blocker, ensure_ascii=False, sort_keys=True),
+        "Resolve exactly this blocker. Do not advance to another gate.",
+    ]
+    return base + "\n" + "\n".join(context)
 
 
 def diagnosis_trigger_signature(text: str) -> str:
@@ -1045,6 +1784,7 @@ CHILD_ROLE_PROMPTS = {
     "review": "prompts/codex/read_only_review_v2.md",
     "rereview": "prompts/codex/read_only_review_v2.md",
     "fix": "prompts/codex/fix_review_findings_v2.md",
+    "gate_fix": "prompts/codex/fix_gate_v1.md",
     "diagnosis": "prompts/codex/diagnose_task_v1.md",
     "diagnosis_escalated": "prompts/codex/diagnose_task_v1.md",
     "acceptance": "prompts/codex/record_task_acceptance_v2.md",
@@ -1142,6 +1882,9 @@ RESUMABLE_PHASES = {
     "diagnosis",
     "diagnosis_escalated",
     "implementation",
+    "gate_resolution",
+    "finalization",
+    "literal_validation",
     "review",
     "commit_implementation_review",
     "fix",
@@ -1174,7 +1917,7 @@ def save_resume_checkpoint(
     state: dict[str, Any],
 ) -> Path:
     path = ctx.run_dir.parent / f"resume_{safe_name(task_id)}.json"
-    state["schema_version"] = 2
+    state["schema_version"] = 3
     state["task_id"] = task_id
     state["repo"] = str(ctx.repo)
     state["current_run_dir"] = str(ctx.run_dir)
@@ -1228,7 +1971,7 @@ def create_manual_resume_state(
     head = run_git(repo, "rev-parse", "HEAD").stdout.strip()
     accepted_commit = head if phase in {"acceptance", "commit_acceptance"} else None
     return {
-        "schema_version": 2,
+        "schema_version": 3,
         "task_id": task_id,
         "repo": str(repo),
         "branch": branch,
@@ -1423,6 +2166,7 @@ def run_codex_text(
 ) -> tuple[str, StageRunRecord]:
     if shutil.which("codex") is None:
         raise OrchestratorError("`codex` executable was not found on PATH.")
+    sandbox = runtime_sandbox_override()
 
     record = ctx.new_stage(task_id, role, config)
     log_path = Path(record.log_path or "")
@@ -1430,6 +2174,8 @@ def run_codex_text(
     prompt_path = Path(record.prompt_path or "")
     prompt_path.write_text(prompt, encoding="utf-8")
     ctx.progress("START", f"{task_id} {role.upper()} — {config.model} / {config.reasoning_effort}")
+    if sandbox is not None:
+        ctx.progress("SANDBOX", f"{task_id} {role.upper()} — {sandbox}")
 
     with tempfile.NamedTemporaryFile(
         mode="w", encoding="utf-8", prefix="codex-last-", suffix=".txt", delete=False
@@ -1441,6 +2187,7 @@ def run_codex_text(
         cmd = [
             "codex",
             "exec",
+            *(["-s", sandbox] if sandbox is not None else []),
             "--model",
             config.model,
             "--config",
@@ -1719,7 +2466,11 @@ def commit_all_changes(
     boundary: str,
     review_status: str | None = None,
     ctx: RunContext | None = None,
+    protected_paths: tuple[str, ...] = (),
+    protected_snapshot: dict[str, Any] | None = None,
 ) -> str:
+    if protected_paths:
+        assert_protected_artifacts_unchanged(repo, protected_paths, protected_snapshot or {})
     if ctx:
         ctx.progress("COMMIT", f"{task_id} {boundary}")
     run_git(repo, "add", "-A")
@@ -1958,6 +2709,8 @@ def run_task(
 ) -> dict[str, Any]:
     """Run or resume one TASK lifecycle with class-aware bounded model routing."""
     events: list[dict[str, Any]] = []
+    contract = load_task_orchestrator_contract(repo, task_id)
+    staged = contract is not None
 
     if resume_state is None:
         ensure_clean_worktree(repo)
@@ -1966,7 +2719,7 @@ def run_task(
         class_cfg = policy.task_classes[assessment.task_class]
         initial_phase = "diagnosis" if class_cfg.diagnosis_required else "implementation"
         state: dict[str, Any] = {
-            "schema_version": 2,
+            "schema_version": 3,
             "task_id": task_id,
             "repo": str(repo),
             "branch": current_branch(repo),
@@ -1999,6 +2752,12 @@ def run_task(
             "current_run_dir": str(ctx.run_dir),
             "updated_at": iso_now(),
         }
+        state = upgrade_checkpoint_state(state, staged=staged)
+        if staged and contract is not None and contract.protected_paths:
+            state["protected_artifacts"] = snapshot_protected_artifacts(
+                repo, contract.protected_paths, authority_commit=initial_head
+            )
+        state["aggregate"]["orchestrator_runs"] += 1
         save_resume_checkpoint(ctx, task_id, state)
         resuming = False
         resume_source_dir: str | None = None
@@ -2009,8 +2768,29 @@ def run_task(
             f"({'; '.join(assessment.reasons)})",
         )
     else:
-        state = dict(resume_state)
+        state = upgrade_checkpoint_state(dict(resume_state), staged=staged)
+        if staged and contract is not None and contract.protected_paths and not state.get("protected_artifacts"):
+            authority = str(state.get("initial_head") or run_git(repo, "rev-parse", "HEAD").stdout.strip())
+            state["protected_artifacts"] = snapshot_protected_artifacts(
+                repo, contract.protected_paths, authority_commit=authority
+            )
+        state["aggregate"]["orchestrator_runs"] = int(state["aggregate"].get("orchestrator_runs") or 0) + 1
+        current_head_for_resume = run_git(repo, "rev-parse", "HEAD").stdout.strip()
+        current_branch_for_resume = current_branch(repo)
+        provenance_mismatch = bool(
+            (state.get("current_head") and state.get("current_head") != current_head_for_resume)
+            or (state.get("branch") and state.get("branch") != current_branch_for_resume)
+        )
         validate_resume_state(repo, task_id, state, force=resume_force)
+        if staged and resume_force and provenance_mismatch:
+            invalidate_staged_proof(state)
+            if str(state.get("phase") or "") not in {"diagnosis", "diagnosis_escalated", "implementation"}:
+                state["phase"] = "gate_resolution"
+            state["last_error"] = "Forced resume provenance mismatch invalidated staged qualification proof."
+            if contract is not None and contract.protected_paths:
+                assert_protected_artifacts_unchanged(
+                    repo, contract.protected_paths, state.get("protected_artifacts") or {}
+                )
         if not isinstance(state.get("task_assessment"), dict):
             assessment = classify_task(repo, task_id, policy)
             state["task_assessment"] = asdict(assessment)
@@ -2037,9 +2817,10 @@ def run_task(
         state.setdefault("implementation_escalated", False)
         state.setdefault("implementation_resume_after_diagnosis", False)
         state.setdefault("fix_resume_after_diagnosis", False)
-        if str(state.get("phase") or "") == "fix":
+        resume_phase_name = str(state.get("phase") or "")
+        effective_resume_class = str(state.get("effective_task_class") or assessment.task_class)
+        if resume_phase_name == "fix":
             bind_latest_resolved_diagnosis(repo, task_id, state, ctx=ctx)
-            effective_resume_class = str(state.get("effective_task_class") or assessment.task_class)
             if effective_resume_class == "RED" and not _diagnosis_path_exists(repo, state):
                 state["phase"] = "diagnosis"
                 state["diagnosis_return_phase"] = "fix"
@@ -2049,6 +2830,29 @@ def run_task(
                 state["diagnosis_trigger_signature"] = None
                 state["fix_resume_after_diagnosis"] = True
                 ctx.progress("ESCALATE", f"{task_id} fix resume lacks current diagnosis → RED diagnosis")
+        if (
+            resume_phase_name == "implementation"
+            and effective_resume_class == "RED"
+            and bool(state.get("implementation_resume_after_diagnosis"))
+        ):
+            bind_latest_resolved_diagnosis(repo, task_id, state, ctx=ctx)
+            durable_diagnosis = _checkpoint_diagnosis_record(state)
+            if (
+                state.get("diagnosis_binding_source") != "task_history"
+                or durable_diagnosis is None
+            ):
+                _clear_bound_diagnosis_state(state)
+                state["phase"] = "diagnosis"
+                state["diagnosis_return_phase"] = "implementation"
+                state["diagnosis_reason"] = "implementation_resume_missing_current_resolved_diagnosis"
+                state["diagnosis_trigger_stage"] = "resume_implementation"
+                state["diagnosis_trigger_path"] = None
+                state["diagnosis_trigger_signature"] = None
+                state["implementation_resume_after_diagnosis"] = True
+                ctx.progress(
+                    "ESCALATE",
+                    f"{task_id} implementation resume lacks current diagnosis → RED diagnosis",
+                )
         resume_source_dir = state.get("current_run_dir") or state.get("previous_run_dir")
         resume_reason = state.get("last_error") or state.get("status")
         state["previous_run_dir"] = resume_source_dir
@@ -2304,7 +3108,219 @@ def run_task(
                     "events": events,
                 }
             state["implementation_resume_after_diagnosis"] = False
-            phase = "review"
+            state["review_return_phase"] = "review"
+            phase = phase_after_implementation(staged=staged)
+            resuming = False
+            continue
+
+        if phase == "gate_resolution":
+            if contract is None:
+                raise OrchestratorError("gate_resolution requires staged_integration_v1 contract.")
+            gate_state = state["gate_state"]
+            index = int(gate_state.get("current_gate_index") or 0)
+            if index >= len(contract.gates):
+                phase = "finalization"
+                resuming = False
+                continue
+            gate = contract.gates[index]
+            gate_id = str(gate["id"])
+            gate_state["gate_resolution_cycles"] = int(gate_state.get("gate_resolution_cycles") or 0) + 1
+            state["aggregate"]["gate_resolution_cycles"] = int(state["aggregate"].get("gate_resolution_cycles") or 0) + 1
+            passed, gate_record, blocker = run_gate_command(repo, gate)
+            events.append({
+                "task_id": task_id,
+                "stage": "gate_resolution",
+                "gate_id": gate_id,
+                "status": "PASS" if passed else "FAIL",
+                "record": gate_record,
+                "blocker": blocker,
+                "workflow_complete": True,
+            })
+            if passed:
+                mark_gate_pass(gate_state, gate_id, {
+                    "head": gate_record["head"],
+                    "result_sha256": gate_record["result_sha256"],
+                    "recorded_at": gate_record["recorded_at"],
+                    "attempt_id": gate_state.get("attempt_id"),
+                })
+                continue
+            assert blocker is not None
+            action = register_gate_failure(gate_state, blocker)
+            if action == "STOP":
+                transition_checkpoint(
+                    ctx, state, phase="gate_resolution", status="GATE_BLOCKED",
+                    last_error=f"{gate_id} blocked by {blocker['classification']}", commits=commits,
+                )
+                return {
+                    "task_id": task_id, "status": "GATE_BLOCKED",
+                    "task_assessment": state["task_assessment"],
+                    "effective_task_class": effective_class(), "gate_id": gate_id,
+                    "blocker": blocker, "commits": commits, "events": events,
+                }
+            if action == "ARCHITECTURE_REVIEW_REQUIRED":
+                transition_checkpoint(
+                    ctx, state, phase="gate_resolution", status="ARCHITECTURE_REVIEW_REQUIRED",
+                    last_error=f"{gate_id} same invariant survived bounded fixes", commits=commits,
+                )
+                return {
+                    "task_id": task_id, "status": "ARCHITECTURE_REVIEW_REQUIRED",
+                    "task_assessment": state["task_assessment"],
+                    "effective_task_class": effective_class(), "gate_id": gate_id,
+                    "blocker": blocker, "commits": commits, "events": events,
+                }
+            config = resolve_model_config(policy, effective_class(), "fix")
+            gate_fix = run_stage(
+                gate_fix_child_prompt(task_id, gate, blocker), repo, config,
+                ctx=ctx, task_id=task_id, role="gate_fix",
+            )
+            require_result(
+                gate_fix, task_id=task_id, stage="gate_fix",
+                allowed={"READY_FOR_GATE_RERUN", "NOT_READY_FOR_GATE_RERUN"},
+            )
+            events.append(stage_event(gate_fix, config, role="gate_fix"))
+            if not workflow_is_complete(gate_fix) or gate_fix.status != "READY_FOR_GATE_RERUN":
+                transition_checkpoint(
+                    ctx, state, phase="gate_resolution", status="GATE_FIX_NOT_READY",
+                    last_error=f"Bounded gate fix for {gate_id} was not ready for rerun.", commits=commits,
+                )
+                return {
+                    "task_id": task_id, "status": "GATE_FIX_NOT_READY",
+                    "task_assessment": state["task_assessment"],
+                    "effective_task_class": effective_class(), "gate_id": gate_id,
+                    "blocker": blocker, "commits": commits, "events": events,
+                }
+            begin_new_gate_attempt(gate_state)
+            resuming = False
+            continue
+
+        if phase == "finalization":
+            if contract is None:
+                raise OrchestratorError("finalization requires staged_integration_v1 contract.")
+            try:
+                source_commit, source_hashes = commit_source_finalization(
+                    repo, task_id=task_id, source_paths=contract.source_paths,
+                    finalization_paths=contract.finalization_paths, ctx=ctx,
+                    protected_paths=contract.protected_paths,
+                    protected_snapshot=state.get("protected_artifacts") or {},
+                )
+            except OrchestratorError as exc:
+                transition_checkpoint(
+                    ctx, state, phase="finalization", status="IMMUTABLE_FINALIZATION_FAILED",
+                    last_error=str(exc), commits=commits,
+                )
+                return {
+                    "task_id": task_id, "status": "IMMUTABLE_FINALIZATION_FAILED",
+                    "task_assessment": state["task_assessment"],
+                    "effective_task_class": effective_class(),
+                    "error": str(exc), "commits": commits, "events": events,
+                }
+            state["finalization"]["source_commit"] = source_commit
+            state["finalization"]["source_hashes"] = source_hashes
+            canonical_record = run_exact_argv(repo, contract.canonical_command)
+            events.append({
+                "task_id": task_id, "stage": "canonical_finalization",
+                "status": "PASS" if canonical_record["exit_code"] == 0 else "FAIL",
+                "record": canonical_record, "workflow_complete": True,
+            })
+            if canonical_record["exit_code"] != 0:
+                transition_checkpoint(
+                    ctx, state, phase="finalization", status="CANONICAL_RUN_FAILED",
+                    last_error="Canonical finalization command failed.", commits=commits,
+                )
+                return {
+                    "task_id": task_id, "status": "CANONICAL_RUN_FAILED",
+                    "task_assessment": state["task_assessment"],
+                    "effective_task_class": effective_class(),
+                    "canonical_record": canonical_record, "commits": commits, "events": events,
+                }
+            canonical_dirty = changed_paths(repo)
+            canonical_outside = [
+                path for path in canonical_dirty
+                if not _path_within_scopes(path, contract.canonical_evidence_paths)
+            ]
+            if canonical_outside:
+                error = (
+                    "IMMUTABLE_FINALIZATION_FAILED: canonical command changed paths outside evidence scope: "
+                    + ", ".join(canonical_outside)
+                )
+                transition_checkpoint(
+                    ctx, state, phase="finalization", status="IMMUTABLE_FINALIZATION_FAILED",
+                    last_error=error, commits=commits,
+                )
+                return {
+                    "task_id": task_id, "status": "IMMUTABLE_FINALIZATION_FAILED",
+                    "task_assessment": state["task_assessment"],
+                    "effective_task_class": effective_class(),
+                    "error": error, "commits": commits, "events": events,
+                }
+            try:
+                binding = verify_canonical_evidence_bindings(
+                    repo, source_commit, contract.canonical_evidence_paths,
+                )
+            except OrchestratorError as exc:
+                transition_checkpoint(
+                    ctx, state, phase="finalization", status="IMMUTABLE_FINALIZATION_FAILED",
+                    last_error=str(exc), commits=commits,
+                )
+                return {
+                    "task_id": task_id, "status": "IMMUTABLE_FINALIZATION_FAILED",
+                    "task_assessment": state["task_assessment"],
+                    "effective_task_class": effective_class(),
+                    "error": str(exc), "commits": commits, "events": events,
+                }
+            state["finalization"]["canonical_results"] = [canonical_record]
+            state["finalization"]["binding"] = binding
+            state["finalization"]["binding_verified"] = True
+            phase = "literal_validation"
+            resuming = False
+            continue
+
+        if phase == "literal_validation":
+            if contract is None:
+                raise OrchestratorError("literal_validation requires staged_integration_v1 contract.")
+            if not bool(state.get("finalization", {}).get("binding_verified")):
+                transition_checkpoint(
+                    ctx, state, phase="literal_validation", status="LITERAL_VALIDATION_BLOCKED",
+                    last_error="Immutable source finalization binding is not verified.", commits=commits,
+                )
+                return {
+                    "task_id": task_id, "status": "LITERAL_VALIDATION_BLOCKED",
+                    "task_assessment": state["task_assessment"],
+                    "effective_task_class": effective_class(), "commits": commits, "events": events,
+                }
+            validation_results: list[dict[str, Any]] = []
+            for argv in contract.literal_validation:
+                result = run_literal_validation(repo, argv)
+                validation_results.append(result)
+                events.append({
+                    "task_id": task_id, "stage": "literal_validation",
+                    "status": "PASS" if result["exit_code"] == 0 else "FAIL",
+                    "result": result, "workflow_complete": True,
+                })
+                if result["exit_code"] != 0:
+                    state["literal_validation"]["results"] = validation_results
+                    transition_checkpoint(
+                        ctx, state, phase="literal_validation", status="LITERAL_VALIDATION_FAILED",
+                        last_error="Literal validation command failed.", commits=commits,
+                    )
+                    return {
+                        "task_id": task_id, "status": "LITERAL_VALIDATION_FAILED",
+                        "task_assessment": state["task_assessment"],
+                        "effective_task_class": effective_class(),
+                        "literal_validation": validation_results, "commits": commits, "events": events,
+                    }
+            state["literal_validation"]["results"] = validation_results
+            assert_finalization_authority_unchanged(
+                repo,
+                finalization=state.get("finalization") or {},
+                source_paths=contract.source_paths,
+                evidence_paths=contract.canonical_evidence_paths,
+                literal_results=validation_results,
+            )
+            return_phase = str(state.get("review_return_phase") or "review")
+            if return_phase not in {"review", "rereview"}:
+                raise OrchestratorError(f"Invalid staged review_return_phase: {return_phase}")
+            phase = return_phase
             resuming = False
             continue
 
@@ -2360,6 +3376,13 @@ def run_task(
             continue
 
         if phase == "commit_implementation_review":
+            if contract is not None:
+                assert_finalization_authority_unchanged(
+                    repo, finalization=state.get("finalization") or {},
+                    source_paths=contract.source_paths,
+                    evidence_paths=contract.canonical_evidence_paths,
+                    literal_results=state.get("literal_validation", {}).get("results") or [],
+                )
             review_status = state.get("review_status")
             if review_status not in {"ACCEPT", "REJECT"}:
                 raise OrchestratorError("Cannot resume implementation-review commit without review_status.")
@@ -2369,6 +3392,8 @@ def run_task(
                 boundary="implementation-review",
                 review_status=str(review_status),
                 ctx=ctx,
+                protected_paths=(contract.protected_paths if contract else ()),
+                protected_snapshot=state.get("protected_artifacts") or {},
             )
             if first_commit not in commits:
                 commits.append(first_commit)
@@ -2517,7 +3542,10 @@ def run_task(
 
             state["fix_resume_after_diagnosis"] = False
             state["fix_cycles_used"] = used + 1
-            phase = "rereview"
+            if staged:
+                invalidate_staged_proof(state)
+            state["review_return_phase"] = "rereview"
+            phase = phase_after_review_fix(staged=staged)
             resuming = False
             continue
 
@@ -2573,6 +3601,13 @@ def run_task(
             continue
 
         if phase == "commit_fix_rereview":
+            if contract is not None:
+                assert_finalization_authority_unchanged(
+                    repo, finalization=state.get("finalization") or {},
+                    source_paths=contract.source_paths,
+                    evidence_paths=contract.canonical_evidence_paths,
+                    literal_results=state.get("literal_validation", {}).get("results") or [],
+                )
             review_status = state.get("review_status")
             if review_status not in {"ACCEPT", "REJECT"}:
                 raise OrchestratorError("Cannot resume fix-rereview commit without review_status.")
@@ -2582,6 +3617,8 @@ def run_task(
                 boundary="fix-rereview",
                 review_status=str(review_status),
                 ctx=ctx,
+                protected_paths=(contract.protected_paths if contract else ()),
+                protected_snapshot=state.get("protected_artifacts") or {},
             )
             if fix_commit not in commits:
                 commits.append(fix_commit)
@@ -2670,7 +3707,11 @@ def run_task(
             acceptance_path = state.get("acceptance_path")
             if not acceptance_path:
                 raise OrchestratorError("Cannot commit acceptance without acceptance_path.")
-            acceptance_commit = commit_all_changes(repo, task_id=task_id, boundary="acceptance", ctx=ctx)
+            acceptance_commit = commit_all_changes(
+                repo, task_id=task_id, boundary="acceptance", ctx=ctx,
+                protected_paths=(contract.protected_paths if contract else ()),
+                protected_snapshot=state.get("protected_artifacts") or {},
+            )
             if acceptance_commit not in commits:
                 commits.append(acceptance_commit)
             state["acceptance_commit"] = acceptance_commit
@@ -2782,6 +3823,40 @@ def derive_next_action(result: dict[str, Any], errors: list[ErrorRecord]) -> tup
             "Resolve the implementation/environment blocker without discarding target-task work.",
             "Then resume with: scripts/codex/resume-task <TASK_ID>",
         ]
+    if status == "GATE_BLOCKED":
+        return "RESOLVE_GATE_BLOCKER", [
+            "Inspect the current gate blocker classification and first failing invariant.",
+            "Do not advance to a later gate; resolve the external/contract blocker or revise the task contract explicitly.",
+            "Resume the checkpointed gate with: scripts/codex/resume-task <TASK_ID>",
+        ]
+    if status == "ARCHITECTURE_REVIEW_REQUIRED":
+        return "REVIEW_GATE_ARCHITECTURE", [
+            "The same normalized gate invariant survived the bounded correction budget.",
+            "Review architecture/contract/scope before authorizing another correction.",
+        ]
+    if status == "GATE_FIX_NOT_READY":
+        return "RESOLVE_GATE_FIX_BLOCKER", [
+            "Inspect the bounded gate-fix final response and the current gate blocker.",
+            "Keep the current gate cursor and existing passed-gate baselines; do not advance manually.",
+            "Resume with: scripts/codex/resume-task <TASK_ID>",
+        ]
+    if status == "IMMUTABLE_FINALIZATION_FAILED":
+        return "REPAIR_IMMUTABLE_FINALIZATION", [
+            "Inspect source scope, protected-artifact state, and canonical Evidence source binding.",
+            "Do not start Review until source_commit and Evidence binding are reproducible from Git objects.",
+            "Resume with: scripts/codex/resume-task <TASK_ID>",
+        ]
+    if status == "CANONICAL_RUN_FAILED":
+        return "REPAIR_CANONICAL_RUN", [
+            "Inspect the exact canonical command result and preserve the immutable source_commit.",
+            "Correct only the bounded canonical-run blocker, then resume finalization.",
+        ]
+    if status in {"LITERAL_VALIDATION_FAILED", "LITERAL_VALIDATION_BLOCKED"}:
+        return "REPAIR_LITERAL_VALIDATION", [
+            "Inspect the exact literal validation command, resolved executable/interpreter, exit code, and Git SHA.",
+            "Do not claim review readiness until the literal command itself passes.",
+            "Resume with: scripts/codex/resume-task <TASK_ID>",
+        ]
     if status == "REVIEW_WORKFLOW_INCOMPLETE":
         return "REPAIR_REVIEW_WORKFLOW_THEN_RESUME", [
             "Inspect the Review/Re-review final response and protocol/error log.",
@@ -2892,6 +3967,7 @@ def write_reports(
         "stages": [asdict(r) for r in ctx.stage_records],
         "errors": [asdict(e) for e in ctx.errors],
         "token_summary": token_summary,
+        "task_lifetime_summary": None,
         "resume_checkpoint": None,
         "resume_command": None,
         "manual_resume_prompt": None,
@@ -2905,6 +3981,12 @@ def write_reports(
             report["resume_command"] = f"scripts/codex/resume-task {terminal_task_for_resume}"
             try:
                 resume_state = json.loads(checkpoint.read_text(encoding="utf-8"))
+                resume_state = upgrade_checkpoint_state(
+                    resume_state, staged=bool(resume_state.get("qualification_profile"))
+                )
+                if merge_run_stage_metrics(resume_state, ctx.stage_records, run_id=str(ctx.run_dir)):
+                    _atomic_write_json(checkpoint, resume_state)
+                report["task_lifetime_summary"] = dict(resume_state.get("aggregate") or {})
                 if resume_state.get("status") != "ACCEPTED":
                     manual_prompt_path = write_manual_resume_prompt(ctx, resume_state)
                     if manual_prompt_path:
@@ -2963,6 +4045,20 @@ def write_reports(
         f"- Terra: `{token_summary['terra_reported_tokens']:,}`",
         f"- Codex child calls: `{token_summary['codex_calls']}`",
         f"- Deterministic acceptance calls saved: `{token_summary['deterministic_acceptance_calls_saved']}`",
+        "",
+        "## Task Lifetime Summary",
+        "",
+    ]
+    lifetime = report.get("task_lifetime_summary")
+    if isinstance(lifetime, dict):
+        for key in (
+            "orchestrator_runs", "codex_calls", "reported_tokens_total", "diagnosis_calls",
+            "gate_fix_calls", "review_fix_calls", "review_calls", "gate_resolution_cycles",
+        ):
+            lines.append(f"- {key}: `{int(lifetime.get(key) or 0):,}`")
+    else:
+        lines.append("Not available.")
+    lines += [
         "",
         "## Errors",
         "",
@@ -3078,6 +4174,9 @@ def main() -> int:
             "diagnosis",
             "diagnosis_escalated",
             "implementation",
+            "gate_resolution",
+            "finalization",
+            "literal_validation",
             "review",
             "fix",
             "rereview",
