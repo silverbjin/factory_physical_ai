@@ -91,7 +91,7 @@
   },
   "decision": "SIM_E2E_NOT_QUALIFIED",
   "dual_world_cosimulation_required": false,
-  "evaluation_repo_head": "ef76e74a35dd4b1955b5d7f5593ad81421017483",
+  "evaluation_repo_head": "a78ee58e2cd151ef72811d5995a3f275a0a5434d",
   "failures": [
     "SIM-007: required READY result not proven"
   ],
@@ -552,5 +552,5 @@
     "PYTHONDONTWRITEBYTECODE=1 python3 -m pytest -q -p no:cacheprovider tests/test_simulation_e2e_qualification.py"
   ],
   "verifier_identity_or_version": "verify_simulation_e2e_qualification.py/v1",
-  "verifier_sha256_or_equivalent_immutable_identity": "45594ff9eb22e8bee20c259d0d7ff8fdd03b8b6ed723532e8102c4f2962a9c82"
+  "verifier_sha256_or_equivalent_immutable_identity": "74b882b595cf9830903b4392effeafda149584e5326f6fc639cc8c7233e8cd11"
 }
