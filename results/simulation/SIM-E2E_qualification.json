@@ -1,0 +1,556 @@
+{
+  "accepted_evidence_bindings": {
+    "SIM-003": {
+      "acceptance_path": "results/reviews/SIM-003_acceptance.json",
+      "accepted": true,
+      "evidence_path": "results/simulation/SIM-003_baseline.json",
+      "evidence_sha256": "97f92b1bd13ab2df0db2546cfca096eaf47c1076b72698bc1a47f72780fc7cb3",
+      "required_result": "SIM_BASELINE_READY",
+      "result": "SIM_BASELINE_READY",
+      "reviewed_revision": "ff87fb0f479d2febdc668abcdea0beac1e1111ed",
+      "status": "PASS"
+    },
+    "SIM-004": {
+      "acceptance_path": "results/reviews/SIM-004_acceptance.json",
+      "accepted": true,
+      "evidence_path": "results/simulation/SIM-004_navigation_backend.json",
+      "evidence_sha256": "b4c0ce91dde6c2f92c57ea6a227149362279993dee0dec4fd1ab12877e73f1d9",
+      "required_result": "SIM_NAVIGATION_BACKEND_READY",
+      "result": "SIM_NAVIGATION_BACKEND_READY",
+      "reviewed_revision": "b7e8266abd17f48c18cca94d9433db50fd55464d",
+      "status": "PASS"
+    },
+    "SIM-005": {
+      "acceptance_path": "results/reviews/SIM-005_acceptance.json",
+      "accepted": true,
+      "evidence_path": "results/simulation/SIM-005_mujoco_vla_backend.json",
+      "evidence_sha256": "f4d41fdb1f13978e1b1e5c91b95e31b38a69825a0d432a8284ff7731a3beb84f",
+      "required_result": "SIM_MANIPULATION_BACKEND_READY",
+      "result": "SIM_MANIPULATION_BACKEND_READY",
+      "reviewed_revision": "542514a4d10bc03087834e8a5f672d53afe6aa21",
+      "status": "PASS"
+    },
+    "SIM-006": {
+      "acceptance_path": "results/reviews/SIM-006_acceptance.json",
+      "accepted": true,
+      "evidence_path": "results/simulation/SIM-006_verification_backend.json",
+      "evidence_sha256": "6fe14dcdcee21c6f1e5be73add28afeba622d0a4497706d0ee3181f610008ffc",
+      "required_result": "SIM_VERIFICATION_BACKEND_READY",
+      "result": "SIM_VERIFICATION_BACKEND_READY",
+      "reviewed_revision": "a10be6725d386e531f9cb0e00079c8d39ffdb1bf",
+      "status": "PASS"
+    },
+    "SIM-007": {
+      "acceptance_path": "results/reviews/SIM-007_acceptance.json",
+      "accepted": true,
+      "evidence_path": "results/simulation/SIM-007_mission_integration.json",
+      "evidence_sha256": "7247f8db76c874e533f615f1c8c3f32febb7a7e2377790ff05e3e93320531711",
+      "required_result": "SIM_MISSION_INTEGRATION_READY",
+      "result": "SIM_MISSION_INTEGRATION_BLOCKED",
+      "reviewed_revision": "228eb7745aa05c230e1b272184601b5afd53853b",
+      "status": "PASS"
+    },
+    "SIM-008": {
+      "acceptance_path": "results/reviews/SIM-008_acceptance.json",
+      "accepted": true,
+      "evidence_path": "results/simulation/SIM-008_normal_system_e2e.json",
+      "evidence_sha256": "ebf0ef0a27114e3c04fa6bec05aa3eef792fdfc282d2be009640bac7ecc26290",
+      "required_result": "SIM_NORMAL_E2E_READY",
+      "result": "SIM_NORMAL_E2E_READY",
+      "reviewed_revision": "ea91e0c16412e20c8cae66355a1a39129919dd42",
+      "status": "PASS"
+    },
+    "SIM-009": {
+      "acceptance_path": "results/reviews/SIM-009_acceptance.json",
+      "accepted": true,
+      "evidence_path": "results/simulation/SIM-009_failure_recovery.json",
+      "evidence_sha256": "91d10e5bb4fb7ca1b62c325885bec276c6ef6231c6baa0424f3213702be3216e",
+      "required_result": "SIM_FAILURE_SUITE_READY",
+      "result": "SIM_FAILURE_SUITE_READY",
+      "reviewed_revision": "67bde0e1f29c3f974bf3f0b29dff3f3aaa38e5be",
+      "status": "PASS"
+    },
+    "SIM-010": {
+      "acceptance_path": "results/reviews/SIM-010_acceptance.json",
+      "accepted": true,
+      "evidence_path": "results/simulation/SIM-010_observability_regression.json",
+      "evidence_sha256": "f634d1a8ad917b6711aa0c5d2af792ea6e44126cc8ba823a4d479abf8676834b",
+      "required_result": "SIM_OBSERVABILITY_REGRESSION_READY",
+      "result": "SIM_OBSERVABILITY_REGRESSION_READY",
+      "reviewed_revision": "7f0eb5200ccaabd8e2810d1d23aa6e969ea86216",
+      "status": "PASS"
+    }
+  },
+  "authorization_snapshot": {
+    "Dataset V1 authorized": false,
+    "SmolVLA fine-tuning authorized": false,
+    "TASK-W1-001 authorized": false,
+    "TASK-W1-002 authorized": false,
+    "hardware target frozen": false,
+    "physical motion authorized": false
+  },
+  "decision": "SIM_E2E_NOT_QUALIFIED",
+  "dual_world_cosimulation_required": false,
+  "evaluation_repo_head": "ef76e74a35dd4b1955b5d7f5593ad81421017483",
+  "failures": [
+    "SIM-007: required READY result not proven"
+  ],
+  "integrated_world_authority": "Gazebo",
+  "matrix": {
+    "L0_contract_runtime": {
+      "acceptance_artifacts": [
+        "results/reviews/SIM-005_acceptance.json"
+      ],
+      "actual": null,
+      "expected": "PASS",
+      "reason": "source index lacks unique predicate-source binding",
+      "reconstruction_status": "UNVERIFIED",
+      "source_tasks": [
+        "SIM-005"
+      ],
+      "underlying_evidence_paths": [
+        "results/simulation/SIM-005_mujoco_vla_backend.json"
+      ],
+      "verified_bindings": [
+        "f4d41fdb1f13978e1b1e5c91b95e31b38a69825a0d432a8284ff7731a3beb84f"
+      ]
+    },
+    "accepted_contract_regression": {
+      "acceptance_artifacts": [
+        "results/reviews/SIM-003_acceptance.json"
+      ],
+      "actual": null,
+      "expected": "PASS",
+      "reason": "source index lacks unique predicate-source binding",
+      "reconstruction_status": "UNVERIFIED",
+      "source_tasks": [
+        "SIM-003"
+      ],
+      "underlying_evidence_paths": [
+        "results/simulation/SIM-003_baseline.json"
+      ],
+      "verified_bindings": [
+        "97f92b1bd13ab2df0db2546cfca096eaf47c1076b72698bc1a47f72780fc7cb3"
+      ]
+    },
+    "cross_simulator_verification": {
+      "acceptance_artifacts": [
+        "results/reviews/SIM-006_acceptance.json"
+      ],
+      "actual": null,
+      "expected": "PASS",
+      "reason": "source index lacks unique predicate-source binding",
+      "reconstruction_status": "UNVERIFIED",
+      "source_tasks": [
+        "SIM-006"
+      ],
+      "underlying_evidence_paths": [
+        "results/simulation/SIM-006_verification_backend.json"
+      ],
+      "verified_bindings": [
+        "6fe14dcdcee21c6f1e5be73add28afeba622d0a4497706d0ee3181f610008ffc"
+      ]
+    },
+    "dual_world_cosimulation_required": {
+      "acceptance_artifacts": [
+        "results/reviews/SIM-007_acceptance.json"
+      ],
+      "actual": null,
+      "expected": false,
+      "reason": "source index lacks unique predicate-source binding",
+      "reconstruction_status": "UNVERIFIED",
+      "source_tasks": [
+        "SIM-007"
+      ],
+      "underlying_evidence_paths": [
+        "results/simulation/SIM-007_mission_integration.json"
+      ],
+      "verified_bindings": [
+        "7247f8db76c874e533f615f1c8c3f32febb7a7e2377790ff05e3e93320531711"
+      ]
+    },
+    "evidence_reproducible": {
+      "acceptance_artifacts": [
+        "results/reviews/SIM-010_acceptance.json"
+      ],
+      "actual": null,
+      "expected": "PASS",
+      "reason": "source index lacks unique predicate-source binding",
+      "reconstruction_status": "UNVERIFIED",
+      "source_tasks": [
+        "SIM-010"
+      ],
+      "underlying_evidence_paths": [
+        "results/simulation/SIM-010_observability_regression.json"
+      ],
+      "verified_bindings": [
+        "f634d1a8ad917b6711aa0c5d2af792ea6e44126cc8ba823a4d479abf8676834b"
+      ]
+    },
+    "forbidden_state_transition": {
+      "acceptance_artifacts": [
+        "results/reviews/SIM-009_acceptance.json"
+      ],
+      "actual": null,
+      "expected": false,
+      "reason": "source index lacks unique predicate-source binding",
+      "reconstruction_status": "UNVERIFIED",
+      "source_tasks": [
+        "SIM-009"
+      ],
+      "underlying_evidence_paths": [
+        "results/simulation/SIM-009_failure_recovery.json"
+      ],
+      "verified_bindings": [
+        "91d10e5bb4fb7ca1b62c325885bec276c6ef6231c6baa0424f3213702be3216e"
+      ]
+    },
+    "leaked_process": {
+      "acceptance_artifacts": [
+        "results/reviews/SIM-009_acceptance.json"
+      ],
+      "actual": null,
+      "expected": false,
+      "reason": "source index lacks unique predicate-source binding",
+      "reconstruction_status": "UNVERIFIED",
+      "source_tasks": [
+        "SIM-009"
+      ],
+      "underlying_evidence_paths": [
+        "results/simulation/SIM-009_failure_recovery.json"
+      ],
+      "verified_bindings": [
+        "91d10e5bb4fb7ca1b62c325885bec276c6ef6231c6baa0424f3213702be3216e"
+      ]
+    },
+    "manipulation_backend": {
+      "acceptance_artifacts": [
+        "results/reviews/SIM-005_acceptance.json"
+      ],
+      "actual": null,
+      "expected": "PASS",
+      "reason": "source index lacks unique predicate-source binding",
+      "reconstruction_status": "UNVERIFIED",
+      "source_tasks": [
+        "SIM-005"
+      ],
+      "underlying_evidence_paths": [
+        "results/simulation/SIM-005_mujoco_vla_backend.json"
+      ],
+      "verified_bindings": [
+        "f4d41fdb1f13978e1b1e5c91b95e31b38a69825a0d432a8284ff7731a3beb84f"
+      ]
+    },
+    "model_config_provenance": {
+      "acceptance_artifacts": [
+        "results/reviews/SIM-005_acceptance.json"
+      ],
+      "actual": null,
+      "expected": "PASS",
+      "reason": "source index lacks unique predicate-source binding",
+      "reconstruction_status": "UNVERIFIED",
+      "source_tasks": [
+        "SIM-005"
+      ],
+      "underlying_evidence_paths": [
+        "results/simulation/SIM-005_mujoco_vla_backend.json"
+      ],
+      "verified_bindings": [
+        "f4d41fdb1f13978e1b1e5c91b95e31b38a69825a0d432a8284ff7731a3beb84f"
+      ]
+    },
+    "normal_system_e2e": {
+      "acceptance_artifacts": [
+        "results/reviews/SIM-008_acceptance.json"
+      ],
+      "actual": null,
+      "expected": "PASS",
+      "reason": "source index lacks unique predicate-source binding",
+      "reconstruction_status": "UNVERIFIED",
+      "source_tasks": [
+        "SIM-008"
+      ],
+      "underlying_evidence_paths": [
+        "results/simulation/SIM-008_normal_system_e2e.json"
+      ],
+      "verified_bindings": [
+        "ebf0ef0a27114e3c04fa6bec05aa3eef792fdfc282d2be009640bac7ecc26290"
+      ]
+    },
+    "observability_sufficient": {
+      "acceptance_artifacts": [
+        "results/reviews/SIM-010_acceptance.json"
+      ],
+      "actual": null,
+      "expected": "PASS",
+      "reason": "source index lacks unique predicate-source binding",
+      "reconstruction_status": "UNVERIFIED",
+      "source_tasks": [
+        "SIM-010"
+      ],
+      "underlying_evidence_paths": [
+        "results/simulation/SIM-010_observability_regression.json"
+      ],
+      "verified_bindings": [
+        "f634d1a8ad917b6711aa0c5d2af792ea6e44126cc8ba823a4d479abf8676834b"
+      ]
+    },
+    "physical_dependency": {
+      "acceptance_artifacts": [
+        "results/reviews/SIM-009_acceptance.json"
+      ],
+      "actual": null,
+      "expected": false,
+      "reason": "source index lacks unique predicate-source binding",
+      "reconstruction_status": "UNVERIFIED",
+      "source_tasks": [
+        "SIM-009"
+      ],
+      "underlying_evidence_paths": [
+        "results/simulation/SIM-009_failure_recovery.json"
+      ],
+      "verified_bindings": [
+        "91d10e5bb4fb7ca1b62c325885bec276c6ef6231c6baa0424f3213702be3216e"
+      ]
+    },
+    "regression_green": {
+      "acceptance_artifacts": [
+        "results/reviews/SIM-010_acceptance.json"
+      ],
+      "actual": null,
+      "expected": "PASS",
+      "reason": "source index lacks unique predicate-source binding",
+      "reconstruction_status": "UNVERIFIED",
+      "source_tasks": [
+        "SIM-010"
+      ],
+      "underlying_evidence_paths": [
+        "results/simulation/SIM-010_observability_regression.json"
+      ],
+      "verified_bindings": [
+        "f634d1a8ad917b6711aa0c5d2af792ea6e44126cc8ba823a4d479abf8676834b"
+      ]
+    },
+    "required_failure_cases": {
+      "acceptance_artifacts": [
+        "results/reviews/SIM-009_acceptance.json"
+      ],
+      "actual": null,
+      "expected": "PASS",
+      "reason": "source index lacks unique predicate-source binding",
+      "reconstruction_status": "UNVERIFIED",
+      "source_tasks": [
+        "SIM-009"
+      ],
+      "underlying_evidence_paths": [
+        "results/simulation/SIM-009_failure_recovery.json"
+      ],
+      "verified_bindings": [
+        "91d10e5bb4fb7ca1b62c325885bec276c6ef6231c6baa0424f3213702be3216e"
+      ]
+    },
+    "required_manipulation_failures": {
+      "acceptance_artifacts": [
+        "results/reviews/SIM-005_acceptance.json"
+      ],
+      "actual": null,
+      "expected": "PASS",
+      "reason": "source index lacks unique predicate-source binding",
+      "reconstruction_status": "UNVERIFIED",
+      "source_tasks": [
+        "SIM-005"
+      ],
+      "underlying_evidence_paths": [
+        "results/simulation/SIM-005_mujoco_vla_backend.json"
+      ],
+      "verified_bindings": [
+        "f4d41fdb1f13978e1b1e5c91b95e31b38a69825a0d432a8284ff7731a3beb84f"
+      ]
+    },
+    "required_navigation_system_failures": {
+      "acceptance_artifacts": [
+        "results/reviews/SIM-009_acceptance.json"
+      ],
+      "actual": null,
+      "expected": "PASS",
+      "reason": "source index lacks unique predicate-source binding",
+      "reconstruction_status": "UNVERIFIED",
+      "source_tasks": [
+        "SIM-009"
+      ],
+      "underlying_evidence_paths": [
+        "results/simulation/SIM-009_failure_recovery.json"
+      ],
+      "verified_bindings": [
+        "91d10e5bb4fb7ca1b62c325885bec276c6ef6231c6baa0424f3213702be3216e"
+      ]
+    },
+    "ros2_jazzy_gazebo_navigation": {
+      "acceptance_artifacts": [
+        "results/reviews/SIM-004_acceptance.json"
+      ],
+      "actual": null,
+      "expected": "PASS",
+      "reason": "source index lacks unique predicate-source binding",
+      "reconstruction_status": "UNVERIFIED",
+      "source_tasks": [
+        "SIM-004"
+      ],
+      "underlying_evidence_paths": [
+        "results/simulation/SIM-004_navigation_backend.json"
+      ],
+      "verified_bindings": [
+        "b4c0ce91dde6c2f92c57ea6a227149362279993dee0dec4fd1ab12877e73f1d9"
+      ]
+    },
+    "sim_baseline_bound": {
+      "acceptance_artifacts": [
+        "results/reviews/SIM-003_acceptance.json"
+      ],
+      "actual": null,
+      "expected": "PASS",
+      "reason": "source index lacks unique predicate-source binding",
+      "reconstruction_status": "UNVERIFIED",
+      "source_tasks": [
+        "SIM-003"
+      ],
+      "underlying_evidence_paths": [
+        "results/simulation/SIM-003_baseline.json"
+      ],
+      "verified_bindings": [
+        "97f92b1bd13ab2df0db2546cfca096eaf47c1076b72698bc1a47f72780fc7cb3"
+      ]
+    },
+    "timeout_reconciliation": {
+      "acceptance_artifacts": [
+        "results/reviews/SIM-004_acceptance.json"
+      ],
+      "actual": null,
+      "expected": "PASS",
+      "reason": "source index lacks unique predicate-source binding",
+      "reconstruction_status": "UNVERIFIED",
+      "source_tasks": [
+        "SIM-004"
+      ],
+      "underlying_evidence_paths": [
+        "results/simulation/SIM-004_navigation_backend.json"
+      ],
+      "verified_bindings": [
+        "b4c0ce91dde6c2f92c57ea6a227149362279993dee0dec4fd1ab12877e73f1d9"
+      ]
+    },
+    "uncertain_never_auto_success": {
+      "acceptance_artifacts": [
+        "results/reviews/SIM-006_acceptance.json"
+      ],
+      "actual": null,
+      "expected": "PASS",
+      "reason": "source index lacks unique predicate-source binding",
+      "reconstruction_status": "UNVERIFIED",
+      "source_tasks": [
+        "SIM-006"
+      ],
+      "underlying_evidence_paths": [
+        "results/simulation/SIM-006_verification_backend.json"
+      ],
+      "verified_bindings": [
+        "6fe14dcdcee21c6f1e5be73add28afeba622d0a4497706d0ee3181f610008ffc"
+      ]
+    }
+  },
+  "mujoco_role": "component-bench",
+  "physical_dependency": false,
+  "predecessors": {
+    "SIM-003": {
+      "acceptance_path": "results/reviews/SIM-003_acceptance.json",
+      "accepted": true,
+      "evidence_path": "results/simulation/SIM-003_baseline.json",
+      "evidence_sha256": "97f92b1bd13ab2df0db2546cfca096eaf47c1076b72698bc1a47f72780fc7cb3",
+      "required_result": "SIM_BASELINE_READY",
+      "result": "SIM_BASELINE_READY",
+      "reviewed_revision": "ff87fb0f479d2febdc668abcdea0beac1e1111ed",
+      "status": "PASS"
+    },
+    "SIM-004": {
+      "acceptance_path": "results/reviews/SIM-004_acceptance.json",
+      "accepted": true,
+      "evidence_path": "results/simulation/SIM-004_navigation_backend.json",
+      "evidence_sha256": "b4c0ce91dde6c2f92c57ea6a227149362279993dee0dec4fd1ab12877e73f1d9",
+      "required_result": "SIM_NAVIGATION_BACKEND_READY",
+      "result": "SIM_NAVIGATION_BACKEND_READY",
+      "reviewed_revision": "b7e8266abd17f48c18cca94d9433db50fd55464d",
+      "status": "PASS"
+    },
+    "SIM-005": {
+      "acceptance_path": "results/reviews/SIM-005_acceptance.json",
+      "accepted": true,
+      "evidence_path": "results/simulation/SIM-005_mujoco_vla_backend.json",
+      "evidence_sha256": "f4d41fdb1f13978e1b1e5c91b95e31b38a69825a0d432a8284ff7731a3beb84f",
+      "required_result": "SIM_MANIPULATION_BACKEND_READY",
+      "result": "SIM_MANIPULATION_BACKEND_READY",
+      "reviewed_revision": "542514a4d10bc03087834e8a5f672d53afe6aa21",
+      "status": "PASS"
+    },
+    "SIM-006": {
+      "acceptance_path": "results/reviews/SIM-006_acceptance.json",
+      "accepted": true,
+      "evidence_path": "results/simulation/SIM-006_verification_backend.json",
+      "evidence_sha256": "6fe14dcdcee21c6f1e5be73add28afeba622d0a4497706d0ee3181f610008ffc",
+      "required_result": "SIM_VERIFICATION_BACKEND_READY",
+      "result": "SIM_VERIFICATION_BACKEND_READY",
+      "reviewed_revision": "a10be6725d386e531f9cb0e00079c8d39ffdb1bf",
+      "status": "PASS"
+    },
+    "SIM-007": {
+      "acceptance_path": "results/reviews/SIM-007_acceptance.json",
+      "accepted": true,
+      "evidence_path": "results/simulation/SIM-007_mission_integration.json",
+      "evidence_sha256": "7247f8db76c874e533f615f1c8c3f32febb7a7e2377790ff05e3e93320531711",
+      "required_result": "SIM_MISSION_INTEGRATION_READY",
+      "result": "SIM_MISSION_INTEGRATION_BLOCKED",
+      "reviewed_revision": "228eb7745aa05c230e1b272184601b5afd53853b",
+      "status": "PASS"
+    },
+    "SIM-008": {
+      "acceptance_path": "results/reviews/SIM-008_acceptance.json",
+      "accepted": true,
+      "evidence_path": "results/simulation/SIM-008_normal_system_e2e.json",
+      "evidence_sha256": "ebf0ef0a27114e3c04fa6bec05aa3eef792fdfc282d2be009640bac7ecc26290",
+      "required_result": "SIM_NORMAL_E2E_READY",
+      "result": "SIM_NORMAL_E2E_READY",
+      "reviewed_revision": "ea91e0c16412e20c8cae66355a1a39129919dd42",
+      "status": "PASS"
+    },
+    "SIM-009": {
+      "acceptance_path": "results/reviews/SIM-009_acceptance.json",
+      "accepted": true,
+      "evidence_path": "results/simulation/SIM-009_failure_recovery.json",
+      "evidence_sha256": "91d10e5bb4fb7ca1b62c325885bec276c6ef6231c6baa0424f3213702be3216e",
+      "required_result": "SIM_FAILURE_SUITE_READY",
+      "result": "SIM_FAILURE_SUITE_READY",
+      "reviewed_revision": "67bde0e1f29c3f974bf3f0b29dff3f3aaa38e5be",
+      "status": "PASS"
+    },
+    "SIM-010": {
+      "acceptance_path": "results/reviews/SIM-010_acceptance.json",
+      "accepted": true,
+      "evidence_path": "results/simulation/SIM-010_observability_regression.json",
+      "evidence_sha256": "f634d1a8ad917b6711aa0c5d2af792ea6e44126cc8ba823a4d479abf8676834b",
+      "required_result": "SIM_OBSERVABILITY_REGRESSION_READY",
+      "result": "SIM_OBSERVABILITY_REGRESSION_READY",
+      "reviewed_revision": "7f0eb5200ccaabd8e2810d1d23aa6e969ea86216",
+      "status": "PASS"
+    }
+  },
+  "schema_version": 1,
+  "sim010_source_index_binding": {
+    "path": "results/simulation/SIM-010_observability_regression.json",
+    "sha256": "f634d1a8ad917b6711aa0c5d2af792ea6e44126cc8ba823a4d479abf8676834b"
+  },
+  "task_id": "TASK-SIM-E2E",
+  "validation_commands": [
+    "PYTHONDONTWRITEBYTECODE=1 python3 -m pytest -q -p no:cacheprovider tests/test_simulation_e2e_qualification.py"
+  ],
+  "verifier_identity_or_version": "verify_simulation_e2e_qualification.py/v1",
+  "verifier_sha256_or_equivalent_immutable_identity": "45594ff9eb22e8bee20c259d0d7ff8fdd03b8b6ed723532e8102c4f2962a9c82"
+}
