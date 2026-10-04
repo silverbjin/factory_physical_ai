@@ -1,0 +1,10 @@
+{
+  "schema_version": 1,
+  "task_id": "TASK-SIM-E2E",
+  "status": "ACCEPT",
+  "accepted_commit": "d63ab80c9cb9ff53c5bfec445063ac9d2fbd9368",
+  "recorded_at": "2026-10-04T22:57:02+09:00",
+  "recorded_by": "codex-task-orchestrator",
+  "recording_mode": "deterministic",
+  "workflow_complete": true
+}
