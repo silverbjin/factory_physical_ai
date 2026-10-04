@@ -1,0 +1,139 @@
+#!/usr/bin/env python3
+from __future__ import annotations
+
+import hashlib
+import json
+import os
+import re
+import sys
+import time
+from pathlib import Path
+
+PLUGIN = """    <plugin filename="gz-sim-scene-broadcaster-system" name="gz::sim::systems::SceneBroadcaster"/>
+"""
+
+def sha256(path: Path) -> str:
+    h = hashlib.sha256()
+    with path.open("rb") as f:
+        for chunk in iter(lambda: f.read(1024 * 1024), b""):
+            h.update(chunk)
+    return h.hexdigest()
+
+def is_server_sim(argv: list[str]) -> bool:
+    if not argv or argv[0] != "sim":
+        return False
+    return (
+        "-s" in argv
+        or "--server-only" in argv
+        or "--server" in argv
+    )
+
+def find_sdf(argv: list[str]) -> Path | None:
+    for arg in reversed(argv):
+        if arg.endswith(".sdf") or arg.endswith(".world"):
+            p = Path(arg)
+            if p.is_file():
+                return p
+    return None
+
+def inject_scene_broadcaster(path: Path) -> dict:
+    text = path.read_text(encoding="utf-8")
+    original_sha = sha256(path)
+
+    already = (
+        "gz::sim::systems::SceneBroadcaster" in text
+        or "gz-sim-scene-broadcaster-system" in text
+    )
+    if already:
+        return {
+            "path": str(path),
+            "changed": False,
+            "reason": "already_present",
+            "original_sha256": original_sha,
+            "patched_sha256": original_sha,
+        }
+
+    match = re.search(r"<world\b[^>]*>", text)
+    if not match:
+        return {
+            "path": str(path),
+            "changed": False,
+            "reason": "world_element_not_found",
+            "original_sha256": original_sha,
+            "patched_sha256": original_sha,
+        }
+
+    insert_at = match.end()
+    patched = text[:insert_at] + "\n" + PLUGIN + text[insert_at:]
+
+    backup = path.with_suffix(path.suffix + ".pre_demo_scene_broadcaster")
+    if not backup.exists():
+        backup.write_text(text, encoding="utf-8")
+
+    path.write_text(patched, encoding="utf-8")
+    patched_sha = sha256(path)
+
+    return {
+        "path": str(path),
+        "backup": str(backup),
+        "changed": True,
+        "reason": "scene_broadcaster_injected",
+        "original_sha256": original_sha,
+        "patched_sha256": patched_sha,
+    }
+
+def append_log(record: dict):
+    log_path = os.environ.get("DEMO_VISUAL_PATCH_LOG")
+    if not log_path:
+        return
+    p = Path(log_path)
+    p.parent.mkdir(parents=True, exist_ok=True)
+    record = {"time": time.time(), **record}
+    with p.open("a", encoding="utf-8") as f:
+        f.write(json.dumps(record, ensure_ascii=False) + "\n")
+
+def main():
+    real_gz = os.environ.get("DEMO_REAL_GZ")
+    if not real_gz:
+        print(
+            "[DEMO GZ WRAPPER] DEMO_REAL_GZ is not set",
+            file=sys.stderr,
+        )
+        return 127
+
+    argv = sys.argv[1:]
+    if is_server_sim(argv):
+        sdf = find_sdf(argv)
+        if sdf:
+            try:
+                record = inject_scene_broadcaster(sdf)
+                append_log(record)
+                if record["changed"]:
+                    print(
+                        "[DEMO GZ WRAPPER] SceneBroadcaster injected into "
+                        f"{sdf}",
+                        file=sys.stderr,
+                    )
+                else:
+                    print(
+                        "[DEMO GZ WRAPPER] SceneBroadcaster injection skipped: "
+                        f"{record['reason']} ({sdf})",
+                        file=sys.stderr,
+                    )
+            except Exception as exc:
+                append_log({
+                    "path": str(sdf),
+                    "changed": False,
+                    "reason": "exception",
+                    "error": repr(exc),
+                })
+                print(
+                    f"[DEMO GZ WRAPPER] injection failed: {exc}",
+                    file=sys.stderr,
+                )
+                return 126
+
+    os.execv(real_gz, [real_gz, *argv])
+
+if __name__ == "__main__":
+    raise SystemExit(main())

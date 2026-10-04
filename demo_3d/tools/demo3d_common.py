@@ -578,6 +578,174 @@ def context_env() -> dict[str, str]:
     return env
 
 
+
+def _sha256_file(path: Path) -> str:
+    import hashlib
+    h = hashlib.sha256()
+    with path.open("rb") as f:
+        for chunk in iter(lambda: f.read(1024 * 1024), b""):
+            h.update(chunk)
+    return h.hexdigest()
+
+
+def inject_scene_broadcaster_text(text: str) -> tuple[str, bool]:
+    if (
+        "gz::sim::systems::SceneBroadcaster" in text
+        or "gz-sim-scene-broadcaster-system" in text
+    ):
+        return text, False
+
+    import re
+    match = re.search(r"<world\b[^>]*>", text)
+    if not match:
+        return text, False
+
+    plugin = (
+        '\n    <plugin filename="gz-sim-scene-broadcaster-system" '
+        'name="gz::sim::systems::SceneBroadcaster"/>\n'
+    )
+    return text[:match.end()] + plugin + text[match.end():], True
+
+
+def make_visual_context_world(
+    root: Path,
+    source_world: Path,
+    label: str,
+) -> tuple[Path, dict]:
+    """
+    Create a demo-only copy of a world with SceneBroadcaster injected.
+    Used only for presentation-only context worlds such as Verification
+    Uncertain fallback and Final Qualification.
+    """
+    out_dir = root / "results/demo/runtime"
+    out_dir.mkdir(parents=True, exist_ok=True)
+    out = out_dir / f"{label}_{source_world.name}"
+
+    original = source_world.read_text(encoding="utf-8")
+    patched, changed = inject_scene_broadcaster_text(original)
+    out.write_text(patched, encoding="utf-8")
+
+    record = {
+        "source": str(source_world),
+        "output": str(out),
+        "scene_broadcaster_added": changed,
+        "source_sha256": _sha256_file(source_world),
+        "output_sha256": _sha256_file(out),
+        "demo_only": True,
+    }
+    return out, record
+
+
+def visual_runner_env(
+    root: Path,
+    base_env: dict[str, str],
+) -> dict[str, str]:
+    """
+    Add a demo-only `gz` wrapper in front of PATH.
+
+    The wrapper modifies only temporary runtime SDF files created for Gazebo
+    server launch. Canonical repository world files remain unchanged.
+    """
+    env = dict(base_env)
+    wrapper_dir = root / "demo_3d/bin"
+    wrapper = wrapper_dir / "gz"
+
+    real_gz = shutil.which("gz", path=env.get("PATH"))
+    if not wrapper.is_file():
+        raise RuntimeError(f"Demo gz wrapper missing: {wrapper}")
+    if not real_gz:
+        raise RuntimeError("Real gz executable not found")
+
+    # Avoid resolving our own wrapper if current PATH already contains it.
+    try:
+        if Path(real_gz).resolve() == wrapper.resolve():
+            search = [
+                p
+                for p in env.get("PATH", "").split(os.pathsep)
+                if Path(p).resolve() != wrapper_dir.resolve()
+            ]
+            real_gz = shutil.which("gz", path=os.pathsep.join(search))
+    except Exception:
+        pass
+
+    if not real_gz:
+        raise RuntimeError("Unable to resolve real gz executable")
+
+    env["DEMO_REAL_GZ"] = str(Path(real_gz).resolve())
+    env["DEMO_VISUAL_PATCH_LOG"] = str(
+        root / "results/demo/visual_runtime_patch.jsonl"
+    )
+    env["PATH"] = (
+        str(wrapper_dir)
+        + os.pathsep
+        + env.get("PATH", "")
+    )
+    return env
+
+
+def _transport_env_for_server(
+    base_env: dict[str, str],
+    server_env: dict[str, str],
+) -> dict[str, str]:
+    env = dict(base_env)
+    for key in ("GZ_PARTITION", "IGN_PARTITION", "ROS_DOMAIN_ID"):
+        env.pop(key, None)
+
+    for key, value in server_env.items():
+        if (
+            key == "ROS_DOMAIN_ID"
+            or key.startswith("GZ_")
+            or key.startswith("IGN_")
+        ):
+            env[key] = value
+
+    if env.get("GZ_PARTITION") and not env.get("IGN_PARTITION"):
+        env["IGN_PARTITION"] = env["GZ_PARTITION"]
+    return env
+
+
+def list_gazebo_services(
+    server_env: dict[str, str],
+) -> list[str]:
+    real_gz = shutil.which("gz")
+    if not real_gz:
+        return []
+    env = _transport_env_for_server(os.environ.copy(), server_env)
+    try:
+        cp = subprocess.run(
+            [real_gz, "service", "-l"],
+            env=env,
+            capture_output=True,
+            text=True,
+            timeout=3,
+        )
+    except Exception:
+        return []
+    if cp.returncode != 0:
+        return []
+    return [
+        line.strip()
+        for line in cp.stdout.splitlines()
+        if line.strip()
+    ]
+
+
+def wait_for_scene_service(
+    server_env: dict[str, str],
+    timeout: float = 5.0,
+) -> str | None:
+    deadline = time.monotonic() + timeout
+    while time.monotonic() < deadline:
+        for service in list_gazebo_services(server_env):
+            if (
+                service.startswith("/world/")
+                and service.endswith("/scene/info")
+            ):
+                return service
+        time.sleep(0.20)
+    return None
+
+
 def runner_env() -> dict[str, str]:
     """
     Preserve the caller environment but do not inject demo-owned transport

@@ -51,13 +51,24 @@ def _attach_to_exact_server(
         and getattr(gui, "_transport_verified", False)
     )
 
+    scene_service = None
     if verified:
+        scene_service = wait_for_scene_service(
+            server["env"],
+            timeout=float(
+                os.environ.get(
+                    "DEMO_SCENE_SERVICE_TIMEOUT",
+                    "5",
+                )
+            ),
+        )
         print(
             "[3D DEMO] GUI transport verified "
             f"server_pid={server['pid']} "
             f"gui_pid={gui.pid} "
             f"partition={info.get('gazebo_partition')} "
-            f"ROS_DOMAIN_ID={info.get('ros_domain_id')}"
+            f"ROS_DOMAIN_ID={info.get('ros_domain_id')} "
+            f"scene_service={scene_service or 'MISSING'}"
         )
     else:
         print(
@@ -66,7 +77,7 @@ def _attach_to_exact_server(
             file=sys.stderr,
         )
 
-    return gui, verified
+    return gui, verified, scene_service
 
 
 def _run_with_gui_follow(
@@ -140,7 +151,7 @@ def _run_with_gui_follow(
                     _server_public_info(server)
                 )
 
-                gui, verified = _attach_to_exact_server(
+                gui, verified, scene_service = _attach_to_exact_server(
                     root,
                     server,
                     scene,
@@ -156,6 +167,7 @@ def _run_with_gui_follow(
                     headline=headline,
                     gazebo_3d=verified,
                     transport_verified=verified,
+                    scene_service=scene_service,
                     strategy=session.strategy,
                     runner_pid=proc.pid,
                     gui_pid=gui.pid if gui else None,
@@ -201,7 +213,7 @@ def _run_with_gui_follow(
 
 
 def normal(root: Path):
-    env = runner_env()
+    env = visual_runner_env(root, runner_env())
     out = root / "results/demo/SIM-008_normal_e2e_demo.json"
     session = prepare_normal_session(root, env, out)
 
@@ -274,7 +286,7 @@ def normal(root: Path):
 
 
 def run_failure(root: Path, scenario_id: str, scene: str):
-    env = runner_env()
+    env = visual_runner_env(root, runner_env())
     out = root / "results/demo/SIM-009_failure_recovery_demo.json"
     session = prepare_failure_session(
         root,
@@ -322,9 +334,14 @@ def run_failure(root: Path, scenario_id: str, scene: str):
         ):
             world = resolve_world(root)
             if world:
+                visual_world, visual_world_record = make_visual_context_world(
+                    root,
+                    world,
+                    "verification_uncertain",
+                )
                 context = start_context_world(
                     context_env(),
-                    world,
+                    visual_world,
                     False,
                     root
                     / "results/demo/logs/"
@@ -390,10 +407,16 @@ def qualification(root: Path):
     world = resolve_world(root)
     context = None
 
+    visual_world_record = None
     if world:
+        visual_world, visual_world_record = make_visual_context_world(
+            root,
+            world,
+            "qualification",
+        )
         context = start_context_world(
             context_env(),
-            world,
+            visual_world,
             True,
             root
             / "results/demo/logs/"
@@ -409,9 +432,11 @@ def qualification(root: Path):
             "Final Qualification is evaluating accepted Evidence"
         ),
         gazebo_3d=bool(context),
+        visual_world=visual_world_record,
         disclosure=(
-            "The 3D scene is paused visual context. "
-            "TASK-SIM-E2E itself does not execute simulation."
+            "The 3D scene is a demo-only paused visual context with "
+            "SceneBroadcaster added. TASK-SIM-E2E itself does not "
+            "execute simulation."
         ),
     )
 

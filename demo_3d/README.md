@@ -322,3 +322,94 @@ partition=sim004-... ROS_DOMAIN_ID=...
 ```
 
 runtime이 Gazebo server를 교체하면 동일 메시지가 새 PID로 다시 출력됩니다.
+
+
+---
+
+## v1.4 — Demo-only SceneBroadcaster injection
+
+### Why v1.4 changed direction
+
+Gazebo Harmonic and earlier ignore `GZ_SIM_SERVER_CONFIG_PATH` when the loaded SDF already contains system `<plugin>` elements. The accepted SIM-008 world already contains Physics / UserCommands / Sensors / Imu, so an external server config alone cannot reliably add SceneBroadcaster.
+
+v1.4 therefore does **not** modify:
+
+```text
+data/simulation/sim008_normal_system_world.sdf
+results/simulation/*
+results/reviews/*
+```
+
+Instead it prepends:
+
+```text
+demo_3d/bin/
+```
+
+to the canonical runner's `PATH`.
+
+When the runtime launches:
+
+```text
+gz sim -r -s /tmp/nav2_xxxxx.sdf
+```
+
+the demo wrapper:
+
+```text
+temporary /tmp/nav2_xxxxx.sdf
+        ↓
+add SceneBroadcaster if missing
+        ↓
+exec real gz
+```
+
+The original repository world remains unchanged.
+
+### Expected runtime plugin
+
+The temporary runtime SDF should contain:
+
+```xml
+<plugin
+  filename="gz-sim-scene-broadcaster-system"
+  name="gz::sim::systems::SceneBroadcaster"/>
+```
+
+### Transparency
+
+Every runtime patch is recorded in:
+
+```text
+results/demo/visual_runtime_patch.jsonl
+```
+
+including original and patched SHA256 values.
+
+This output is **demo-only visualization evidence** and must not be used as canonical TASK-SIM-008 acceptance Evidence.
+
+### Verify during Normal E2E
+
+Terminal 1:
+
+```bash
+./demo_3d/scripts/01_normal_e2e_3d.sh
+```
+
+During the live run, Terminal 2:
+
+```bash
+./demo_3d/scripts/05_verify_scene_broadcaster.sh
+```
+
+Expected:
+
+```text
+[VERIFY] SceneBroadcaster service is available.
+```
+
+The Normal runner should also report:
+
+```text
+scene_service=/world/sim008_normal_system_world/scene/info
+```

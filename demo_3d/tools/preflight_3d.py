@@ -67,6 +67,18 @@ print(
     "[3D PREFLIGHT] GUI attach="
     "runner-owned Gazebo server auto-discovery"
 )
+
+wrapper = root / "demo_3d/bin/gz"
+print(
+    "[3D PREFLIGHT] visual gz wrapper="
+    f"{wrapper.relative_to(root) if wrapper.exists() else 'MISSING'}"
+)
+print(
+    "[3D PREFLIGHT] scene broadcaster injection="
+    "TEMP_RUNTIME_SDF_ONLY"
+)
+if not wrapper.exists():
+    raise SystemExit("[FAIL] demo visual gz wrapper missing.")
 print(
     "[3D PREFLIGHT] discovery timeout="
     f"{os.environ.get('DEMO_GZ_DISCOVERY_TIMEOUT', '20')}s"

@@ -204,3 +204,80 @@ pgrep -af 'gz sim -g'
 그리고 실행 중 Entity Tree / 3D scene이 표시되어야 합니다.
 
 runner가 끝나면 runtime-owned Gazebo server가 bounded cleanup되므로 GUI도 자동으로 닫히는 것이 정상입니다.
+
+
+---
+
+# v1.4 실행 방법
+
+## 1. 기존 Gazebo GUI / stale server 확인
+
+```bash
+pgrep -af 'gz sim|ign gazebo'
+```
+
+이전 테스트의 stale process가 있다면 **해당 PID만** 정리합니다. `pkill gz`는 사용하지 않습니다.
+
+## 2. Preflight
+
+```bash
+source .venv-sim/bin/activate
+./demo_3d/scripts/00_preflight_3d.sh
+```
+
+추가 확인:
+
+```text
+visual gz wrapper=demo_3d/bin/gz
+scene broadcaster injection=TEMP_RUNTIME_SDF_ONLY
+```
+
+## 3. Normal E2E 3D 실행
+
+```bash
+./demo_3d/scripts/01_normal_e2e_3d.sh
+```
+
+성공적인 attach 출력 예:
+
+```text
+[3D DEMO] GUI transport verified \
+server_pid=... gui_pid=... \
+partition=sim004-... \
+ROS_DOMAIN_ID=... \
+scene_service=/world/sim008_normal_system_world/scene/info
+```
+
+## 4. 실행 중 SceneBroadcaster 검증
+
+다른 Terminal:
+
+```bash
+./demo_3d/scripts/05_verify_scene_broadcaster.sh
+```
+
+PASS 조건:
+
+```text
+SceneBroadcaster in runtime SDF:
+... gz-sim-scene-broadcaster-system ...
+... gz::sim::systems::SceneBroadcaster ...
+
+[VERIFY] PASS: SceneBroadcaster service is available.
+```
+
+## 5. Patch log 확인
+
+```bash
+tail -n 5 results/demo/visual_runtime_patch.jsonl
+```
+
+여기에는 `/tmp/nav2_*.sdf`의 original/patched SHA256가 기록됩니다.
+
+## 6. 중요한 claim boundary
+
+v1.4의 3D 실행은 **portfolio visualization run**입니다.
+
+SceneBroadcaster는 physics / mission / navigation policy를 바꾸기 위한 plugin이 아니라 GUI scene 전송을 위한 system plugin이지만, runtime SDF가 demo-only로 변경되므로 이 실행 결과를 canonical accepted Evidence로 승격하지 않습니다.
+
+Canonical qualification은 기존 accepted Evidence와 `SIM-E2E` Gate를 계속 사용합니다.
