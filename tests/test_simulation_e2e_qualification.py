@@ -16,6 +16,78 @@ def _sha(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
+def _sim009_scenarios() -> list[dict[str, object]]:
+    fail_closed = {
+        "SIM009-L0-MALFORMED": ("L0", "malformed", "INVALID_NAVIGATION_REQUEST"),
+        "SIM009-L0-UNAVAILABLE": ("L0", "unavailable", "NAVIGATION_UNAVAILABLE"),
+        "SIM009-NAV-BLOCKED": ("L1-NAV", "failure", "NAVIGATION_ABORTED"),
+        "SIM009-NAV-ABORTED": ("L1-NAV", "failure", "NAVIGATION_ABORTED"),
+        "SIM009-NAV-TF-UNAVAILABLE": ("L1-NAV", "failure", "NAVIGATION_TF_UNAVAILABLE"),
+        "SIM009-VLA-GRASP-MISS": ("L1-VLA", "failure", "GRASP_MISS"),
+        "SIM009-VLA-CONTACT-LOSS": ("L1-VLA", "failure", "CONTACT_LOSS"),
+        "SIM009-VLA-WORKSPACE-LIMIT": ("L1-VLA", "failure", "WORKSPACE_LIMIT"),
+        "SIM009-VLA-AMBIGUOUS": ("L1-VLA", "uncertain", "INVALID_OBSERVATION"),
+    }
+    rows = [
+        {
+            "id": scenario_id, "layer": layer, "outcome_kind": outcome_kind,
+            "expected_decision": "FAIL_CLOSED", "decision": "FAIL_CLOSED", "pass": True,
+            "within_budget": True, "cleanup_complete": True,
+            "result": {"result": "failure", "status": "failed", "operation": "navigation.execute" if layer != "L1-VLA" else "vla.execute", "error": {"code": code}},
+        }
+        for scenario_id, (layer, outcome_kind, code) in fail_closed.items()
+    ]
+    rows.append({
+        "id": "SIM009-L0-CONTRADICTORY", "layer": "L0", "outcome_kind": "contradictory",
+        "expected_decision": "FAIL_CLOSED", "decision": "FAIL_CLOSED", "pass": True,
+        "within_budget": True, "cleanup_complete": True, "validation_error": "result/status contradiction rejected",
+    })
+    rows.append({
+        "id": "SIM009-NAV-TIMEOUT-RETRY", "layer": "L1-NAV", "outcome_kind": "unknown",
+        "expected_decision": "RETRY", "decision": "RETRY", "pass": True,
+        "within_budget": True, "cleanup_complete": True, "logical_side_effect_count": 1,
+        "first_result": {"action_id": "nav-action", "mission_id": "nav-mission", "result": "pending", "status": "unknown", "error": {"code": "NAVIGATION_TIMEOUT", "retryable": True}},
+        "reconciliation": {"action_id": "nav-action", "mission_id": "nav-mission", "operation": "action_status.get", "result": "success", "status": "succeeded", "observed_status": "failed"},
+        "retry_authorization": {"action_id": "nav-action", "mission_id": "nav-mission", "reconciliation_completed": True, "resolved_status": "failed", "next_attempt": 2, "error": {"code": "NAVIGATION_ABORTED", "retryable": True}},
+        "identity": {"action_id_stable": True, "mission_id_stable": True, "idempotency_key_stable": True, "attempt_incremented": True, "retry_request_id_new": True},
+        "retry_result": {"action_id": "nav-action", "mission_id": "nav-mission", "result": "success", "status": "succeeded"},
+    })
+    for scenario_id, code, observed_status in (
+        ("SIM009-VLA-TIMEOUT", "MUJOCO_TIMEOUT", "unknown"),
+        ("SIM009-VLA-UNKNOWN", "MUJOCO_OUTCOME_UNKNOWN", "succeeded"),
+    ):
+        rows.append({
+            "id": scenario_id, "layer": "L1-VLA", "outcome_kind": "unknown",
+            "expected_decision": "RECONCILE", "decision": "RECONCILE", "pass": True,
+            "within_budget": True, "cleanup_complete": True,
+            "result": {"action_id": f"{scenario_id}-action", "mission_id": f"{scenario_id}-mission", "operation": "vla.execute", "result": "pending", "status": "unknown", "error": {"code": code, "retryable": True}},
+            "reconciliation": {"action_id": f"{scenario_id}-action", "mission_id": f"{scenario_id}-mission", "operation": "action_status.get", "result": "success", "status": "succeeded", "observed_status": observed_status},
+        })
+    for scenario_id, decision, outcome_kind, verdict, mission_state, mission_outcome, path in (
+        ("SIM009-VERIFY-MISMATCH", "RECOVERY", "failure", "fail", "recovering", "in_progress", ["executing", "reconciling", "recovering"]),
+        ("SIM009-VERIFY-STALE", "HITL", "failure", None, "escalated", "requires_human", ["executing", "escalated"]),
+        ("SIM009-VERIFY-UNCERTAIN", "RECONCILE", "uncertain", "uncertain", "reconciling", "in_progress", ["executing", "reconciling"]),
+    ):
+        verification = {"operation": "verification.verify", "result": "success", "status": "succeeded", "verdict": verdict}
+        if scenario_id == "SIM009-VERIFY-MISMATCH":
+            verification["mismatch_code"] = "EXPECTED_STATE_MISMATCH"
+        if scenario_id == "SIM009-VERIFY-UNCERTAIN":
+            verification["mismatch_code"] = "INSUFFICIENT_OR_AMBIGUOUS_EVIDENCE"
+        if scenario_id == "SIM009-VERIFY-STALE":
+            verification = {"operation": "verification.verify", "result": "failure", "status": "failed", "error": {"code": "INVALID_VERIFICATION_EVIDENCE"}}
+        rows.append({
+            "id": scenario_id, "layer": "L2", "outcome_kind": outcome_kind,
+            "expected_decision": decision, "decision": decision, "route": decision, "pass": True,
+            "within_budget": True, "cleanup_complete": True,
+            "skill_reported_success": scenario_id == "SIM009-VERIFY-MISMATCH",
+            "verification": verification,
+            "mission": {"mission_success_committed": False, "mission_state": mission_state, "mission_outcome": mission_outcome, "verification_verdict": verdict, "transition_path": path, "transition": {"from": "executing", "to": mission_state}},
+        })
+    for row in rows:
+        row.setdefault("mission", {"mission_success_committed": False})
+    return rows
+
+
 def _fixture(root: Path) -> None:
     (root / "results/reviews").mkdir(parents=True)
     (root / "results/simulation").mkdir(parents=True)
@@ -45,8 +117,7 @@ def _fixture(root: Path) -> None:
     data["SIM-006"].update({"proof": {"cross_backend_equivalence": "equivalent incomplete Gazebo and MuJoCo evidence produces uncertain", "uncertain_confidence_promotion": "forbidden", "insufficient_or_ambiguous": "uncertain"}})
     data["SIM-007"].update({"system_authority": {"integrated_world": "gazebo_harmonic", "dual_world": False, "mujoco_live_world": False}})
     data["SIM-008"].update({"execution": {"mission": {"result": "success", "status": "completed"}, "lifecycle": {"cleanup_complete": True}, "steps": [{"name": name} for name in ("source_navigation", "source_verification", "destination_navigation", "vla.execute", "final_verification")]}})
-    required_009 = ("SIM009-L0-MALFORMED", "SIM009-L0-UNAVAILABLE", "SIM009-L0-CONTRADICTORY", "SIM009-NAV-BLOCKED", "SIM009-NAV-ABORTED", "SIM009-NAV-TIMEOUT-RETRY", "SIM009-NAV-TF-UNAVAILABLE", "SIM009-VLA-GRASP-MISS", "SIM009-VLA-CONTACT-LOSS", "SIM009-VLA-WORKSPACE-LIMIT", "SIM009-VLA-TIMEOUT", "SIM009-VLA-AMBIGUOUS", "SIM009-VLA-UNKNOWN", "SIM009-VERIFY-MISMATCH", "SIM009-VERIFY-STALE", "SIM009-VERIFY-UNCERTAIN")
-    data["SIM-009"].update({"cleanup_complete": True, "simulation_authority": {"physical_dependency": False}, "scenarios": [{"id": name, "pass": True, "cleanup_complete": True, "within_budget": True, "mission": {"mission_success_committed": False}} for name in required_009]})
+    data["SIM-009"].update({"cleanup_complete": True, "simulation_authority": {"physical_dependency": False}, "scenarios": _sim009_scenarios()})
     data["SIM-010"].update({"deterministic_replay": {"status": "PASS", "failures": []}, "normal_failure_suite_coverage": {"status": "PASS"}, "physics_semantic_regression": {"status": "PASS"}})
     index = {"accepted_source_index": [], "predicate_sources": {key: value[0] for key, value in PREDICATES.items()}}
     for short, ready in TASKS.items():
@@ -124,7 +195,7 @@ def test_missing_state_safety_proof_fails_closed(tmp_path: Path) -> None:
     evidence_path = tmp_path / "results/simulation/SIM-009.json"
     evidence = json.loads(evidence_path.read_text())
     for row in evidence["scenarios"]:
-        row.pop("mission")
+        row.pop("mission", None)
     evidence_path.write_text(json.dumps(evidence))
     acceptance_path = tmp_path / "results/reviews/SIM-009_acceptance.json"
     acceptance = json.loads(acceptance_path.read_text())
@@ -136,6 +207,48 @@ def test_missing_state_safety_proof_fails_closed(tmp_path: Path) -> None:
     row.update({"acceptance_sha256": _sha(acceptance_path), "evidence_sha256": _sha(evidence_path)})
     index_path.write_text(json.dumps(index))
     assert evaluate(tmp_path)["decision"] == "SIM_E2E_NOT_QUALIFIED"
+
+
+def _rebind_sim009(root: Path) -> None:
+    evidence_path = root / "results/simulation/SIM-009.json"
+    acceptance_path = root / "results/reviews/SIM-009_acceptance.json"
+    acceptance = json.loads(acceptance_path.read_text())
+    acceptance["evidence"]["sha256"] = _sha(evidence_path)
+    acceptance_path.write_text(json.dumps(acceptance))
+    index_path = root / "results/simulation/SIM-010_observability_regression.json"
+    index = json.loads(index_path.read_text())
+    row = next(row for row in index["accepted_source_index"] if row["short_task_id"] == "SIM-009")
+    row.update({"acceptance_sha256": _sha(acceptance_path), "evidence_sha256": _sha(evidence_path)})
+    index_path.write_text(json.dumps(index))
+
+
+def test_sim009_sparse_or_contradictory_semantics_fail_closed(tmp_path: Path) -> None:
+    cases = (
+        ("SIM009-NAV-BLOCKED", "outcome_kind"),
+        ("SIM009-NAV-BLOCKED", "expected_decision"),
+        ("SIM009-NAV-BLOCKED", "result.error.code"),
+        ("SIM009-NAV-TIMEOUT-RETRY", "retry_authorization"),
+        ("SIM009-NAV-TIMEOUT-RETRY", "identity.idempotency_key_stable"),
+        ("SIM009-VLA-TIMEOUT", "reconciliation"),
+        ("SIM009-VERIFY-MISMATCH", "mission.transition_path"),
+        ("SIM009-VERIFY-UNCERTAIN", "verification.verdict"),
+        ("SIM009-VERIFY-STALE", "cleanup_complete"),
+        ("SIM009-VERIFY-STALE", "within_budget"),
+    )
+    for index, (scenario_id, field) in enumerate(cases):
+        case_root = tmp_path / str(index)
+        _fixture(case_root)
+        evidence_path = case_root / "results/simulation/SIM-009.json"
+        evidence = json.loads(evidence_path.read_text())
+        row = next(row for row in evidence["scenarios"] if row["id"] == scenario_id)
+        target = row
+        parts = field.split(".")
+        for key in parts[:-1]:
+            target = target[key]
+        target.pop(parts[-1])
+        evidence_path.write_text(json.dumps(evidence))
+        _rebind_sim009(case_root)
+        assert evaluate(case_root)["decision"] == "SIM_E2E_NOT_QUALIFIED", f"{scenario_id} missing {field} qualified"
 
 
 def test_blocked_or_wrong_ready_predecessor_fails_closed(tmp_path: Path) -> None:
