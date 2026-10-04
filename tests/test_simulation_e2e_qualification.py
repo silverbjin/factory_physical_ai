@@ -29,6 +29,25 @@ def _fixture(root: Path) -> None:
         "SIM-009": {"scenarios": [{"id": "NAV", "pass": True}], "cleanup_complete": True},
         "SIM-010": {"deterministic_replay": {"status": "PASS"}, "full_repository_regression": {"gate_result": "PASS"}, "simulation_only": True},
     }
+    data["SIM-003"].update({"implementation_complete": True, "deterministic_regression": {"status": "PASS", "probe": {"returncode": 0}}})
+    data["SIM-004"].update({
+        "runtime_identity": {"gazebo": {"returncode": 0}, "ros2": {"command": ["/opt/ros/jazzy/bin/ros2"]}},
+        "scenarios": [
+            *[{"id": name, "pass": True} for name in ("success", "invalid_goal", "unavailable", "blocked")],
+            {"id": "timeout_reconciliation", "pass": True, "status": {"operation": "action_status.get", "observed_status": "unknown"}},
+        ],
+    })
+    data["SIM-005"].update({
+        "cleanup": {"bounded": True, "child_processes": 0},
+        "provenance": {"backend_id": "sim005-mujoco-vla-backend-v1", "physical_target": False, "assets": [{"path": f"asset-{n}", "sha256": "a" * 64} for n in range(3)]},
+        "scenarios": [{"scenario": name, "pass": True} for name in ("mujoco-grasp-miss", "mujoco-contact-loss", "mujoco-workspace-limit", "mujoco-invalid-observation")],
+    })
+    data["SIM-006"].update({"proof": {"cross_backend_equivalence": "equivalent incomplete Gazebo and MuJoCo evidence produces uncertain", "uncertain_confidence_promotion": "forbidden", "insufficient_or_ambiguous": "uncertain"}})
+    data["SIM-007"].update({"system_authority": {"integrated_world": "gazebo_harmonic", "dual_world": False, "mujoco_live_world": False}})
+    data["SIM-008"].update({"execution": {"mission": {"result": "success", "status": "completed"}, "lifecycle": {"cleanup_complete": True}, "steps": [{"name": name} for name in ("source_navigation", "source_verification", "destination_navigation", "vla.execute", "final_verification")]}})
+    required_009 = ("SIM009-L0-MALFORMED", "SIM009-L0-UNAVAILABLE", "SIM009-L0-CONTRADICTORY", "SIM009-NAV-BLOCKED", "SIM009-NAV-ABORTED", "SIM009-NAV-TIMEOUT-RETRY", "SIM009-NAV-TF-UNAVAILABLE", "SIM009-VLA-GRASP-MISS", "SIM009-VLA-CONTACT-LOSS", "SIM009-VLA-WORKSPACE-LIMIT", "SIM009-VLA-TIMEOUT", "SIM009-VLA-AMBIGUOUS", "SIM009-VLA-UNKNOWN", "SIM009-VERIFY-MISMATCH", "SIM009-VERIFY-STALE", "SIM009-VERIFY-UNCERTAIN")
+    data["SIM-009"].update({"cleanup_complete": True, "simulation_authority": {"physical_dependency": False}, "scenarios": [{"id": name, "pass": True, "cleanup_complete": True, "within_budget": True, "mission": {"mission_success_committed": False}} for name in required_009]})
+    data["SIM-010"].update({"deterministic_replay": {"status": "PASS", "failures": []}, "normal_failure_suite_coverage": {"status": "PASS"}, "physics_semantic_regression": {"status": "PASS"}})
     index = {"accepted_source_index": [], "predicate_sources": {key: value[0] for key, value in PREDICATES.items()}}
     for short, ready in TASKS.items():
         evidence = {"task_id": f"TASK-{short}", "task_specific_result": ready, **data[short]}
@@ -75,6 +94,48 @@ def test_contradictory_reviewed_revision_in_source_index_fails_closed(tmp_path: 
     result = evaluate(tmp_path)
     assert result["decision"] == "SIM_E2E_NOT_QUALIFIED"
     assert any("contradictory source-index" in x for x in result["failures"])
+
+
+def test_duplicate_source_index_identity_fails_closed(tmp_path: Path) -> None:
+    _fixture(tmp_path)
+    index_path = tmp_path / "results/simulation/SIM-010_observability_regression.json"
+    index = json.loads(index_path.read_text())
+    index["accepted_source_index"].append(dict(index["accepted_source_index"][0]))
+    index_path.write_text(json.dumps(index))
+    assert evaluate(tmp_path)["decision"] == "SIM_E2E_NOT_QUALIFIED"
+
+
+def test_mismatched_acceptance_identity_fails_closed(tmp_path: Path) -> None:
+    _fixture(tmp_path)
+    acceptance_path = tmp_path / "results/reviews/SIM-004_acceptance.json"
+    acceptance = json.loads(acceptance_path.read_text())
+    acceptance["task_id"] = "TASK-SIM-005"
+    acceptance_path.write_text(json.dumps(acceptance))
+    index_path = tmp_path / "results/simulation/SIM-010_observability_regression.json"
+    index = json.loads(index_path.read_text())
+    row = next(row for row in index["accepted_source_index"] if row["short_task_id"] == "SIM-004")
+    row["acceptance_sha256"] = _sha(acceptance_path)
+    index_path.write_text(json.dumps(index))
+    assert evaluate(tmp_path)["decision"] == "SIM_E2E_NOT_QUALIFIED"
+
+
+def test_missing_state_safety_proof_fails_closed(tmp_path: Path) -> None:
+    _fixture(tmp_path)
+    evidence_path = tmp_path / "results/simulation/SIM-009.json"
+    evidence = json.loads(evidence_path.read_text())
+    for row in evidence["scenarios"]:
+        row.pop("mission")
+    evidence_path.write_text(json.dumps(evidence))
+    acceptance_path = tmp_path / "results/reviews/SIM-009_acceptance.json"
+    acceptance = json.loads(acceptance_path.read_text())
+    acceptance["evidence"]["sha256"] = _sha(evidence_path)
+    acceptance_path.write_text(json.dumps(acceptance))
+    index_path = tmp_path / "results/simulation/SIM-010_observability_regression.json"
+    index = json.loads(index_path.read_text())
+    row = next(row for row in index["accepted_source_index"] if row["short_task_id"] == "SIM-009")
+    row.update({"acceptance_sha256": _sha(acceptance_path), "evidence_sha256": _sha(evidence_path)})
+    index_path.write_text(json.dumps(index))
+    assert evaluate(tmp_path)["decision"] == "SIM_E2E_NOT_QUALIFIED"
 
 
 def test_blocked_or_wrong_ready_predecessor_fails_closed(tmp_path: Path) -> None:

@@ -16,27 +16,47 @@ TASKS = {
     "SIM-007": "SIM_MISSION_INTEGRATION_READY", "SIM-008": "SIM_NORMAL_E2E_READY",
     "SIM-009": "SIM_FAILURE_SUITE_READY", "SIM-010": "SIM_OBSERVABILITY_REGRESSION_READY",
 }
+def _rows(data: dict[str, Any], key: str) -> list[dict[str, Any]]:
+    value = data.get(key)
+    return value if isinstance(value, list) and all(isinstance(row, dict) for row in value) else []
+
+def _scenario_set(data: dict[str, Any], required: set[str], *, field: str = "id") -> bool:
+    rows = _rows(data, "scenarios")
+    by_id = {row.get(field): row for row in rows}
+    return len(by_id) == len(rows) and required <= set(by_id) and all(by_id[name].get("pass") is True for name in required)
+
+def _proof(data: dict[str, Any], key: str, value: Any) -> bool:
+    return isinstance(data.get("proof"), dict) and data["proof"].get(key) == value
+
+def _state_safety(data: dict[str, Any]) -> bool:
+    rows = _rows(data, "scenarios")
+    return bool(rows) and all(
+        isinstance(row.get("mission"), dict)
+        and row["mission"].get("mission_success_committed") is False
+        for row in rows
+    )
+
 PREDICATES = {
-    "sim_baseline_bound": ("SIM-003", lambda d: d.get("baseline_id") == "SIM_BASELINE_V1"),
-    "accepted_contract_regression": ("SIM-003", lambda d: d.get("deterministic_regression", {}).get("status") == "PASS"),
-    "L0_contract_runtime": ("SIM-005", lambda d: d.get("l0_regression") == "PASS"),
-    "timeout_reconciliation": ("SIM-004", lambda d: any(x.get("id") == "timeout_reconciliation" and x.get("pass") is True for x in d.get("scenarios", []))),
-    "ros2_jazzy_gazebo_navigation": ("SIM-004", lambda d: "jazzy" in json.dumps(d).lower() and "gazebo" in json.dumps(d).lower()),
-    "normal_system_e2e": ("SIM-008", lambda d: d.get("task_specific_result") == "SIM_NORMAL_E2E_READY"),
-    "required_navigation_system_failures": ("SIM-009", lambda d: any("NAV" in str(x.get("id")) and x.get("pass") is True for x in d.get("scenarios", []))),
-    "manipulation_backend": ("SIM-005", lambda d: bool(d.get("scenarios"))),
-    "required_manipulation_failures": ("SIM-005", lambda d: sum(x.get("result") == "failure" for x in d.get("scenarios", [])) >= 2),
-    "model_config_provenance": ("SIM-005", lambda d: bool(d.get("provenance") or d.get("source_hashes"))),
-    "cross_simulator_verification": ("SIM-006", lambda d: set(d.get("normalized_sources", [])) >= {"gazebo", "mujoco"}),
-    "uncertain_never_auto_success": ("SIM-006", lambda d: d.get("proof", {}).get("uncertain_confidence_promotion") == "forbidden"),
-    "required_failure_cases": ("SIM-009", lambda d: len(d.get("scenarios", [])) > 0 and all(x.get("pass") is True for x in d.get("scenarios", []))),
-    "forbidden_state_transition": ("SIM-009", lambda d: "forbidden_state_transition" not in json.dumps(d).lower()),
-    "leaked_process": ("SIM-009", lambda d: d.get("cleanup_complete") is True),
-    "evidence_reproducible": ("SIM-010", lambda d: d.get("deterministic_replay", {}).get("status") == "PASS"),
+    "sim_baseline_bound": ("SIM-003", lambda d: d.get("baseline_id") == "SIM_BASELINE_V1" and d.get("implementation_complete") is True),
+    "accepted_contract_regression": ("SIM-003", lambda d: isinstance(d.get("deterministic_regression"), dict) and d["deterministic_regression"].get("status") == "PASS" and d["deterministic_regression"].get("probe", {}).get("returncode") == 0),
+    "L0_contract_runtime": ("SIM-005", lambda d: d.get("l0_regression") == "PASS" and d.get("cleanup", {}).get("bounded") is True and d.get("cleanup", {}).get("child_processes") == 0),
+    "timeout_reconciliation": ("SIM-004", lambda d: any(row.get("id") == "timeout_reconciliation" and row.get("pass") is True and row.get("status", {}).get("operation") == "action_status.get" and row["status"].get("observed_status") == "unknown" for row in _rows(d, "scenarios"))),
+    "ros2_jazzy_gazebo_navigation": ("SIM-004", lambda d: d.get("runtime_identity", {}).get("gazebo", {}).get("returncode") == 0 and "/jazzy/" in d.get("runtime_identity", {}).get("ros2", {}).get("command", [""])[0] and _scenario_set(d, {"success", "invalid_goal", "unavailable", "blocked"})),
+    "normal_system_e2e": ("SIM-008", lambda d: d.get("execution", {}).get("mission", {}).get("result") == "success" and d.get("execution", {}).get("mission", {}).get("status") == "completed" and d.get("execution", {}).get("lifecycle", {}).get("cleanup_complete") is True and {row.get("name") for row in d.get("execution", {}).get("steps", [])} >= {"source_navigation", "source_verification", "destination_navigation", "vla.execute", "final_verification"}),
+    "required_navigation_system_failures": ("SIM-009", lambda d: _scenario_set(d, {"SIM009-NAV-BLOCKED", "SIM009-NAV-ABORTED", "SIM009-NAV-TIMEOUT-RETRY", "SIM009-NAV-TF-UNAVAILABLE"})),
+    "manipulation_backend": ("SIM-005", lambda d: d.get("provenance", {}).get("backend_id") == "sim005-mujoco-vla-backend-v1" and d.get("provenance", {}).get("physical_target") is False),
+    "required_manipulation_failures": ("SIM-005", lambda d: _scenario_set(d, {"mujoco-grasp-miss", "mujoco-contact-loss", "mujoco-workspace-limit", "mujoco-invalid-observation"}, field="scenario")),
+    "model_config_provenance": ("SIM-005", lambda d: isinstance(d.get("provenance", {}).get("assets"), list) and len(d["provenance"]["assets"]) >= 3 and all(isinstance(row.get("path"), str) and isinstance(row.get("sha256"), str) and len(row["sha256"]) == 64 for row in d["provenance"]["assets"])),
+    "cross_simulator_verification": ("SIM-006", lambda d: set(d.get("normalized_sources", [])) >= {"gazebo", "mujoco"} and _proof(d, "cross_backend_equivalence", "equivalent incomplete Gazebo and MuJoCo evidence produces uncertain")),
+    "uncertain_never_auto_success": ("SIM-006", lambda d: _proof(d, "uncertain_confidence_promotion", "forbidden") and _proof(d, "insufficient_or_ambiguous", "uncertain")),
+    "required_failure_cases": ("SIM-009", lambda d: _scenario_set(d, {"SIM009-L0-MALFORMED", "SIM009-L0-UNAVAILABLE", "SIM009-L0-CONTRADICTORY", "SIM009-VLA-GRASP-MISS", "SIM009-VLA-CONTACT-LOSS", "SIM009-VLA-WORKSPACE-LIMIT", "SIM009-VLA-TIMEOUT", "SIM009-VLA-AMBIGUOUS", "SIM009-VLA-UNKNOWN", "SIM009-VERIFY-MISMATCH", "SIM009-VERIFY-STALE", "SIM009-VERIFY-UNCERTAIN"})),
+    "forbidden_state_transition": ("SIM-009", _state_safety),
+    "leaked_process": ("SIM-009", lambda d: d.get("cleanup_complete") is True and all(row.get("cleanup_complete") is True and row.get("within_budget") is True for row in _rows(d, "scenarios"))),
+    "evidence_reproducible": ("SIM-010", lambda d: d.get("deterministic_replay", {}).get("status") == "PASS" and d["deterministic_replay"].get("failures") == []),
     "regression_green": ("SIM-010", lambda d: d.get("full_repository_regression", {}).get("gate_result") == "PASS"),
-    "observability_sufficient": ("SIM-010", lambda d: d.get("task_specific_result") == "SIM_OBSERVABILITY_REGRESSION_READY"),
-    "physical_dependency": ("SIM-010", lambda d: d.get("simulation_only") is True),
-    "dual_world_cosimulation_required": ("SIM-007", lambda d: all(x.get("integrated_world") != "dual_world" for x in d.get("profiles", {}).values())),
+    "observability_sufficient": ("SIM-010", lambda d: d.get("normal_failure_suite_coverage", {}).get("status") == "PASS" and d.get("physics_semantic_regression", {}).get("status") == "PASS"),
+    "physical_dependency": ("SIM-009", lambda d: d.get("simulation_authority", {}).get("physical_dependency") is False),
+    "dual_world_cosimulation_required": ("SIM-007", lambda d: d.get("system_authority", {}).get("integrated_world") == "gazebo_harmonic" and d["system_authority"].get("dual_world") is False and d["system_authority"].get("mujoco_live_world") is False),
 }
 
 def sha256(path: Path) -> str:
@@ -60,7 +80,23 @@ def evaluate(root: Path) -> dict[str, Any]:
         index = read_json(index_path)
     except Exception as exc:
         index, failures = {}, [f"SIM-010 index unreadable: {exc}"]
-    rows = {str(x.get("short_task_id")): x for x in index.get("accepted_source_index", []) if isinstance(x, dict)}
+    index_rows = index.get("accepted_source_index")
+    rows: dict[str, dict[str, Any]] = {}
+    if not isinstance(index_rows, list):
+        failures.append("SIM-010 index has no accepted-source list")
+    else:
+        for row in index_rows:
+            if not isinstance(row, dict) or not isinstance(row.get("short_task_id"), str):
+                failures.append("SIM-010 index has malformed source row")
+                continue
+            short = row["short_task_id"]
+            if short in rows:
+                failures.append(f"{short}: duplicate source-index binding")
+            else:
+                rows[short] = row
+        unexpected = set(rows) - (set(TASKS) - {"SIM-010"})
+        if unexpected:
+            failures.append(f"SIM-010 index has unexpected source identities: {sorted(unexpected)}")
     bindings: dict[str, Any] = {}
     sources: dict[str, dict[str, Any]] = {}
     for short, expected in TASKS.items():
@@ -68,16 +104,27 @@ def evaluate(root: Path) -> dict[str, Any]:
         record: dict[str, Any] = {"acceptance_path": str(apath.relative_to(root)), "status": "FAIL"}
         try:
             acceptance = read_json(apath)
+            if acceptance.get("task_id") != f"TASK-{short}":
+                raise ValueError("acceptance task identity mismatch")
+            if acceptance.get("short_task_id") not in (None, short):
+                raise ValueError("acceptance short task identity mismatch")
             record["accepted"] = accepted(acceptance)
             if not record["accepted"]: failures.append(f"{short}: not accepted")
             row = rows.get(short)
             if short != "SIM-010" and not row: failures.append(f"{short}: missing source-index binding")
+            if short != "SIM-010" and row is not None:
+                if row.get("acceptance_path") != str(apath.relative_to(root)):
+                    raise ValueError("source-index acceptance path mismatch")
+                if row.get("acceptance_sha256") != sha256(apath):
+                    raise ValueError("contradictory source-index binding")
+                if row.get("accepted_commit") != acceptance.get("accepted_commit", acceptance.get("reviewed_commit")):
+                    raise ValueError("contradictory source-index binding")
             ev = acceptance.get("evidence") if isinstance(acceptance.get("evidence"), dict) else (row or {})
             path, digest = ev.get("path", ev.get("evidence_path")), ev.get("sha256", ev.get("evidence_sha256"))
             if not isinstance(path, str) or not isinstance(digest, str): raise ValueError("missing immutable Evidence binding")
             epath = root / path
             if sha256(epath) != digest: raise ValueError("Evidence hash mismatch")
-            if row and (row.get("acceptance_sha256") != sha256(apath) or row.get("evidence_path") != path or row.get("evidence_sha256") != digest or row.get("accepted_commit") != acceptance.get("accepted_commit", acceptance.get("reviewed_commit"))):
+            if row and (row.get("evidence_path") != path or row.get("evidence_sha256") != digest):
                 raise ValueError("contradictory source-index binding")
             evidence = read_json(epath)
             record.update({"status": "PASS", "evidence_path": path, "evidence_sha256": digest,

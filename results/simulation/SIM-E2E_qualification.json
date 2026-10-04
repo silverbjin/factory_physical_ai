@@ -91,7 +91,7 @@
   },
   "decision": "SIM_E2E_NOT_QUALIFIED",
   "dual_world_cosimulation_required": false,
-  "evaluation_repo_head": "628b93ced5218a32618c489a1dca986c2e2d4b33",
+  "evaluation_repo_head": "ef76e74a35dd4b1955b5d7f5593ad81421017483",
   "failures": [
     "SIM-007: required READY result not proven"
   ],
@@ -297,20 +297,20 @@
     },
     "physical_dependency": {
       "acceptance_artifacts": [
-        "results/reviews/SIM-010_acceptance.json"
+        "results/reviews/SIM-009_acceptance.json"
       ],
       "actual": null,
       "expected": false,
       "reason": "source index lacks unique predicate-source binding",
       "reconstruction_status": "UNVERIFIED",
       "source_tasks": [
-        "SIM-010"
+        "SIM-009"
       ],
       "underlying_evidence_paths": [
-        "results/simulation/SIM-010_observability_regression.json"
+        "results/simulation/SIM-009_failure_recovery.json"
       ],
       "verified_bindings": [
-        "f634d1a8ad917b6711aa0c5d2af792ea6e44126cc8ba823a4d479abf8676834b"
+        "91d10e5bb4fb7ca1b62c325885bec276c6ef6231c6baa0424f3213702be3216e"
       ]
     },
     "regression_green": {
@@ -552,5 +552,5 @@
     "PYTHONDONTWRITEBYTECODE=1 python3 -m pytest -q -p no:cacheprovider tests/test_simulation_e2e_qualification.py"
   ],
   "verifier_identity_or_version": "verify_simulation_e2e_qualification.py/v1",
-  "verifier_sha256_or_equivalent_immutable_identity": "494c14b6b823c9b7727dcb9f98868f577018b678588076cc334d66211e77230d"
+  "verifier_sha256_or_equivalent_immutable_identity": "45594ff9eb22e8bee20c259d0d7ff8fdd03b8b6ed723532e8102c4f2962a9c82"
 }
