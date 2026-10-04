@@ -1,0 +1,43 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SIMULATION_FIRST_V1 3D HUD</title>
+<style>
+:root{--bg:#07111f;--panel:#0f2035;--text:#eef6ff;--muted:#9fb1c8;--cyan:#54c8ff;--teal:#47ddb7;--orange:#ffad52;--red:#ff6675;--line:#29445f}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,system-ui,sans-serif}
+main{padding:18px;max-width:1100px;margin:auto}.top{display:flex;justify-content:space-between;gap:12px;align-items:center}
+h1{font-size:18px;margin:0}.badge{border:1px solid var(--line);border-radius:999px;padding:7px 10px;color:var(--cyan);font-size:12px}
+.hero{margin-top:14px;background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:18px}
+.scene{color:var(--muted);font-size:12px;text-transform:uppercase;letter-spacing:.12em}.headline{font-size:28px;font-weight:800;margin:7px 0}
+.phase{display:inline-block;border-radius:8px;padding:5px 8px;background:#193550;color:var(--teal);font-weight:700}
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin-top:14px}.card{border:1px solid var(--line);border-radius:12px;padding:11px;background:#0a1829;min-width:0}
+.k{font-size:10px;color:var(--muted);text-transform:uppercase}.v{font-size:14px;font-weight:700;margin-top:4px;overflow-wrap:anywhere}
+.disclosure{margin-top:14px;padding:11px;border-left:3px solid var(--orange);background:#231a0e;color:#ffdcb2;font-size:12px;display:none}
+@media(max-width:700px){.grid{grid-template-columns:1fr}.headline{font-size:22px}}
+</style></head>
+<body><main>
+<div class="top"><h1>SIMULATION_FIRST_V1 — 3D Demo HUD</h1><span class="badge" id="mode">IDLE</span></div>
+<section class="hero"><div class="scene" id="scene">waiting</div><div class="headline" id="headline">Waiting for 3D demo…</div><span class="phase" id="phase">idle</span>
+<div class="grid" id="grid"></div><div class="disclosure" id="disclosure"></div></section>
+</main><script>
+const esc=v=>String(v??"—").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+function card(k,v){return `<div class="card"><div class="k">${esc(k)}</div><div class="v">${esc(v)}</div></div>`}
+async function tick(){
+ const d=await fetch("/api/state",{cache:"no-store"}).then(r=>r.json()).catch(()=>({}));
+ document.getElementById("mode").textContent=d.mode||"IDLE";
+ document.getElementById("scene").textContent=d.scene||"waiting";
+ document.getElementById("headline").textContent=d.headline||"Waiting for 3D demo…";
+ document.getElementById("phase").textContent=d.phase||"idle";
+ const s=d.scenario||{};
+ const m=[
+  ["Scenario",d.scenario_id||s.id],["Decision",d.decision||s.decision],
+  ["Expected",s.expected_decision],["Outcome",s.outcome_kind],
+  ["Mission State",s.mission?.mission_state],["Success Committed",s.mission?.mission_success_committed],
+  ["Gazebo 3D",d.gazebo_3d===true?"ACTIVE":d.gazebo_3d===false?"OFF":"—"],
+  ["Evidence",d.evidence||d.output]
+ ].filter(x=>x[1]!==undefined&&x[1]!==null);
+ document.getElementById("grid").innerHTML=m.map(x=>card(x[0],x[1])).join("");
+ const disc=document.getElementById("disclosure");
+ if(d.disclosure){disc.style.display="block";disc.textContent=d.disclosure}else{disc.style.display="none"}
+}
+tick();setInterval(tick,700);
+</script></body></html>
