@@ -4,7 +4,6 @@ from __future__ import annotations
 import json
 import os
 import shutil
-import signal
 import subprocess
 import sys
 import tempfile
@@ -266,6 +265,103 @@ def _read_proc_environ(pid: int) -> dict[str, str] | None:
     return env
 
 
+
+def _read_proc_ppid(pid: int) -> int | None:
+    try:
+        for line in Path(f"/proc/{pid}/status").read_text(
+            encoding="utf-8",
+            errors="replace",
+        ).splitlines():
+            if line.startswith("PPid:"):
+                return int(line.split(":", 1)[1].strip())
+    except (FileNotFoundError, ProcessLookupError, PermissionError, ValueError):
+        return None
+    return None
+
+
+def process_is_descendant(
+    pid: int,
+    ancestor_pid: int,
+    max_depth: int = 32,
+) -> bool:
+    current = pid
+    seen = set()
+
+    for _ in range(max_depth):
+        if current == ancestor_pid:
+            return True
+        if current in seen or current <= 1:
+            return False
+        seen.add(current)
+
+        parent = _read_proc_ppid(current)
+        if parent is None:
+            return False
+        current = parent
+
+    return False
+
+
+def gazebo_gui_snapshots() -> dict[int, dict]:
+    snapshots = {}
+    proc = Path("/proc")
+    for entry in proc.iterdir():
+        if not entry.name.isdigit():
+            continue
+        pid = int(entry.name)
+        tokens = _read_proc_cmdline(pid)
+        if not tokens:
+            continue
+
+        joined = " ".join(tokens)
+        looks_like_gz = (
+            ("gz sim" in joined)
+            or ("ign gazebo" in joined)
+        )
+        if not looks_like_gz or "-g" not in tokens:
+            continue
+
+        env = _read_proc_environ(pid)
+        if env is None:
+            continue
+
+        snapshots[pid] = {
+            "pid": pid,
+            "cmdline": tokens,
+            "env": env,
+        }
+    return snapshots
+
+
+def transport_identity(env: dict[str, str]) -> dict[str, str | None]:
+    return {
+        "GZ_PARTITION": env.get("GZ_PARTITION"),
+        "IGN_PARTITION": env.get("IGN_PARTITION"),
+        "ROS_DOMAIN_ID": env.get("ROS_DOMAIN_ID"),
+    }
+
+
+def normalized_transport_identity(
+    env: dict[str, str],
+) -> dict[str, str | None]:
+    gz = env.get("GZ_PARTITION")
+    ign = env.get("IGN_PARTITION") or gz
+    return {
+        "GZ_PARTITION": gz,
+        "IGN_PARTITION": ign,
+        "ROS_DOMAIN_ID": env.get("ROS_DOMAIN_ID"),
+    }
+
+
+def transport_matches(
+    server_env: dict[str, str],
+    gui_env: dict[str, str],
+) -> bool:
+    return (
+        normalized_transport_identity(server_env)
+        == normalized_transport_identity(gui_env)
+    )
+
 def _is_gazebo_server(tokens: list[str] | None) -> bool:
     if not tokens:
         return False
@@ -355,13 +451,19 @@ def gui_env_from_server(
     server_env: dict[str, str],
 ) -> dict[str, str]:
     """
-    The GUI follows the runtime-owned server environment.
+    Build a clean GUI environment from the desktop environment plus the exact
+    runtime-owned Gazebo / ROS transport identity.
 
-    Do not impose a demo partition/domain on the canonical runner. Instead
-    overlay the server's actual Gazebo/ROS transport settings on the current
-    desktop environment so DISPLAY/WSLg variables remain valid.
+    Transport identity keys are removed first so stale values from a previous
+    demo run cannot survive when the new server omits one of them.
     """
     env = dict(base_env)
+
+    # Clear stale identity first.
+    for key in ("GZ_PARTITION", "IGN_PARTITION", "ROS_DOMAIN_ID"):
+        env.pop(key, None)
+
+    # Reuse server-owned Gazebo / Ignition environment and ROS domain.
     for key, value in server_env.items():
         if (
             key == "ROS_DOMAIN_ID"
@@ -370,8 +472,7 @@ def gui_env_from_server(
         ):
             env[key] = value
 
-    # Fortress / Gazebo transport compatibility: if only GZ_PARTITION exists,
-    # mirror it to IGN_PARTITION for the GUI process.
+    # Gazebo / Ignition transport compatibility.
     if env.get("GZ_PARTITION") and not env.get("IGN_PARTITION"):
         env["IGN_PARTITION"] = env["GZ_PARTITION"]
 
@@ -387,9 +488,13 @@ def start_gui_attach_to_server(
     if not cli:
         return None
 
-    env = gui_env_from_server(base_env, server_snapshot["env"])
+    env = gui_env_from_server(
+        base_env,
+        server_snapshot["env"],
+    )
     log_path.parent.mkdir(parents=True, exist_ok=True)
-    log = open(log_path, "w", encoding="utf-8")
+    log = open(log_path, "a", encoding="utf-8")
+
     try:
         proc = subprocess.Popen(
             cli + ["-g"],
@@ -397,12 +502,62 @@ def start_gui_attach_to_server(
             stderr=subprocess.STDOUT,
             env=env,
         )
-        # Keep log handle alive with the Popen object.
         proc._demo_log_handle = log
+        proc._expected_transport = normalized_transport_identity(
+            server_snapshot["env"]
+        )
+
+        # Verify the environment actually seen by the GUI process.
+        deadline = time.monotonic() + 2.0
+        actual = None
+        while time.monotonic() < deadline:
+            if proc.poll() is not None:
+                break
+            actual_env = _read_proc_environ(proc.pid)
+            if actual_env is not None:
+                actual = normalized_transport_identity(actual_env)
+                break
+            time.sleep(0.05)
+
+        proc._actual_transport = actual
+        proc._transport_verified = (
+            actual == proc._expected_transport
+        )
+
+        if not proc._transport_verified:
+            stop_proc(proc)
+            return None
+
         return proc
     except Exception:
         log.close()
         return None
+
+
+def runner_gazebo_servers(
+    runner_pid: int,
+) -> list[dict]:
+    """
+    Return live Gazebo server processes that belong to the canonical runner
+    process tree. This avoids attaching to unrelated or stale servers.
+    """
+    out = []
+    for snap in gazebo_server_snapshots().values():
+        if process_is_descendant(
+            snap["pid"],
+            runner_pid,
+        ):
+            out.append(snap)
+
+    out.sort(key=lambda snap: snap["pid"])
+    return out
+
+
+def newest_runner_gazebo_server(
+    runner_pid: int,
+) -> dict | None:
+    servers = runner_gazebo_servers(runner_pid)
+    return servers[-1] if servers else None
 
 
 def context_env() -> dict[str, str]:
@@ -490,82 +645,6 @@ def stop_proc(proc):
 
 
 
-def pause_runner_for_gui_warmup(
-    runner_proc: subprocess.Popen,
-    root: Path,
-    scene: str,
-) -> bool:
-    """
-    Briefly freeze only the demo runner parent after its Gazebo server appears.
-
-    The runtime-owned Gazebo/Nav2 child processes remain alive so the GUI can
-    connect and build the scene graph before the runner advances toward mission
-    execution / bounded cleanup.
-
-    This is presentation timing only:
-    - no canonical Evidence is changed;
-    - no runtime contract state is changed;
-    - the runner is resumed before mission execution continues.
-    """
-    if runner_proc.poll() is not None:
-        return False
-
-    if os.environ.get("DEMO_DISABLE_GUI_WARMUP", "0") == "1":
-        return False
-
-    try:
-        os.kill(runner_proc.pid, signal.SIGSTOP)
-        write_state(
-            root,
-            scene=scene,
-            mode="GUI_WARMUP",
-            phase="gui_warmup",
-            headline="Gazebo GUI is attaching to the live runtime world",
-            gazebo_3d=True,
-            runner_pid=runner_proc.pid,
-            disclosure=(
-                "The demo runner parent is briefly paused so the Gazebo GUI "
-                "can load the live world before bounded execution continues."
-            ),
-        )
-        return True
-    except (ProcessLookupError, PermissionError):
-        return False
-
-
-def resume_runner_after_gui_warmup(
-    runner_proc: subprocess.Popen,
-    was_paused: bool,
-):
-    if not was_paused:
-        return
-    try:
-        if runner_proc.poll() is None:
-            os.kill(runner_proc.pid, signal.SIGCONT)
-    except (ProcessLookupError, PermissionError):
-        pass
-
-
-def wait_for_gui_warmup(
-    gui_proc: subprocess.Popen | None,
-) -> float:
-    """
-    Give Gazebo GUI enough time to create its 3D view and subscribe to the
-    runtime-owned server. Kept bounded and configurable because this consumes
-    wall-clock startup budget in the canonical runner.
-    """
-    seconds = float(
-        os.environ.get("DEMO_GUI_WARMUP_SECONDS", "4.0")
-    )
-    seconds = max(0.0, min(seconds, 8.0))
-    deadline = time.monotonic() + seconds
-
-    while time.monotonic() < deadline:
-        if gui_proc is not None and gui_proc.poll() is not None:
-            break
-        time.sleep(0.10)
-
-    return seconds
 
 
 @dataclass

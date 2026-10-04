@@ -34,14 +34,73 @@ def _server_public_info(server: dict | None) -> dict:
     }
 
 
-def _discover_and_attach(
+def _attach_to_exact_server(
+    root: Path,
+    server: dict,
+    scene: str,
+):
+    gui = start_gui_attach_to_server(
+        server,
+        os.environ.copy(),
+        root / f"results/demo/logs/gazebo_gui_{scene}.log",
+    )
+
+    info = _server_public_info(server)
+    verified = bool(
+        gui
+        and getattr(gui, "_transport_verified", False)
+    )
+
+    if verified:
+        print(
+            "[3D DEMO] GUI transport verified "
+            f"server_pid={server['pid']} "
+            f"gui_pid={gui.pid} "
+            f"partition={info.get('gazebo_partition')} "
+            f"ROS_DOMAIN_ID={info.get('ros_domain_id')}"
+        )
+    else:
+        print(
+            "[3D DEMO][WARN] GUI transport verification failed "
+            f"for server pid={server['pid']}",
+            file=sys.stderr,
+        )
+
+    return gui, verified
+
+
+def _run_with_gui_follow(
     root: Path,
     session: RunnerSession,
     scene: str,
     headline: str,
 ):
-    before = set(gazebo_server_snapshots())
+    """
+    Run the canonical session without SIGSTOP / timing manipulation.
+
+    While the runner is alive:
+      * follow only Gazebo servers in the runner's descendant process tree;
+      * attach the GUI to the current server's exact transport identity;
+      * if the runtime replaces its Gazebo server, close the stale GUI and
+        automatically attach a new GUI to the replacement server.
+
+    This directly addresses the observed case where the GUI retained the
+    partition/domain of an earlier server while a new server was active.
+    """
+    stale_guis = gazebo_gui_snapshots()
+    if stale_guis:
+        ids = ", ".join(str(pid) for pid in sorted(stale_guis))
+        raise RuntimeError(
+            "A Gazebo GUI is already running before this demo "
+            f"(PID(s): {ids}). Close only those GUI windows/processes "
+            "and rerun. The demo refuses to mix stale and current GUI."
+        )
+
     proc = session.start()
+    current_server = None
+    gui = None
+    ever_attached = False
+    server_history = []
 
     write_state(
         root,
@@ -54,90 +113,92 @@ def _discover_and_attach(
         runner_pid=proc.pid,
     )
 
-    timeout = float(
-        os.environ.get("DEMO_GZ_DISCOVERY_TIMEOUT", "20")
+    poll_s = float(
+        os.environ.get("DEMO_SERVER_FOLLOW_POLL_SECONDS", "0.10")
     )
-    server = discover_new_gazebo_server(
-        before,
-        proc,
-        timeout=timeout,
-    )
+    poll_s = max(0.03, min(poll_s, 0.50))
 
-    gui = None
-    if server:
-        # Critical v1.2 ordering:
-        #   runtime server appears
-        #   -> freeze only runner parent
-        #   -> attach GUI to server-owned transport environment
-        #   -> bounded GUI warm-up
-        #   -> resume runner
-        #
-        # This avoids the previous race where the canonical runner completed
-        # bounded cleanup before the GUI had received the world/entity graph.
-        was_paused = pause_runner_for_gui_warmup(
-            proc,
-            root,
-            scene,
-        )
+    while proc.poll() is None:
+        server = newest_runner_gazebo_server(proc.pid)
 
-        try:
-            gui = start_gui_attach_to_server(
-                server,
-                os.environ.copy(),
-                root
-                / f"results/demo/logs/gazebo_gui_{scene}.log",
+        if server is not None:
+            changed = (
+                current_server is None
+                or server["pid"] != current_server["pid"]
+                or not Path(
+                    f"/proc/{current_server['pid']}"
+                ).exists()
             )
 
-            warmup = wait_for_gui_warmup(gui)
+            if changed:
+                if gui is not None:
+                    stop_proc(gui)
+                    gui = None
 
-            info = _server_public_info(server)
+                current_server = server
+                server_history.append(
+                    _server_public_info(server)
+                )
+
+                gui, verified = _attach_to_exact_server(
+                    root,
+                    server,
+                    scene,
+                )
+                ever_attached = ever_attached or verified
+
+                info = _server_public_info(server)
+                write_state(
+                    root,
+                    scene=scene,
+                    mode="LIVE_CANONICAL_RUN",
+                    phase="running",
+                    headline=headline,
+                    gazebo_3d=verified,
+                    transport_verified=verified,
+                    strategy=session.strategy,
+                    runner_pid=proc.pid,
+                    gui_pid=gui.pid if gui else None,
+                    server_history=server_history,
+                    **info,
+                )
+
+        # If the server vanished, discard the stale GUI immediately rather
+        # than leaving a blank window that looks connected.
+        if (
+            current_server is not None
+            and not Path(
+                f"/proc/{current_server['pid']}"
+            ).exists()
+        ):
+            stop_proc(gui)
+            gui = None
+            current_server = None
             write_state(
                 root,
                 scene=scene,
                 mode="LIVE_CANONICAL_RUN",
-                phase="running",
-                headline=headline,
-                gazebo_3d=bool(gui),
+                phase="server_transition",
+                headline="Runtime is transitioning Gazebo server",
+                gazebo_3d=False,
                 strategy=session.strategy,
                 runner_pid=proc.pid,
-                gui_warmup_seconds=warmup,
-                **info,
+                server_history=server_history,
             )
 
-            print(
-                "[3D DEMO] attached GUI to runtime-owned server "
-                f"pid={server['pid']} "
-                f"partition={info.get('gazebo_partition')} "
-                f"ROS_DOMAIN_ID={info.get('ros_domain_id')} "
-                f"warmup={warmup:.1f}s"
-            )
-        finally:
-            resume_runner_after_gui_warmup(
-                proc,
-                was_paused,
-            )
-    else:
-        write_state(
-            root,
-            scene=scene,
-            mode="LIVE_CANONICAL_RUN",
-            phase="running_without_3d_attach",
-            headline=headline,
-            gazebo_3d=False,
-            strategy=session.strategy,
-            runner_pid=proc.pid,
-            disclosure=(
-                "No new canonical Gazebo server was discovered before "
-                "the bounded timeout. Check the runner log."
-            ),
-        )
-        print(
-            "[3D DEMO][WARN] canonical Gazebo server was not "
-            "discovered; GUI attach skipped.",
-            file=sys.stderr,
-        )
+        time.sleep(poll_s)
 
-    return server, gui
+    rc = session.wait()
+
+    # The canonical runtime owns bounded server cleanup. Close the GUI as soon
+    # as the runner ends so the audience is never left looking at an empty
+    # Entity Tree from a disconnected GUI.
+    stop_proc(gui)
+    gui = None
+
+    return rc, current_server, ever_attached, server_history
+
+
 
 def normal(root: Path):
     env = runner_env()
@@ -154,15 +215,13 @@ def normal(root: Path):
         strategy=session.strategy,
     )
 
-    server = gui = None
     try:
-        server, gui = _discover_and_attach(
+        rc, server, attached, history = _run_with_gui_follow(
             root,
             session,
             "normal",
             "Normal E2E executing in Gazebo",
         )
-        rc = session.wait()
 
         info = _server_public_info(server)
         write_state(
@@ -187,7 +246,14 @@ def normal(root: Path):
             ),
             strategy=session.strategy,
             exit_code=rc,
-            gazebo_3d=bool(gui),
+            gazebo_3d=False,
+            transport_verified_during_run=attached,
+            server_history=history,
+            disclosure=(
+                "Gazebo GUI is intentionally closed when the canonical "
+                "runner finishes because the runtime also performs bounded "
+                "server cleanup."
+            ),
             **info,
         )
 
@@ -195,17 +261,16 @@ def normal(root: Path):
             f"[3D DEMO] strategy={session.strategy} "
             f"runner={session.runner.relative_to(root)} rc={rc}"
         )
+        print(
+            f"[3D DEMO] GUI transport verified during run={attached}"
+        )
         if out.exists():
             print(f"[3D DEMO] evidence={out.relative_to(root)}")
 
-        wait_for_enter(
-            "Gazebo 3D 실행을 확인한 뒤 Enter를 누르면 "
-            "viewer를 종료합니다... "
-        )
         return rc
     finally:
-        stop_proc(gui)
         session.cleanup()
+
 
 
 def run_failure(root: Path, scenario_id: str, scene: str):
@@ -234,20 +299,20 @@ def run_failure(root: Path, scenario_id: str, scene: str):
         runner_mode=session.strategy,
     )
 
-    server = gui = context = None
+    context = None
     try:
-        server, gui = _discover_and_attach(
+        rc, server, attached, history = _run_with_gui_follow(
             root,
             session,
             scene,
             f"{scenario_id} executing",
         )
 
-        # Verification uncertainty may be a semantic evaluation with no
-        # physical-motion Gazebo server. In that case show a separately
-        # isolated, explicitly disclosed live 3D context world.
+        # Verification uncertainty may legitimately have no Gazebo server in
+        # its semantic fixture. Only after the live canonical run ends do we
+        # optionally show a separately disclosed context world.
         if (
-            server is None
+            not attached
             and scene == "verify_uncertain"
             and os.environ.get(
                 "DEMO_UNCERTAIN_CONTEXT_WORLD",
@@ -265,25 +330,6 @@ def run_failure(root: Path, scenario_id: str, scene: str):
                     / "results/demo/logs/"
                     "uncertain_context_world.log",
                 )
-                write_state(
-                    root,
-                    scene=scene,
-                    mode="LIVE_3D_CONTEXT_PLUS_VERIFICATION",
-                    phase="running",
-                    headline=(
-                        "Gazebo world live; Verification uncertainty "
-                        "is being evaluated"
-                    ),
-                    gazebo_3d=bool(context),
-                    scenario_id=scenario_id,
-                    disclosure=(
-                        "3D world is visual context because the "
-                        "Verification fixture itself may not create "
-                        "physical motion."
-                    ),
-                )
-
-        rc = session.wait()
 
         source = (
             out
@@ -310,26 +356,33 @@ def run_failure(root: Path, scenario_id: str, scene: str):
             scenario_id=scenario_id,
             exit_code=rc,
             evidence=str(source.relative_to(root)),
-            gazebo_3d=bool(gui or context),
+            gazebo_3d=bool(context),
+            transport_verified_during_run=attached,
             runner_mode=session.strategy,
             scenario=row or {},
+            server_history=history,
             **info,
         )
 
         print(
             f"[3D DEMO] runner mode={session.strategy} rc={rc}"
         )
+        print(
+            f"[3D DEMO] GUI transport verified during run={attached}"
+        )
         print_scenario(row)
 
-        wait_for_enter(
-            "3D 장면과 상태를 확인한 뒤 Enter를 누르면 "
-            "viewer를 종료합니다... "
-        )
+        if context:
+            wait_for_enter(
+                "Verification context world를 확인한 뒤 "
+                "Enter를 누르면 종료합니다... "
+            )
+
         return rc
     finally:
-        stop_proc(gui)
         stop_proc(context)
         session.cleanup()
+
 
 
 def qualification(root: Path):

@@ -259,3 +259,66 @@ export DEMO_GUI_WARMUP_SECONDS=5.0
 ```
 
 정도로만 올리는 것을 권장합니다.
+
+
+---
+
+## v1.3 — Current runtime server follow
+
+진단 결과 v1.2에는 두 문제가 있었습니다.
+
+1. GUI가 이전 Gazebo server의 partition/domain을 유지한 채 새 server가 생성될 수 있었습니다.
+2. GUI warm-up을 위해 runner parent를 `SIGSTOP`한 실행에서 `NAVIGATION_LIFECYCLE_START_FAILED`가 관찰되었습니다.
+
+v1.3은 canonical runtime timing을 변경하지 않습니다.
+
+```text
+canonical runner
+      ↓
+runner process tree의 gz server 탐색
+      ↓
+server A 발견
+      ↓
+server A transport로 GUI attach + /proc 재검증
+      ↓
+server A 종료 / server B 생성
+      ↓
+stale GUI 즉시 종료
+      ↓
+server B transport로 새 GUI attach
+      ↓
+runner 완료
+      ↓
+canonical bounded cleanup
+      ↓
+GUI도 자동 종료
+```
+
+따라서 `Enter` prompt 이후 빈 Gazebo 창을 남기지 않습니다. 3D 화면은 **canonical runner가 실제로 실행되는 동안** 보여주는 것이 정상입니다.
+
+### 시작 전에 기존 GUI를 닫아야 함
+
+v1.3은 stale GUI 혼입을 방지하기 위해 demo 시작 전에 `gz sim -g`가 이미 실행 중이면 fail-closed합니다.
+
+확인:
+
+```bash
+pgrep -af 'gz sim -g'
+```
+
+기존 GUI만 종료한 뒤 실행하십시오.
+
+```bash
+kill <GUI_PID>
+./demo_3d/scripts/01_normal_e2e_3d.sh
+```
+
+정상적인 핵심 출력:
+
+```text
+[3D DEMO] GUI transport verified \
+server_pid=... gui_pid=... \
+partition=sim004-... ROS_DOMAIN_ID=...
+```
+
+runtime이 Gazebo server를 교체하면 동일 메시지가 새 PID로 다시 출력됩니다.

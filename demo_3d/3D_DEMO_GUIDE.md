@@ -178,3 +178,29 @@ export DEMO_GUI_WARMUP_SECONDS=5.0
 ```
 
 8초를 넘기지 않는 것을 권장합니다. 이 시간은 canonical runtime의 wall-clock startup budget에도 포함될 수 있기 때문입니다.
+
+
+---
+
+# v1.3 실행 원칙
+
+Normal E2E의 Gazebo 3D는 **명령이 끝난 뒤 확인하는 화면이 아닙니다.**
+canonical runner가 실행되는 동안 실제 world를 보는 화면입니다.
+
+```bash
+# 기존 GUI가 없는지 확인
+pgrep -af 'gz sim -g'
+
+# 실행
+./demo_3d/scripts/01_normal_e2e_3d.sh
+```
+
+성공 판정:
+
+```text
+[3D DEMO] GUI transport verified ...
+```
+
+그리고 실행 중 Entity Tree / 3D scene이 표시되어야 합니다.
+
+runner가 끝나면 runtime-owned Gazebo server가 bounded cleanup되므로 GUI도 자동으로 닫히는 것이 정상입니다.
