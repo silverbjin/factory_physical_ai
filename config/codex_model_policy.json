@@ -2,32 +2,32 @@
   "schema_version": 2,
   "roles": {
     "implementation": {
-      "model": "gpt-5.6-terra",
+      "model": "gpt-6.1-sol",
       "reasoning_effort": "medium",
       "rationale": "default executor for bounded implementation work"
     },
     "review": {
-      "model": "gpt-5.6-sol",
+      "model": "gpt-6.1-sol",
       "reasoning_effort": "low",
       "rationale": "cost-efficient independent gate for GREEN tasks; elevated by task class when needed"
     },
     "fix": {
-      "model": "gpt-5.6-terra",
+      "model": "gpt-6.1-sol",
       "reasoning_effort": "medium",
       "rationale": "targeted correction after findings narrow the scope"
     },
     "rereview": {
-      "model": "gpt-5.6-sol",
+      "model": "gpt-6.1-sol",
       "reasoning_effort": "low",
       "rationale": "cost-efficient narrow gate for GREEN tasks; elevated by task class when needed"
     },
     "diagnosis": {
-      "model": "gpt-5.6-sol",
+      "model": "gpt-6.1-sol",
       "reasoning_effort": "medium",
       "rationale": "read-only root-cause and contract resolution for RED or dynamically escalated tasks"
     },
     "diagnosis_escalated": {
-      "model": "gpt-5.6-sol",
+      "model": "gpt-6.1-sol",
       "reasoning_effort": "high",
       "rationale": "exception-only read-only escalation when medium diagnosis remains unresolved"
     }
