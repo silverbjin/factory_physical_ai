@@ -61,8 +61,8 @@ if [[ -n "${SDF:-}" && -f "$SDF" ]]; then
 fi
 
 echo
-echo "[VERIFY] Demo patch log:"
-tail -n 5 "$ROOT/results/demo/visual_runtime_patch.jsonl" \
+echo "[VERIFY] Demo worktree patch log:"
+tail -n 8 "$ROOT/results/demo/visual_worktree_patch.jsonl" \
   2>/dev/null || true
 
 if [[ -z "$SCENE" ]]; then

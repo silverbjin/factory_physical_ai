@@ -281,3 +281,105 @@ v1.4의 3D 실행은 **portfolio visualization run**입니다.
 SceneBroadcaster는 physics / mission / navigation policy를 바꾸기 위한 plugin이 아니라 GUI scene 전송을 위한 system plugin이지만, runtime SDF가 demo-only로 변경되므로 이 실행 결과를 canonical accepted Evidence로 승격하지 않습니다.
 
 Canonical qualification은 기존 accepted Evidence와 `SIM-E2E` Gate를 계속 사용합니다.
+
+
+---
+
+# v1.5 실행 방법
+
+## 1. 기존 stale 프로세스 확인
+
+```bash
+pgrep -af 'gz sim|ign gazebo'
+```
+
+이전 테스트에서 남은 server / GUI가 있다면 PID를 확인한 뒤 그 PID만
+종료합니다. `pkill gz`는 사용하지 않습니다.
+
+## 2. Preflight
+
+```bash
+cd ~/projects/factory_physical_ai_simDemo
+source .venv-sim/bin/activate
+
+./demo_3d/scripts/00_preflight_3d.sh
+```
+
+핵심 출력:
+
+```text
+scene broadcaster injection=ISOLATED_WORKTREE_WORLD_COPY
+canonical world mutation=DISABLED
+PASS
+```
+
+## 3. Normal E2E 실행
+
+```bash
+./demo_3d/scripts/01_normal_e2e_3d.sh
+```
+
+성공 기대값:
+
+```text
+GUI transport verified ...
+scene_service=/world/sim008_normal_system_world/scene/info
+```
+
+## 4. 실행 중 Terminal 2에서 확인
+
+```bash
+./demo_3d/scripts/05_verify_scene_broadcaster.sh
+```
+
+성공 기준:
+
+```text
+SceneBroadcaster in runtime SDF:
+... gz-sim-scene-broadcaster-system ...
+... gz::sim::systems::SceneBroadcaster ...
+
+[VERIFY] PASS: SceneBroadcaster service is available.
+```
+
+## 5. Worktree patch가 실제 수행됐는지 확인
+
+```bash
+tail -n 10 results/demo/visual_worktree_patch.jsonl
+```
+
+다음 형태가 있어야 합니다.
+
+```json
+{
+  "label": "SIM-008_NORMAL_WORLD",
+  "changed": true,
+  "reason": "scene_broadcaster_injected",
+  "scope": "isolated_git_worktree_only"
+}
+```
+
+## 6. main repository가 깨끗한지 확인
+
+```bash
+git status --short -- \
+  data/simulation \
+  results/simulation \
+  results/reviews
+```
+
+출력이 없어야 정상입니다.
+
+## 7. 실패 시 최소 제출 정보
+
+다음 4개 출력이면 다음 진단에 충분합니다.
+
+```bash
+./demo_3d/scripts/00_preflight_3d.sh
+
+tail -n 10 results/demo/visual_worktree_patch.jsonl
+
+./demo_3d/scripts/05_verify_scene_broadcaster.sh
+
+tail -n 80 results/demo/logs/normal_runner.log
+```

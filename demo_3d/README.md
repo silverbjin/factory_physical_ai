@@ -413,3 +413,55 @@ The Normal runner should also report:
 ```text
 scene_service=/world/sim008_normal_system_world/scene/info
 ```
+
+
+---
+
+## v1.5 — Worktree-world SceneBroadcaster injection
+
+v1.4의 `PATH -> demo_3d/bin/gz` interception은 ROS 2 / Nav2가 실제 Gazebo
+child를 만드는 경로에서 사용되지 않는 경우가 확인되었습니다.
+
+v1.5는 더 단순하고 강한 경계를 사용합니다.
+
+```text
+canonical repository world
+        │  수정 안 함
+        ▼
+detached Git worktree
+        │
+        ├─ world copy에 SceneBroadcaster 추가
+        │
+        └─ canonical runner 실행
+                ↓
+           Nav2 temporary SDF
+                ↓
+           Gazebo server + scene service
+```
+
+### Canonical 보호
+
+다음은 변경하지 않습니다.
+
+```text
+data/simulation/*
+results/simulation/*
+results/reviews/*
+```
+
+main repository에서의 변경 여부는 다음으로 확인합니다.
+
+```bash
+git status --short -- data/simulation results/simulation results/reviews
+```
+
+출력이 없어야 합니다.
+
+### Demo patch provenance
+
+```bash
+cat results/demo/visual_worktree_patch.jsonl
+```
+
+각 행은 `original_sha256`, `patched_sha256`, `scope=isolated_git_worktree_only`
+를 기록합니다.

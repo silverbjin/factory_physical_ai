@@ -636,51 +636,161 @@ def make_visual_context_world(
     return out, record
 
 
+
+def _append_jsonl(path: Path, record: dict):
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with path.open("a", encoding="utf-8") as f:
+        f.write(json.dumps(record, ensure_ascii=False) + "\n")
+
+
+def patch_world_file_for_demo(
+    source: Path,
+    log_root: Path,
+    label: str,
+) -> dict:
+    """
+    Add SceneBroadcaster to a world file that lives ONLY inside an isolated
+    detached Git worktree.
+
+    Canonical repository assets are never modified by this function.
+    """
+    if not source.is_file():
+        return {
+            "label": label,
+            "path": str(source),
+            "changed": False,
+            "reason": "missing",
+            "demo_only": True,
+        }
+
+    original = source.read_text(encoding="utf-8")
+    original_sha = _sha256_file(source)
+    patched, changed = inject_scene_broadcaster_text(original)
+
+    if "<world" not in original:
+        record = {
+            "label": label,
+            "path": str(source),
+            "changed": False,
+            "reason": "not_world_sdf",
+            "original_sha256": original_sha,
+            "patched_sha256": original_sha,
+            "demo_only": True,
+        }
+        _append_jsonl(
+            log_root / "results/demo/visual_worktree_patch.jsonl",
+            record,
+        )
+        return record
+
+    if changed:
+        source.write_text(patched, encoding="utf-8")
+
+    patched_sha = _sha256_file(source)
+    record = {
+        "label": label,
+        "path": str(source),
+        "changed": changed,
+        "reason": (
+            "scene_broadcaster_injected"
+            if changed
+            else "already_present"
+        ),
+        "original_sha256": original_sha,
+        "patched_sha256": patched_sha,
+        "demo_only": True,
+        "scope": "isolated_git_worktree_only",
+    }
+    _append_jsonl(
+        log_root / "results/demo/visual_worktree_patch.jsonl",
+        record,
+    )
+    return record
+
+
+def sim008_world_relative_path(root: Path) -> Path:
+    """
+    Resolve the accepted SIM-008 scenario world path without modifying the
+    accepted Evidence.
+    """
+    data = json.loads(
+        accepted_sim008(root).read_text(encoding="utf-8")
+    )
+    scenario = data.get("scenario")
+    if not isinstance(scenario, dict):
+        raise RuntimeError("SIM-008 Evidence has no scenario mapping")
+    value = scenario.get("world")
+    if not isinstance(value, str) or not value:
+        raise RuntimeError("SIM-008 Evidence has no scenario.world")
+    p = Path(value)
+    if p.is_absolute():
+        try:
+            return p.relative_to(root)
+        except ValueError:
+            raise RuntimeError(
+                "SIM-008 world is outside repository; "
+                "cannot patch isolated worktree safely"
+            )
+    return p
+
+
+def patch_sim008_worktree_world(
+    main_root: Path,
+    worktree: Path,
+) -> dict:
+    rel = sim008_world_relative_path(main_root)
+    return patch_world_file_for_demo(
+        worktree / rel,
+        main_root,
+        "SIM-008_NORMAL_WORLD",
+    )
+
+
+def patch_failure_worktree_worlds(
+    main_root: Path,
+    worktree: Path,
+) -> list[dict]:
+    """
+    SIM-009 navigation can reuse the shared SIM-004 world. Patch only
+    world-level SDF files in the isolated worktree's data/simulation tree.
+    """
+    records = []
+    data_dir = worktree / "data/simulation"
+    if not data_dir.is_dir():
+        return records
+
+    for p in sorted(data_dir.glob("*.sdf")):
+        try:
+            text = p.read_text(encoding="utf-8")
+        except Exception:
+            continue
+        if "<world" not in text:
+            continue
+        records.append(
+            patch_world_file_for_demo(
+                p,
+                main_root,
+                f"SIM-009_WORLD:{p.name}",
+            )
+        )
+    return records
+
+
 def visual_runner_env(
     root: Path,
     base_env: dict[str, str],
 ) -> dict[str, str]:
     """
-    Add a demo-only `gz` wrapper in front of PATH.
+    v1.5 compatibility helper.
 
-    The wrapper modifies only temporary runtime SDF files created for Gazebo
-    server launch. Canonical repository world files remain unchanged.
+    Do NOT intercept `gz` through PATH. ros2/nav2 launch may materialize its
+    own ROS environment and resolve Gazebo independently. Visualization is
+    instead enabled by patching only the isolated worktree's world copy.
     """
     env = dict(base_env)
-    wrapper_dir = root / "demo_3d/bin"
-    wrapper = wrapper_dir / "gz"
-
-    real_gz = shutil.which("gz", path=env.get("PATH"))
-    if not wrapper.is_file():
-        raise RuntimeError(f"Demo gz wrapper missing: {wrapper}")
-    if not real_gz:
-        raise RuntimeError("Real gz executable not found")
-
-    # Avoid resolving our own wrapper if current PATH already contains it.
-    try:
-        if Path(real_gz).resolve() == wrapper.resolve():
-            search = [
-                p
-                for p in env.get("PATH", "").split(os.pathsep)
-                if Path(p).resolve() != wrapper_dir.resolve()
-            ]
-            real_gz = shutil.which("gz", path=os.pathsep.join(search))
-    except Exception:
-        pass
-
-    if not real_gz:
-        raise RuntimeError("Unable to resolve real gz executable")
-
-    env["DEMO_REAL_GZ"] = str(Path(real_gz).resolve())
-    env["DEMO_VISUAL_PATCH_LOG"] = str(
-        root / "results/demo/visual_runtime_patch.jsonl"
-    )
-    env["PATH"] = (
-        str(wrapper_dir)
-        + os.pathsep
-        + env.get("PATH", "")
-    )
+    env["DEMO_VISUALIZATION_MODE"] = "ISOLATED_WORKTREE_WORLD_COPY"
     return env
+
 
 
 def _transport_env_for_server(
@@ -917,43 +1027,57 @@ def prepare_normal_session(
     env: dict[str, str],
     output: Path,
 ) -> RunnerSession:
-    runner = normal_runner(root)
-    if has_flag(runner, "--output"):
-        return RunnerSession(
-            root=root,
-            runner=runner,
-            cmd=[sys.executable, str(runner), "--output", str(output)],
-            cwd=root,
-            env=env,
-            log_path=root / "results/demo/logs/normal_runner.log",
-            strategy="direct-output",
-            final_output=output,
-            generated_output=output,
-        )
+    """
+    Always use a detached worktree for the 3D Normal E2E demo.
 
+    v1.5 patches only the worktree copy of the accepted world with
+    SceneBroadcaster. This avoids both canonical mutation and unreliable PATH
+    interception of Gazebo launched through ROS 2.
+    """
+    runner = normal_runner(root)
     canon = accepted_sim008(root)
     rel_runner = runner.relative_to(root)
     rel_canon = canon.relative_to(root)
+
     tmp = _create_detached_worktree(root, "sim008-3d-demo-")
+    patch_record = patch_sim008_worktree_world(root, tmp)
 
     env2 = dict(env)
     env2["PYTHONPATH"] = (
         f"{tmp / 'src'}:{tmp}:{env2.get('PYTHONPATH', '')}"
     )
     env2["REPO_ROOT"] = str(tmp)
+    env2["DEMO_VISUAL_WORLD_PATCHED"] = (
+        "1" if patch_record.get("changed") else "0"
+    )
+
+    # If the canonical runner supports --output, keep even its generated
+    # artifact inside the worktree. Never point it at the main repository.
+    output_flag = has_flag(tmp / rel_runner, "--output")
+    generated = tmp / rel_canon
+    cmd = [sys.executable, str(tmp / rel_runner)]
+
+    if output_flag:
+        generated = (
+            tmp
+            / "results/demo/SIM-008_normal_e2e_demo.json"
+        )
+        generated.parent.mkdir(parents=True, exist_ok=True)
+        cmd += [output_flag, str(generated)]
 
     return RunnerSession(
         root=root,
         runner=runner,
-        cmd=[sys.executable, str(tmp / rel_runner)],
+        cmd=cmd,
         cwd=tmp,
         env=env2,
         log_path=root / "results/demo/logs/normal_runner.log",
-        strategy="isolated-worktree",
+        strategy="visual-isolated-worktree",
         final_output=output,
-        generated_output=tmp / rel_canon,
+        generated_output=generated,
         worktree=tmp,
     )
+
 
 
 def prepare_failure_session(
@@ -976,64 +1100,48 @@ def prepare_failure_session(
         "--scenario-id",
         "--only",
     )
-    output_flag = has_flag(runner, "--output")
 
-    extra = []
-    if scenario_flag:
-        extra += [scenario_flag, scenario_id]
-
-    if override:
-        # Execute explicit task command in an isolated worktree unless user has
-        # separately designed it to write only to results/demo/.
-        tmp = _create_detached_worktree(root, "sim009-3d-demo-")
-        env2 = dict(env)
-        env2["PYTHONPATH"] = (
-            f"{tmp / 'src'}:{tmp}:{env2.get('PYTHONPATH', '')}"
-        )
-        env2["REPO_ROOT"] = str(tmp)
-        return RunnerSession(
-            root=root,
-            runner=runner,
-            cmd=["bash", "-lc", override],
-            cwd=tmp,
-            env=env2,
-            log_path=root
-            / f"results/demo/logs/{scenario_id}_runner.log",
-            strategy="override-isolated-worktree",
-            final_output=output,
-            generated_output=tmp
-            / "results/simulation/SIM-009_failure_recovery.json",
-            worktree=tmp,
-        )
-
-    if output_flag:
-        cmd = [sys.executable, str(runner), *extra, output_flag, str(output)]
-        return RunnerSession(
-            root=root,
-            runner=runner,
-            cmd=cmd,
-            cwd=root,
-            env=env,
-            log_path=root
-            / f"results/demo/logs/{scenario_id}_runner.log",
-            strategy=(
-                "filtered-direct-output"
-                if scenario_flag
-                else "full-suite-direct-output"
-            ),
-            final_output=output,
-            generated_output=output,
-        )
-
-    # No --output: never run against canonical results in the main worktree.
+    # v1.5: all live 3D failure execution occurs in an isolated worktree,
+    # because the visualization world copy is augmented with SceneBroadcaster.
     tmp = _create_detached_worktree(root, "sim009-3d-demo-")
+    patch_failure_worktree_worlds(root, tmp)
+
     rel_runner = runner.relative_to(root)
+    runner_in_tmp = tmp / rel_runner
+    output_flag = has_flag(runner_in_tmp, "--output")
+
     env2 = dict(env)
     env2["PYTHONPATH"] = (
         f"{tmp / 'src'}:{tmp}:{env2.get('PYTHONPATH', '')}"
     )
     env2["REPO_ROOT"] = str(tmp)
-    cmd = [sys.executable, str(tmp / rel_runner), *extra]
+    env2["DEMO_VISUAL_WORLD_PATCHED"] = "1"
+
+    generated = (
+        tmp / "results/simulation/SIM-009_failure_recovery.json"
+    )
+
+    if override:
+        cmd = ["bash", "-lc", override]
+        strategy = "visual-override-isolated-worktree"
+    else:
+        extra = []
+        if scenario_flag:
+            extra += [scenario_flag, scenario_id]
+        cmd = [sys.executable, str(runner_in_tmp), *extra]
+        strategy = (
+            "visual-filtered-isolated-worktree"
+            if scenario_flag
+            else "visual-full-suite-isolated-worktree"
+        )
+
+        if output_flag:
+            generated = (
+                tmp
+                / "results/demo/SIM-009_failure_recovery_demo.json"
+            )
+            generated.parent.mkdir(parents=True, exist_ok=True)
+            cmd += [output_flag, str(generated)]
 
     return RunnerSession(
         root=root,
@@ -1043,16 +1151,12 @@ def prepare_failure_session(
         env=env2,
         log_path=root
         / f"results/demo/logs/{scenario_id}_runner.log",
-        strategy=(
-            "filtered-isolated-worktree"
-            if scenario_flag
-            else "full-suite-isolated-worktree"
-        ),
+        strategy=strategy,
         final_output=output,
-        generated_output=tmp
-        / "results/simulation/SIM-009_failure_recovery.json",
+        generated_output=generated,
         worktree=tmp,
     )
+
 
 
 def find_scenario(path: Path, scenario_id: str):
