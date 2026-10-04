@@ -199,3 +199,63 @@ scripts/run_simulation_failure_suite.py
 ```
 
 둘 다 존재하면 임의 선택하지 않고 `DEMO_FAILURE_RUNNER` 지정이 필요합니다.
+
+
+---
+
+## v1.2 — Gazebo GUI world-load race 해결
+
+v1.1에서는 partition/domain attach는 성공했지만 canonical runner가 매우 빠르게 완료되어,
+Gazebo GUI가 world/entity graph를 수신하기 전에 runtime cleanup이 server를 종료할 수 있었습니다.
+
+관찰 예:
+
+```text
+server  : gz sim -r -s /tmp/nav2_....sdf
+GUI     : gz sim -g
+attach  : same GZ_PARTITION / ROS_DOMAIN_ID
+runner  : rc=0
+server  : bounded cleanup으로 종료
+GUI     : Entity Tree empty
+```
+
+v1.2 실행 순서:
+
+```text
+canonical runner start
+        ↓
+runtime-owned Gazebo server 발견
+        ↓
+runner parent만 SIGSTOP
+        ↓
+같은 partition/domain으로 GUI attach
+        ↓
+DEMO_GUI_WARMUP_SECONDS (기본 4초)
+        ↓
+runner parent SIGCONT
+        ↓
+실제 mission execution
+        ↓
+canonical bounded cleanup
+```
+
+중요:
+- Gazebo/Nav2 child server 자체는 warm-up 동안 계속 살아 있습니다.
+- accepted runtime/Evidence는 수정하지 않습니다.
+- presentation orchestration에서 runner parent의 진행만 짧게 지연합니다.
+- 기본 4초이며 최대 8초로 제한됩니다.
+
+정상 출력 예:
+
+```text
+[3D DEMO] attached GUI to runtime-owned server \
+pid=... partition=sim004-... ROS_DOMAIN_ID=... warmup=4.0s
+```
+
+GUI가 여전히 늦게 뜨면 `demo.env`에서:
+
+```bash
+export DEMO_GUI_WARMUP_SECONDS=5.0
+```
+
+정도로만 올리는 것을 권장합니다.

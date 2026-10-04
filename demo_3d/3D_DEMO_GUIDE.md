@@ -148,3 +148,33 @@ pgrep -af 'gz sim|ign gazebo'
 
 GUI와 server의 partition을 수동으로 맞추는 대신 `results/demo/logs/normal_runner.log`와
 `results/demo/logs/gazebo_gui_normal.log`를 확인하십시오.
+
+
+---
+
+# v1.2 Normal E2E 3D 확인
+
+```bash
+source .venv-sim/bin/activate
+source demo_3d/config/demo.env 2>/dev/null || true
+
+./demo_3d/scripts/00_preflight_3d.sh
+./demo_3d/scripts/01_normal_e2e_3d.sh
+```
+
+성공 기준:
+
+```text
+[3D DEMO] attached GUI to runtime-owned server ... warmup=4.0s
+```
+
+그리고 warm-up 동안 Gazebo `Entity Tree`에 world/model entity가 나타나야 합니다.
+
+렌더링이 WSL 환경에서 늦을 때:
+
+```bash
+export DEMO_GUI_WARMUP_SECONDS=5.0
+./demo_3d/scripts/01_normal_e2e_3d.sh
+```
+
+8초를 넘기지 않는 것을 권장합니다. 이 시간은 canonical runtime의 wall-clock startup budget에도 포함될 수 있기 때문입니다.

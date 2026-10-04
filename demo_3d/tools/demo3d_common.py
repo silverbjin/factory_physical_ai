@@ -4,6 +4,7 @@ from __future__ import annotations
 import json
 import os
 import shutil
+import signal
 import subprocess
 import sys
 import tempfile
@@ -486,6 +487,85 @@ def stop_proc(proc):
             handle.close()
         except Exception:
             pass
+
+
+
+def pause_runner_for_gui_warmup(
+    runner_proc: subprocess.Popen,
+    root: Path,
+    scene: str,
+) -> bool:
+    """
+    Briefly freeze only the demo runner parent after its Gazebo server appears.
+
+    The runtime-owned Gazebo/Nav2 child processes remain alive so the GUI can
+    connect and build the scene graph before the runner advances toward mission
+    execution / bounded cleanup.
+
+    This is presentation timing only:
+    - no canonical Evidence is changed;
+    - no runtime contract state is changed;
+    - the runner is resumed before mission execution continues.
+    """
+    if runner_proc.poll() is not None:
+        return False
+
+    if os.environ.get("DEMO_DISABLE_GUI_WARMUP", "0") == "1":
+        return False
+
+    try:
+        os.kill(runner_proc.pid, signal.SIGSTOP)
+        write_state(
+            root,
+            scene=scene,
+            mode="GUI_WARMUP",
+            phase="gui_warmup",
+            headline="Gazebo GUI is attaching to the live runtime world",
+            gazebo_3d=True,
+            runner_pid=runner_proc.pid,
+            disclosure=(
+                "The demo runner parent is briefly paused so the Gazebo GUI "
+                "can load the live world before bounded execution continues."
+            ),
+        )
+        return True
+    except (ProcessLookupError, PermissionError):
+        return False
+
+
+def resume_runner_after_gui_warmup(
+    runner_proc: subprocess.Popen,
+    was_paused: bool,
+):
+    if not was_paused:
+        return
+    try:
+        if runner_proc.poll() is None:
+            os.kill(runner_proc.pid, signal.SIGCONT)
+    except (ProcessLookupError, PermissionError):
+        pass
+
+
+def wait_for_gui_warmup(
+    gui_proc: subprocess.Popen | None,
+) -> float:
+    """
+    Give Gazebo GUI enough time to create its 3D view and subscribe to the
+    runtime-owned server. Kept bounded and configurable because this consumes
+    wall-clock startup budget in the canonical runner.
+    """
+    seconds = float(
+        os.environ.get("DEMO_GUI_WARMUP_SECONDS", "4.0")
+    )
+    seconds = max(0.0, min(seconds, 8.0))
+    deadline = time.monotonic() + seconds
+
+    while time.monotonic() < deadline:
+        if gui_proc is not None and gui_proc.poll() is not None:
+            break
+        time.sleep(0.10)
+
+    return seconds
 
 
 @dataclass

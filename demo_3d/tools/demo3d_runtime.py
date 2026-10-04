@@ -54,7 +54,9 @@ def _discover_and_attach(
         runner_pid=proc.pid,
     )
 
-    timeout = float(os.environ.get("DEMO_GZ_DISCOVERY_TIMEOUT", "20"))
+    timeout = float(
+        os.environ.get("DEMO_GZ_DISCOVERY_TIMEOUT", "20")
+    )
     server = discover_new_gazebo_server(
         before,
         proc,
@@ -63,30 +65,57 @@ def _discover_and_attach(
 
     gui = None
     if server:
-        gui = start_gui_attach_to_server(
-            server,
-            os.environ.copy(),
-            root
-            / f"results/demo/logs/gazebo_gui_{scene}.log",
-        )
-        info = _server_public_info(server)
-        write_state(
+        # Critical v1.2 ordering:
+        #   runtime server appears
+        #   -> freeze only runner parent
+        #   -> attach GUI to server-owned transport environment
+        #   -> bounded GUI warm-up
+        #   -> resume runner
+        #
+        # This avoids the previous race where the canonical runner completed
+        # bounded cleanup before the GUI had received the world/entity graph.
+        was_paused = pause_runner_for_gui_warmup(
+            proc,
             root,
-            scene=scene,
-            mode="LIVE_CANONICAL_RUN",
-            phase="running",
-            headline=headline,
-            gazebo_3d=bool(gui),
-            strategy=session.strategy,
-            runner_pid=proc.pid,
-            **info,
+            scene,
         )
-        print(
-            "[3D DEMO] attached GUI to runtime-owned server "
-            f"pid={server['pid']} "
-            f"partition={info.get('gazebo_partition')} "
-            f"ROS_DOMAIN_ID={info.get('ros_domain_id')}"
-        )
+
+        try:
+            gui = start_gui_attach_to_server(
+                server,
+                os.environ.copy(),
+                root
+                / f"results/demo/logs/gazebo_gui_{scene}.log",
+            )
+
+            warmup = wait_for_gui_warmup(gui)
+
+            info = _server_public_info(server)
+            write_state(
+                root,
+                scene=scene,
+                mode="LIVE_CANONICAL_RUN",
+                phase="running",
+                headline=headline,
+                gazebo_3d=bool(gui),
+                strategy=session.strategy,
+                runner_pid=proc.pid,
+                gui_warmup_seconds=warmup,
+                **info,
+            )
+
+            print(
+                "[3D DEMO] attached GUI to runtime-owned server "
+                f"pid={server['pid']} "
+                f"partition={info.get('gazebo_partition')} "
+                f"ROS_DOMAIN_ID={info.get('ros_domain_id')} "
+                f"warmup={warmup:.1f}s"
+            )
+        finally:
+            resume_runner_after_gui_warmup(
+                proc,
+                was_paused,
+            )
     else:
         write_state(
             root,
@@ -109,7 +138,6 @@ def _discover_and_attach(
         )
 
     return server, gui
-
 
 def normal(root: Path):
     env = runner_env()
