@@ -1,6 +1,6 @@
 # TASK-SIM-010 History
 
-Current status: READY FOR INDEPENDENT RE-REVIEW
+Current status: G6-G7 PASS / INDEPENDENT G8 PENDING
 
 | Seq | Type | Result | Record | Primary fault domain | Architecture decision / next action |
 |---:|---|---|---|---|---|
@@ -28,3 +28,7 @@ Current status: READY FOR INDEPENDENT RE-REVIEW
 | 23 | Diagnosis | RESOLVED | `23_diagnosis.md` | `SIM010_G5_TEST_TREE_PROVENANCE_ERROR` | `22_review.md` baseline summary superseded / `RESUME_IMPLEMENTATION` |
 | 24 | Review | PASS — corrected S10-G0 through S10-G5 | `24_review.md` | `SIM010_G5_TEST_TREE_PROVENANCE_ERROR` | `PASS_PROVEN_PREEXISTING` / `RUN_MANUAL_S10_G6_AND_G7` |
 | 25 | Review | PASS — S10-G6 through S10-G7 | `25_review.md` | `SIM010_MANUAL_GATE_FINALIZATION` | `RUN_INDEPENDENT_S10_G8_REREVIEW` |
+| 26 | Review | REJECT | `26_review.md` | `SIM010_Q01_SEMANTIC_AND_APPLICABILITY_FAIL_OPEN` | resolve `SIM010-G8R-001`, `SIM010-G8R-002` before Acceptance |
+| 27 | Fix | COMPLETE | `27_fix.md` | `SIM010_Q01_SEMANTIC_AND_APPLICABILITY_FAIL_OPEN` | `RUN_MANUAL_S10_G0_THROUGH_G5` |
+| 28 | Review | PASS — S10-G0 through S10-G5 | `28_review.md` | `SIM010_MANUAL_GATE_VALIDATION` | `RUN_MANUAL_S10_G6_AND_G7` / fresh independent S10-G8 pending |
+| 29 | Review | PASS — S10-G6 through S10-G7 | `29_review.md` | `SIM010_MANUAL_GATE_FINALIZATION` | `RUN_INDEPENDENT_S10_G8_REREVIEW` |

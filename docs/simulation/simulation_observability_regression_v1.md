@@ -1,7 +1,7 @@
 # SIM-010 observability regression
 
 - Task: `TASK-SIM-010`
-- Canonical source authority: `2179d965b64abac79c068a94363b9a67e9f4739b`
+- Canonical source authority: `8b4395f10a7235b018181d37e5b4a781222feafb`
 - Result: `SIM_OBSERVABILITY_REGRESSION_READY`
 - Scope: simulation-only regression evidence; no physical or production-performance claim.
 
@@ -25,14 +25,17 @@ and `0` `STILL_BLOCKING`.
   authority only. All eleven Q01 rows are explicitly non-replay authority.
 - Physics semantic regression: `PASS`; historical semantics are compared with
   qualified actual observations, including validated applicable Gazebo and MuJoCo
-  observations. This is not a bitwise-identity or real-world-performance claim.
+  observations. The comparison is fail-closed for nested retry, reconciliation,
+  lifecycle, invariant, and exact provenance semantics. NOT_APPLICABLE claims
+  require the accepted execution state and `timing.simulation_time_source`.
+  This is not a bitwise-identity or real-world-performance claim.
 - Full repository regression: `PASS_PROVEN_PREEXISTING`. Candidate
-  `2179d965b64abac79c068a94363b9a67e9f4739b` used its own clean detached source
-  and test tree and recorded `396` collected, `4 failed`, and `392 passed`.
+  `8b4395f10a7235b018181d37e5b4a781222feafb` used its own clean detached source
+  and test tree and recorded `410` collected, `4 failed`, and `406 passed`.
   Baseline `6909c6cceb727598570f6e170ae8d1d293418c9a` used its own clean detached
   source and test tree and recorded `341` collected, `4 failed`, and `337 passed`.
   Both used `/home/jinho/projects/factory_physical_ai/.venv-sim/bin/python`
-  (MuJoCo `3.13.0`) with equivalent qualified environments. The `55` additional
+  (MuJoCo `3.13.0`) with equivalent qualified environments. The `69` additional
   candidate-only tests are `EXPECTED_TEST_SUITE_EVOLUTION`; total/pass count
   equality is not required. The complete failed-node set and every corresponding
   non-empty stable signature match exactly.
