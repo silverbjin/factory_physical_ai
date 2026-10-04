@@ -1,0 +1,5 @@
+#!/home/jinho/projects/factory_physical_ai/.venv-sim/bin/python3
+from pytest import console_main
+
+if __name__ == "__main__":
+    raise SystemExit(console_main())
