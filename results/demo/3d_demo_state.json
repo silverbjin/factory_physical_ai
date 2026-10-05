@@ -1,8 +1,8 @@
 {
-  "updated_at": 1791172612.1632345,
+  "updated_at": 1791184023.9298682,
   "scene": "normal",
-  "phase": "failed",
-  "validation": "/home/jinho/projects/factory_physical_ai_simDemo/results/demo/resolution/track_a/A3_run_01",
+  "phase": "complete",
+  "validation": "/home/jinho/projects/factory_physical_ai_simDemo/results/demo/resolution/track_c/final_normal_integrated",
   "gates": {
     "A": true,
     "B": true,
@@ -10,7 +10,7 @@
     "D": true,
     "E": true,
     "F": true,
-    "G": false,
+    "G": true,
     "H": true
   }
 }

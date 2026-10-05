@@ -30,3 +30,31 @@ wheels/
 venv/
 ENV/
 env/
+
+
+# Python generated files
+__pycache__/
+*.py[cod]
+
+# Local demo environment
+demo_3d/config/demo.env
+
+# Demo runtime state
+results/demo/3d_demo_state.json
+results/demo/latest_validation
+results/demo/runtime/
+results/demo/logs/
+results/demo/runs/
+
+# Raw iterative diagnostics
+results/demo/diagnostics/codex_cycle_*/
+results/demo/diagnostics/gazebo_3d_*/
+results/demo/diagnostics/*_red.txt
+
+# Resolution working area
+results/demo/resolution/
+
+# Generated/intermediate demo evidence
+results/demo/SIM-008_normal_e2e_demo.json
+results/demo/SIM-009_failure_recovery_demo.json
+results/demo/visual_worktree_patch.jsonl
