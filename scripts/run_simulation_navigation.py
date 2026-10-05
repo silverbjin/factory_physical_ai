@@ -263,6 +263,20 @@ class BoundedGazeboNav2Runtime:
 
     def _probe(self, label: str, command: list[str], timeout: float = 10) -> subprocess.CompletedProcess[str] | None:
         started = time.monotonic()
+        if label == 'simulation_clock' and not hasattr(self, '_bootstrap_client'):
+            from scripts.ros_bootstrap_client import RosBootstrapProcess
+            self._bootstrap_client = RosBootstrapProcess(self.environment)
+        if label in {'initial_pose_publish', 'navigation_lifecycle_start'} and hasattr(self, '_bootstrap_client'):
+            try:
+                response = self._bootstrap_client.request(label, command, timeout)
+                result = subprocess.CompletedProcess(command, 0 if response.get('ok') is True else 1, json.dumps(response), '')
+                record = {'label': label, 'command': command, 'returncode': result.returncode, 'stdout': result.stdout, 'stderr': '', 'timed_out': False}
+            except (TimeoutError, OSError, RuntimeError) as exc:
+                result = None
+                record = {'label': label, 'command': command, 'timed_out': True, 'error': str(exc)}
+            record.update(client='persistent_ros_bootstrap', duration_ms=round((time.monotonic()-started)*1000,3))
+            self.measurements.setdefault('localization', {}).setdefault('probes', []).append(record)
+            return result
         try:
             result = subprocess.run(command, text=True, capture_output=True, timeout=timeout, check=False, env=self.environment)
             record: dict[str, Any] = {"label": label, "command": command, "returncode": result.returncode, "stdout": result.stdout[-1000:], "stderr": result.stderr[-1000:], "duration_ms": round((time.monotonic() - started) * 1000, 3), "timed_out": False}
@@ -503,6 +517,8 @@ class BoundedGazeboNav2Runtime:
 
     def close(self) -> bool:
         deadline = time.monotonic() + self.bounds.cleanup_seconds
+        client = getattr(self, '_bootstrap_client', None)
+        client_complete = client.close() if client is not None else True
         terminated: list[dict[str, Any]] = []
         owned_groups = self._owned_process_groups()
         for group in owned_groups:
@@ -520,7 +536,7 @@ class BoundedGazeboNav2Runtime:
                     except ProcessLookupError:
                         continue
             terminated.append({"pid": process.pid, "returncode": process.wait(timeout=2)})
-        complete = all(process.poll() is not None for process in self.processes)
+        complete = client_complete and all(process.poll() is not None for process in self.processes)
         for process, log_file in zip(self.processes, self.log_files):
             log_file.flush()
             log_file.seek(0)

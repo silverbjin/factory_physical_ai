@@ -10,6 +10,7 @@ import shlex
 import shutil
 import signal
 import subprocess
+import sys
 import time
 import xml.etree.ElementTree as ET
 from pathlib import Path
@@ -22,6 +23,30 @@ SERVICE = f'/world/{WORLD}/scene/info'
 
 def dump(path, value):
     path.write_text(json.dumps(value, indent=2, sort_keys=True)+'\n')
+
+
+def successor_status_is_authorized(root, status):
+    """Permit only independently qualified new artifacts, never historical edits."""
+    if not status.strip():return True
+    if any(line[:3]!='?? ' for line in status.splitlines()):return False
+    code="import sys,json;from pathlib import Path;sys.path[:0]=[sys.argv[1],sys.argv[1]+'/src'];from scripts.verify_simulation_e2e_qualification import evaluate_current;print(json.dumps(evaluate_current(Path(sys.argv[1]))))"
+    try:
+        completed=subprocess.run([sys.executable,'-c',code,str(root)],capture_output=True,text=True,timeout=10,check=False)
+        result=json.loads(completed.stdout)
+        if completed.returncode or result.get('decision')!='SIM_E2E_QUALIFIED':return False
+        bindings=result['successor_evidence_bindings']
+        allowed={row[key] for row in bindings.values() for key in ('evidence_path','acceptance_path')}
+        index=json.loads((root/bindings['SIM-010']['evidence_path']).read_text())
+        allowed.update(index['full_repository_regression'][key] for key in ('stdout_path','stderr_path'))
+        qualification='results/simulation/SIM-E2E-R01_qualification.json'
+        if (root/qualification).is_file() and json.loads((root/qualification).read_text())==result:allowed.add(qualification)
+        for line in status.splitlines():
+            path=root/line[3:].rstrip('/')
+            files=[path] if path.is_file() else list(path.rglob('*')) if path.is_dir() else []
+            files=[item for item in files if item.is_file()]
+            if not files or any(str(item.relative_to(root)) not in allowed for item in files):return False
+        return True
+    except (OSError,ValueError,KeyError,TypeError,subprocess.SubprocessError):return False
 
 
 def command(args, env=None, timeout=7):
@@ -52,9 +77,35 @@ def alive(record):
 
 
 def protected_hashes(root):
-    args=['git','-C',str(root),'ls-files','-z','--','data/simulation','results/simulation','results/reviews']
-    paths=subprocess.check_output(args).decode().split('\0')
-    return {p: hashlib.sha256((root/p).read_bytes()).hexdigest() for p in paths if p and (root/p).is_file()}
+    return {str(path.relative_to(root)):hashlib.sha256(path.read_bytes()).hexdigest()
+            for directory in ('data/simulation','results/simulation','results/reviews','docs/task_history','docs/contracts')
+            for path in (root/directory).rglob('*') if path.is_file()}
+
+
+def read_complete_runtime_world(path, timeout):
+    """Observe completed world XML; pathname creation does not imply readiness."""
+    import ctypes
+    import select
+    started=time.monotonic();deadline=started+timeout;first_size=None;last_error=None
+    libc=ctypes.CDLL(None,use_errno=True)
+    fd=libc.inotify_init1(os.O_NONBLOCK|os.O_CLOEXEC)
+    if fd<0:raise OSError(ctypes.get_errno(),'inotify initialization failed')
+    try:
+        if libc.inotify_add_watch(fd,os.fsencode(path.parent),0x8|0x80|0x100)<0:
+            raise OSError(ctypes.get_errno(),'runtime world generation watch failed')
+        while time.monotonic()<deadline:
+            try:
+                data=path.read_bytes()
+                if first_size is None:first_size=len(data)
+                world=ET.fromstring(data).find('world')
+                if world is not None:
+                    return data,world,{'first_size':first_size,'completed_size':len(data),'duration_ms':round((time.monotonic()-started)*1000,3),'bound_ms':timeout*1000}
+                last_error='XML contains no world'
+            except (OSError,ET.ParseError) as error:last_error=str(error)
+            if not select.select([fd],[],[],max(0,deadline-time.monotonic()))[0]:break
+            os.read(fd,65536)
+        raise RuntimeError(f'Runtime world XML not complete within existing bound; first_size={first_size}; last_error={last_error}')
+    finally:os.close(fd)
 
 
 def capture_window(out, gui_pid):
@@ -139,14 +190,11 @@ def _execute(root,out):
                 identity=proc_identity(server['pid'])
                 tokens=shlex.split(' '.join(identity['cmdline']))
                 sdf=next((Path(t) for t in tokens if t.endswith('.sdf')),None)
-                deadline=time.monotonic()+3
-                while sdf and not sdf.is_file() and time.monotonic()<deadline:
-                    time.sleep(.05)
-                if not sdf or not sdf.is_file():
-                    raise RuntimeError('Exact live runtime SDF is unavailable after generation wait')
-                shutil.copy2(sdf,out/'04_runtime_world.sdf')
-                world=ET.parse(sdf).getroot().find('world')
-                runtime={'path':str(sdf),'sha256':hashlib.sha256(sdf.read_bytes()).hexdigest(),
+                if not sdf:raise RuntimeError('Exact live runtime SDF pathname is unavailable')
+                world_bytes,world,generation=read_complete_runtime_world(sdf,3)
+                (out/'04_runtime_world.sdf').write_bytes(world_bytes)
+                dump(out/'world_generation_readiness.json',generation)
+                runtime={'path':str(sdf),'sha256':hashlib.sha256(world_bytes).hexdigest(),
                          'world':world.get('name'),'plugins':[p.attrib for p in world.iter('plugin')],
                          'source_models':len(world.findall('model')),'source_includes':len(world.findall('include')),
                          'visualization_augmentation':any('SceneBroadcaster' in p.get('name','') for p in world.findall('plugin'))}
@@ -251,8 +299,8 @@ def _execute(root,out):
                'preexisting_pids_untouched':sorted(preexisting)}
     dump(out/'process_lifecycle.json',lifecycle)
     after=protected_hashes(root)
-    status=subprocess.check_output(['git','-C',str(root),'status','--short','--','data/simulation','results/simulation','results/reviews'],text=True)
-    intact=before==after and not status.strip()
+    status=subprocess.check_output(['git','-C',str(root),'status','--short','--untracked-files=all','--','data/simulation','results/simulation','results/reviews','docs/task_history','docs/contracts'],text=True)
+    intact=before==after and successor_status_is_authorized(root,status)
     (out/'canonical_integrity.txt').write_text(f'hashes_identical={before==after}\n'+status)
     result=json.loads((out/'normal_e2e_result.json').read_text()) if (out/'normal_e2e_result.json').exists() else {}
     log=(out/'09_gui.log').read_text(errors='replace') if (out/'09_gui.log').exists() else ''

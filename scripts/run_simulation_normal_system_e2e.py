@@ -23,6 +23,30 @@ def now() -> str:
     return datetime.now(timezone.utc).isoformat(timespec="milliseconds").replace("+00:00", "Z")
 
 
+def parse_gazebo_stats_time(output: str) -> dict[str, int]:
+    """Validate each delivered stats frame; use the latest complete sample.
+
+    gz topic may drain more than one queued frame even with -n 1. Protobuf
+    JSON also omits default zero-valued seconds/nanoseconds.
+    """
+    decoder = json.JSONDecoder()
+    remaining = output.strip()
+    latest = None
+    try:
+        while remaining:
+            stats, end = decoder.raw_decode(remaining)
+            clock = stats['simTime']
+            latest = {'sec': int(clock.get('sec', 0)), 'nsec': int(clock.get('nsec', 0))}
+            if latest['sec'] < 0 or not 0 <= latest['nsec'] < 1_000_000_000:
+                raise ValueError('invalid simulation clock range')
+            remaining = remaining[end:].lstrip()
+        if latest is None:
+            raise ValueError('empty stats stream')
+    except (KeyError, TypeError, ValueError, AttributeError) as exc:
+        raise RuntimeError('Gazebo simulation time observation is malformed') from exc
+    return latest
+
+
 class GazeboSystemWorld:
     """Private port coupling the accepted SIM-004 process lifecycle to SIM-008 state."""
     def __init__(self, scenario: Mapping[str, Any]) -> None:
@@ -74,11 +98,7 @@ class GazeboSystemWorld:
             raise RuntimeError("Gazebo world snapshot response is malformed") from exc
         stats_topic = f"/world/{self.world_name}/stats"
         stats_result = self._run_gz(["gz", "topic", "-e", "-n", "1", "--json-output", "-t", stats_topic])
-        try:
-            stats = json.loads(stats_result.stdout)
-            sim_time = {"sec": int(stats["simTime"]["sec"]), "nsec": int(stats["simTime"].get("nsec", 0))}
-        except (KeyError, TypeError, ValueError, json.JSONDecodeError) as exc:
-            raise RuntimeError("Gazebo simulation time observation is malformed") from exc
+        sim_time = parse_gazebo_stats_time(stats_result.stdout)
         return parse_authoritative_world_snapshot(snapshot, self.scenario, observed_at=now(), simulation_time=sim_time)
     def apply_vla_surrogate(self, *, task_id: str, expected_from: Mapping[str, str], expected_to: Mapping[str, str]) -> bool:
         if task_id != "place-brake-ecu" or self.observe()["semantic_state"] != dict(expected_from): return False

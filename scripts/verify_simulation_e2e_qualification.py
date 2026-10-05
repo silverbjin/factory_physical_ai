@@ -270,6 +270,16 @@ def evaluate(root: Path) -> dict[str, Any]:
             "physical_dependency": False, "integrated_world_authority": "Gazebo", "mujoco_role": "component-bench", "dual_world_cosimulation_required": False,
             "validation_commands": ["PYTHONDONTWRITEBYTECODE=1 python3 -m pytest -q -p no:cacheprovider tests/test_simulation_e2e_qualification.py"]}
 
+def evaluate_current(root: Path) -> dict[str, Any]:
+    """Consume an explicitly declared additive chain, otherwise historical inputs."""
+    if (Path(root) / "configs/simulation/e2e_successor_chain_v1.json").exists():
+        package_root = str(Path(__file__).resolve().parents[1])
+        if package_root not in sys.path:
+            sys.path.insert(0, package_root)
+        from scripts.simulation_e2e_successor import evaluate_successor
+        return evaluate_successor(Path(root))
+    return evaluate(Path(root))
+
 def write_artifacts(result: dict[str, Any], output: Path, report: Path) -> None:
     output.parent.mkdir(parents=True, exist_ok=True); report.parent.mkdir(parents=True, exist_ok=True)
     output.write_text(json.dumps(result, indent=2, sort_keys=True) + "\n", encoding="utf-8")
@@ -278,7 +288,7 @@ def write_artifacts(result: dict[str, Any], output: Path, report: Path) -> None:
 
 def main() -> int:
     parser = argparse.ArgumentParser(); parser.add_argument("--root", type=Path, default=Path(__file__).resolve().parents[1]); parser.add_argument("--output", type=Path); parser.add_argument("--report", type=Path)
-    args = parser.parse_args(); result = evaluate(args.root)
+    args = parser.parse_args(); result = evaluate_current(args.root)
     if args.output or args.report:
         write_artifacts(result, args.output or args.root / "results/simulation/SIM-E2E_qualification.json", args.report or args.root / "docs/simulation/simulation_e2e_qualification_v1.md")
     print(result["decision"])

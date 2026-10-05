@@ -4,6 +4,7 @@ import hashlib
 import importlib.util
 import json
 import shutil
+import subprocess
 import tempfile
 import unittest
 from pathlib import Path
@@ -34,10 +35,17 @@ def _result(command: Sequence[str], stdout: str = "", *, returncode: int = 0) ->
 
 
 def _copy_predecessors(destination_root: Path) -> None:
-    for relative in baseline.PRESERVED_ACCEPTED_PATHS:
+    for relative in set(baseline.PRESERVED_ACCEPTED_PATHS) | set(baseline.SOURCE_PATHS):
         destination = destination_root / relative
         destination.parent.mkdir(parents=True, exist_ok=True)
         shutil.copyfile(ROOT / relative, destination)
+    # Reconstruct the exact accepted gate snapshot in this disposable fixture;
+    # current regression tests can evolve without rewriting historical review.
+    reviewed_commit = baseline.EXPECTED_ACCEPTANCE_IDENTITIES["TASK-SIM-GATE"]["reviewed_commit"]
+    for relative in baseline.GATE_REVIEWED_ARTIFACTS.values():
+        (destination_root / relative).write_bytes(
+            subprocess.check_output(["git", "show", f"{reviewed_commit}:{relative}"], cwd=ROOT)
+        )
 
 
 class ReadyRunner:
@@ -110,9 +118,15 @@ class ReadyRunner:
 
 
 class SimulationToolchainBaselineTests(unittest.TestCase):
+    def setUp(self) -> None:
+        self.temp = tempfile.TemporaryDirectory()
+        self.addCleanup(self.temp.cleanup)
+        self.root = Path(self.temp.name)
+        _copy_predecessors(self.root)
+
     def evaluate(self, runner: ReadyRunner) -> dict[str, Any]:
         return baseline.evaluate_baseline(
-            ROOT,
+            self.root,
             git_root=ROOT,
             runner=runner,
             environ={"ROS_DISTRO": "jazzy"},
@@ -122,7 +136,7 @@ class SimulationToolchainBaselineTests(unittest.TestCase):
         )
 
     def test_current_predecessor_chain_is_exact_and_accepted(self) -> None:
-        result = baseline.validate_predecessors(ROOT, git_root=ROOT)
+        result = baseline.validate_predecessors(self.root, git_root=ROOT)
         self.assertEqual(result["status"], "PASS")
         self.assertTrue(all(check["status"] == "PASS" for check in result["checks"]))
         decisions = {item["task_id"]: item.get("task_specific_decision") for item in result["bindings"]}
@@ -222,7 +236,7 @@ class SimulationToolchainBaselineTests(unittest.TestCase):
     def test_wrong_ros_distribution_fails_closed(self) -> None:
         runner = ReadyRunner()
         result = baseline.evaluate_baseline(
-            ROOT,
+            self.root,
             git_root=ROOT,
             runner=runner,
             environ={"ROS_DISTRO": "humble"},
@@ -235,7 +249,7 @@ class SimulationToolchainBaselineTests(unittest.TestCase):
     def test_humble_executable_cannot_pass_with_jazzy_environment_label(self) -> None:
         runner = ReadyRunner()
         result = baseline.evaluate_baseline(
-            ROOT,
+            self.root,
             git_root=ROOT,
             runner=runner,
             environ={"ROS_DISTRO": "jazzy"},
@@ -274,7 +288,7 @@ class SimulationToolchainBaselineTests(unittest.TestCase):
         self.assertEqual(result["payload_sha256"], baseline.canonical_payload_sha256(result))
         self.assertTrue(all(item["exists"] for item in result["source_bindings"]))
         for item in result["source_bindings"]:
-            digest = hashlib.sha256((ROOT / item["path"]).read_bytes()).hexdigest()
+            digest = hashlib.sha256((self.root / item["path"]).read_bytes()).hexdigest()
             self.assertEqual(item["sha256"], digest)
 
     def test_report_matches_result_and_non_authorization(self) -> None:

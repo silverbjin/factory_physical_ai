@@ -2214,15 +2214,16 @@ def run_codex_text(
             q: queue.Queue[str | None] = queue.Queue()
             reader = threading.Thread(target=_reader_thread, args=(proc.stdout, q), daemon=True)
             reader.start()
-            ctx.progress(
-                "CHILD",
-                f"{task_id} {role.upper()} pid={proc.pid} started; waiting for Codex output",
-            )
-            last_heartbeat = time.monotonic()
-            first_output_seen = False
-            stream_done = False
-
             try:
+                # CHILD is an externally observed readiness point. Own SIGINT
+                # cleanup before emitting it, including initialization below.
+                ctx.progress(
+                    "CHILD",
+                    f"{task_id} {role.upper()} pid={proc.pid} started; waiting for Codex output",
+                )
+                last_heartbeat = time.monotonic()
+                first_output_seen = False
+                stream_done = False
                 while not stream_done:
                     timeout = 1.0
                     try:

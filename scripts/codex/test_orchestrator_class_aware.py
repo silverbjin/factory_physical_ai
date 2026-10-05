@@ -2,6 +2,7 @@ import importlib.util
 import tempfile
 import unittest
 import sys
+import subprocess
 from types import SimpleNamespace
 from unittest.mock import patch
 from pathlib import Path
@@ -182,13 +183,18 @@ class StateMachineIntegrationTests(unittest.TestCase):
         )
 
     def base_state(self, repo, phase, task_class='RED', fix_cycles_used=0):
+        # Resume owns actual repository HEAD/branch provenance even when stage
+        # dispatch and checkpoint persistence are replaced by test boundaries.
+        subprocess.run(['git','init','-q','--initial-branch=task/test'],cwd=repo,check=True)
+        subprocess.run(['git','-c','user.name=Test','-c','user.email=test@example.com','commit','--allow-empty','-qm','fixture'],cwd=repo,check=True)
+        head=subprocess.check_output(['git','rev-parse','HEAD'],cwd=repo,text=True).strip()
         return {
             'schema_version': 2,
             'task_id': 'TASK-SIM-009',
             'repo': str(repo),
             'branch': 'task/test',
-            'initial_head': 'base',
-            'current_head': 'base',
+            'initial_head': head,
+            'current_head': head,
             'phase': phase,
             'status': 'RUNNING',
             'task_assessment': {
