@@ -1,0 +1,294 @@
+{
+  "measurements": {
+    "started_at": "2026-10-05T03:55:42.677Z",
+    "processes": [
+      {
+        "name": "gazebo_nav2_proxy",
+        "pid": 247932,
+        "pgid": 247932,
+        "command": [
+          "/opt/ros/jazzy/bin/ros2",
+          "launch",
+          "nav2_bringup",
+          "tb4_simulation_launch.py",
+          "headless:=True",
+          "use_rviz:=False",
+          "autostart:=False",
+          "x_pose:=-6.5",
+          "y_pose:=0.0",
+          "yaw:=0.0",
+          "world:=/tmp/sim008-3d-demo-bph6xjzl/data/simulation/sim008_normal_system_world.sdf"
+        ],
+        "log_path": "/tmp/sim004-ros-k53sjgzg/gazebo_nav2_proxy.log",
+        "started_ms": 0.664,
+        "log_tail": "nt_container_isolated-8] [INFO] [1791172584.243624612] [map_server]: Activating\n[component_container_isolated-8] [INFO] [1791172584.244116037] [map_server]: Creating bond (map_server) to lifecycle manager.\n[component_container_isolated-8] [INFO] [1791172587.593066449] [amcl]: Configuring\n[component_container_isolated-8] [INFO] [1791172587.594032891] [amcl]: initTransforms\n[component_container_isolated-8] [INFO] [1791172587.654200975] [amcl]: initPubSub\n[component_container_isolated-8] [INFO] [1791172587.689916881] [amcl]: Subscribed to map topic.\n[component_container_isolated-8] [INFO] [1791172587.716606093] [amcl]: Received a 604 X 307 map @ 0.050 m/pix\n[component_container_isolated-8] [INFO] [1791172590.206468055] [amcl]: Message Filter dropping message: frame 'rplidar_link' at time 7.401 for reason 'the timestamp on the message is earlier than all the data in the transform cache'\n[component_container_isolated-8] [INFO] [1791172590.248412711] [amcl]: Activating\n[component_container_isolated-8] [INFO] [1791172590.248527019] [amcl]: Creating bond (amcl) to lifecycle manager.\n[component_container_isolated-8] [INFO] [1791172590.337525833] [amcl]: createLaserObject\n[component_container_isolated-8] [WARN] [1791172592.868795222] [amcl]: AMCL cannot publish a pose or update the transform. Please set the initial pose...\n[component_container_isolated-8] [WARN] [1791172600.853677860] [amcl]: AMCL cannot publish a pose or update the transform. Please set the initial pose...\n[component_container_isolated-8] [INFO] [1791172604.277924114] [amcl]: initialPoseReceived\n[component_container_isolated-8] [WARN] [1791172604.278362014] [amcl]: Failed to transform initial pose in time (Lookup would require extrapolation into the future.  Requested time 12.714000 but the latest data is at time 12.708000, when looking up transform from frame [base_footprint] to frame [odom])\n[component_container_isolated-8] [INFO] [1791172604.278412914] [amcl]: Setting pose (12.714000): -6.500 0.000 0.000\n"
+      }
+    ],
+    "readiness": [
+      {
+        "command": [
+          "/opt/ros/jazzy/bin/ros2",
+          "action",
+          "list",
+          "-t"
+        ],
+        "returncode": 0,
+        "navigate_to_pose": false,
+        "duration_ms": 1493.107
+      },
+      {
+        "command": [
+          "/opt/ros/jazzy/bin/ros2",
+          "action",
+          "list",
+          "-t"
+        ],
+        "returncode": 0,
+        "navigate_to_pose": false,
+        "duration_ms": 1103.652
+      },
+      {
+        "command": [
+          "/opt/ros/jazzy/bin/ros2",
+          "action",
+          "list",
+          "-t"
+        ],
+        "returncode": 0,
+        "navigate_to_pose": false,
+        "duration_ms": 913.545
+      },
+      {
+        "localization_ready": false,
+        "reason": "INITIAL_POSE_PUBLISH_FAILED"
+      }
+    ],
+    "cleanup": {
+      "bound_ms": 5000,
+      "processes": [
+        {
+          "pid": 247932,
+          "returncode": -15
+        }
+      ],
+      "owned_process_groups": [
+        247932
+      ],
+      "complete": true
+    },
+    "localization": {
+      "initial_pose": {
+        "frame_id": "map",
+        "x": -6.5,
+        "y": 0.0,
+        "yaw": 0.0,
+        "source": "SIM-008 scenario.regions.source",
+        "published": false
+      },
+      "probes": [
+        {
+          "label": "simulation_clock",
+          "command": [
+            "/opt/ros/jazzy/bin/ros2",
+            "topic",
+            "echo",
+            "--once",
+            "/clock",
+            "rosgraph_msgs/msg/Clock"
+          ],
+          "duration_ms": 5007.376,
+          "timed_out": true
+        },
+        {
+          "label": "simulation_clock",
+          "command": [
+            "/opt/ros/jazzy/bin/ros2",
+            "topic",
+            "echo",
+            "--once",
+            "/clock",
+            "rosgraph_msgs/msg/Clock"
+          ],
+          "duration_ms": 5015.824,
+          "timed_out": true
+        },
+        {
+          "label": "simulation_clock",
+          "command": [
+            "/opt/ros/jazzy/bin/ros2",
+            "topic",
+            "echo",
+            "--once",
+            "/clock",
+            "rosgraph_msgs/msg/Clock"
+          ],
+          "returncode": 0,
+          "stdout": "clock:\n  sec: 0\n  nanosec: 276000000\n---\n",
+          "stderr": "",
+          "duration_ms": 2388.551,
+          "timed_out": false
+        },
+        {
+          "label": "localization_topics",
+          "command": [
+            "/opt/ros/jazzy/bin/ros2",
+            "topic",
+            "list",
+            "-t"
+          ],
+          "returncode": 0,
+          "stdout": "ssed [sensor_msgs/msg/CompressedImage]\n/rgbd_camera/depth_image/compressedDepth [sensor_msgs/msg/CompressedImage]\n/rgbd_camera/depth_image/theora [theora_image_transport/msg/Packet]\n/rgbd_camera/depth_image/zstd [sensor_msgs/msg/CompressedImage]\n/rgbd_camera/image [sensor_msgs/msg/Image]\n/rgbd_camera/image/compressed [sensor_msgs/msg/CompressedImage]\n/rgbd_camera/image/compressedDepth [sensor_msgs/msg/CompressedImage]\n/rgbd_camera/image/theora [theora_image_transport/msg/Packet]\n/rgbd_camera/image/zstd [sensor_msgs/msg/CompressedImage]\n/robot_description [std_msgs/msg/String]\n/rosout [rcl_interfaces/msg/Log]\n/route_server/transition_event [lifecycle_msgs/msg/TransitionEvent]\n/scan [sensor_msgs/msg/LaserScan]\n/smoother_server/transition_event [lifecycle_msgs/msg/TransitionEvent]\n/tf [tf2_msgs/msg/TFMessage]\n/tf_static [tf2_msgs/msg/TFMessage]\n/velocity_smoother/transition_event [lifecycle_msgs/msg/TransitionEvent]\n/waypoint_follower/transition_event [lifecycle_msgs/msg/TransitionEvent]\n",
+          "stderr": "",
+          "duration_ms": 3373.273,
+          "timed_out": false
+        },
+        {
+          "label": "odom_to_base",
+          "command": [
+            "/opt/ros/jazzy/bin/ros2",
+            "run",
+            "tf2_ros",
+            "tf2_echo",
+            "odom",
+            "base_link"
+          ],
+          "target_frame": "odom",
+          "source_frame": "base_link",
+          "duration_ms": 4052.909,
+          "available": true,
+          "observed_transform": true,
+          "timed_out": false,
+          "output_tail": "[INFO] [1791172573.868323247] [tf2_echo]: Waiting for transform odom ->  base_link: Invalid frame ID \"odom\" passed to canTransform argument target_frame - frame does not exist\nAt time 2.376000000\n- Translation: [0.000, -0.000, 0.000]\n- Rotation: in Quaternion (xyzw) [0.000, 0.000, -0.000, 1.000]\n"
+        },
+        {
+          "label": "/map_server:configure",
+          "command": [
+            "/opt/ros/jazzy/bin/ros2",
+            "lifecycle",
+            "set",
+            "/map_server",
+            "configure"
+          ],
+          "returncode": 0,
+          "stdout": "Transitioning successful\n",
+          "stderr": "",
+          "duration_ms": 5259.04,
+          "timed_out": false
+        },
+        {
+          "label": "/map_server:activate",
+          "command": [
+            "/opt/ros/jazzy/bin/ros2",
+            "lifecycle",
+            "set",
+            "/map_server",
+            "activate"
+          ],
+          "returncode": 0,
+          "stdout": "Transitioning successful\n",
+          "stderr": "",
+          "duration_ms": 2451.904,
+          "timed_out": false
+        },
+        {
+          "label": "/amcl:configure",
+          "command": [
+            "/opt/ros/jazzy/bin/ros2",
+            "lifecycle",
+            "set",
+            "/amcl",
+            "configure"
+          ],
+          "returncode": 0,
+          "stdout": "Transitioning successful\n",
+          "stderr": "",
+          "duration_ms": 3473.12,
+          "timed_out": false
+        },
+        {
+          "label": "/amcl:activate",
+          "command": [
+            "/opt/ros/jazzy/bin/ros2",
+            "lifecycle",
+            "set",
+            "/amcl",
+            "activate"
+          ],
+          "returncode": 0,
+          "stdout": "Transitioning successful\n",
+          "stderr": "",
+          "duration_ms": 2504.975,
+          "timed_out": false
+        },
+        {
+          "label": "map_server_lifecycle",
+          "command": [
+            "/opt/ros/jazzy/bin/ros2",
+            "lifecycle",
+            "get",
+            "/map_server"
+          ],
+          "returncode": 0,
+          "stdout": "active [3]\n",
+          "stderr": "",
+          "duration_ms": 2532.894,
+          "timed_out": false
+        },
+        {
+          "label": "amcl_lifecycle",
+          "command": [
+            "/opt/ros/jazzy/bin/ros2",
+            "lifecycle",
+            "get",
+            "/amcl"
+          ],
+          "returncode": 0,
+          "stdout": "active [3]\n",
+          "stderr": "",
+          "duration_ms": 4227.845,
+          "timed_out": false
+        },
+        {
+          "label": "initial_pose_publish",
+          "command": [
+            "/opt/ros/jazzy/bin/ros2",
+            "topic",
+            "pub",
+            "--once",
+            "/initialpose",
+            "geometry_msgs/msg/PoseWithCovarianceStamped",
+            "{header: {frame_id: map}, pose: {pose: {position: {x: -6.5, y: 0.0, z: 0.0}, orientation: {z: 0.0, w: 1.0}}, covariance: [0.25, 0, 0, 0, 0, 0, 0, 0.25, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]}}"
+          ],
+          "duration_ms": 5049.381,
+          "timed_out": true
+        }
+      ],
+      "clock_available": true,
+      "prerequisites": {
+        "map_available": true,
+        "scan_available": true,
+        "odom_available": true,
+        "odom_to_base_available": true
+      },
+      "map_server_active": true,
+      "amcl_active": true,
+      "failure": "INITIAL_POSE_PUBLISH_FAILED"
+    },
+    "session_readiness": {
+      "ready": false,
+      "stage": "LOCALIZATION",
+      "error": "INITIAL_POSE_PUBLISH_FAILED"
+    }
+  },
+  "transport": {
+    "ROS_DOMAIN_ID": "210",
+    "GZ_PARTITION": "sim004-5ceceba941e2",
+    "ROS_LOG_DIR": "/tmp/sim004-ros-k53sjgzg",
+    "FASTDDS_BUILTIN_TRANSPORTS": null,
+    "ROS_AUTOMATIC_DISCOVERY_RANGE": "SYSTEM_DEFAULT",
+    "RMW_IMPLEMENTATION": "rmw_fastrtps_cpp",
+    "FASTDDS_DEFAULT_PROFILES_FILE": "/home/jinho/projects/factory_physical_ai_simDemo/demo_3d/config/fastdds_loopback.xml",
+    "FASTRTPS_DEFAULT_PROFILES_FILE": "/home/jinho/projects/factory_physical_ai_simDemo/demo_3d/config/fastdds_loopback.xml"
+  },
+  "disclosure": "DEMO_RUNTIME_OBSERVATION: existing measurements exported after original cleanup"
+}
