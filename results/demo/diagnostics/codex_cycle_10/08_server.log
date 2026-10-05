@@ -1,0 +1,11 @@
+[INFO] [launch]: All log files can be found below /tmp/sim004-ros-1y82mdw1/2026-10-05-04-10-25-204335-DESKTOP-4B51LPI-194798
+[INFO] [launch]: Default logging verbosity is set to INFO
+[INFO] [xacro-1]: process started with pid [194880]
+[INFO] [parameter_bridge-2]: process started with pid [194881]
+[INFO] [image_bridge-3]: process started with pid [194882]
+[INFO] [image_bridge-4]: process started with pid [194883]
+[INFO] [create-5]: process started with pid [194884]
+[INFO] [gz-6]: process started with pid [194885]
+[INFO] [robot_state_publisher-7]: process started with pid [194894]
+[INFO] [component_container_isolated-8]: process started with pid [194895]
+[INFO] [xacro-1]: process has finished cleanly [pid 194880]

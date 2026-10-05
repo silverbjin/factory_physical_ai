@@ -43,21 +43,21 @@ def write_state(root: Path, **kw):
     )
 
 
-def run_help(script: Path) -> str:
-    cp = subprocess.run(
-        [sys.executable, str(script), "--help"],
-        capture_output=True,
-        text=True,
-    )
-    return (cp.stdout or "") + "\n" + (cp.stderr or "")
-
-
 def has_flag(script: Path, *flags: str) -> str | None:
-    help_text = run_help(script)
-    for flag in flags:
-        if flag in help_text:
-            return flag
-    return None
+    """Read literal argparse declarations without executing the runner.
+
+    SIM-008 and SIM-009 ignore --help and execute missions. Capability
+    discovery must never spawn those scripts in the canonical checkout.
+    """
+    import ast
+    tree = ast.parse(script.read_text())
+    declared = set()
+    for node in ast.walk(tree):
+        if (isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute)
+                and node.func.attr == "add_argument"):
+            declared.update(arg.value for arg in node.args
+                            if isinstance(arg, ast.Constant) and isinstance(arg.value, str))
+    return next((flag for flag in flags if flag in declared), None)
 
 
 def normal_runner(root: Path) -> Path:
@@ -365,6 +365,12 @@ def transport_matches(
 def _is_gazebo_server(tokens: list[str] | None) -> bool:
     if not tokens:
         return False
+    import shlex
+    if len(tokens) == 1 and tokens[0].startswith(("gz sim ", "ign gazebo ")):
+        try:
+            tokens = shlex.split(tokens[0])
+        except ValueError:
+            return False
     joined = " ".join(tokens)
 
     looks_like_gz = ("gz sim" in joined) or ("ign gazebo" in joined)
@@ -497,7 +503,7 @@ def start_gui_attach_to_server(
 
     try:
         proc = subprocess.Popen(
-            cli + ["-g"],
+            cli + ["-v", "4", "-g"],
             stdout=log,
             stderr=subprocess.STDOUT,
             env=env,
@@ -589,22 +595,35 @@ def _sha256_file(path: Path) -> str:
 
 
 def inject_scene_broadcaster_text(text: str) -> tuple[str, bool]:
-    if (
-        "gz::sim::systems::SceneBroadcaster" in text
-        or "gz-sim-scene-broadcaster-system" in text
-    ):
-        return text, False
+    """Resolve Nav2's headless xacro, then augment its actual world plugins.
 
+    A plugin nested in xacro:unless is not an active world plugin. Resolve
+    that boundary first so Nav2's subsequent xacro pass cannot remove ours.
+    """
     import re
+    import xml.etree.ElementTree as ET
+    original = text
+    if "xacro:" in text:
+        result = subprocess.run(
+            ["/opt/ros/jazzy/bin/xacro", "headless:=True", "/dev/stdin"],
+            input=text, text=True, capture_output=True, check=True, timeout=10,
+        )
+        text = result.stdout
+    world = ET.fromstring(text).find("world")
+    if world is None:
+        raise ValueError("Expected a world SDF for demo augmentation")
+    if any(p.get("name") == "gz::sim::systems::SceneBroadcaster"
+           for p in world.findall("plugin")):
+        return text, text != original
+    # Discover the definition from this installation, not a remembered name.
+    example = Path("/opt/ros/jazzy/share/ros_gz_sim_demos/worlds/default.sdf")
+    installed = ET.parse(example).getroot().find("world")
+    plugin = next(p for p in installed.findall("plugin")
+                  if p.get("name") == "gz::sim::systems::SceneBroadcaster")
     match = re.search(r"<world\b[^>]*>", text)
-    if not match:
-        return text, False
-
-    plugin = (
-        '\n    <plugin filename="gz-sim-scene-broadcaster-system" '
-        'name="gz::sim::systems::SceneBroadcaster"/>\n'
-    )
-    return text[:match.end()] + plugin + text[match.end():], True
+    addition = "\n    <!-- DEMO_VISUALIZATION_AUGMENTATION -->\n    " + ET.tostring(plugin, encoding="unicode") + "\n"
+    text = text[:match.end()] + addition + text[match.end():]
+    return text, True
 
 
 def make_visual_context_world(
@@ -781,7 +800,7 @@ def visual_runner_env(
     base_env: dict[str, str],
 ) -> dict[str, str]:
     """
-    v1.5 compatibility helper.
+    Demo-only environment boundary.
 
     Do NOT intercept `gz` through PATH. ros2/nav2 launch may materialize its
     own ROS environment and resolve Gazebo independently. Visualization is
@@ -789,6 +808,14 @@ def visual_runner_env(
     """
     env = dict(base_env)
     env["DEMO_VISUALIZATION_MODE"] = "ISOLATED_WORKTREE_WORLD_COPY"
+    # Demo middleware adaptation proven on the WSL host. Explicit custom UDP
+    # prevents Jazzy LOCALHOST mode from silently reintroducing shared memory.
+    profile = root / "demo_3d/config/fastdds_loopback.xml"
+    env["RMW_IMPLEMENTATION"] = "rmw_fastrtps_cpp"
+    env["ROS_AUTOMATIC_DISCOVERY_RANGE"] = "SYSTEM_DEFAULT"
+    env["FASTRTPS_DEFAULT_PROFILES_FILE"] = str(profile)
+    env["FASTDDS_DEFAULT_PROFILES_FILE"] = str(profile)
+    env.pop("FASTDDS_BUILTIN_TRANSPORTS", None)
     return env
 
 
@@ -1030,7 +1057,7 @@ def prepare_normal_session(
     """
     Always use a detached worktree for the 3D Normal E2E demo.
 
-    v1.5 patches only the worktree copy of the accepted world with
+    Resolve headless xacro and augment only the worktree copy with
     SceneBroadcaster. This avoids both canonical mutation and unreliable PATH
     interception of Gazebo launched through ROS 2.
     """
@@ -1040,7 +1067,11 @@ def prepare_normal_session(
     rel_canon = canon.relative_to(root)
 
     tmp = _create_detached_worktree(root, "sim008-3d-demo-")
-    patch_record = patch_sim008_worktree_world(root, tmp)
+    try:
+        patch_record = patch_sim008_worktree_world(root, tmp)
+    except BaseException:
+        subprocess.run(["git", "-C", str(root), "worktree", "remove", "--force", str(tmp)], check=True)
+        raise
 
     env2 = dict(env)
     env2["PYTHONPATH"] = (
@@ -1051,19 +1082,11 @@ def prepare_normal_session(
         "1" if patch_record.get("changed") else "0"
     )
 
-    # If the canonical runner supports --output, keep even its generated
-    # artifact inside the worktree. Never point it at the main repository.
-    output_flag = has_flag(tmp / rel_runner, "--output")
+    # The SIM-008 runner has no CLI; it writes only inside this worktree.
     generated = tmp / rel_canon
-    cmd = [sys.executable, str(tmp / rel_runner)]
-
-    if output_flag:
-        generated = (
-            tmp
-            / "results/demo/SIM-008_normal_e2e_demo.json"
-        )
-        generated.parent.mkdir(parents=True, exist_ok=True)
-        cmd += [output_flag, str(generated)]
+    cmd = [sys.executable, str(root / "demo_3d/tools/observed_normal_entry.py"),
+           "--runner", str(tmp / rel_runner),
+           "--observations", str(output.parent / "runtime_observations.json")]
 
     return RunnerSession(
         root=root,
@@ -1101,7 +1124,7 @@ def prepare_failure_session(
         "--only",
     )
 
-    # v1.5: all live 3D failure execution occurs in an isolated worktree,
+    # All live 3D failure execution occurs in an isolated worktree,
     # because the visualization world copy is augmented with SceneBroadcaster.
     tmp = _create_detached_worktree(root, "sim009-3d-demo-")
     patch_failure_worktree_worlds(root, tmp)

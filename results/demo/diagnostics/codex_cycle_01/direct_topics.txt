@@ -1,0 +1,14 @@
+/clock
+/gazebo/resource_paths
+/stats
+/world/sim008_normal_system_world/clock
+/world/sim008_normal_system_world/dynamic_pose/info
+/world/sim008_normal_system_world/pose/info
+/world/sim008_normal_system_world/scene/deletion
+/world/sim008_normal_system_world/scene/info
+/world/sim008_normal_system_world/state
+/world/sim008_normal_system_world/stats
+/model/Depot/joint/fan1_joint/cmd_vel
+/model/Depot/joint/fan2_joint/cmd_vel
+/world/sim008_normal_system_world/light_config
+/world/sim008_normal_system_world/material_color

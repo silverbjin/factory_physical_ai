@@ -1,0 +1,212 @@
+[
+  {
+    "pid": 190246,
+    "command": [
+      "/opt/ros/jazzy/lib/ros_gz_bridge/parameter_bridge",
+      "--ros-args",
+      "-r",
+      "__node:=bridge_ros_gz",
+      "--params-file",
+      "/tmp/launch_params_r603xv4t"
+    ],
+    "domain": "58",
+    "partition": "sim004-6e41d299357f",
+    "status": "Name:\tparameter_bridg\nUmask:\t0022\nState:\tS (sleeping)\nTgid:\t190246\nNgid:\t0\nPid:\t190246\nPPid:\t190170\nTracerPid:\t0\nUid:\t1000\t1000\t1000\t1000\nGid:\t1000\t1000\t1000\t1000\nFDSize:\t64\nGroups:\t4 20 24 25 27 29 30 44 46 100 107 989 1000 \nNStgid:\t190246\nNSpid:\t190246\nNSpgid:\t190170\nNSsid:\t190170\nKthread:\t0\nVmPeak:\t  551936 kB\nVmSize:\t  551936 kB\nVmLck:\t       0 kB\nVmPin:\t       0 kB\nVmHWM:\t   44796 kB\nVmRSS:\t   44796 kB\nRssAnon:\t    8612 kB\nRssFile:\t   35204 kB\nRssShmem:\t     980 kB\nVmData:\t   98776 kB\nVmStk:\t     140 kB\nVmExe:\t      16 kB\nVmLib:\t   29588 kB\nVmPTE:\t     240 kB\nVmSwap:\t       0 kB\nHugetlbPages:\t       0 kB\nCoreDumping:\t0\nTHP_enabled:\t1\nuntag_mask:\t0xffffffffffffffff\nThreads:\t12\nSigQ:\t4/63361\nSigPnd:\t0000000000000000\nShdPnd:\t0000000000000000\nSigBlk:\t0000000000000000\nSigIgn:\t0000000000000000\nSigCgt:\t0000000100004002\nCapInh:\t0000000000000000\nCapPrm:\t0000000000000000\nCapEff:\t0000000000000000\nCapBnd:\t000001ffffffffff\nCapAmb:\t0000000000000000\nNoNewPrivs:\t0\nSeccomp:\t0\nSeccomp_filters:\t0\nSpeculation_Store_Bypass:\tthread vulnerable\nSpeculationIndirectBranch:\tconditional enabled\nCpus_allowed:\tff\nCpus_allowed_list:\t0-7\nMems_allowed:\t00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000001\nMems_allowed_list:\t0\nvoluntary_ctxt_switches:\t4592\nnonvoluntary_ctxt_switches:\t1714\n",
+    "wchan": "hrtimer_nanosleep",
+    "threads": [
+      {
+        "tid": "190246",
+        "wchan": "hrtimer_nanosleep"
+      },
+      {
+        "tid": "190255",
+        "wchan": "unix_stream_read_generic"
+      },
+      {
+        "tid": "190256",
+        "wchan": "futex_do_wait"
+      },
+      {
+        "tid": "190274",
+        "wchan": "futex_do_wait"
+      },
+      {
+        "tid": "190275",
+        "wchan": "futex_do_wait"
+      },
+      {
+        "tid": "190276",
+        "wchan": "futex_do_wait"
+      },
+      {
+        "tid": "190277",
+        "wchan": "futex_do_wait"
+      },
+      {
+        "tid": "190278",
+        "wchan": "__skb_wait_for_more_packets"
+      },
+      {
+        "tid": "190279",
+        "wchan": "__skb_wait_for_more_packets"
+      },
+      {
+        "tid": "190280",
+        "wchan": "futex_do_wait"
+      },
+      {
+        "tid": "190281",
+        "wchan": "__skb_wait_for_more_packets"
+      },
+      {
+        "tid": "190282",
+        "wchan": "futex_do_wait"
+      }
+    ]
+  },
+  {
+    "pid": 190253,
+    "command": [
+      "/opt/ros/jazzy/lib/robot_state_publisher/robot_state_publisher",
+      "--ros-args",
+      "-r",
+      "__node:=robot_state_publisher",
+      "-r",
+      "__ns:=/",
+      "--params-file",
+      "/tmp/launch_params_h57kjaam",
+      "-r",
+      "/tf:=tf",
+      "-r",
+      "/tf_static:=tf_static"
+    ],
+    "domain": "58",
+    "partition": "sim004-6e41d299357f",
+    "status": "Name:\trobot_state_pub\nUmask:\t0022\nState:\tS (sleeping)\nTgid:\t190253\nNgid:\t0\nPid:\t190253\nPPid:\t190170\nTracerPid:\t0\nUid:\t1000\t1000\t1000\t1000\nGid:\t1000\t1000\t1000\t1000\nFDSize:\t128\nGroups:\t4 20 24 25 27 29 30 44 46 100 107 989 1000 \nNStgid:\t190253\nNSpid:\t190253\nNSpgid:\t190170\nNSsid:\t190170\nKthread:\t0\nVmPeak:\t  521948 kB\nVmSize:\t  521948 kB\nVmLck:\t       0 kB\nVmPin:\t       0 kB\nVmHWM:\t   27132 kB\nVmRSS:\t   27132 kB\nRssAnon:\t    5816 kB\nRssFile:\t   20336 kB\nRssShmem:\t     980 kB\nVmData:\t   95796 kB\nVmStk:\t     140 kB\nVmExe:\t      16 kB\nVmLib:\t   18988 kB\nVmPTE:\t     180 kB\nVmSwap:\t       0 kB\nHugetlbPages:\t       0 kB\nCoreDumping:\t0\nTHP_enabled:\t1\nuntag_mask:\t0xffffffffffffffff\nThreads:\t12\nSigQ:\t4/63361\nSigPnd:\t0000000000000000\nShdPnd:\t0000000000000000\nSigBlk:\t0000000000000000\nSigIgn:\t0000000000000000\nSigCgt:\t0000000100004002\nCapInh:\t0000000000000000\nCapPrm:\t0000000000000000\nCapEff:\t0000000000000000\nCapBnd:\t000001ffffffffff\nCapAmb:\t0000000000000000\nNoNewPrivs:\t0\nSeccomp:\t0\nSeccomp_filters:\t0\nSpeculation_Store_Bypass:\tthread vulnerable\nSpeculationIndirectBranch:\tconditional enabled\nCpus_allowed:\tff\nCpus_allowed_list:\t0-7\nMems_allowed:\t00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000001\nMems_allowed_list:\t0\nvoluntary_ctxt_switches:\t4607\nnonvoluntary_ctxt_switches:\t1692\n",
+    "wchan": "hrtimer_nanosleep",
+    "threads": [
+      {
+        "tid": "190253",
+        "wchan": "hrtimer_nanosleep"
+      },
+      {
+        "tid": "190268",
+        "wchan": "unix_stream_read_generic"
+      },
+      {
+        "tid": "190269",
+        "wchan": "futex_do_wait"
+      },
+      {
+        "tid": "190292",
+        "wchan": "futex_do_wait"
+      },
+      {
+        "tid": "190293",
+        "wchan": "futex_do_wait"
+      },
+      {
+        "tid": "190294",
+        "wchan": "futex_do_wait"
+      },
+      {
+        "tid": "190295",
+        "wchan": "futex_do_wait"
+      },
+      {
+        "tid": "190296",
+        "wchan": "__skb_wait_for_more_packets"
+      },
+      {
+        "tid": "190297",
+        "wchan": "__skb_wait_for_more_packets"
+      },
+      {
+        "tid": "190298",
+        "wchan": "futex_do_wait"
+      },
+      {
+        "tid": "190299",
+        "wchan": "__skb_wait_for_more_packets"
+      },
+      {
+        "tid": "190302",
+        "wchan": "futex_do_wait"
+      }
+    ]
+  },
+  {
+    "pid": 190254,
+    "command": [
+      "/opt/ros/jazzy/lib/rclcpp_components/component_container_isolated",
+      "--ros-args",
+      "--log-level",
+      "info",
+      "--ros-args",
+      "-r",
+      "__node:=nav2_container",
+      "--params-file",
+      "/tmp/launch_params_2n253m9v",
+      "--params-file",
+      "/tmp/launch_params_e0ghzsdl",
+      "-r",
+      "/tf:=tf",
+      "-r",
+      "/tf_static:=tf_static"
+    ],
+    "domain": "58",
+    "partition": "sim004-6e41d299357f",
+    "status": "Name:\tcomponent_conta\nUmask:\t0022\nState:\tS (sleeping)\nTgid:\t190254\nNgid:\t0\nPid:\t190254\nPPid:\t190170\nTracerPid:\t0\nUid:\t1000\t1000\t1000\t1000\nGid:\t1000\t1000\t1000\t1000\nFDSize:\t128\nGroups:\t4 20 24 25 27 29 30 44 46 100 107 989 1000 \nNStgid:\t190254\nNSpid:\t190254\nNSpgid:\t190170\nNSsid:\t190170\nKthread:\t0\nVmPeak:\t  518432 kB\nVmSize:\t  518432 kB\nVmLck:\t       0 kB\nVmPin:\t       0 kB\nVmHWM:\t   25004 kB\nVmRSS:\t   25004 kB\nRssAnon:\t    5748 kB\nRssFile:\t   18276 kB\nRssShmem:\t     980 kB\nVmData:\t   95728 kB\nVmStk:\t     140 kB\nVmExe:\t      24 kB\nVmLib:\t   17364 kB\nVmPTE:\t     176 kB\nVmSwap:\t       0 kB\nHugetlbPages:\t       0 kB\nCoreDumping:\t0\nTHP_enabled:\t1\nuntag_mask:\t0xffffffffffffffff\nThreads:\t12\nSigQ:\t4/63361\nSigPnd:\t0000000000000000\nShdPnd:\t0000000000000000\nSigBlk:\t0000000000000000\nSigIgn:\t0000000000000000\nSigCgt:\t0000000100004002\nCapInh:\t0000000000000000\nCapPrm:\t0000000000000000\nCapEff:\t0000000000000000\nCapBnd:\t000001ffffffffff\nCapAmb:\t0000000000000000\nNoNewPrivs:\t0\nSeccomp:\t0\nSeccomp_filters:\t0\nSpeculation_Store_Bypass:\tthread vulnerable\nSpeculationIndirectBranch:\tconditional enabled\nCpus_allowed:\tff\nCpus_allowed_list:\t0-7\nMems_allowed:\t00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000001\nMems_allowed_list:\t0\nvoluntary_ctxt_switches:\t4607\nnonvoluntary_ctxt_switches:\t1706\n",
+    "wchan": "hrtimer_nanosleep",
+    "threads": [
+      {
+        "tid": "190254",
+        "wchan": "hrtimer_nanosleep"
+      },
+      {
+        "tid": "190266",
+        "wchan": "unix_stream_read_generic"
+      },
+      {
+        "tid": "190267",
+        "wchan": "futex_do_wait"
+      },
+      {
+        "tid": "190283",
+        "wchan": "futex_do_wait"
+      },
+      {
+        "tid": "190284",
+        "wchan": "futex_do_wait"
+      },
+      {
+        "tid": "190285",
+        "wchan": "futex_do_wait"
+      },
+      {
+        "tid": "190286",
+        "wchan": "futex_do_wait"
+      },
+      {
+        "tid": "190287",
+        "wchan": "__skb_wait_for_more_packets"
+      },
+      {
+        "tid": "190288",
+        "wchan": "__skb_wait_for_more_packets"
+      },
+      {
+        "tid": "190289",
+        "wchan": "futex_do_wait"
+      },
+      {
+        "tid": "190290",
+        "wchan": "__skb_wait_for_more_packets"
+      },
+      {
+        "tid": "190291",
+        "wchan": "futex_do_wait"
+      }
+    ]
+  }
+]

@@ -1,0 +1,5 @@
+[3D PREFLIGHT] installed SceneBroadcaster: {'name': 'gz::sim::systems::SceneBroadcaster', 'filename': 'gz-sim-scene-broadcaster-system'}
+[3D PREFLIGHT] pre-existing servers (left untouched): [176573]
+[3D PREFLIGHT] authority: headless-xacro-resolved demo worktree -> unchanged Nav2 launch -> actual runtime SDF -> exact GUI transport
+[3D PREFLIGHT] protected canonical tree clean; no stale recorded owned processes
+[3D PREFLIGHT] PASS

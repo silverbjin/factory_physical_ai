@@ -1,0 +1,11 @@
+Preparing worktree (detached HEAD c2951b7)
+[3D DEMO] attached server=194885 gui=194961 partition=sim004-70f77624f81c domain=61
+[3D DEMO] live scene confirmed=True models=2
+Gate A: PASS
+Gate B: PASS
+Gate C: PASS
+Gate D: PASS
+Gate E: PASS
+Gate F: PASS
+Gate G: FAIL
+Gate H: PASS

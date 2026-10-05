@@ -1,0 +1,13 @@
+{
+  "scripts/run_simulation_normal_system_e2e.py": {
+    "checkout_sha256": "5bcb2a6d7365b2b466b1920888c68a4cbb8b76b562cfccdb0d9bda94e5c17759",
+    "detached_worktree_base_sha256": "5bcb2a6d7365b2b466b1920888c68a4cbb8b76b562cfccdb0d9bda94e5c17759",
+    "checkout_identical_to_worktree_base": true
+  },
+  "scripts/run_simulation_navigation.py": {
+    "checkout_sha256": "5994ebc845544e709e96fc5c5ee544babe7f6fba9c21f97940934328daaef448",
+    "detached_worktree_base_sha256": "5994ebc845544e709e96fc5c5ee544babe7f6fba9c21f97940934328daaef448",
+    "checkout_identical_to_worktree_base": true
+  },
+  "provenance_basis": "Detached worktree created at HEAD c2951b7; demo patch modifies only scenario world; runner code compared to its Git base after cleanup, not independently re-read while live."
+}

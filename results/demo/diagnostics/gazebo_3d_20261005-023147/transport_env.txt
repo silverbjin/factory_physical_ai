@@ -1,0 +1,11 @@
+SERVER PID=164596
+SERVER CMD=gz sim -r -s /tmp/nav2_cl5nyx7a.sdf                                             
+SERVER GZ_PARTITION=sim004-c0830b86cfc2
+SERVER IGN_PARTITION=
+SERVER ROS_DOMAIN_ID=119
+
+GUI PID=164713
+GUI CMD=gz sim -g                                             
+GUI GZ_PARTITION=sim004-c0830b86cfc2
+GUI IGN_PARTITION=sim004-c0830b86cfc2
+GUI ROS_DOMAIN_ID=119

@@ -213,76 +213,8 @@ def _run_with_gui_follow(
 
 
 def normal(root: Path):
-    env = visual_runner_env(root, runner_env())
-    out = root / "results/demo/SIM-008_normal_e2e_demo.json"
-    session = prepare_normal_session(root, env, out)
-
-    write_state(
-        root,
-        scene="normal",
-        mode="LIVE_CANONICAL_RUN",
-        phase="starting",
-        headline="Starting canonical Normal E2E",
-        gazebo_3d=False,
-        strategy=session.strategy,
-    )
-
-    try:
-        rc, server, attached, history = _run_with_gui_follow(
-            root,
-            session,
-            "normal",
-            "Normal E2E executing in Gazebo",
-        )
-
-        info = _server_public_info(server)
-        write_state(
-            root,
-            scene="normal",
-            mode="LIVE_CANONICAL_RUN",
-            phase="complete" if rc == 0 else "failed",
-            headline=(
-                "Normal E2E complete"
-                if rc == 0
-                else "Normal E2E failed"
-            ),
-            output=(
-                str(out.relative_to(root))
-                if out.exists()
-                else None
-            ),
-            runner=(
-                str(session.runner.relative_to(root))
-                if session.runner
-                else None
-            ),
-            strategy=session.strategy,
-            exit_code=rc,
-            gazebo_3d=False,
-            transport_verified_during_run=attached,
-            server_history=history,
-            disclosure=(
-                "Gazebo GUI is intentionally closed when the canonical "
-                "runner finishes because the runtime also performs bounded "
-                "server cleanup."
-            ),
-            **info,
-        )
-
-        print(
-            f"[3D DEMO] strategy={session.strategy} "
-            f"runner={session.runner.relative_to(root)} rc={rc}"
-        )
-        print(
-            f"[3D DEMO] GUI transport verified during run={attached}"
-        )
-        if out.exists():
-            print(f"[3D DEMO] evidence={out.relative_to(root)}")
-
-        return rc
-    finally:
-        session.cleanup()
-
+    from verified_normal import run
+    return run(root)
 
 
 def run_failure(root: Path, scenario_id: str, scene: str):

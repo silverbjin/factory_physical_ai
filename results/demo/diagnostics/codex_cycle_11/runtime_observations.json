@@ -1,0 +1,365 @@
+{
+  "measurements": {
+    "started_at": "2026-10-04T19:13:23.742Z",
+    "processes": [
+      {
+        "name": "gazebo_nav2_proxy",
+        "pid": 195847,
+        "pgid": 195847,
+        "command": [
+          "/opt/ros/jazzy/bin/ros2",
+          "launch",
+          "nav2_bringup",
+          "tb4_simulation_launch.py",
+          "headless:=True",
+          "use_rviz:=False",
+          "autostart:=False",
+          "x_pose:=-6.5",
+          "y_pose:=0.0",
+          "yaw:=0.0",
+          "world:=/tmp/sim008-3d-demo-zkkvwnb3/data/simulation/sim008_normal_system_world.sdf"
+        ],
+        "log_path": "/tmp/sim004-ros-zl7bpflh/gazebo_nav2_proxy.log",
+        "started_ms": 0.479,
+        "log_tail": "ner_isolated-8] [INFO] [1791141268.088882530] [lifecycle_manager_navigation]: Server bt_navigator connected with bond.\n[component_container_isolated-8] [INFO] [1791141268.088955523] [lifecycle_manager_navigation]: \u001b[34m\u001b[1mActivating waypoint_follower\u001b[0m\u001b[0m\n[component_container_isolated-8] [INFO] [1791141268.089522711] [waypoint_follower]: Activating\n[component_container_isolated-8] [INFO] [1791141268.089590250] [waypoint_follower]: Creating bond (waypoint_follower) to lifecycle manager.\n[component_container_isolated-8] [INFO] [1791141268.219506428] [lifecycle_manager_navigation]: Server waypoint_follower connected with bond.\n[component_container_isolated-8] [INFO] [1791141268.219593207] [lifecycle_manager_navigation]: \u001b[34m\u001b[1mActivating docking_server\u001b[0m\u001b[0m\n[component_container_isolated-8] [INFO] [1791141268.220151668] [docking_server]: Activating docking_server\n[component_container_isolated-8] [INFO] [1791141268.269724525] [docking_server]: Creating bond (docking_server) to lifecycle manager.\n[component_container_isolated-8] [INFO] [1791141268.428017156] [lifecycle_manager_navigation]: Server docking_server connected with bond.\n[component_container_isolated-8] [INFO] [1791141268.428115043] [lifecycle_manager_navigation]: \u001b[34m\u001b[1mManaged nodes are active\u001b[0m\u001b[0m\n[component_container_isolated-8] [INFO] [1791141268.428160267] [lifecycle_manager_navigation]: \u001b[34m\u001b[1mCreating bond timer...\u001b[0m\u001b[0m\n[component_container_isolated-8] [INFO] [1791141279.434777071] [bt_navigator]: Begin navigating from current location (-6.47, -0.00) to (-6.50, 0.00)\n[component_container_isolated-8] [WARN] [1791141279.474506200] [bt_navigator_navigate_to_pose_rclcpp_node]: Timed out while waiting for action server to acknowledge goal request for compute_path_to_pose\n[component_container_isolated-8] [WARN] [1791141279.503908061] [bt_navigator]: [navigate_to_pose] [ActionServer] Aborting handle.\n[component_container_isolated-8] [ERROR] [1791141279.504419959] [bt_navigator]: Goal failed\n"
+      }
+    ],
+    "readiness": [
+      {
+        "command": [
+          "/opt/ros/jazzy/bin/ros2",
+          "action",
+          "list",
+          "-t"
+        ],
+        "returncode": 0,
+        "navigate_to_pose": false,
+        "duration_ms": 1284.917
+      },
+      {
+        "command": [
+          "/opt/ros/jazzy/bin/ros2",
+          "action",
+          "list",
+          "-t"
+        ],
+        "returncode": 0,
+        "navigate_to_pose": false,
+        "duration_ms": 602.516
+      },
+      {
+        "command": [
+          "/opt/ros/jazzy/bin/ros2",
+          "action",
+          "list",
+          "-t"
+        ],
+        "returncode": 0,
+        "navigate_to_pose": false,
+        "duration_ms": 637.613
+      },
+      {
+        "command": [
+          "/opt/ros/jazzy/bin/ros2",
+          "action",
+          "list",
+          "-t"
+        ],
+        "returncode": 0,
+        "navigate_to_pose": false,
+        "duration_ms": 868.771
+      },
+      {
+        "command": [
+          "/opt/ros/jazzy/bin/ros2",
+          "action",
+          "list",
+          "-t"
+        ],
+        "returncode": 0,
+        "navigate_to_pose": false,
+        "duration_ms": 1357.645
+      },
+      {
+        "bt_navigator_active": true,
+        "navigate_to_pose": true
+      }
+    ],
+    "cleanup": {
+      "bound_ms": 5000,
+      "processes": [
+        {
+          "pid": 195847,
+          "returncode": -15
+        }
+      ],
+      "owned_process_groups": [
+        195847
+      ],
+      "complete": true
+    },
+    "localization": {
+      "initial_pose": {
+        "frame_id": "map",
+        "x": -6.5,
+        "y": 0.0,
+        "yaw": 0.0,
+        "source": "SIM-008 scenario.regions.source",
+        "published": true
+      },
+      "probes": [
+        {
+          "label": "simulation_clock",
+          "command": [
+            "/opt/ros/jazzy/bin/ros2",
+            "topic",
+            "echo",
+            "--once",
+            "/clock",
+            "rosgraph_msgs/msg/Clock"
+          ],
+          "returncode": 0,
+          "stdout": "A message was lost!!!\n\ttotal count change:1\n\ttotal count: 1---\nA message was lost!!!\n\ttotal count change:1\n\ttotal count: 2---\nA message was lost!!!\n\ttotal count change:1\n\ttotal count: 3---\nA message was lost!!!\n\ttotal count change:1\n\ttotal count: 4---\nA message was lost!!!\n\ttotal count change:1\n\ttotal count: 5---\nclock:\n  sec: 4\n  nanosec: 35000000\n---\n",
+          "stderr": "",
+          "duration_ms": 3610.787,
+          "timed_out": false
+        },
+        {
+          "label": "localization_topics",
+          "command": [
+            "/opt/ros/jazzy/bin/ros2",
+            "topic",
+            "list",
+            "-t"
+          ],
+          "returncode": 0,
+          "stdout": "ssed [sensor_msgs/msg/CompressedImage]\n/rgbd_camera/depth_image/compressedDepth [sensor_msgs/msg/CompressedImage]\n/rgbd_camera/depth_image/theora [theora_image_transport/msg/Packet]\n/rgbd_camera/depth_image/zstd [sensor_msgs/msg/CompressedImage]\n/rgbd_camera/image [sensor_msgs/msg/Image]\n/rgbd_camera/image/compressed [sensor_msgs/msg/CompressedImage]\n/rgbd_camera/image/compressedDepth [sensor_msgs/msg/CompressedImage]\n/rgbd_camera/image/theora [theora_image_transport/msg/Packet]\n/rgbd_camera/image/zstd [sensor_msgs/msg/CompressedImage]\n/robot_description [std_msgs/msg/String]\n/rosout [rcl_interfaces/msg/Log]\n/route_server/transition_event [lifecycle_msgs/msg/TransitionEvent]\n/scan [sensor_msgs/msg/LaserScan]\n/smoother_server/transition_event [lifecycle_msgs/msg/TransitionEvent]\n/tf [tf2_msgs/msg/TFMessage]\n/tf_static [tf2_msgs/msg/TFMessage]\n/velocity_smoother/transition_event [lifecycle_msgs/msg/TransitionEvent]\n/waypoint_follower/transition_event [lifecycle_msgs/msg/TransitionEvent]\n",
+          "stderr": "",
+          "duration_ms": 1310.433,
+          "timed_out": false
+        },
+        {
+          "label": "odom_to_base",
+          "command": [
+            "/opt/ros/jazzy/bin/ros2",
+            "run",
+            "tf2_ros",
+            "tf2_echo",
+            "odom",
+            "base_link"
+          ],
+          "target_frame": "odom",
+          "source_frame": "base_link",
+          "duration_ms": 2594.472,
+          "available": true,
+          "observed_transform": true,
+          "timed_out": false,
+          "output_tail": "[INFO] [1791141230.858904762] [tf2_echo]: Waiting for transform odom ->  base_link: Invalid frame ID \"odom\" passed to canTransform argument target_frame - frame does not exist\nAt time 5.544000000\n- Translation: [0.000, -0.000, 0.000]\n- Rotation: in Quaternion (xyzw) [0.000, 0.000, -0.000, 1.000]\n"
+        },
+        {
+          "label": "/map_server:configure",
+          "command": [
+            "/opt/ros/jazzy/bin/ros2",
+            "lifecycle",
+            "set",
+            "/map_server",
+            "configure"
+          ],
+          "returncode": 0,
+          "stdout": "Transitioning successful\n",
+          "stderr": "",
+          "duration_ms": 2262.17,
+          "timed_out": false
+        },
+        {
+          "label": "/map_server:activate",
+          "command": [
+            "/opt/ros/jazzy/bin/ros2",
+            "lifecycle",
+            "set",
+            "/map_server",
+            "activate"
+          ],
+          "returncode": 0,
+          "stdout": "Transitioning successful\n",
+          "stderr": "",
+          "duration_ms": 2392.423,
+          "timed_out": false
+        },
+        {
+          "label": "/amcl:configure",
+          "command": [
+            "/opt/ros/jazzy/bin/ros2",
+            "lifecycle",
+            "set",
+            "/amcl",
+            "configure"
+          ],
+          "returncode": 0,
+          "stdout": "Transitioning successful\n",
+          "stderr": "",
+          "duration_ms": 4585.102,
+          "timed_out": false
+        },
+        {
+          "label": "/amcl:activate",
+          "command": [
+            "/opt/ros/jazzy/bin/ros2",
+            "lifecycle",
+            "set",
+            "/amcl",
+            "activate"
+          ],
+          "returncode": 0,
+          "stdout": "Transitioning successful\n",
+          "stderr": "",
+          "duration_ms": 2129.482,
+          "timed_out": false
+        },
+        {
+          "label": "map_server_lifecycle",
+          "command": [
+            "/opt/ros/jazzy/bin/ros2",
+            "lifecycle",
+            "get",
+            "/map_server"
+          ],
+          "returncode": 0,
+          "stdout": "active [3]\n",
+          "stderr": "",
+          "duration_ms": 3317.55,
+          "timed_out": false
+        },
+        {
+          "label": "amcl_lifecycle",
+          "command": [
+            "/opt/ros/jazzy/bin/ros2",
+            "lifecycle",
+            "get",
+            "/amcl"
+          ],
+          "returncode": 0,
+          "stdout": "active [3]\n",
+          "stderr": "",
+          "duration_ms": 3286.395,
+          "timed_out": false
+        },
+        {
+          "label": "initial_pose_publish",
+          "command": [
+            "/opt/ros/jazzy/bin/ros2",
+            "topic",
+            "pub",
+            "--once",
+            "/initialpose",
+            "geometry_msgs/msg/PoseWithCovarianceStamped",
+            "{header: {frame_id: map}, pose: {pose: {position: {x: -6.5, y: 0.0, z: 0.0}, orientation: {z: 0.0, w: 1.0}}, covariance: [0.25, 0, 0, 0, 0, 0, 0, 0.25, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]}}"
+          ],
+          "returncode": 0,
+          "stdout": "publisher: beginning loop\npublishing #1: geometry_msgs.msg.PoseWithCovarianceStamped(header=std_msgs.msg.Header(stamp=builtin_interfaces.msg.Time(sec=0, nanosec=0), frame_id='map'), pose=geometry_msgs.msg.PoseWithCovariance(pose=geometry_msgs.msg.Pose(position=geometry_msgs.msg.Point(x=-6.5, y=0.0, z=0.0), orientation=geometry_msgs.msg.Quaternion(x=0.0, y=0.0, z=0.0, w=1.0)), covariance=array([0.25, 0.  , 0.  , 0.  , 0.  , 0.  , 0.  , 0.25, 0.  , 0.  , 0.  ,\n       0.  , 0.  , 0.  , 0.  , 0.  , 0.  , 0.  , 0.  , 0.  , 0.  , 0.  ,\n       0.  , 0.  , 0.  , 0.  , 0.  , 0.  , 0.  , 0.  , 0.  , 0.  , 0.  ,\n       0.  , 0.  , 0.  ])))\n\n",
+          "stderr": "",
+          "duration_ms": 2342.231,
+          "timed_out": false
+        },
+        {
+          "label": "map_to_odom",
+          "command": [
+            "/opt/ros/jazzy/bin/ros2",
+            "run",
+            "tf2_ros",
+            "tf2_echo",
+            "map",
+            "odom"
+          ],
+          "target_frame": "map",
+          "source_frame": "odom",
+          "duration_ms": 4573.493,
+          "available": true,
+          "observed_transform": true,
+          "timed_out": false,
+          "output_tail": "[INFO] [1791141254.873241801] [tf2_echo]: Waiting for transform map ->  odom: Invalid frame ID \"map\" passed to canTransform argument target_frame - frame does not exist\n[INFO] [1791141256.849507999] [tf2_echo]: Waiting for transform map ->  odom: Invalid frame ID \"map\" passed to canTransform argument target_frame - frame does not exist\nAt time 17.701000000\n- Translation: [-6.470, -0.003, 0.000]\n- Rotation: in Quaternion (xyzw) [0.000, 0.000, 0.000, 1.000]\n"
+        },
+        {
+          "label": "navigation_lifecycle_start",
+          "command": [
+            "/opt/ros/jazzy/bin/ros2",
+            "service",
+            "call",
+            "/lifecycle_manager_navigation/manage_nodes",
+            "nav2_msgs/srv/ManageLifecycleNodes",
+            "{command: 0}"
+          ],
+          "returncode": 0,
+          "stdout": "waiting for service to become available...\nrequester: making request: nav2_msgs.srv.ManageLifecycleNodes_Request(command=0)\n\nresponse:\nnav2_msgs.srv.ManageLifecycleNodes_Response(success=True)\n\n",
+          "stderr": "",
+          "duration_ms": 9850.552,
+          "timed_out": false
+        },
+        {
+          "label": "bt_navigator_lifecycle",
+          "command": [
+            "/opt/ros/jazzy/bin/ros2",
+            "lifecycle",
+            "get",
+            "/bt_navigator"
+          ],
+          "returncode": 0,
+          "stdout": "active [3]\n",
+          "stderr": "",
+          "duration_ms": 4281.268,
+          "timed_out": false
+        },
+        {
+          "label": "navigate_to_pose_action",
+          "command": [
+            "/opt/ros/jazzy/bin/ros2",
+            "action",
+            "list",
+            "-t"
+          ],
+          "returncode": 0,
+          "stdout": "/assisted_teleop [nav2_msgs/action/AssistedTeleop]\n/backup [nav2_msgs/action/BackUp]\n/compute_and_track_route [nav2_msgs/action/ComputeAndTrackRoute]\n/compute_path_through_poses [nav2_msgs/action/ComputePathThroughPoses]\n/compute_path_to_pose [nav2_msgs/action/ComputePathToPose]\n/compute_route [nav2_msgs/action/ComputeRoute]\n/dock_robot [nav2_msgs/action/DockRobot]\n/drive_on_heading [nav2_msgs/action/DriveOnHeading]\n/follow_gps_waypoints [nav2_msgs/action/FollowGPSWaypoints]\n/follow_path [nav2_msgs/action/FollowPath]\n/follow_waypoints [nav2_msgs/action/FollowWaypoints]\n/navigate_through_poses [nav2_msgs/action/NavigateThroughPoses]\n/navigate_to_pose [nav2_msgs/action/NavigateToPose]\n/smooth_path [nav2_msgs/action/SmoothPath]\n/spin [nav2_msgs/action/Spin]\n/undock_robot [nav2_msgs/action/UndockRobot]\n/wait [nav2_msgs/action/Wait]\n",
+          "stderr": "",
+          "duration_ms": 1529.189,
+          "timed_out": false
+        }
+      ],
+      "clock_available": true,
+      "prerequisites": {
+        "map_available": true,
+        "scan_available": true,
+        "odom_available": true,
+        "odom_to_base_available": true
+      },
+      "map_server_active": true,
+      "amcl_active": true,
+      "map_to_odom_available": true
+    },
+    "session_readiness": {
+      "ready": true,
+      "stage": "READY",
+      "error": null
+    },
+    "executions": [
+      {
+        "action_id": "f48a55e3-0962-4bc0-b036-1884d0290098",
+        "destination_id": "warehouse-a",
+        "goal": "{pose: {header: {frame_id: map}, pose: {position: {x: -6.5, y: 0.0, z: 0.0}, orientation: {w: 1.0}}}}",
+        "execution_bound_ms": 20000,
+        "duration_ms": 4267.237,
+        "returncode": 0,
+        "terminal_status": "ABORTED",
+        "stdout_tail": "Waiting for an action server to become available...\nSending goal:\n     pose:\n  header:\n    stamp:\n      sec: 0\n      nanosec: 0\n    frame_id: map\n  pose:\n    position:\n      x: -6.5\n      y: 0.0\n      z: 0.0\n    orientation:\n      x: 0.0\n      y: 0.0\n      z: 0.0\n      w: 1.0\nbehavior_tree: ''\n\nGoal accepted with ID: c1cc493fe322495ea98d0657813614ce\n\nResult:\n    error_code: 0\nerror_msg: ''\n\nGoal finished with status: ABORTED\n",
+        "stderr_tail": "",
+        "observed_status": "failed",
+        "arrival_verified": false
+      }
+    ]
+  },
+  "transport": {
+    "ROS_DOMAIN_ID": "49",
+    "GZ_PARTITION": "sim004-52a70fe0eb82",
+    "ROS_LOG_DIR": "/tmp/sim004-ros-zl7bpflh"
+  },
+  "disclosure": "DEMO_RUNTIME_OBSERVATION: existing measurements exported after original cleanup"
+}

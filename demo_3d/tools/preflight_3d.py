@@ -1,87 +1,33 @@
 #!/usr/bin/env python3
+"""Read-only preflight; never execute mission runners to discover CLI flags."""
+import os
+import shutil
 import subprocess
+import xml.etree.ElementTree as ET
+from pathlib import Path
+from demo3d_common import repo_root, gazebo_cli, gazebo_server_snapshots
+from verified_normal import alive
+import json
 
-from demo3d_common import *
-
-root = repo_root()
-print(f"[3D PREFLIGHT] repo={root}")
-
-for rel in [
-    "results/reviews/SIM-008_acceptance.json",
-    "results/reviews/SIM-009_acceptance.json",
-    "results/reviews/SIM-010_acceptance.json",
-    "results/reviews/SIM-E2E_acceptance.json",
-    "results/simulation/SIM-009_failure_recovery.json",
-    "scripts/verify_simulation_e2e_qualification.py",
-]:
-    p = root / rel
-    if not p.exists():
-        raise SystemExit(f"[FAIL] missing: {rel}")
-
-dirty = subprocess.run(
-    [
-        "git",
-        "-C",
-        str(root),
-        "status",
-        "--porcelain",
-        "--",
-        "results/simulation",
-        "results/reviews",
-    ],
-    capture_output=True,
-    text=True,
-).stdout.strip()
-if dirty:
-    print(dirty)
-    raise SystemExit("[FAIL] canonical results tree is dirty.")
-
-nr = normal_runner(root)
-fr = failure_runner(root)
-world = resolve_world(root)
-cli = gazebo_cli()
-
-print(f"[3D PREFLIGHT] normal runner={nr.relative_to(root)}")
-print(
-    "[3D PREFLIGHT] SIM-008 Evidence="
-    f"{accepted_sim008(root).relative_to(root)}"
-)
-print(
-    "[3D PREFLIGHT] Gazebo CLI="
-    f"{' '.join(cli or []) or 'NOT FOUND'}"
-)
-print(
-    "[3D PREFLIGHT] world="
-    f"{world.relative_to(root) if world and str(world).startswith(str(root)) else world or 'UNRESOLVED'}"
-)
-print(f"[3D PREFLIGHT] failure runner={fr.relative_to(root)}")
-print(
-    "[3D PREFLIGHT] failure output="
-    f"{'--output' if has_flag(fr, '--output') else 'isolated-worktree fallback'}"
-)
-print(
-    "[3D PREFLIGHT] scenario filter="
-    f"{has_flag(fr, '--scenario', '--scenario-id', '--only') or 'NOT EXPOSED (full suite fallback)'}"
-)
-print(
-    "[3D PREFLIGHT] GUI attach="
-    "runner-owned Gazebo server auto-discovery"
-)
-
-print(
-    "[3D PREFLIGHT] scene broadcaster injection="
-    "ISOLATED_WORKTREE_WORLD_COPY"
-)
-print(
-    "[3D PREFLIGHT] canonical world mutation="
-    "DISABLED"
-)
-print(
-    "[3D PREFLIGHT] discovery timeout="
-    f"{os.environ.get('DEMO_GZ_DISCOVERY_TIMEOUT', '20')}s"
-)
-
-if not cli:
-    raise SystemExit("[FAIL] Gazebo CLI not found.")
-
-print("[3D PREFLIGHT] PASS")
+root=repo_root()
+for rel in ['scripts/run_simulation_normal_system_e2e.py','data/simulation/sim008_normal_system_world.sdf',
+            'results/simulation/SIM-008_normal_system_e2e.json','results/reviews/SIM-008_acceptance.json',
+            'results/simulation/SIM-009_failure_recovery.json','scripts/verify_simulation_e2e_qualification.py']:
+    if not (root/rel).is_file():raise SystemExit('[FAIL] missing: '+rel)
+status=subprocess.check_output(['git','-C',str(root),'status','--short','--','data/simulation','results/simulation','results/reviews'],text=True)
+if status.strip():raise SystemExit('[FAIL] protected canonical tree is dirty:\n'+status)
+if not gazebo_cli():raise SystemExit('[FAIL] gz sim unavailable')
+if not Path('/opt/ros/jazzy/bin/xacro').is_file():raise SystemExit('[FAIL] installed xacro unavailable')
+example=Path('/opt/ros/jazzy/share/ros_gz_sim_demos/worlds/default.sdf')
+plugin=next(p for p in ET.parse(example).getroot().find('world').findall('plugin') if p.get('name','').endswith('SceneBroadcaster'))
+print('[3D PREFLIGHT] installed SceneBroadcaster:',plugin.attrib)
+if not (os.environ.get('DISPLAY') or os.environ.get('WAYLAND_DISPLAY')):raise SystemExit('[FAIL] no GUI display')
+for rel in ['results/demo/latest_validation/01_processes.txt','results/demo/final_validation/01_processes.txt']:
+    path=root/rel
+    if path.is_file():
+        stale=[r['pid'] for r in json.loads(path.read_text()) if alive(r)]
+        if stale:raise SystemExit('[FAIL] previously owned processes still live: '+str(stale))
+print('[3D PREFLIGHT] pre-existing servers (left untouched):',list(gazebo_server_snapshots()))
+print('[3D PREFLIGHT] authority: headless-xacro-resolved demo worktree -> unchanged Nav2 launch -> actual runtime SDF -> exact GUI transport')
+print('[3D PREFLIGHT] protected canonical tree clean; no stale recorded owned processes')
+print('[3D PREFLIGHT] PASS')

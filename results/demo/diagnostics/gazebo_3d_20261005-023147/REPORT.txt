@@ -1,0 +1,137 @@
+
+============================================================
+Gazebo 3D Diagnostic
+============================================================
+repo=/home/jinho/projects/factory_physical_ai_simDemo
+output=/home/jinho/projects/factory_physical_ai_simDemo/results/demo/diagnostics/gazebo_3d_20261005-023147
+time=2026-10-05T02:31:48+09:00
+
+============================================================
+1. Host / WSL / Display
+============================================================
+
+============================================================
+2. Gazebo version / CLI
+============================================================
+
+============================================================
+3. Current Gazebo processes
+============================================================
+153079 gz sim -r -s /tmp/nav2_pxz29l9s.sdf
+164596 gz sim -r -s /tmp/nav2_cl5nyx7a.sdf
+164713 gz sim -g
+detected_server_pid=164596
+detected_gui_pid=164713
+
+============================================================
+4. Server / GUI environment match
+============================================================
+SERVER PID=164596
+SERVER CMD=gz sim -r -s /tmp/nav2_cl5nyx7a.sdf                                             
+SERVER GZ_PARTITION=sim004-c0830b86cfc2
+SERVER IGN_PARTITION=
+SERVER ROS_DOMAIN_ID=119
+
+GUI PID=164713
+GUI CMD=gz sim -g                                             
+GUI GZ_PARTITION=sim004-c0830b86cfc2
+GUI IGN_PARTITION=sim004-c0830b86cfc2
+GUI ROS_DOMAIN_ID=119
+transport_match=1
+
+============================================================
+5. Gazebo topics visible from SERVER environment
+============================================================
+/clock
+/world/sim008_normal_system_world/clock
+/world/sim008_normal_system_world/stats
+/world/sim008_normal_system_world/light_config
+/world/sim008_normal_system_world/material_color
+/world/sim008_normal_system_world/state
+detected_world_name=sim008_normal_system_world
+scene_topic_count=0
+
+============================================================
+6. One-shot scene / pose traffic probe
+============================================================
+scene_probe=NO_SCENE_TOPIC
+
+============================================================
+7. Server SDF / world inspection
+============================================================
+server_sdf=/tmp/nav2_cl5nyx7a.sdf
+world_count= 1
+world_name= sim008_normal_system_world
+direct_models= 1
+direct_includes= 1
+direct_lights= 0
+direct_plugins= 4
+model= brake_ecu_type_b_001
+include=  https://fuel.gazebosim.org/1.0/OpenRobotics/models/Depot
+
+============================================================
+8. GUI and runner logs
+============================================================
+No obvious render/transport error found in copied demo logs.
+
+============================================================
+9. Server lifetime observation (5 seconds)
+============================================================
+1791135119.523111541 ALIVE
+1791135119.728294415 ALIVE
+1791135119.936199578 ALIVE
+1791135120.142230152 ALIVE
+1791135120.353348556 ALIVE
+
+============================================================
+10. Rendering sanity
+============================================================
+render_hint=NO_OBVIOUS_RENDER_ERROR
+
+============================================================
+11. Automatic diagnosis
+============================================================
+DIAGNOSIS=UNRESOLVED
+transport_match=1
+world_topics=1
+world_name=sim008_normal_system_world
+scene_probe=NO_SCENE_TOPIC
+sdf_entities=1
+server_alive_after_probe=1
+render_hint=NO_OBVIOUS_RENDER_ERROR
+
+NEXT_ACTION=Inspect generated files manually.
+
+============================================================
+12. Safe follow-up commands
+============================================================
+Read summary:
+  cat "/home/jinho/projects/factory_physical_ai_simDemo/results/demo/diagnostics/gazebo_3d_20261005-023147/SUMMARY.txt"
+
+Inspect world / scene:
+  cat "/home/jinho/projects/factory_physical_ai_simDemo/results/demo/diagnostics/gazebo_3d_20261005-023147/world_topics.txt"
+  cat "/home/jinho/projects/factory_physical_ai_simDemo/results/demo/diagnostics/gazebo_3d_20261005-023147/scene_topics.txt"
+  cat "/home/jinho/projects/factory_physical_ai_simDemo/results/demo/diagnostics/gazebo_3d_20261005-023147/sdf_summary.txt"
+
+Inspect GUI errors:
+  cat "/home/jinho/projects/factory_physical_ai_simDemo/results/demo/diagnostics/gazebo_3d_20261005-023147/log_errors.txt"
+
+If diagnosis is GUI_RENDERER_FAILURE or GUI_NOT_POPULATING_DESPITE_LIVE_SCENE:
+  # Run while the server is alive, using its exact transport environment.
+  SERVER_PID=164596
+  export GZ_PARTITION="sim004-c0830b86cfc2"
+  export IGN_PARTITION="sim004-c0830b86cfc2"
+  export ROS_DOMAIN_ID="119"
+
+  # First normal renderer:
+  gz sim -g
+
+  # Then software rendering comparison:
+  LIBGL_ALWAYS_SOFTWARE=1 gz sim -g
+
+Do not use pkill gz; it may kill the canonical server.
+
+Diagnostic complete.
+Share these two files for the next diagnosis:
+  /home/jinho/projects/factory_physical_ai_simDemo/results/demo/diagnostics/gazebo_3d_20261005-023147/SUMMARY.txt
+  /home/jinho/projects/factory_physical_ai_simDemo/results/demo/diagnostics/gazebo_3d_20261005-023147/REPORT.txt

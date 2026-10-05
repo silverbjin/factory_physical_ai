@@ -1,0 +1,70 @@
+[INFO] [launch]: All log files can be found below /tmp/sim004-ros-9uakungz/2026-10-05-04-00-11-249427-DESKTOP-4B51LPI-191847
+[INFO] [launch]: Default logging verbosity is set to INFO
+[INFO] [xacro-1]: process started with pid [191887]
+[INFO] [parameter_bridge-2]: process started with pid [191888]
+[INFO] [image_bridge-3]: process started with pid [191889]
+[INFO] [image_bridge-4]: process started with pid [191890]
+[INFO] [create-5]: process started with pid [191891]
+[INFO] [gz-6]: process started with pid [191892]
+[INFO] [robot_state_publisher-7]: process started with pid [191904]
+[INFO] [component_container_isolated-8]: process started with pid [191906]
+[create-5] [INFO] [1791140412.855610431] [ros_gz_sim]: Requesting list of world names.
+[INFO] [xacro-1]: process has finished cleanly [pid 191887]
+[create-5] [INFO] [1791140413.414288687] [ros_gz_sim]: Waiting messages on topic [robot_description].
+[create-5] [INFO] [1791140414.414706290] [ros_gz_sim]: Waiting messages on topic [robot_description].
+[create-5] [INFO] [1791140415.414935227] [ros_gz_sim]: Waiting messages on topic [robot_description].
+[parameter_bridge-2] [INFO] [1791140416.224055913] [bridge_ros_gz]: Creating GZ->ROS Bridge: [/clock (gz.msgs.Clock) -> clock (rosgraph_msgs/msg/Clock)] (Lazy 0)
+[parameter_bridge-2] [INFO] [1791140416.256130083] [bridge_ros_gz]: Creating GZ->ROS Bridge: [joint_states (gz.msgs.Model) -> joint_states (sensor_msgs/msg/JointState)] (Lazy 0)
+[parameter_bridge-2] [INFO] [1791140416.262102931] [bridge_ros_gz]: Creating GZ->ROS Bridge: [/odom (gz.msgs.Odometry) -> odom (nav_msgs/msg/Odometry)] (Lazy 0)
+[parameter_bridge-2] [INFO] [1791140416.265399285] [bridge_ros_gz]: Creating GZ->ROS Bridge: [/tf (gz.msgs.Pose_V) -> tf (tf2_msgs/msg/TFMessage)] (Lazy 0)
+[parameter_bridge-2] [INFO] [1791140416.268482282] [bridge_ros_gz]: Creating GZ->ROS Bridge: [/imu (gz.msgs.IMU) -> imu (sensor_msgs/msg/Imu)] (Lazy 0)
+[parameter_bridge-2] [INFO] [1791140416.269905328] [bridge_ros_gz]: Creating GZ->ROS Bridge: [/scan (gz.msgs.LaserScan) -> scan (sensor_msgs/msg/LaserScan)] (Lazy 0)
+[parameter_bridge-2] [INFO] [1791140416.271475474] [bridge_ros_gz]: Creating ROS->GZ Bridge: [cmd_vel (geometry_msgs/msg/Twist) -> /cmd_vel (gz.msgs.Twist)] (Lazy 0)
+[parameter_bridge-2] [INFO] [1791140416.274434061] [bridge_ros_gz]: Creating GZ->ROS Bridge: [/rgbd_camera/camera_info (gz.msgs.CameraInfo) -> /rgbd_camera/camera_info (sensor_msgs/msg/CameraInfo)] (Lazy 0)
+[create-5] [INFO] [1791140416.415154155] [ros_gz_sim]: Waiting messages on topic [robot_description].
+[create-5] [INFO] [1791140418.888166214] [ros_gz_sim]: Waiting messages on topic [robot_description].
+[create-5] [INFO] [1791140419.888313546] [ros_gz_sim]: Waiting messages on topic [robot_description].
+[create-5] [INFO] [1791140420.888476799] [ros_gz_sim]: Waiting messages on topic [robot_description].
+[create-5] [INFO] [1791140421.888690335] [ros_gz_sim]: Waiting messages on topic [robot_description].
+[create-5] [INFO] [1791140422.888859074] [ros_gz_sim]: Waiting messages on topic [robot_description].
+[create-5] [INFO] [1791140423.889081028] [ros_gz_sim]: Waiting messages on topic [robot_description].
+[create-5] [INFO] [1791140424.889319767] [ros_gz_sim]: Waiting messages on topic [robot_description].
+[create-5] [INFO] [1791140425.890953365] [ros_gz_sim]: Waiting messages on topic [robot_description].
+[create-5] [INFO] [1791140426.891199829] [ros_gz_sim]: Waiting messages on topic [robot_description].
+[create-5] [INFO] [1791140427.891890710] [ros_gz_sim]: Waiting messages on topic [robot_description].
+[create-5] [INFO] [1791140428.892655311] [ros_gz_sim]: Waiting messages on topic [robot_description].
+[create-5] [INFO] [1791140429.892828380] [ros_gz_sim]: Waiting messages on topic [robot_description].
+[create-5] [INFO] [1791140430.893060384] [ros_gz_sim]: Waiting messages on topic [robot_description].
+[create-5] [INFO] [1791140431.893264933] [ros_gz_sim]: Waiting messages on topic [robot_description].
+[create-5] [INFO] [1791140432.901421928] [ros_gz_sim]: Waiting messages on topic [robot_description].
+[create-5] [INFO] [1791140433.901651073] [ros_gz_sim]: Waiting messages on topic [robot_description].
+[create-5] [INFO] [1791140434.901838653] [ros_gz_sim]: Waiting messages on topic [robot_description].
+[create-5] [INFO] [1791140435.902499924] [ros_gz_sim]: Waiting messages on topic [robot_description].
+[create-5] [INFO] [1791140436.902750327] [ros_gz_sim]: Waiting messages on topic [robot_description].
+[create-5] [INFO] [1791140437.902976136] [ros_gz_sim]: Waiting messages on topic [robot_description].
+[create-5] [INFO] [1791140438.903184624] [ros_gz_sim]: Waiting messages on topic [robot_description].
+[create-5] [INFO] [1791140439.904352359] [ros_gz_sim]: Waiting messages on topic [robot_description].
+[create-5] [INFO] [1791140440.904528644] [ros_gz_sim]: Waiting messages on topic [robot_description].
+[create-5] [INFO] [1791140441.904711217] [ros_gz_sim]: Waiting messages on topic [robot_description].
+[create-5] [INFO] [1791140442.904902651] [ros_gz_sim]: Waiting messages on topic [robot_description].
+[create-5] [INFO] [1791140443.905126003] [ros_gz_sim]: Waiting messages on topic [robot_description].
+[create-5] [INFO] [1791140444.905428148] [ros_gz_sim]: Waiting messages on topic [robot_description].
+[create-5] [INFO] [1791140445.909423273] [ros_gz_sim]: Waiting messages on topic [robot_description].
+[create-5] [INFO] [1791140446.909624300] [ros_gz_sim]: Waiting messages on topic [robot_description].
+[create-5] [INFO] [1791140447.909831167] [ros_gz_sim]: Waiting messages on topic [robot_description].
+[create-5] [INFO] [1791140448.911544253] [ros_gz_sim]: Waiting messages on topic [robot_description].
+[create-5] [INFO] [1791140449.911739345] [ros_gz_sim]: Waiting messages on topic [robot_description].
+[create-5] [INFO] [1791140450.911959422] [ros_gz_sim]: Waiting messages on topic [robot_description].
+[create-5] [INFO] [1791140453.597252097] [ros_gz_sim]: Waiting messages on topic [robot_description].
+[create-5] [INFO] [1791140454.597449007] [ros_gz_sim]: Waiting messages on topic [robot_description].
+[create-5] [INFO] [1791140455.597661010] [ros_gz_sim]: Waiting messages on topic [robot_description].
+[create-5] [INFO] [1791140456.597888941] [ros_gz_sim]: Waiting messages on topic [robot_description].
+[create-5] [INFO] [1791140457.598089533] [ros_gz_sim]: Waiting messages on topic [robot_description].
+[create-5] [INFO] [1791140458.601412415] [ros_gz_sim]: Waiting messages on topic [robot_description].
+[create-5] [INFO] [1791140459.601649872] [ros_gz_sim]: Waiting messages on topic [robot_description].
+[create-5] [INFO] [1791140460.601848177] [ros_gz_sim]: Waiting messages on topic [robot_description].
+[create-5] [INFO] [1791140461.602823316] [ros_gz_sim]: Waiting messages on topic [robot_description].
+[create-5] [INFO] [1791140462.603512394] [ros_gz_sim]: Waiting messages on topic [robot_description].
+[create-5] [INFO] [1791140463.603716812] [ros_gz_sim]: Waiting messages on topic [robot_description].
+[create-5] [INFO] [1791140464.603933995] [ros_gz_sim]: Waiting messages on topic [robot_description].
+[create-5] [INFO] [1791140465.604177076] [ros_gz_sim]: Waiting messages on topic [robot_description].

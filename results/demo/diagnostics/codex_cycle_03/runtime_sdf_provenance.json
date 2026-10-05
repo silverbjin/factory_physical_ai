@@ -1,0 +1,30 @@
+{
+  "path": "/tmp/nav2_l18_ajel.sdf",
+  "plugins": [
+    {
+      "filename": "gz-sim-scene-broadcaster-system",
+      "name": "gz::sim::systems::SceneBroadcaster"
+    },
+    {
+      "filename": "gz-sim-physics-system",
+      "name": "gz::sim::systems::Physics"
+    },
+    {
+      "filename": "gz-sim-user-commands-system",
+      "name": "gz::sim::systems::UserCommands"
+    },
+    {
+      "filename": "gz-sim-sensors-system",
+      "name": "gz::sim::systems::Sensors"
+    },
+    {
+      "filename": "gz-sim-imu-system",
+      "name": "gz::sim::systems::Imu"
+    }
+  ],
+  "sha256": "1a4a289974a87a64e69c43892c5cdab6a3846a7c09b06e10137af5a67a080721",
+  "source_includes": 1,
+  "source_models": 1,
+  "visualization_augmentation": true,
+  "world": "sim008_normal_system_world"
+}

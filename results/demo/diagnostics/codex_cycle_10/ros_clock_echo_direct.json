@@ -1,0 +1,14 @@
+{
+  "command": [
+    "/opt/ros/jazzy/bin/ros2",
+    "topic",
+    "echo",
+    "--once",
+    "/clock",
+    "rosgraph_msgs/msg/Clock",
+    "--no-daemon"
+  ],
+  "timed_out": true,
+  "stdout": null,
+  "stderr": null
+}

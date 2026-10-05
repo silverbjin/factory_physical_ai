@@ -1,0 +1,12 @@
+{
+  "command": [
+    "gz",
+    "topic",
+    "-i",
+    "-t",
+    "/clock"
+  ],
+  "returncode": 0,
+  "stdout": "Publishers [Address, Message Type]:\n  tcp://172.25.105.69:35773, gz.msgs.Clock\nNo subscribers on topic [/clock]\n",
+  "stderr": ""
+}

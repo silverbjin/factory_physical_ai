@@ -1,0 +1,159 @@
+$ gz sim --help
+Run and manage Gazebo simulations.                                              
+                                                                                
+  gz sim [options] [file]                                                       
+                                                                                
+                                                                                
+Available Options:                                                              
+  -g                           Run only the GUI.                                
+
+  --initial-sim-time [arg]     Initial simulation time, in seconds.             
+
+  --iterations [arg]           Number of iterations to execute.                 
+
+  --levels                     Use the level system. The default is false,      
+                               which loads all models. It's always true         
+                               with --network-role.                             
+
+  --network-role [arg]         Participant role used in a distributed           
+                               simulation environment. Role is one of           
+                               [primary, secondary]. It implies --levels.       
+
+  --network-secondaries [arg]  Number of secondary participants expected        
+                               to join a distributed simulation                 
+                               environment. (Primary only).                     
+
+  --record                     Use logging system to record states and          
+                               console messages to the default location,        
+                               in ~/.gz/sim/log.                       
+
+  --record-path [arg]          Implicitly invokes --record, and specifies       
+                               custom path to put recorded files. Argument      
+                               is path to record states and console             
+                               messages. Specifying this argument will          
+                               enable console logging to a console.log          
+                               file in the specified path.                      
+
+  --record-resources           Implicitly invokes --record, and records         
+                               meshes and material files, in addition to        
+                               states and console messages.                     
+
+  --record-topic [arg]         Specify the name of an additional topic to       
+                               record. Implicitly invokes --record.             
+                               Zero or more topics can be specified by          
+                               using multiple --record-topic options.           
+                               Regular expressions can be used, which           
+                               likely requires quotes. A default set of         
+                               topics are also recorded, which support          
+                               simulation state playback. Enable debug          
+                               console output with the -v 4 option              
+                               and look for 'Recording default topic' in        
+                               order to determine the default set of            
+                               topics.                                          
+                               Examples:                                        
+                                 1. Record all topics.                          
+                                     --record-topic ".*"                      
+                                 2. Record only the /stats topic.               
+                                     --record-topic /stats                      
+                                 3. Record the /stats and /clock topics.        
+                                     --record-topic /stats                     
+                                     --record-topic /clock                      
+
+  --record-period [arg]        Specify the time period (seconds) between        
+                               state recording.                                 
+
+  --log-overwrite              When recording, overwrite existing files.        
+                               Only valid if recording is enabled.              
+
+  --log-compress               When recording, compress final log files.        
+                               Only valid if recording is enabled.              
+
+  --seed [arg]                 Pass a custom seed value to the random           
+                               number generator.                                
+
+  --playback [arg]             Use logging system to play back states.          
+                               Argument is path to recorded states.             
+
+  --headless-rendering         Run rendering in headless mode                   
+
+  -r                           Run simulation on start.                         
+
+  -s                           Run only the server (headless mode). This        
+                               overrides -g, if it is also present.             
+
+  -v [ --verbose ] [arg]       Adjust the level of console output (0~4).        
+                               The default verbosity is 1, use -v without       
+                               arguments for level 3.                           
+
+  --gui-config [arg]           Gazebo GUI configuration file to load.           
+                               If no config is given, the configuration in      
+                               the SDF file is used. And if that's not          
+                               provided, the default installed config is        
+                               used.                                            
+
+  --physics-engine [arg]       Gazebo Physics engine plugin to load.            
+                               Gazebo will use DART by default.                 
+                               (gz-physics-dartsim-plugin)                
+                               Make sure custom plugins are in                  
+                               GZ_SIM_PHYSICS_ENGINE_PATH.                      
+
+  --render-engine [arg]        Gazebo Rendering engine plugin to load for       
+                               both the server and the GUI. Gazebo will use     
+                               OGRE2 by default. (ogre2)                        
+                               Make sure custom plugins are in                  
+                               GZ_SIM_RENDER_ENGINE_PATH.                       
+
+  --render-engine-api-backend [arg]                                             
+                               API to use for both the Server & GUI.            
+                               Possible values for ogre2:                       
+                                 - opengl (default)                             
+                                 - vulkan (beta)                                
+                                 - metal (Apple only, default for Apple)        
+                               Note: If using Vulkan in the GUI and gz-gui      
+                               was built against Qt < 5.15.2, it may be very    
+                               slow.                                            
+
+  --render-engine-gui [arg]    Gazebo Rendering engine plugin to load for       
+                               the GUI. Gazebo will use OGRE2 by default.       
+                               (ogre2)                                          
+                               Make sure custom plugins are in                  
+                               GZ_SIM_RENDER_ENGINE_PATH.                       
+
+  --render-engine-gui-api-backend [arg]                                         
+                               Same as --render-engine-api-backend but only     
+                               for the GUI.                                     
+
+  --render-engine-server [arg] Gazebo Rendering engine plugin to load for       
+                               the server. Gazebo will use OGRE2 by default.    
+                               (ogre2)                                          
+                               Make sure custom plugins are in                  
+                               GZ_SIM_RENDER_ENGINE_PATH.                       
+
+  --render-engine-server-api-backend [arg]                                      
+                               Same as --render-engine-api-backend but only     
+                               for the server.                                  
+
+  --version                    Print Gazebo version information.                
+
+  -z [arg]                     Update rate in Hertz.                            
+
+  -h [--help]                Print this help message.
+                                                    
+  --force-version <VERSION>  Use a specific library version.
+                                                    
+  --versions                 Show the available versions.
+
+Environment variables:                                                          
+  GZ_SIM_RESOURCE_PATH         Colon separated paths used to locate             
+ resources such as worlds and models.                                         
+
+  GZ_SIM_SYSTEM_PLUGIN_PATH    Colon separated paths used to                    
+ locate system plugins.                                                       
+
+  GZ_SIM_SERVER_CONFIG_PATH    Path to server configuration file.             
+
+  GZ_GUI_PLUGIN_PATH           Colon separated paths used to locate GUI         
+ plugins.                                                                       
+  GZ_GUI_RESOURCE_PATH    Colon separated paths used to locate GUI              
+ resources such as configuration files.                                       
+

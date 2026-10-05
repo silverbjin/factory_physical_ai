@@ -1,0 +1,22 @@
+[
+  {
+    "filename": "gz-sim-scene-broadcaster-system",
+    "name": "gz::sim::systems::SceneBroadcaster"
+  },
+  {
+    "filename": "gz-sim-physics-system",
+    "name": "gz::sim::systems::Physics"
+  },
+  {
+    "filename": "gz-sim-user-commands-system",
+    "name": "gz::sim::systems::UserCommands"
+  },
+  {
+    "filename": "gz-sim-sensors-system",
+    "name": "gz::sim::systems::Sensors"
+  },
+  {
+    "filename": "gz-sim-imu-system",
+    "name": "gz::sim::systems::Imu"
+  }
+]

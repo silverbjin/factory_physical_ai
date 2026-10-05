@@ -1,0 +1,3 @@
+[INFO] [1791142036.009404120] [listener]: I heard: [Hello World: 1]
+[INFO] [1791142037.009305253] [listener]: I heard: [Hello World: 2]
+[INFO] [1791142037.973649349] [rclcpp]: signal_handler(SIGINT/SIGTERM)

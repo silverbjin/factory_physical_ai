@@ -1,0 +1,7 @@
+{
+  "service": "/gazebo/worlds",
+  "server_pid": 201499,
+  "partition": "sim004-6a235b8de982",
+  "response": "data: \"sim008_normal_system_world\"\n\n",
+  "pass": true
+}

@@ -1,0 +1,21 @@
+FF
+======================================================================
+FAIL: test_scene_plugin_survives_real_nav2_headless_xacro (__main__.SceneAugmentation.test_scene_plugin_survives_real_nav2_headless_xacro)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/home/jinho/projects/factory_physical_ai_simDemo/demo_3d/diagnostics/test_scene_augmentation.py", line 13, in test_scene_plugin_survives_real_nav2_headless_xacro
+    self.assertEqual(len([p for p in world.findall('plugin') if p.get('name')=='gz::sim::systems::SceneBroadcaster']),1)
+AssertionError: 0 != 1
+
+======================================================================
+FAIL: test_server_discovery_handles_gazebo_rewritten_process_title (__main__.SceneAugmentation.test_server_discovery_handles_gazebo_rewritten_process_title)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/home/jinho/projects/factory_physical_ai_simDemo/demo_3d/diagnostics/test_scene_augmentation.py", line 19, in test_server_discovery_handles_gazebo_rewritten_process_title
+    self.assertTrue(_is_gazebo_server(['gz sim -r -s /tmp/nav2_actual.sdf']))
+AssertionError: False is not true
+
+----------------------------------------------------------------------
+Ran 2 tests in 0.103s
+
+FAILED (failures=2)

@@ -1,0 +1,2070 @@
+ambient {
+  r: 0.4
+  g: 0.4
+  b: 0.4
+  a: 1
+}
+background {
+  r: 0.7
+  g: 0.7
+  b: 0.7
+  a: 1
+}
+shadows: true
+model {
+  name: "Depot"
+  id: 4
+  pose {
+    position {
+    }
+    orientation {
+      w: 1
+    }
+  }
+  link {
+    id: 5
+    name: "main"
+    pose {
+      position {
+      }
+      orientation {
+        w: 1
+      }
+    }
+    visual {
+      name: "WALLS_visual"
+      id: 6
+      parent_id: 5
+      cast_shadows: true
+      pose {
+        position {
+        }
+        orientation {
+          w: 1
+        }
+      }
+      geometry {
+        type: MESH
+        mesh {
+          filename: "/home/jinho/.gz/fuel/fuel.gazebosim.org/openrobotics/models/depot/6/meshes/Depot.dae"
+          scale {
+            x: 0.6
+            y: 0.6
+            z: 0.6
+          }
+          submesh: "WALLS"
+        }
+      }
+      material {
+        ambient {
+          a: 1
+        }
+        diffuse {
+          r: 1
+          g: 1
+          b: 1
+          a: 1
+        }
+        specular {
+          r: 1
+          g: 1
+          b: 1
+          a: 1
+        }
+        emissive {
+          a: 1
+        }
+        lighting: true
+        pbr {
+          type: METAL
+          albedo_map: "/home/jinho/.gz/fuel/fuel.gazebosim.org/openrobotics/models/depot/6/materials/textures/WALLS_Albedo.png"
+          normal_map: "/home/jinho/.gz/fuel/fuel.gazebosim.org/openrobotics/models/depot/6/materials/textures/WALLS_Normal.png"
+          metalness: 0.5
+          metalness_map: "/home/jinho/.gz/fuel/fuel.gazebosim.org/openrobotics/models/depot/6/materials/textures/WALLS_Metalness.png"
+          roughness: 0.5
+          roughness_map: "/home/jinho/.gz/fuel/fuel.gazebosim.org/openrobotics/models/depot/6/materials/textures/WALLS_Roughness.png"
+          light_map: "/home/jinho/.gz/fuel/fuel.gazebosim.org/openrobotics/models/depot/6/materials/textures/DepotLightmap.png"
+          light_map_texcoord_set: 1
+        }
+      }
+    }
+    visual {
+      name: "PILLERS_visual"
+      id: 7
+      parent_id: 5
+      cast_shadows: true
+      pose {
+        position {
+        }
+        orientation {
+          w: 1
+        }
+      }
+      geometry {
+        type: MESH
+        mesh {
+          filename: "/home/jinho/.gz/fuel/fuel.gazebosim.org/openrobotics/models/depot/6/meshes/Depot.dae"
+          scale {
+            x: 0.6
+            y: 0.6
+            z: 0.6
+          }
+          submesh: "PILLERS"
+        }
+      }
+      material {
+        ambient {
+          a: 1
+        }
+        diffuse {
+          r: 1
+          g: 1
+          b: 1
+          a: 1
+        }
+        specular {
+          r: 1
+          g: 1
+          b: 1
+          a: 1
+        }
+        emissive {
+          a: 1
+        }
+        lighting: true
+        pbr {
+          type: METAL
+          albedo_map: "/home/jinho/.gz/fuel/fuel.gazebosim.org/openrobotics/models/depot/6/materials/textures/PILLERS_Albedo.png"
+          normal_map: "/home/jinho/.gz/fuel/fuel.gazebosim.org/openrobotics/models/depot/6/materials/textures/PILLERS_Normal.png"
+          metalness: 0.5
+          metalness_map: "/home/jinho/.gz/fuel/fuel.gazebosim.org/openrobotics/models/depot/6/materials/textures/PILLERS_Metalness.png"
+          roughness: 0.5
+          roughness_map: "/home/jinho/.gz/fuel/fuel.gazebosim.org/openrobotics/models/depot/6/materials/textures/PILLERS_Roughness.png"
+          light_map: "/home/jinho/.gz/fuel/fuel.gazebosim.org/openrobotics/models/depot/6/materials/textures/DepotLightmap.png"
+          light_map_texcoord_set: 1
+        }
+      }
+    }
+    visual {
+      name: "WINDOW_visual"
+      id: 8
+      parent_id: 5
+      cast_shadows: true
+      pose {
+        position {
+        }
+        orientation {
+          w: 1
+        }
+      }
+      geometry {
+        type: MESH
+        mesh {
+          filename: "/home/jinho/.gz/fuel/fuel.gazebosim.org/openrobotics/models/depot/6/meshes/Depot.dae"
+          scale {
+            x: 0.6
+            y: 0.6
+            z: 0.6
+          }
+          submesh: "WINDOW"
+        }
+      }
+      material {
+        ambient {
+          a: 1
+        }
+        diffuse {
+          r: 1
+          g: 1
+          b: 1
+          a: 1
+        }
+        specular {
+          r: 1
+          g: 1
+          b: 1
+          a: 1
+        }
+        emissive {
+          a: 1
+        }
+        lighting: true
+        pbr {
+          type: METAL
+          albedo_map: "/home/jinho/.gz/fuel/fuel.gazebosim.org/openrobotics/models/depot/6/materials/textures/Window_WINDOW_BaseColor.png"
+          metalness: 0.5
+          metalness_map: "/home/jinho/.gz/fuel/fuel.gazebosim.org/openrobotics/models/depot/6/materials/textures/Window_WINDOW_Metallic.png"
+          roughness: 0.5
+          roughness_map: "/home/jinho/.gz/fuel/fuel.gazebosim.org/openrobotics/models/depot/6/materials/textures/Window_WINDOW_Roughness.png"
+        }
+      }
+    }
+    visual {
+      name: "INTERCOM_visual"
+      id: 9
+      parent_id: 5
+      cast_shadows: true
+      pose {
+        position {
+        }
+        orientation {
+          w: 1
+        }
+      }
+      geometry {
+        type: MESH
+        mesh {
+          filename: "/home/jinho/.gz/fuel/fuel.gazebosim.org/openrobotics/models/depot/6/meshes/Depot.dae"
+          scale {
+            x: 0.6
+            y: 0.6
+            z: 0.6
+          }
+          submesh: "INTERCOM"
+        }
+      }
+      material {
+        ambient {
+          a: 1
+        }
+        diffuse {
+          r: 1
+          g: 1
+          b: 1
+          a: 1
+        }
+        specular {
+          r: 1
+          g: 1
+          b: 1
+          a: 1
+        }
+        emissive {
+          a: 1
+        }
+        lighting: true
+        pbr {
+          type: METAL
+          albedo_map: "/home/jinho/.gz/fuel/fuel.gazebosim.org/openrobotics/models/depot/6/materials/textures/INTERCOM_Albedo.png"
+          normal_map: "/home/jinho/.gz/fuel/fuel.gazebosim.org/openrobotics/models/depot/6/materials/textures/INTERCOM_Normal.png"
+          metalness: 0.5
+          metalness_map: "/home/jinho/.gz/fuel/fuel.gazebosim.org/openrobotics/models/depot/6/materials/textures/INTERCOM_Metalness.png"
+          roughness: 0.5
+          roughness_map: "/home/jinho/.gz/fuel/fuel.gazebosim.org/openrobotics/models/depot/6/materials/textures/INTERCOM_Roughness.png"
+          emissive_map: "/home/jinho/.gz/fuel/fuel.gazebosim.org/openrobotics/models/depot/6/materials/textures/INTERCOM_Emissive.png"
+          light_map: "/home/jinho/.gz/fuel/fuel.gazebosim.org/openrobotics/models/depot/6/materials/textures/DepotLightmap.png"
+          light_map_texcoord_set: 1
+        }
+      }
+    }
+    visual {
+      name: "FireAlarm_visual"
+      id: 10
+      parent_id: 5
+      cast_shadows: true
+      pose {
+        position {
+        }
+        orientation {
+          w: 1
+        }
+      }
+      geometry {
+        type: MESH
+        mesh {
+          filename: "/home/jinho/.gz/fuel/fuel.gazebosim.org/openrobotics/models/depot/6/meshes/Depot.dae"
+          scale {
+            x: 0.6
+            y: 0.6
+            z: 0.6
+          }
+          submesh: "FireAlarm"
+        }
+      }
+      material {
+        ambient {
+          a: 1
+        }
+        diffuse {
+          r: 1
+          g: 1
+          b: 1
+          a: 1
+        }
+        specular {
+          r: 1
+          g: 1
+          b: 1
+          a: 1
+        }
+        emissive {
+          a: 1
+        }
+        lighting: true
+        pbr {
+          type: METAL
+          albedo_map: "/home/jinho/.gz/fuel/fuel.gazebosim.org/openrobotics/models/depot/6/materials/textures/FireAlarm_Albedo.png"
+          normal_map: "/home/jinho/.gz/fuel/fuel.gazebosim.org/openrobotics/models/depot/6/materials/textures/FireAlarm_Normal.png"
+          metalness: 0.5
+          metalness_map: "/home/jinho/.gz/fuel/fuel.gazebosim.org/openrobotics/models/depot/6/materials/textures/FireAlarm_Metalness.png"
+          roughness: 0.5
+          roughness_map: "/home/jinho/.gz/fuel/fuel.gazebosim.org/openrobotics/models/depot/6/materials/textures/FireAlarm_Roughness.png"
+          light_map: "/home/jinho/.gz/fuel/fuel.gazebosim.org/openrobotics/models/depot/6/materials/textures/DepotLightmap.png"
+          light_map_texcoord_set: 1
+        }
+      }
+    }
+    visual {
+      name: "FireAlarmPole_visual"
+      id: 11
+      parent_id: 5
+      cast_shadows: true
+      pose {
+        position {
+        }
+        orientation {
+          w: 1
+        }
+      }
+      geometry {
+        type: MESH
+        mesh {
+          filename: "/home/jinho/.gz/fuel/fuel.gazebosim.org/openrobotics/models/depot/6/meshes/Depot.dae"
+          scale {
+            x: 0.6
+            y: 0.6
+            z: 0.6
+          }
+          submesh: "FireAlarmPole"
+        }
+      }
+      material {
+        ambient {
+          a: 1
+        }
+        diffuse {
+          r: 1
+          g: 1
+          b: 1
+          a: 1
+        }
+        specular {
+          r: 1
+          g: 1
+          b: 1
+          a: 1
+        }
+        emissive {
+          a: 1
+        }
+        lighting: true
+        pbr {
+          type: METAL
+          albedo_map: "/home/jinho/.gz/fuel/fuel.gazebosim.org/openrobotics/models/depot/6/materials/textures/FireAlarmPole_Albedo.png"
+          normal_map: "/home/jinho/.gz/fuel/fuel.gazebosim.org/openrobotics/models/depot/6/materials/textures/FireAlarmPole_Normal.png"
+          metalness: 0.5
+          metalness_map: "/home/jinho/.gz/fuel/fuel.gazebosim.org/openrobotics/models/depot/6/materials/textures/FireAlarmPole_Metalness.png"
+          roughness: 0.5
+          roughness_map: "/home/jinho/.gz/fuel/fuel.gazebosim.org/openrobotics/models/depot/6/materials/textures/FireAlarmPole_Roughness.png"
+          light_map: "/home/jinho/.gz/fuel/fuel.gazebosim.org/openrobotics/models/depot/6/materials/textures/DepotLightmap.png"
+          light_map_texcoord_set: 1
+        }
+      }
+    }
+    visual {
+      name: "Pipes_visual"
+      id: 12
+      parent_id: 5
+      cast_shadows: true
+      pose {
+        position {
+        }
+        orientation {
+          w: 1
+        }
+      }
+      geometry {
+        type: MESH
+        mesh {
+          filename: "/home/jinho/.gz/fuel/fuel.gazebosim.org/openrobotics/models/depot/6/meshes/Depot.dae"
+          scale {
+            x: 0.6
+            y: 0.6
+            z: 0.6
+          }
+          submesh: "Pipes"
+        }
+      }
+      material {
+        ambient {
+          a: 1
+        }
+        diffuse {
+          r: 1
+          g: 1
+          b: 1
+          a: 1
+        }
+        specular {
+          r: 1
+          g: 1
+          b: 1
+          a: 1
+        }
+        emissive {
+          a: 1
+        }
+        lighting: true
+        pbr {
+          type: METAL
+          albedo_map: "/home/jinho/.gz/fuel/fuel.gazebosim.org/openrobotics/models/depot/6/materials/textures/Pipes_Albedo.png"
+          normal_map: "/home/jinho/.gz/fuel/fuel.gazebosim.org/openrobotics/models/depot/6/materials/textures/Pipes_Normal.png"
+          metalness: 0.5
+          metalness_map: "/home/jinho/.gz/fuel/fuel.gazebosim.org/openrobotics/models/depot/6/materials/textures/Pipes_Metalness.png"
+          roughness: 0.5
+          roughness_map: "/home/jinho/.gz/fuel/fuel.gazebosim.org/openrobotics/models/depot/6/materials/textures/Pipes_Roughness.png"
+          light_map: "/home/jinho/.gz/fuel/fuel.gazebosim.org/openrobotics/models/depot/6/materials/textures/DepotLightmap.png"
+          light_map_texcoord_set: 1
+        }
+      }
+    }
+    visual {
+      name: "STAIRS_visual"
+      id: 13
+      parent_id: 5
+      cast_shadows: true
+      pose {
+        position {
+        }
+        orientation {
+          w: 1
+        }
+      }
+      geometry {
+        type: MESH
+        mesh {
+          filename: "/home/jinho/.gz/fuel/fuel.gazebosim.org/openrobotics/models/depot/6/meshes/Depot.dae"
+          scale {
+            x: 0.6
+            y: 0.6
+            z: 0.6
+          }
+          submesh: "STAIRS"
+        }
+      }
+      material {
+        ambient {
+          a: 1
+        }
+        diffuse {
+          r: 1
+          g: 1
+          b: 1
+          a: 1
+        }
+        specular {
+          r: 1
+          g: 1
+          b: 1
+          a: 1
+        }
+        emissive {
+          a: 1
+        }
+        lighting: true
+        pbr {
+          type: METAL
+          albedo_map: "/home/jinho/.gz/fuel/fuel.gazebosim.org/openrobotics/models/depot/6/materials/textures/STAIRS_Albedo.png"
+          normal_map: "/home/jinho/.gz/fuel/fuel.gazebosim.org/openrobotics/models/depot/6/materials/textures/STAIRS_Normal.png"
+          metalness: 0.5
+          metalness_map: "/home/jinho/.gz/fuel/fuel.gazebosim.org/openrobotics/models/depot/6/materials/textures/STAIRS_Metalness.png"
+          roughness: 0.5
+          roughness_map: "/home/jinho/.gz/fuel/fuel.gazebosim.org/openrobotics/models/depot/6/materials/textures/STAIRS_Roughness.png"
+          light_map: "/home/jinho/.gz/fuel/fuel.gazebosim.org/openrobotics/models/depot/6/materials/textures/DepotLightmap.png"
+          light_map_texcoord_set: 1
+        }
+      }
+    }
+    visual {
+      name: "BOXSET_visual"
+      id: 14
+      parent_id: 5
+      cast_shadows: true
+      pose {
+        position {
+        }
+        orientation {
+          w: 1
+        }
+      }
+      geometry {
+        type: MESH
+        mesh {
+          filename: "/home/jinho/.gz/fuel/fuel.gazebosim.org/openrobotics/models/depot/6/meshes/Depot.dae"
+          scale {
+            x: 0.6
+            y: 0.6
+            z: 0.6
+          }
+          submesh: "BOXSET"
+        }
+      }
+      material {
+        ambient {
+          a: 1
+        }
+        diffuse {
+          r: 1
+          g: 1
+          b: 1
+          a: 1
+        }
+        specular {
+          r: 1
+          g: 1
+          b: 1
+          a: 1
+        }
+        emissive {
+          a: 1
+        }
+        lighting: true
+        pbr {
+          type: METAL
+          albedo_map: "/home/jinho/.gz/fuel/fuel.gazebosim.org/openrobotics/models/depot/6/materials/textures/BOXSET_Albedo.png"
+          normal_map: "/home/jinho/.gz/fuel/fuel.gazebosim.org/openrobotics/models/depot/6/materials/textures/BOXSET_Normal.png"
+          metalness: 0.5
+          metalness_map: "/home/jinho/.gz/fuel/fuel.gazebosim.org/openrobotics/models/depot/6/materials/textures/BOXSET_Metalness.png"
+          roughness: 0.5
+          roughness_map: "/home/jinho/.gz/fuel/fuel.gazebosim.org/openrobotics/models/depot/6/materials/textures/BOXSET_Roughness.png"
+          emissive_map: "/home/jinho/.gz/fuel/fuel.gazebosim.org/openrobotics/models/depot/6/materials/textures/BOXSET_Emissive.png"
+          light_map: "/home/jinho/.gz/fuel/fuel.gazebosim.org/openrobotics/models/depot/6/materials/textures/DepotLightmap.png"
+          light_map_texcoord_set: 1
+        }
+      }
+    }
+    visual {
+      name: "FLOOR_visual"
+      id: 15
+      parent_id: 5
+      cast_shadows: true
+      pose {
+        position {
+        }
+        orientation {
+          w: 1
+        }
+      }
+      geometry {
+        type: MESH
+        mesh {
+          filename: "/home/jinho/.gz/fuel/fuel.gazebosim.org/openrobotics/models/depot/6/meshes/Depot.dae"
+          scale {
+            x: 0.6
+            y: 0.6
+            z: 0.6
+          }
+          submesh: "FLOOR"
+        }
+      }
+      material {
+        ambient {
+          a: 1
+        }
+        diffuse {
+          r: 1
+          g: 1
+          b: 1
+          a: 1
+        }
+        specular {
+          r: 1
+          g: 1
+          b: 1
+          a: 1
+        }
+        emissive {
+          a: 1
+        }
+        lighting: true
+        pbr {
+          type: METAL
+          albedo_map: "/home/jinho/.gz/fuel/fuel.gazebosim.org/openrobotics/models/depot/6/materials/textures/FLOOR_Albedo.png"
+          normal_map: "/home/jinho/.gz/fuel/fuel.gazebosim.org/openrobotics/models/depot/6/materials/textures/FLOOR_Normal.png"
+          metalness: 0.5
+          metalness_map: "/home/jinho/.gz/fuel/fuel.gazebosim.org/openrobotics/models/depot/6/materials/textures/FLOOR_Metalness.png"
+          roughness: 0.5
+          roughness_map: "/home/jinho/.gz/fuel/fuel.gazebosim.org/openrobotics/models/depot/6/materials/textures/FLOOR_Roughness.png"
+          light_map: "/home/jinho/.gz/fuel/fuel.gazebosim.org/openrobotics/models/depot/6/materials/textures/DepotLightmap.png"
+          light_map_texcoord_set: 1
+        }
+      }
+    }
+    visual {
+      name: "FanBack_visual"
+      id: 16
+      parent_id: 5
+      cast_shadows: true
+      pose {
+        position {
+        }
+        orientation {
+          w: 1
+        }
+      }
+      geometry {
+        type: MESH
+        mesh {
+          filename: "/home/jinho/.gz/fuel/fuel.gazebosim.org/openrobotics/models/depot/6/meshes/Depot.dae"
+          scale {
+            x: 0.6
+            y: 0.6
+            z: 0.6
+          }
+          submesh: "FanBack"
+        }
+      }
+      material {
+        ambient {
+          a: 1
+        }
+        diffuse {
+          r: 1
+          g: 1
+          b: 1
+          a: 1
+        }
+        specular {
+          r: 1
+          g: 1
+          b: 1
+          a: 1
+        }
+        emissive {
+          a: 1
+        }
+        lighting: true
+        pbr {
+          type: METAL
+          albedo_map: "/home/jinho/.gz/fuel/fuel.gazebosim.org/openrobotics/models/depot/6/materials/textures/FanBack_FanBack_BaseColor.png"
+          metalness: 0.5
+          roughness: 0.5
+        }
+      }
+    }
+    visual {
+      name: "crates"
+      id: 17
+      parent_id: 5
+      cast_shadows: true
+      pose {
+        position {
+        }
+        orientation {
+          w: 1
+        }
+      }
+      geometry {
+        type: MESH
+        mesh {
+          filename: "/home/jinho/.gz/fuel/fuel.gazebosim.org/openrobotics/models/depot/6/meshes/Crates.dae"
+          scale {
+            x: 0.6
+            y: 0.6
+            z: 0.6
+          }
+        }
+      }
+      material {
+        ambient {
+          a: 1
+        }
+        diffuse {
+          r: 1
+          g: 1
+          b: 1
+          a: 1
+        }
+        specular {
+          r: 1
+          g: 1
+          b: 1
+          a: 1
+        }
+        emissive {
+          a: 1
+        }
+        lighting: true
+        pbr {
+          type: METAL
+          albedo_map: "/home/jinho/.gz/fuel/fuel.gazebosim.org/openrobotics/models/depot/6/materials/textures/Crates_Crates_BaseColor.png"
+          normal_map: "/home/jinho/.gz/fuel/fuel.gazebosim.org/openrobotics/models/depot/6/materials/textures/Crates_Crates_Normal.png"
+          metalness: 0.5
+          roughness: 0.5
+          roughness_map: "/home/jinho/.gz/fuel/fuel.gazebosim.org/openrobotics/models/depot/6/materials/textures/Crates_Crates_Roughness.png"
+        }
+      }
+    }
+  }
+  link {
+    id: 19
+    name: "Fan1"
+    pose {
+      position {
+        x: -5.0154
+        y: -0.2952
+        z: 6.12
+      }
+      orientation {
+        w: 1
+      }
+    }
+    light {
+      name: "fan_light"
+      pose {
+        position {
+        }
+        orientation {
+          w: 1
+        }
+      }
+      diffuse {
+        r: 1
+        g: 1
+        b: 1
+        a: 1
+      }
+      specular {
+        r: 0.3
+        g: 0.3
+        b: 0.3
+        a: 1
+      }
+      direction {
+        z: -1
+      }
+      range: 50
+      id: 20
+      parent_id: 19
+      intensity: 1
+      visualize_visual: true
+    }
+  }
+  link {
+    id: 22
+    name: "Fan2"
+    pose {
+      position {
+        x: 5.0154
+        y: -0.2952
+        z: 6.12
+      }
+      orientation {
+        w: 1
+      }
+    }
+    light {
+      name: "fan_light"
+      pose {
+        position {
+        }
+        orientation {
+          w: 1
+        }
+      }
+      diffuse {
+        r: 1
+        g: 1
+        b: 1
+        a: 1
+      }
+      specular {
+        r: 0.3
+        g: 0.3
+        b: 0.3
+        a: 1
+      }
+      direction {
+        z: -1
+      }
+      range: 50
+      id: 23
+      parent_id: 22
+      intensity: 1
+      visualize_visual: true
+    }
+  }
+}
+model {
+  name: "brake_ecu_type_b_001"
+  id: 28
+  pose {
+    position {
+      x: -6.5
+      z: 0.2
+    }
+    orientation {
+      w: 1
+    }
+  }
+  link {
+    id: 29
+    name: "body"
+    pose {
+      position {
+      }
+      orientation {
+        w: 1
+      }
+    }
+    visual {
+      name: "visual"
+      id: 30
+      parent_id: 29
+      cast_shadows: true
+      pose {
+        position {
+        }
+        orientation {
+          w: 1
+        }
+      }
+      geometry {
+        box {
+          size {
+            x: 0.2
+            y: 0.15
+            z: 0.1
+          }
+        }
+      }
+    }
+  }
+}
+model {
+  name: "turtlebot4"
+  id: 31
+  pose {
+    position {
+      x: -6.5
+      y: -3.6689401516909473e-22
+      z: 0.0099118
+    }
+    orientation {
+      x: -1.3739009929736313e-21
+      y: -2.7977620220553945e-20
+      z: 1.9125326322644298e-22
+      w: 1
+    }
+  }
+  link {
+    id: 32
+    name: "base_link"
+    pose {
+      position {
+      }
+      orientation {
+        w: 1
+      }
+    }
+    visual {
+      name: "base_link_visual"
+      id: 33
+      parent_id: 32
+      cast_shadows: true
+      pose {
+        position {
+          z: 0.039200000000000013
+        }
+        orientation {
+          z: 0.70710678118654724
+          w: 0.70710678118654779
+        }
+      }
+      geometry {
+        type: MESH
+        mesh {
+          filename: "model://nav2_minimal_tb4_description/meshes/body_visual.dae"
+          scale {
+            x: 1
+            y: 1
+            z: 1
+          }
+        }
+      }
+      material {
+        ambient {
+          a: 1
+        }
+        diffuse {
+          r: 0.0117647061
+          g: 0.0117647061
+          b: 0.0117647061
+          a: 1
+        }
+        specular {
+          a: 1
+        }
+        emissive {
+          a: 1
+        }
+        lighting: true
+      }
+    }
+    visual {
+      name: "base_link_fixed_joint_lump__base_footprint_visual_1"
+      id: 34
+      parent_id: 32
+      cast_shadows: true
+      pose {
+        position {
+        }
+        orientation {
+          w: 1
+        }
+      }
+      geometry {
+        box {
+          size {
+            x: 0.001
+            y: 0.001
+            z: 0.001
+          }
+        }
+      }
+    }
+    visual {
+      name: "base_link_fixed_joint_lump__bumper_visual_2"
+      id: 35
+      parent_id: 32
+      cast_shadows: true
+      pose {
+        position {
+          z: 0.039200000000000013
+        }
+        orientation {
+          w: 1
+        }
+      }
+      geometry {
+        type: MESH
+        mesh {
+          filename: "model://nav2_minimal_tb4_description/meshes/bumper_visual.dae"
+          scale {
+            x: 1
+            y: 1
+            z: 1
+          }
+        }
+      }
+    }
+    visual {
+      name: "base_link_fixed_joint_lump__shell_link_visual_3"
+      id: 36
+      parent_id: 32
+      cast_shadows: true
+      pose {
+        position {
+          z: 0.0942
+        }
+        orientation {
+          x: 0.5
+          y: 0.49999999999999961
+          z: 0.5
+          w: 0.50000000000000033
+        }
+      }
+      geometry {
+        type: MESH
+        mesh {
+          filename: "model://nav2_minimal_tb4_description/meshes/shell.dae"
+          scale {
+            x: 1
+            y: 1
+            z: 1
+          }
+        }
+      }
+      material {
+        ambient {
+          a: 1
+        }
+        diffuse {
+          a: 1
+        }
+        specular {
+          r: 0.313725501
+          g: 0.313725501
+          b: 0.313725501
+          a: 1
+        }
+        emissive {
+          a: 1
+        }
+        lighting: true
+      }
+    }
+  }
+  link {
+    id: 40
+    name: "front_caster_link"
+    pose {
+      position {
+        x: 0.125
+        y: 3.76158192263132e-37
+        z: 0.013899999999999997
+      }
+      orientation {
+        x: -0.70710678118654724
+        y: -5.172175143618065e-37
+        z: 3.9966807927957775e-37
+        w: 0.70710678118654779
+      }
+    }
+    visual {
+      name: "front_caster_link_visual"
+      id: 41
+      parent_id: 40
+      cast_shadows: true
+      pose {
+        position {
+        }
+        orientation {
+          w: 1
+        }
+      }
+      geometry {
+        type: SPHERE
+        sphere {
+          radius: 0.01
+        }
+      }
+      material {
+        ambient {
+          r: 0.175
+          g: 0.175
+          b: 0.175
+          a: 1
+        }
+        diffuse {
+          r: 0.175
+          g: 0.175
+          b: 0.175
+          a: 1
+        }
+        specular {
+          r: 0.175
+          g: 0.175
+          b: 0.175
+          a: 1
+        }
+        emissive {
+          a: 1
+        }
+        lighting: true
+      }
+    }
+  }
+  link {
+    id: 43
+    name: "front_left_bottom_weight_block"
+    pose {
+      position {
+        x: 0.060052670000000141
+        y: 0.08758841
+        z: 0.097885460000000007
+      }
+      orientation {
+        y: 2.6276304825625729e-43
+        w: 1
+      }
+    }
+    visual {
+      name: "front_left_bottom_weight_block_visual"
+      id: 44
+      parent_id: 43
+      cast_shadows: true
+      pose {
+        position {
+        }
+        orientation {
+          w: 1
+        }
+      }
+      geometry {
+        type: MESH
+        mesh {
+          filename: "model://nav2_minimal_tb4_description/meshes/weight_block.dae"
+          scale {
+            x: 1
+            y: 1
+            z: 1
+          }
+        }
+      }
+      material {
+        ambient {
+          a: 1
+        }
+        diffuse {
+          r: 0.0117647061
+          g: 0.0117647061
+          b: 0.0117647061
+          a: 1
+        }
+        specular {
+          a: 1
+        }
+        emissive {
+          a: 1
+        }
+        lighting: true
+      }
+    }
+  }
+  link {
+    id: 45
+    name: "front_left_top_weight_block"
+    pose {
+      position {
+        x: 0.060052670000000141
+        y: 0.08758841
+        z: 0.10688546
+      }
+      orientation {
+        y: 2.6276304825625729e-43
+        w: 1
+      }
+    }
+    visual {
+      name: "front_left_top_weight_block_visual"
+      id: 46
+      parent_id: 45
+      cast_shadows: true
+      pose {
+        position {
+        }
+        orientation {
+          w: 1
+        }
+      }
+      geometry {
+        type: MESH
+        mesh {
+          filename: "model://nav2_minimal_tb4_description/meshes/weight_block.dae"
+          scale {
+            x: 1
+            y: 1
+            z: 1
+          }
+        }
+      }
+      material {
+        ambient {
+          a: 1
+        }
+        diffuse {
+          r: 0.0117647061
+          g: 0.0117647061
+          b: 0.0117647061
+          a: 1
+        }
+        specular {
+          a: 1
+        }
+        emissive {
+          a: 1
+        }
+        lighting: true
+      }
+    }
+  }
+  link {
+    id: 47
+    name: "front_right_bottom_weight_block"
+    pose {
+      position {
+        x: 0.060052670000000141
+        y: -0.08758841
+        z: 0.097885460000000007
+      }
+      orientation {
+        x: 1
+        z: -1.1711147594885735e-38
+        w: 6.123233995736766e-17
+      }
+    }
+    visual {
+      name: "front_right_bottom_weight_block_visual"
+      id: 48
+      parent_id: 47
+      cast_shadows: true
+      pose {
+        position {
+          y: -1.3877787807814457e-17
+          z: -1.3877787807814457e-17
+        }
+        orientation {
+          w: 1
+        }
+      }
+      geometry {
+        type: MESH
+        mesh {
+          filename: "model://nav2_minimal_tb4_description/meshes/weight_block.dae"
+          scale {
+            x: 1
+            y: 1
+            z: 1
+          }
+        }
+      }
+      material {
+        ambient {
+          a: 1
+        }
+        diffuse {
+          r: 0.0117647061
+          g: 0.0117647061
+          b: 0.0117647061
+          a: 1
+        }
+        specular {
+          a: 1
+        }
+        emissive {
+          a: 1
+        }
+        lighting: true
+      }
+    }
+  }
+  link {
+    id: 49
+    name: "front_right_top_weight_block"
+    pose {
+      position {
+        x: 0.060052670000000141
+        y: -0.08758841
+        z: 0.10688546
+      }
+      orientation {
+        x: 1
+        z: -1.1711147594885735e-38
+        w: 6.123233995736766e-17
+      }
+    }
+    visual {
+      name: "front_right_top_weight_block_visual"
+      id: 50
+      parent_id: 49
+      cast_shadows: true
+      pose {
+        position {
+          y: -1.3877787807814457e-17
+          z: -1.3877787807814457e-17
+        }
+        orientation {
+          w: 1
+        }
+      }
+      geometry {
+        type: MESH
+        mesh {
+          filename: "model://nav2_minimal_tb4_description/meshes/weight_block.dae"
+          scale {
+            x: 1
+            y: 1
+            z: 1
+          }
+        }
+      }
+      material {
+        ambient {
+          a: 1
+        }
+        diffuse {
+          r: 0.0117647061
+          g: 0.0117647061
+          b: 0.0117647061
+          a: 1
+        }
+        specular {
+          a: 1
+        }
+        emissive {
+          a: 1
+        }
+        lighting: true
+      }
+    }
+  }
+  link {
+    id: 51
+    name: "imu_link"
+    pose {
+      position {
+        x: 0.050613000000000241
+        y: 0.043673
+        z: 0.0844
+      }
+      orientation {
+        y: 2.6276304825625729e-43
+        w: 1
+      }
+    }
+    sensor {
+      name: "imu"
+      id: 52
+      parent_id: 51
+      type: "imu"
+      pose {
+        position {
+        }
+        orientation {
+          w: 1
+        }
+      }
+      imu {
+        angular_velocity {
+          x_noise {
+            type: GAUSSIAN
+          }
+          y_noise {
+            type: GAUSSIAN
+          }
+          z_noise {
+            type: GAUSSIAN
+          }
+        }
+        linear_acceleration {
+          x_noise {
+            type: GAUSSIAN
+          }
+          y_noise {
+            type: GAUSSIAN
+          }
+          z_noise {
+            type: GAUSSIAN
+          }
+        }
+      }
+    }
+  }
+  link {
+    id: 53
+    name: "left_wheel"
+    pose {
+      position {
+        y: 0.1165
+        z: 0.040200000000000007
+      }
+      orientation {
+        x: -0.70710678118654724
+        y: 1.9783164979415589e-20
+        z: 1.9783164979415604e-20
+        w: 0.70710678118654779
+      }
+    }
+    visual {
+      name: "left_wheel_visual"
+      id: 54
+      parent_id: 53
+      cast_shadows: true
+      pose {
+        position {
+          y: -1.3877787807814457e-17
+          z: 1.3877787807814457e-17
+        }
+        orientation {
+          w: 1
+        }
+      }
+      geometry {
+        type: CYLINDER
+        cylinder {
+          radius: 0.03575
+          length: 0.015
+        }
+      }
+      material {
+        ambient {
+          r: 0.175
+          g: 0.175
+          b: 0.175
+          a: 1
+        }
+        diffuse {
+          r: 0.175
+          g: 0.175
+          b: 0.175
+          a: 1
+        }
+        specular {
+          r: 0.175
+          g: 0.175
+          b: 0.175
+          a: 1
+        }
+        emissive {
+          a: 1
+        }
+        lighting: true
+      }
+    }
+  }
+  link {
+    id: 56
+    name: "right_wheel"
+    pose {
+      position {
+        y: -0.1165
+        z: 0.040200000000000007
+      }
+      orientation {
+        x: -0.70710678118654724
+        y: 1.9783164979415571e-20
+        z: 1.9783164979415586e-20
+        w: 0.70710678118654779
+      }
+    }
+    visual {
+      name: "right_wheel_visual"
+      id: 57
+      parent_id: 56
+      cast_shadows: true
+      pose {
+        position {
+          y: -6.9388939039072284e-18
+          z: 1.3877787807814457e-17
+        }
+        orientation {
+          w: 1
+        }
+      }
+      geometry {
+        type: CYLINDER
+        cylinder {
+          radius: 0.03575
+          length: 0.015
+        }
+      }
+      material {
+        ambient {
+          r: 0.175
+          g: 0.175
+          b: 0.175
+          a: 1
+        }
+        diffuse {
+          r: 0.175
+          g: 0.175
+          b: 0.175
+          a: 1
+        }
+        specular {
+          r: 0.175
+          g: 0.175
+          b: 0.175
+          a: 1
+        }
+        emissive {
+          a: 1
+        }
+        lighting: true
+      }
+    }
+  }
+  link {
+    id: 59
+    name: "front_left_tower_standoff"
+    pose {
+      position {
+        x: 0.030630000000000379
+        y: 0.11431
+        z: 0.24177
+      }
+      orientation {
+        y: 2.6276304825625729e-43
+        w: 1
+      }
+    }
+    visual {
+      name: "front_left_tower_standoff_visual"
+      id: 60
+      parent_id: 59
+      cast_shadows: true
+      pose {
+        position {
+        }
+        orientation {
+          y: 0.70710678118654768
+          w: 0.70710678118654735
+        }
+      }
+      geometry {
+        type: MESH
+        mesh {
+          filename: "model://nav2_minimal_tb4_description/meshes/tower_standoff.dae"
+          scale {
+            x: 1
+            y: 1
+            z: 1
+          }
+        }
+      }
+      material {
+        ambient {
+          a: 1
+        }
+        diffuse {
+          a: 1
+        }
+        specular {
+          r: 0.313725501
+          g: 0.313725501
+          b: 0.313725501
+          a: 1
+        }
+        emissive {
+          a: 1
+        }
+        lighting: true
+      }
+    }
+  }
+  link {
+    id: 62
+    name: "front_right_tower_standoff"
+    pose {
+      position {
+        x: 0.030630000000000379
+        y: -0.11431
+        z: 0.24177
+      }
+      orientation {
+        y: 2.6276304825625729e-43
+        w: 1
+      }
+    }
+    visual {
+      name: "front_right_tower_standoff_visual"
+      id: 63
+      parent_id: 62
+      cast_shadows: true
+      pose {
+        position {
+        }
+        orientation {
+          y: 0.70710678118654768
+          w: 0.70710678118654735
+        }
+      }
+      geometry {
+        type: MESH
+        mesh {
+          filename: "model://nav2_minimal_tb4_description/meshes/tower_standoff.dae"
+          scale {
+            x: 1
+            y: 1
+            z: 1
+          }
+        }
+      }
+      material {
+        ambient {
+          a: 1
+        }
+        diffuse {
+          a: 1
+        }
+        specular {
+          r: 0.313725501
+          g: 0.313725501
+          b: 0.313725501
+          a: 1
+        }
+        emissive {
+          a: 1
+        }
+        lighting: true
+      }
+    }
+  }
+  link {
+    id: 65
+    name: "oakd_camera_bracket"
+    pose {
+      position {
+        x: -0.11800000000000033
+        z: 0.14677
+      }
+      orientation {
+        y: 2.6276304825625729e-43
+        w: 1
+      }
+    }
+    visual {
+      name: "oakd_camera_bracket_visual"
+      id: 66
+      parent_id: 65
+      cast_shadows: true
+      pose {
+        position {
+        }
+        orientation {
+          w: 1
+        }
+      }
+      geometry {
+        type: MESH
+        mesh {
+          filename: "model://nav2_minimal_tb4_description/meshes/camera_bracket.dae"
+          scale {
+            x: 1
+            y: 1
+            z: 1
+          }
+        }
+      }
+      material {
+        ambient {
+          a: 1
+        }
+        diffuse {
+          a: 1
+        }
+        specular {
+          r: 0.313725501
+          g: 0.313725501
+          b: 0.313725501
+          a: 1
+        }
+        emissive {
+          a: 1
+        }
+        lighting: true
+      }
+    }
+  }
+  link {
+    id: 67
+    name: "oakd_link"
+    pose {
+      position {
+        x: -0.059599999999999653
+        z: 0.24353000000000005
+      }
+      orientation {
+        y: 2.6276304825625729e-43
+        w: 1
+      }
+    }
+    visual {
+      name: "oakd_link_visual"
+      id: 68
+      parent_id: 67
+      cast_shadows: true
+      pose {
+        position {
+        }
+        orientation {
+          w: 1
+        }
+      }
+      geometry {
+        type: MESH
+        mesh {
+          filename: "model://nav2_minimal_tb4_description/meshes/oakd_pro.dae"
+          scale {
+            x: 1
+            y: 1
+            z: 1
+          }
+        }
+      }
+    }
+  }
+  link {
+    id: 70
+    name: "oakd_imu_frame"
+    pose {
+      position {
+        x: -0.059599999999999653
+        y: 2.1570415377137042e-32
+        z: 0.24353000000000005
+      }
+      orientation {
+        x: -0.49999999999999917
+        y: 0.49999999999999889
+        z: -0.49999999999999917
+        w: 0.50000000000000067
+      }
+    }
+  }
+  link {
+    id: 71
+    name: "oakd_left_camera_frame"
+    pose {
+      position {
+        x: -0.059599999999999653
+        y: 0.0375
+        z: 0.24353000000000005
+      }
+      orientation {
+        y: 2.6276304825625729e-43
+        w: 1
+      }
+    }
+  }
+  link {
+    id: 72
+    name: "oakd_left_camera_optical_frame"
+    pose {
+      position {
+        x: -0.059599999999999653
+        y: 0.0375
+        z: 0.24353000000000005
+      }
+      orientation {
+        x: -0.49999999999999917
+        y: 0.49999999999999889
+        z: -0.49999999999999917
+        w: 0.50000000000000067
+      }
+    }
+  }
+  link {
+    id: 73
+    name: "oakd_rgb_camera_frame"
+    pose {
+      position {
+        x: -0.059599999999999653
+        z: 0.24353000000000005
+      }
+      orientation {
+        y: 2.6276304825625729e-43
+        w: 1
+      }
+    }
+    sensor {
+      name: "rgbd_camera"
+      id: 74
+      parent_id: 73
+      type: "rgbd_camera"
+      pose {
+        position {
+        }
+        orientation {
+          w: 1
+        }
+      }
+    }
+  }
+  link {
+    id: 75
+    name: "oakd_rgb_camera_optical_frame"
+    pose {
+      position {
+        x: -0.059599999999999653
+        y: 2.1570415377137042e-32
+        z: 0.24353000000000005
+      }
+      orientation {
+        x: -0.49999999999999917
+        y: 0.49999999999999889
+        z: -0.49999999999999917
+        w: 0.50000000000000067
+      }
+    }
+  }
+  link {
+    id: 76
+    name: "oakd_right_camera_frame"
+    pose {
+      position {
+        x: -0.059599999999999653
+        y: -0.0375
+        z: 0.24353000000000005
+      }
+      orientation {
+        y: 2.6276304825625729e-43
+        w: 1
+      }
+    }
+  }
+  link {
+    id: 77
+    name: "oakd_right_camera_optical_frame"
+    pose {
+      position {
+        x: -0.059599999999999653
+        y: -0.0375
+        z: 0.24353000000000005
+      }
+      orientation {
+        x: -0.49999999999999917
+        y: 0.49999999999999889
+        z: -0.49999999999999917
+        w: 0.50000000000000067
+      }
+    }
+  }
+  link {
+    id: 78
+    name: "rear_left_tower_standoff"
+    pose {
+      position {
+        x: -0.076069999999999638
+        y: 0.09066
+        z: 0.24177
+      }
+      orientation {
+        y: 2.6276304825625729e-43
+        w: 1
+      }
+    }
+    visual {
+      name: "rear_left_tower_standoff_visual"
+      id: 79
+      parent_id: 78
+      cast_shadows: true
+      pose {
+        position {
+        }
+        orientation {
+          y: 0.70710678118654768
+          w: 0.70710678118654735
+        }
+      }
+      geometry {
+        type: MESH
+        mesh {
+          filename: "model://nav2_minimal_tb4_description/meshes/tower_standoff.dae"
+          scale {
+            x: 1
+            y: 1
+            z: 1
+          }
+        }
+      }
+      material {
+        ambient {
+          a: 1
+        }
+        diffuse {
+          a: 1
+        }
+        specular {
+          r: 0.313725501
+          g: 0.313725501
+          b: 0.313725501
+          a: 1
+        }
+        emissive {
+          a: 1
+        }
+        lighting: true
+      }
+    }
+  }
+  link {
+    id: 81
+    name: "rear_right_tower_standoff"
+    pose {
+      position {
+        x: -0.076069999999999638
+        y: -0.09066
+        z: 0.24177
+      }
+      orientation {
+        y: 2.6276304825625729e-43
+        w: 1
+      }
+    }
+    visual {
+      name: "rear_right_tower_standoff_visual"
+      id: 82
+      parent_id: 81
+      cast_shadows: true
+      pose {
+        position {
+        }
+        orientation {
+          y: 0.70710678118654768
+          w: 0.70710678118654735
+        }
+      }
+      geometry {
+        type: MESH
+        mesh {
+          filename: "model://nav2_minimal_tb4_description/meshes/tower_standoff.dae"
+          scale {
+            x: 1
+            y: 1
+            z: 1
+          }
+        }
+      }
+      material {
+        ambient {
+          a: 1
+        }
+        diffuse {
+          a: 1
+        }
+        specular {
+          r: 0.313725501
+          g: 0.313725501
+          b: 0.313725501
+          a: 1
+        }
+        emissive {
+          a: 1
+        }
+        lighting: true
+      }
+    }
+  }
+  link {
+    id: 84
+    name: "rplidar_link"
+    pose {
+      position {
+        x: -0.040000000000000036
+        z: 0.192915
+      }
+      orientation {
+        x: -3.5977933259930678e-42
+        y: 3.96939639252756e-42
+        z: 0.70710678118654724
+        w: 0.70710678118654779
+      }
+    }
+    visual {
+      name: "rplidar_link_visual"
+      id: 85
+      parent_id: 84
+      cast_shadows: true
+      pose {
+        position {
+        }
+        orientation {
+          w: 1
+        }
+      }
+      geometry {
+        type: MESH
+        mesh {
+          filename: "model://nav2_minimal_tb4_description/meshes/rplidar.dae"
+          scale {
+            x: 1
+            y: 1
+            z: 1
+          }
+        }
+      }
+      material {
+        ambient {
+          a: 1
+        }
+        diffuse {
+          r: 0.0117647061
+          g: 0.0117647061
+          b: 0.0117647061
+          a: 1
+        }
+        specular {
+          a: 1
+        }
+        emissive {
+          a: 1
+        }
+        lighting: true
+      }
+    }
+    sensor {
+      name: "rplidar"
+      id: 87
+      parent_id: 84
+      type: "gpu_lidar"
+      pose {
+        position {
+        }
+        orientation {
+          w: 1
+        }
+      }
+      lidar {
+        horizontal_samples: 360
+        horizontal_resolution: 1
+        horizontal_max_angle: 6.28
+        vertical_samples: 1
+        vertical_resolution: 1
+        range_min: 0.164
+        range_max: 20
+        range_resolution: 0.01
+        noise {
+        }
+      }
+    }
+  }
+  link {
+    id: 88
+    name: "tower_sensor_plate"
+    pose {
+      position {
+        y: 3.76158192263132e-37
+        z: 0.34677
+      }
+      orientation {
+        y: 2.6276304825625729e-43
+        w: 1
+      }
+    }
+    visual {
+      name: "tower_sensor_plate_visual"
+      id: 89
+      parent_id: 88
+      cast_shadows: true
+      pose {
+        position {
+        }
+        orientation {
+          w: 1
+        }
+      }
+      geometry {
+        type: MESH
+        mesh {
+          filename: "model://nav2_minimal_tb4_description/meshes/tower_sensor_plate.dae"
+          scale {
+            x: 1
+            y: 1
+            z: 1
+          }
+        }
+      }
+      material {
+        ambient {
+          a: 1
+        }
+        diffuse {
+          a: 1
+        }
+        specular {
+          r: 0.313725501
+          g: 0.313725501
+          b: 0.313725501
+          a: 1
+        }
+        emissive {
+          a: 1
+        }
+        lighting: true
+      }
+    }
+  }
+}
+origin_visual: true
+

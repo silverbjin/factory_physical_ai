@@ -1,0 +1,10 @@
+{
+  "A": false,
+  "B": false,
+  "C": false,
+  "D": false,
+  "E": false,
+  "F": false,
+  "G": false,
+  "H": true
+}

@@ -1,0 +1,3 @@
+153079 gz sim -r -s /tmp/nav2_pxz29l9s.sdf
+164596 gz sim -r -s /tmp/nav2_cl5nyx7a.sdf
+164713 gz sim -g

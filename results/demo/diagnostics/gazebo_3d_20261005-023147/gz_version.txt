@@ -1,0 +1,2 @@
+$ gz sim --versions
+8.11.0

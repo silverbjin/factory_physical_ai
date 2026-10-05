@@ -1,0 +1,6 @@
+/clock
+/world/sim008_normal_system_world/clock
+/world/sim008_normal_system_world/stats
+/world/sim008_normal_system_world/light_config
+/world/sim008_normal_system_world/material_color
+/world/sim008_normal_system_world/state

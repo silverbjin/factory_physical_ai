@@ -1,0 +1,12 @@
+DEMO_DIAGNOSTIC: launch children close_fds=True
+[INFO] [launch]: All log files can be found below /tmp/sim004-ros-0ocnx42s/2026-10-05-04-19-57-450117-DESKTOP-4B51LPI-197691
+[INFO] [launch]: Default logging verbosity is set to INFO
+[INFO] [xacro-1]: process started with pid [197770]
+[INFO] [parameter_bridge-2]: process started with pid [197771]
+[INFO] [image_bridge-3]: process started with pid [197772]
+[INFO] [image_bridge-4]: process started with pid [197773]
+[INFO] [create-5]: process started with pid [197774]
+[INFO] [gz-6]: process started with pid [197775]
+[INFO] [robot_state_publisher-7]: process started with pid [197778]
+[INFO] [component_container_isolated-8]: process started with pid [197779]
+[INFO] [xacro-1]: process has finished cleanly [pid 197770]
