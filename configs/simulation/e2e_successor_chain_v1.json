@@ -1,0 +1,26 @@
+{
+  "schema_version": 1,
+  "contract_id": "SIM-E2E-SUCCESSOR-V1",
+  "authorization_source": "Explicit user forward-only qualification architecture, fresh canonical evidence and independent review acceptance instruction",
+  "identity_model": "independent_candidate_manifest; historical accepted_commit authority remains unchanged",
+  "required_reviewed_paths": [
+    "configs/simulation/e2e_successor_chain_v1.json",
+    "scripts/verify_simulation_e2e_qualification.py",
+    "scripts/simulation_e2e_successor.py",
+    "scripts/run_simulation_forward_profile_qualification.py",
+    "scripts/build_simulation_e2e_successor_index.py"
+  ],
+  "successors": {
+    "SIM-007": {
+      "task_id": "TASK-SIM-007-R01",
+      "evidence_path": "results/simulation/SIM-007-R01_mission_integration.json",
+      "acceptance_path": "results/reviews/SIM-007-R01_acceptance.json"
+    },
+    "SIM-010": {
+      "task_id": "TASK-SIM-010-R01",
+      "evidence_path": "results/simulation/SIM-010-R01_observability_regression.json",
+      "acceptance_path": "results/reviews/SIM-010-R01_acceptance.json"
+    }
+  },
+  "middleware_profile": "configs/simulation/sim_r01_fastdds_loopback.xml"
+}

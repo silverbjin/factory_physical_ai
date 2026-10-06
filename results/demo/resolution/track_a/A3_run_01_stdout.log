@@ -1,0 +1,10 @@
+[3D DEMO] attached server=247997 gui=248102 partition=sim004-5ceceba941e2 domain=210
+[3D DEMO] live scene confirmed=True models=3
+Gate A: PASS
+Gate B: PASS
+Gate C: PASS
+Gate D: PASS
+Gate E: PASS
+Gate F: PASS
+Gate G: FAIL
+Gate H: PASS

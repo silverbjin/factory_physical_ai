@@ -1067,6 +1067,20 @@ def prepare_normal_session(
     rel_canon = canon.relative_to(root)
 
     tmp = _create_detached_worktree(root, "sim008-3d-demo-")
+    # Validate the current candidate, including uncommitted corrections, while
+    # keeping canonical Evidence writes inside the disposable worktree.
+    candidate_paths = set(subprocess.check_output(['git','-C',str(root),'diff','--name-only','HEAD','--','scripts','src','configs'],text=True).splitlines())
+    candidate_paths.update(subprocess.check_output(['git','-C',str(root),'ls-files','--others','--exclude-standard','--','scripts','src','configs'],text=True).splitlines())
+    candidate_hashes = {}
+    for relative in sorted(candidate_paths):
+        source=root/relative; target=tmp/relative
+        if source.is_file():
+            target.parent.mkdir(parents=True,exist_ok=True)
+            shutil.copy2(source,target)
+            candidate_hashes[relative]={'source_sha256':_sha256_file(source),'runtime_sha256':_sha256_file(target)}
+        elif target.is_file(): target.unlink()
+    output.parent.mkdir(parents=True,exist_ok=True)
+    (output.parent/'runtime_code_integrity.json').write_text(json.dumps({'candidate_head':subprocess.check_output(['git','-C',str(root),'rev-parse','HEAD'],text=True).strip(),'current_source_overlay':candidate_hashes},indent=2)+'\n')
     try:
         patch_record = patch_sim008_worktree_world(root, tmp)
     except BaseException:

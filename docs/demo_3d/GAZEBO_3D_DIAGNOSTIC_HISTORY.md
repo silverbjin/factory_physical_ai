@@ -2596,3 +2596,85 @@ Supporting Evidence: results/demo/runs/403830e0b44b477bbdb60bed59664ce1 및 e04f
 Rejected Alternative: final_validation의 과거 PASS를 current latest PASS로 재사용하거나 diagnostic evidence를 재작성한다.
 
 Impact: 최신 G7 FAIL, open questions3개. 다음 단일 실험은 lifecycle request/activation/response 구간의 비침습 측정이다. 본 작업은 runner를 실행하지 않았으며 추가 실행 주체는 NOT_YET_PROVEN이다.
+
+
+## 2026-10-05 — Remaining issues continuation, diagnosis and controls
+
+- Prior A3 failure frontier resumed: initialpose CLI timeout, A–F/H PASS. Added opt-in demo client/probe absolute+monotonic timestamps, timeout partial stdout/stderr, inherited profile/QoS and a passive persistent publisher control.
+- diagnostic_01 rejected: instrumentation event name collision; failed artifact retained. Corrected instrumentation, no production inference from this run.
+- diagnostic_02/03/04: three valid A–H PASS baseline samples; client startup/matching/publication traces retained under results/demo/resolution/track_a/continuation/.
+- Archived failure AMCL server log proves receipt and Setting pose before outer client failure. control_01 persistent publisher completes in0.351s with AMCL observation80ms after publication, rejecting missing receipt/QoS. GateG later fails on multiple Gazebo stats JSON frames.
+- One bootstrap correction: run-owned persistent initialpose/STARTUP clients with unchanged5s/10s bounds; RED4tests→GREEN21tests. fix_01 confirms initialpose3.833ms and STARTUP5.559s; new later frontier stats parsing remains failure, retained.
+- One stats correction: validate framed JSON stream and protobuf default zero fields instead of whole-output json.loads. RED7tests→GREEN40focusedtests. Beginning live validation before stability repetition.
+- TrackB B1 reproduced canonical NOT_QUALIFIED: historical SIM007 BLOCKED and SIM010 ownership unrecorded; all 20 underlying semantic predicates pass. Additive independent-review successor chain underway; historical artifacts remain authoritative and untouched.
+
+
+## 2026-10-05 — Final runtime stability qualification
+
+Independent review identified partial response-line deadline blocking. RED test reproduced; bounded byte framing fixes it, independently verified with prefilled pipe. Initial corrected samples stability_01/02 passed; counter reset after reader change. qualified_stability_01…05 all A–H PASS, exit 0 and same runtime SHA identities; durations80.325/91.472/97.997/92.778/89.562s. TrackA complete. Full fresh qualification regression exposed stale orchestrator test fixtures, a SIGINT cleanup race, and C18 provenance failures; these are internal follow-up work, not blockers.
+
+
+## 2026-10-05 — Required policy regression and final Normal
+
+C1 current-source demo wrapper completed rc0: SIM009-NAV-TIMEOUT-RETRY unknown→RETRY, pass/within_budget/cleanup_complete true. C2 current-source wrapper completed rc0: SIM009-VERIFY-UNCERTAIN uncertain→RECONCILE, reconciling, mission_success_committed false, verification_verdict uncertain, pass true. Fresh overlays were test-only and hash matched root candidate files; raw output/logs/source identity preserved in results/demo/resolution/track_c. C3 finaladditionalNormal all A–H PASS rc0, in addition to five-run proof. All236 protected snapshot files remain byte-identical.
+
+Qualification regression fixes: historical test fixtures now use exact independent reviewed Git source blobs rather than current expanded/modified files when asserting historical authority. This preserves the production provenance gates. A real SIGINT race between CHILD progress emission and entry into protected cleanup was moved into existing cleanup try; no nested orchestrator launched. Canonical profile successor execution is separately scheduled without demo world augmentation or demo evidence reuse.
+
+
+## 2026-10-05 — Canonical predicate closure and independent review
+
+The real qualifier initially rejected the immutable SIM-007 BLOCKED result and SIM-010 missing predicate ownership. Historical evidence was not edited. The explicitly authorized additive successor contract binds fresh canonical four-profile execution, full regression/source index, independent review, exact candidate HEAD and complete source/config/test hashes.
+
+First full regression retained eight failures: stale orchestrator fixtures and a proven SIGINT child-cleanup race. Focused fixture and cleanup corrections passed. Second full regression retained eight toolchain-baseline fixture provenance failures; restoring exact historical reviewed Git blobs in disposable test inputs preserved production hash gates and passed the focused fourteen tests. Failed full-suite logs remain in the diagnostic chain.
+
+First fresh four-profile canonical attempt proved deterministic, navigation_physics and system success, but manipulation_physics failed at Navigation allowlist validation before MuJoCo. The component smoke had passed its generic workspace destination to the approved-waypoint Navigation fixture. The isolated correction routes the fixture to line-b-drop and retains measured MuJoCo transfer-zone semantics. The failed artifact SHA256 063d4e3a76f6e89cc7db55015187efb68b9b8167921147c2a61d05d375ee68b0 is archived in B3_attempt01_profile_failed.json.
+
+Independent review reproduced missing verification/completion timestamp reconstruction and public request/result identity checks. Negative tamper tests and minimal successor validation corrections precede fresh evidence generation. Review remains REJECT_PENDING_CORRECTION_AND_EVIDENCE until all raw profiles and full regression are green; no acceptance has been created.
+
+
+## 2026-10-05 — Canonical source identity and failed live attempt02
+
+Independent review reproduced acceptance of a failed raw source-navigation step beneath a successful mission envelope. RED test then minimal validation requires all five canonical raw steps success/succeeded. Legacy config/ assets were absent from complete candidate identity; a mutation RED test drove inclusion in both producer manifest and verifier reconstruction. Twenty-five focused tests pass.
+
+Fresh attempt02 retained BLOCKED: deterministic, manipulation and system profiles passed; navigation physics returned unknown at its unchanged five-second action-client bound (5023.057ms). The base runtime discarded TimeoutExpired partial output, preventing phase classification. Canonical-only synchronous instrumentation now records the exact parent command, bound, start/end and partial stdout/stderr, then re-raises the same exception. It does not claim unavailable child send/accept timestamps. No timeout, success policy or retry changed. Attempt03 executes the frozen corrected source.
+
+
+## 2026-10-05 — Canonical navigation client control and correction
+
+Attempt03 again records cold CLI timeout5.010s; preserved partial stdout proves server readiness and accepted goal UUID, with no terminal result before timeout. The system profile again passes. A fresh-runtime API control uses the same initial conditions, GOALS YAML, default ActionClient QoS, inherited DDS identity and5s execution bound: successful terminal4/errorcode0 arrives1.266s after dispatch; acknowledgment1.535ms and motion1.261s. This discriminates cold participant overhead from slow healthy motion.
+
+Control overall envelope retained with cleanup=None due a newly introduced missing close return; raw cleanup confirms owned processes reaped. Fixed that internal error before adoption, kept timeout cleanup outside action elapsed budget, prohibited reuse after a timed-out response and preserved definitive rejected/aborted failure. Canonical-only warmed client is owned from startup through close; original Normal runtime core hashes remain unchanged. Verifier requires exact public request identity, accepted/terminal matching UUID, success status4/errorcode0 and ordered timestamps within the original5s action bound. Twenty-seven focused tests pass. Fresh attempt04 runs frozen source.
+
+
+## 2026-10-05 — Fresh canonical four-profile PASS
+
+Attempt04 returns SIM_MISSION_INTEGRATION_READY, exit0. All four required profiles pass, bounded and cleanup complete; verification-before-completion and raw backend checks reconstruct valid. Execution source manifest equals the complete frozen current tree. The fresh unaccepted SIM-007-R01 artifact SHA256 is225535cca6be6450f43fefd05ccebfcee6a630a6033b5016141f8672b635a07a. Full regression/source-index generation and independent actual-artifact review follow; no prior failed attempt is used as qualification proof.
+
+
+## 2026-10-05 — Full regression environment correction
+
+First new index after four-profile success retained1failure/567passes: real xacro scene test cannot find installed xacro package metadata because the index builder replaced inherited PYTHONPATH with ROOT/src. Preserving inherited ROS Python paths while prepending the source path, and sourcing installed Jazzy setup for regression, fixes the precise environment defect; the failing three-test file passes. No pytest skips, arguments, simulation bounds or gate predicates change. Failed index and stdout/stderr archived under B4_index_attempt01. Because builder code belongs to complete execution identity, fresh profile attempt05 regenerates evidence instead of backfilling the previous manifest.
+
+
+## 2026-10-05 — Final canonical source index PASS
+
+Fresh attempt05 all four canonical profiles pass at final frozen source; new SIM-007-R01 SHA68bfa79e46583ea863e818d28977adf65cff47cb39fc729ad15b7fd1c5d3f508. Correct-environment full regression passes568tests in59.62s, exit0, empty stderr. SIM-010-R01 returns READY, SHA69c789b03215005bc6e2cd3a17020ffb0f09e7b0ed3f07a3d6dc93ed00c01090, binds exact same manifest and fresh mission evidence. Independent actual-artifact review and one additional final Normal precede new acceptance/qualification writes.
+
+
+## 2026-10-05 — Actual qualification and forward-artifact integrity boundary
+
+Independent reviewer ACCEPT binds final7/10 exact hashes, candidate HEAD and106-file canonical manifest, all 20 reconstructed predicates and568passingtests. Parent recorded only new SIM-007-R01/SIM-010-R01 acceptance files. Real canonical verifier emits SIM_E2E_QUALIFIED, all 20 green, historical legacy NOT_QUALIFIED preserved.
+
+Additional Normal after canonical generation passedA–G but failedH: hashes_identical=True, and the sole failing condition was nonempty Git status for legitimate new untracked successor artifacts/logs. No historical bytes changed. Narrow demo-only correction permits only exact independently qualified successor Evidence/Acceptance and bound regression log paths, plus qualification JSON exactly equal to fresh actual verifier output. All tracked changes and unknown untracked paths remain rejected.
+
+Independent review strengthened the snapshot from tracked-only to all protected files, including untracked successors and task_history/contracts; status enumerates every untracked file. Disposable snapshot RED/GREEN proves an untracked evidence mutation changes the hash comparison. First integrated retest began before this strengthening; source identity check will exclude it. Final completeA–H five-run proof restarts after helper freeze, retaining all earlier evidence.
+
+
+## 2026-10-05 — Earlier runtime world generation readiness race
+
+Final_stability_01 failed before attachment: exact archived runtimeSDF0bytes; ET.ParseError noelement; A–Gfalse/Htrue, cleanupcomplete. Actual code waited for pathname existence, then parsed immediately. File creation is earlier than completed xacro output. An event-controlled empty-file writer control reproduces this distinction without arbitrary sleeps. Minimum demo-only correction awaits complete valid world XML on inotify write/create/move events within unchanged3s generation bound; copied bytes, parsed world and provenanceSHA come from one observed snapshot. RED2→GREEN2 disposable checks also reject permanently incompleteXML. Consecutive proof restarts with confirmed_stability; old final_stability failure and both integratedmixedversion runs remain preserved.
+
+
+## 2026-10-05 — Final resolution
+
+confirmed_stability_01…05 all A–H PASS / exit 0 with identical final sourcehashes; additionalfinalNormal `2d5fd89ecf204653b8b59b8fdb9ca8ef` all A–H PASS / exit 0. Finalactualcanonicalverifier C4_final emits SIM_E2E_QUALIFIED, all 20 green. Navigationunknown→RETRY and verificationuncertain→RECONCILE/nevermission-success remainPASS. All 236 historicalfiles unchanged; seven forward-only new artifact hashes recorded. Exactownedfailedattemptorphan306455 identitymatched and individuallycleaned afterlivesequence, unrelatedpreexistingserver176573 untouched. FinalstatusRESOLVED; allfailedcyclesretained.

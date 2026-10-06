@@ -3,7 +3,7 @@ import json
 import sys
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[1]
+ROOT = Path(__file__).resolve().parents[2]
 MODULE_PATH = ROOT / "scripts" / "codex" / "run_task_orchestrator.py"
 spec = importlib.util.spec_from_file_location("orch", MODULE_PATH)
 orch = importlib.util.module_from_spec(spec)

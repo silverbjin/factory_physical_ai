@@ -427,9 +427,12 @@ class OrchestratorUnitTests(unittest.TestCase):
                     ("acceptance", "gpt-5.6-luna", "low"),
                 ]
             }
+            data.update(diagnosis={"model":"gpt-5.6-terra","reasoning_effort":"medium"},diagnosis_escalated={"model":"gpt-5.6-terra","reasoning_effort":"high"})
+            data = {"schema_version":2,"roles":data,"task_classes":{name:{"diagnosis_required":name=="RED","allow_high_escalation":True,"review_reasoning_effort":"low","rereview_reasoning_effort":"low"} for name in ("GREEN","YELLOW","RED")},"classification":{"green_max_score":2,"yellow_max_score":6,"explicit_override_keys":["task_class"]},"acceptance":{"mode":"deterministic"}}
             (repo / "config/codex_model_policy.json").write_text(json.dumps(data), encoding="utf-8")
             policy = load_model_policy(repo, Path("config/codex_model_policy.json"))
-            self.assertEqual(policy["acceptance"], ModelConfig("gpt-5.6-luna", "low"))
+            self.assertEqual(policy.roles["review"], ModelConfig("gpt-5.6-sol", "low"))
+            self.assertEqual(policy.acceptance_mode, "deterministic")
 
     def test_commit_boundary(self):
         with tempfile.TemporaryDirectory() as td:

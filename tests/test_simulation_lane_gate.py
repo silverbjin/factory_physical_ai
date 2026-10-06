@@ -78,6 +78,16 @@ class SimulationLaneGateTests(unittest.TestCase):
                 destination = self.root / relative
                 destination.parent.mkdir(parents=True, exist_ok=True)
                 shutil.copyfile(source, destination)
+        # C18 reconstructs the independent SIM-002 review snapshot. Later
+        # accepted package exports do not belong to that historical surface.
+        anchor = gate._sim_002_review_anchor(ROOT)
+        if anchor is None:
+            raise RuntimeError("independent SIM-002 review anchor is unavailable")
+        reviewed_init = subprocess.check_output(
+            ["git", "show", f"{anchor['reviewed_commit']}:{gate.SIM_002_RUNTIME_INIT_PATH}"],
+            cwd=ROOT,
+        )
+        (self.root / gate.SIM_002_RUNTIME_INIT_PATH).write_bytes(reviewed_init)
 
     def evaluate(self) -> dict[str, Any]:
         return gate.evaluate_simulation_lane_gate(
