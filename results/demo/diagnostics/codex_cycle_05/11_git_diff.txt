@@ -1,0 +1,1735 @@
+diff --git a/demo_3d/3D_DEMO_GUIDE.md b/demo_3d/3D_DEMO_GUIDE.md
+index 276b78e..1d67059 100644
+--- a/demo_3d/3D_DEMO_GUIDE.md
++++ b/demo_3d/3D_DEMO_GUIDE.md
+@@ -1,385 +1,54 @@
+-# 3D_DEMO_GUIDE — 5~7분 실제 시연
++# Gazebo 3D execution guide
+ 
+-## 화면 배치
+-
+-가장 권장:
+-
+-```text
+-┌──────────────────────────────────────┬──────────────────────┐
+-│                                      │                      │
+-│         Gazebo 3D Rendering          │     3D Demo HUD      │
+-│              70%                     │        30%           │
+-│                                      │                      │
+-└──────────────────────────────────────┴──────────────────────┘
+-```
+-
+-Gazebo가 반드시 주 화면입니다.
+-
+----
+-
+-## 0:00–0:35 — Architecture
+-
+-`assets/01_system_architecture.png`
+-
+-설명:
+-- Gazebo = L2 integrated world authority
+-- MuJoCo = separate manipulation bench
+-- Final gate = Evidence reconstruction
+-
+----
+-
+-## 0:35–1:50 — Normal E2E
+-
+-Terminal:
+-
+-```bash
+-./demo_3d/scripts/01_normal_e2e_3d.sh
+-```
+-
+-관객에게 실제로 보여줄 것:
+-- Gazebo factory world
+-- robot navigation
+-- canonical mission의 world-state 변화
+-- final verified state
+-
+-HUD:
+-- `LIVE_CANONICAL_RUN`
+-- phase = running → complete
+-
+-설명:
+-“지금 보이는 것은 accepted JSON replay가 아니라 canonical Normal E2E runner의 실제 Gazebo 실행입니다.”
+-
+----
+-
+-## 1:50–3:20 — Navigation Timeout
+-
+-```bash
+-./demo_3d/scripts/02_navigation_timeout_3d.sh
+-```
+-
+-권장: `demo.env`의 `DEMO_NAV_TIMEOUT_COMMAND`를 저장소의 실제 단일-scenario command로 한 번 bind합니다.
+-
+-보여줄 것:
+-- navigation goal 진행
+-- robot이 목표를 완료하지 못하는 3D 상황
+-- timeout
+-- UNKNOWN
+-- original goal reconciliation
+-- retry authorization / next attempt
+-
+-중요:
+-`Timeout → Retry`로 바로 설명하지 말고,
+-`Timeout → UNKNOWN → Reconciliation → Retry authorization` 순서로 설명합니다.
+-
+----
+-
+-## 3:20–4:20 — Verification Uncertain
+-
+-```bash
+-./demo_3d/scripts/03_verification_uncertain_3d.sh
+-```
+-
+-3D:
+-- Gazebo world는 계속 live
+-- robot/object final state를 관객이 직접 봄
+-
+-HUD:
+-- scenario = `SIM009-VERIFY-UNCERTAIN`
+-- outcome = uncertain
+-- decision = RECONCILE
+-- mission_success_committed = false
+-
+-설명:
+-“이 장면은 robot이 더 움직이는 failure가 아니라, 현재 3D world를 관찰한 결과를 SUCCESS로 확정할 수 없는 경우입니다. 그래서 world는 live이지만 Mission은 성공 처리되지 않습니다.”
+-
+----
+-
+-## 4:20–5:40 — Final Qualification
+-
+-```bash
+-./demo_3d/scripts/04_final_qualification_3d.sh
+-```
+-
+-3D:
+-- canonical Gazebo world를 paused state로 표시
+-- 시각적 맥락 유지
+-
+-Gate:
+-- 실제 acceptance/hash/source-index/predicate reconstruction 실행
+-- 결과: `SIM_E2E_QUALIFIED`
+-
+-설명:
+-“이 단계에서 시뮬레이션을 다시 돌리는 것은 오히려 계약 위반입니다. 화면의 3D world는 paused context이고, 오른쪽에서는 accepted Evidence만 읽어 Qualification을 수행하고 있습니다.”
+-
+----
+-
+-## 5:40–6:20 — REJECT → ACCEPT
+-
+-`assets/06_review_reject_to_accept.png`
+-
+-마지막 메시지:
+-“3D로 잘 움직이는 것과 검증된 시스템은 다릅니다. 이 프로젝트는 실제 3D 실행, 장애 의미, Evidence integrity, Independent Review까지 하나로 묶었습니다.”
+-
+-
+----
+-
+-# Runtime-owned GUI attach 확인
+-
+-Normal E2E 실행:
+-
+-```bash
+-./demo_3d/scripts/01_normal_e2e_3d.sh
+-```
+-
+-정상 attach 시 터미널에 다음 형식이 출력됩니다.
+-
+-```text
+-[3D DEMO] attached GUI to runtime-owned server \
+-pid=<PID> partition=sim004-... ROS_DOMAIN_ID=<N>
+-```
+-
+-이 출력이 보이면 별도의 `SERVER_PID` 수동 지정이나 `/proc` 명령은 필요하지 않습니다.
+-
+-문제가 있을 때 확인:
+-
+-```bash
+-pgrep -af 'gz sim|ign gazebo'
+-```
+-
+-GUI와 server의 partition을 수동으로 맞추는 대신 `results/demo/logs/normal_runner.log`와
+-`results/demo/logs/gazebo_gui_normal.log`를 확인하십시오.
+-
+-
+----
+-
+-# v1.2 Normal E2E 3D 확인
+-
+-```bash
+-source .venv-sim/bin/activate
+-source demo_3d/config/demo.env 2>/dev/null || true
+-
+-./demo_3d/scripts/00_preflight_3d.sh
+-./demo_3d/scripts/01_normal_e2e_3d.sh
+-```
+-
+-성공 기준:
+-
+-```text
+-[3D DEMO] attached GUI to runtime-owned server ... warmup=4.0s
+-```
+-
+-그리고 warm-up 동안 Gazebo `Entity Tree`에 world/model entity가 나타나야 합니다.
+-
+-렌더링이 WSL 환경에서 늦을 때:
+-
+-```bash
+-export DEMO_GUI_WARMUP_SECONDS=5.0
+-./demo_3d/scripts/01_normal_e2e_3d.sh
+-```
+-
+-8초를 넘기지 않는 것을 권장합니다. 이 시간은 canonical runtime의 wall-clock startup budget에도 포함될 수 있기 때문입니다.
+-
+-
+----
+-
+-# v1.3 실행 원칙
+-
+-Normal E2E의 Gazebo 3D는 **명령이 끝난 뒤 확인하는 화면이 아닙니다.**
+-canonical runner가 실행되는 동안 실제 world를 보는 화면입니다.
+-
+-```bash
+-# 기존 GUI가 없는지 확인
+-pgrep -af 'gz sim -g'
+-
+-# 실행
+-./demo_3d/scripts/01_normal_e2e_3d.sh
+-```
+-
+-성공 판정:
+-
+-```text
+-[3D DEMO] GUI transport verified ...
+-```
+-
+-그리고 실행 중 Entity Tree / 3D scene이 표시되어야 합니다.
+-
+-runner가 끝나면 runtime-owned Gazebo server가 bounded cleanup되므로 GUI도 자동으로 닫히는 것이 정상입니다.
+-
+-
+----
+-
+-# v1.4 실행 방법
+-
+-## 1. 기존 Gazebo GUI / stale server 확인
+-
+-```bash
+-pgrep -af 'gz sim|ign gazebo'
+-```
+-
+-이전 테스트의 stale process가 있다면 **해당 PID만** 정리합니다. `pkill gz`는 사용하지 않습니다.
+-
+-## 2. Preflight
++Run from `~/projects/factory_physical_ai_simDemo`:
+ 
+ ```bash
+ source .venv-sim/bin/activate
+ ./demo_3d/scripts/00_preflight_3d.sh
+-```
+-
+-추가 확인:
+-
+-```text
+-visual gz wrapper=demo_3d/bin/gz
+-scene broadcaster injection=TEMP_RUNTIME_SDF_ONLY
+-```
+-
+-## 3. Normal E2E 3D 실행
+-
+-```bash
+ ./demo_3d/scripts/01_normal_e2e_3d.sh
+ ```
+ 
+-성공적인 attach 출력 예:
+-
+-```text
+-[3D DEMO] GUI transport verified \
+-server_pid=... gui_pid=... \
+-partition=sim004-... \
+-ROS_DOMAIN_ID=... \
+-scene_service=/world/sim008_normal_system_world/scene/info
+-```
++The GUI starts when the runner-owned server appears. Give the renderer time to load meshes. Its Entity Tree should contain `Depot`, `brake_ecu_type_b_001` and `turtlebot4`; the world inspector names `sim008_normal_system_world`. The simulation performs the real Normal mission, including the existing VLA surrogate's semantic placement. The world is visible while the bounded mission executes. The GUI closes as the runner cleans up.
+ 
+-## 4. 실행 중 SceneBroadcaster 검증
++The console reports the exact server/GUI PIDs, partition and domain, followed by gates A–H. Exit code zero requires all gates. Normal does not ask for Enter, pause the runner, or extend its startup budget.
+ 
+-다른 Terminal:
++During the run, use a second terminal with the same virtual environment:
+ 
+ ```bash
+-./demo_3d/scripts/05_verify_scene_broadcaster.sh
++./demo_3d/scripts/05_verify_3d_runtime.sh
+ ```
+ 
+-PASS 조건:
++This verifier selects the recorded owned server/GUI identities and requests live scene data. After cleanup it explicitly checks completed-run proof instead. It never chooses an arbitrary server by process age.
+ 
+-```text
+-SceneBroadcaster in runtime SDF:
+-... gz-sim-scene-broadcaster-system ...
+-... gz::sim::systems::SceneBroadcaster ...
+-
+-[VERIFY] PASS: SceneBroadcaster service is available.
+-```
+-
+-## 5. Patch log 확인
++For the package qualification run:
+ 
+ ```bash
+-tail -n 5 results/demo/visual_runtime_patch.jsonl
+-```
+-
+-여기에는 `/tmp/nav2_*.sdf`의 original/patched SHA256가 기록됩니다.
+-
+-## 6. 중요한 claim boundary
+-
+-v1.4의 3D 실행은 **portfolio visualization run**입니다.
+-
+-SceneBroadcaster는 physics / mission / navigation policy를 바꾸기 위한 plugin이 아니라 GUI scene 전송을 위한 system plugin이지만, runtime SDF가 demo-only로 변경되므로 이 실행 결과를 canonical accepted Evidence로 승격하지 않습니다.
+-
+-Canonical qualification은 기존 accepted Evidence와 `SIM-E2E` Gate를 계속 사용합니다.
+-
+-
+----
+-
+-# v1.5 실행 방법
+-
+-## 1. 기존 stale 프로세스 확인
+-
+-```bash
+-pgrep -af 'gz sim|ign gazebo'
+-```
+-
+-이전 테스트에서 남은 server / GUI가 있다면 PID를 확인한 뒤 그 PID만
+-종료합니다. `pkill gz`는 사용하지 않습니다.
+-
+-## 2. Preflight
+-
+-```bash
+-cd ~/projects/factory_physical_ai_simDemo
+-source .venv-sim/bin/activate
+-
++export DEMO_VALIDATION_DIR="$PWD/results/demo/final_validation"
+ ./demo_3d/scripts/00_preflight_3d.sh
+-```
+-
+-핵심 출력:
+-
+-```text
+-scene broadcaster injection=ISOLATED_WORKTREE_WORLD_COPY
+-canonical world mutation=DISABLED
+-PASS
+-```
+-
+-## 3. Normal E2E 실행
+-
+-```bash
+ ./demo_3d/scripts/01_normal_e2e_3d.sh
++./demo_3d/scripts/05_verify_3d_runtime.sh --validation-dir "$DEMO_VALIDATION_DIR"
+ ```
+ 
+-성공 기대값:
+-
+-```text
+-GUI transport verified ...
+-scene_service=/world/sim008_normal_system_world/scene/info
+-```
+-
+-## 4. 실행 중 Terminal 2에서 확인
+-
+-```bash
+-./demo_3d/scripts/05_verify_scene_broadcaster.sh
+-```
+-
+-성공 기준:
++The directory contains exact `/proc` identities, captured SDF and SHA256, live scene response, GUI and server logs, screenshot, mission output, lifecycle report, gates and canonical hashes. The desktop screenshot is captured from the attached GUI PID's X11 window. Rendered-content detection excludes toolbar and inspector areas; the screenshot also supports direct visual inspection of the populated tree and warehouse.
+ 
+-```text
+-SceneBroadcaster in runtime SDF:
+-... gz-sim-scene-broadcaster-system ...
+-... gz::sim::systems::SceneBroadcaster ...
++The runner owns fresh `ROS_DOMAIN_ID`, `GZ_PARTITION` and ROS logs. GUI attachment copies those exact values. Existing unrelated servers remain untouched. Cleanup tracks PID plus process start time, closes the owned GUI and removes the detached worktree. Any orphaned owned ROS CLI daemon is terminated within a bounded supplementary cleanup. No global kill command is used.
+ 
+-[VERIFY] PASS: SceneBroadcaster service is available.
+-```
+-
+-## 5. Worktree patch가 실제 수행됐는지 확인
++## Optional presentation steps
+ 
+ ```bash
+-tail -n 10 results/demo/visual_worktree_patch.jsonl
+-```
+-
+-다음 형태가 있어야 합니다.
+-
+-```json
+-{
+-  "label": "SIM-008_NORMAL_WORLD",
+-  "changed": true,
+-  "reason": "scene_broadcaster_injected",
+-  "scope": "isolated_git_worktree_only"
+-}
+-```
+-
+-## 6. main repository가 깨끗한지 확인
+-
+-```bash
+-git status --short -- \
+-  data/simulation \
+-  results/simulation \
+-  results/reviews
++./demo_3d/scripts/02_navigation_timeout_3d.sh
++./demo_3d/scripts/03_verification_uncertain_3d.sh
++./demo_3d/scripts/04_final_qualification_3d.sh
+ ```
+ 
+-출력이 없어야 정상입니다.
++SIM-009 has no scenario-filter CLI in this repository. Each failure entry therefore runs the real full failure suite in an isolated augmented worktree and displays the selected result. The timeout entry follows the suite's live navigation server. Verification Uncertain can display a separate presentation context **after** suite completion; it is not a second co-simulated mission world. Final Qualification reads accepted Evidence and uses a paused presentation world; it does not execute a new mission or create canonical acceptance. These optional steps are outside the Normal A–H qualification claim.
+ 
+-## 7. 실패 시 최소 제출 정보
++`run_3d_showcase.sh` runs preflight, Normal and the optional steps in order. `DEMO_NO_WAIT=1` skips presentation prompts. `launch_3d_hud.sh` starts an optional secondary browser HUD.
+ 
+-다음 4개 출력이면 다음 진단에 충분합니다.
++## Diagnostic boundaries
+ 
+-```bash
+-./demo_3d/scripts/00_preflight_3d.sh
++The installed example `/opt/ros/jazzy/share/ros_gz_sim_demos/worlds/default.sdf` supplies the exact SceneBroadcaster definition. Demo augmentation runs the same headless xacro transformation first, then adds that plugin to the resolved world. Nav2's later transformation is idempotent for this resolved SDF. No installed launch or canonical source is edited.
+ 
+-tail -n 10 results/demo/visual_worktree_patch.jsonl
++If a scene service check fails, inspect `04_runtime_world.sdf`, `05_plugins.txt`, `06_services.txt` and `08_server.log` before changing anything. If the live scene is correct but the screenshot is blank, inspect `09_gui.log`; isolate GUI configuration or rendering. `LIBGL_ALWAYS_SOFTWARE=1` is available for renderer comparisons on the same runtime transport, but was not needed for the proven run.
+ 
+-./demo_3d/scripts/05_verify_scene_broadcaster.sh
+-
+-tail -n 80 results/demo/logs/normal_runner.log
+-```
++Ground-truth controls and failed observer cycles remain under `results/demo/diagnostics/`. `demo_3d/diagnostics/test_scene_augmentation.py` tests real headless xacro preservation, rewritten Gazebo process-title discovery and read-only CLI capability discovery.
+diff --git a/demo_3d/CHANGELOG_v1_4.md b/demo_3d/CHANGELOG_v1_4.md
+deleted file mode 100644
+index b341a23..0000000
+--- a/demo_3d/CHANGELOG_v1_4.md
++++ /dev/null
+@@ -1,10 +0,0 @@
+-# v1.4 Changes
+-
+-- Added demo-only `gz` PATH wrapper.
+-- Injects `gz::sim::systems::SceneBroadcaster` only into temporary runtime SDF files passed to `gz sim -s`.
+-- Does not modify canonical `data/simulation/*.sdf`, accepted Evidence, or Acceptance artifacts.
+-- Records each temporary SDF patch in `results/demo/visual_runtime_patch.jsonl` with original/patched SHA256.
+-- Waits for `/world/.../scene/info` and reports the discovered scene service during GUI attach.
+-- Added `05_verify_scene_broadcaster.sh` for live verification.
+-- Demo-only paused / fallback context worlds are copied and augmented separately under `results/demo/runtime/`.
+-- Keeps v1.3 runtime-owned server following and transport verification.
+diff --git a/demo_3d/CHANGELOG_v1_5.md b/demo_3d/CHANGELOG_v1_5.md
+deleted file mode 100644
+index 664ce05..0000000
+--- a/demo_3d/CHANGELOG_v1_5.md
++++ /dev/null
+@@ -1,63 +0,0 @@
+-# CHANGELOG v1.5
+-
+-## Root cause of v1.4 failure
+-
+-v1.4 attempted to prepend `demo_3d/bin/gz` to `PATH`. The expected proof was:
+-
+-```text
+-results/demo/visual_runtime_patch.jsonl
+-```
+-
+-and `SceneBroadcaster` inside `/tmp/nav2_*.sdf`.
+-
+-The user run showed both absent:
+-
+-```text
+-scene_service=MISSING
+-Runtime SDF: /tmp/nav2_....sdf
+-SceneBroadcaster in runtime SDF: <empty>
+-Demo patch log: <empty>
+-```
+-
+-Therefore the wrapper was not on the actual Gazebo launch path.
+-
+-The canonical navigation runtime is launched through ROS 2 / Nav2, and the
+-runtime materializes the ROS installation environment. A PATH interception
+-outside that boundary is not authoritative.
+-
+-## v1.5 correction
+-
+-v1.5 removes PATH interception from the execution design.
+-
+-The demo already uses a detached Git worktree to protect accepted Evidence.
+-v1.5 patches the **worktree copy** of the world before the canonical runner
+-starts:
+-
+-```text
+-main repo canonical world  (read-only)
+-            ↓
+-detached worktree
+-            ↓
+-worktree/data/simulation/...sdf
+-            ↓
+-add SceneBroadcaster
+-            ↓
+-ros2 launch / Nav2
+-            ↓
+-/tmp/nav2_*.sdf inherits SceneBroadcaster
+-            ↓
+-gz sim -s
+-            ↓
+-/world/.../scene/info
+-```
+-
+-No file under the main repository's `data/simulation`, `results/simulation`,
+-or `results/reviews` is changed.
+-
+-Patch provenance is written to:
+-
+-```text
+-results/demo/visual_worktree_patch.jsonl
+-```
+-
+-This is portfolio visualization output only, not canonical acceptance Evidence.
+diff --git a/demo_3d/README.md b/demo_3d/README.md
+index 792f68c..94f06af 100644
+--- a/demo_3d/README.md
++++ b/demo_3d/README.md
+@@ -1,467 +1,22 @@
+-# SIMULATION_FIRST_V1 — 3D Rendering Demo Package
++# Simulation First — Gazebo 3D demo 1.6
+ 
+-이 버전은 **JSON/Dashboard 중심 데모가 아니라 실제 Gazebo 3D 렌더링을 주 화면**으로 사용하도록 설계했습니다.
++The primary demo runs the real SIM-008 Normal E2E mission in Gazebo Harmonic and attaches a GUI to its runtime-owned transport. It requires live scene publication, the Brake ECU entity, rendered window evidence, mission success and cleanup before returning success.
+ 
+-## 장면별 원칙
+-
+-| 장면 | 3D 표현 | 의미 |
+-|---|---|---|
+-| Normal E2E | 실제 canonical Gazebo 실행 + GUI attach | 실제 정상 mission |
+-| Navigation Timeout | 실제 SIM-009 Navigation fault 실행 + Gazebo GUI | timeout → unknown → reconciliation/retry |
+-| Verification Uncertain | live Gazebo world + 실제 Verification uncertain 평가 | uncertainty는 물리 motion보다 판정 의미가 중심 |
+-| Final Qualification | **paused Gazebo 3D context** + 실제 evidence-only Gate | Gate는 simulation을 실행하지 않음 |
+-
+-`Final Qualification`에서 새 simulation workload를 실행하지 않는 것은 의도적입니다. `TASK-SIM-E2E`는 evidence-only Gate이기 때문입니다.
+-
+----
+-
+-## 설치
+-
+-프로젝트 루트에 `demo_3d/`를 복사합니다.
++From the repository root:
+ 
+ ```bash
+-cd ~/projects/factory_physical_ai_simDemo
+-cp -a /path/to/package/demo_3d .
+-chmod +x demo_3d/scripts/*.sh
+ source .venv-sim/bin/activate
+-```
+-
+-필요 시:
+-
+-```bash
+-cp demo_3d/config/demo.env.example demo_3d/config/demo.env
+-source demo_3d/config/demo.env
+-```
+-
+-## 1. Preflight
+-
+-```bash
+ ./demo_3d/scripts/00_preflight_3d.sh
+-```
+-
+-확인 항목:
+-- canonical results tree clean
+-- accepted SIM-008/SIM-009/SIM-010/E2E artifacts 존재
+-- Gazebo CLI (`gz sim` 또는 `ign gazebo`) 탐지
+-- SIM-008 runner 탐지
+-- failure runner의 scenario-filter 지원 여부
+-- world file 자동 탐지 여부
+-
+-## 2. HUD는 보조 화면
+-
+-별도 Terminal:
+-
+-```bash
+-./demo_3d/scripts/launch_3d_hud.sh
+-```
+-
+-브라우저:
+-`http://127.0.0.1:8766`
+-
+-HUD는 3D 화면을 대체하지 않고 현재 scene/decision만 표시합니다.
+-
+-## 3. Normal E2E — 실제 Gazebo 3D
+-
+-```bash
+-./demo_3d/scripts/01_normal_e2e_3d.sh
+-```
+-
+-동작:
+-1. canonical runner와 같은 `GZ_PARTITION`으로 Gazebo GUI attach
+-2. normal E2E 실제 실행
+-3. runner에 `--output`이 없으면 detached Git worktree에서 안전 실행
+-4. 결과는 `results/demo/SIM-008_normal_e2e_demo.json`
+-5. accepted Evidence는 변경하지 않음
+-
+-## 4. Navigation Timeout — 실제 Gazebo 3D fault
+-
+-```bash
+-./demo_3d/scripts/02_navigation_timeout_3d.sh
+-```
+-
+-우선순위:
+-1. `DEMO_NAV_TIMEOUT_COMMAND`이 설정되어 있으면 그 실제 canonical scenario command 실행
+-2. failure runner가 `--scenario` / `--scenario-id` / `--only`를 지원하면 `SIM009-NAV-TIMEOUT-RETRY`만 실행
+-3. 그렇지 않으면 full SIM-009 suite를 실제 실행하면서 Gazebo GUI attach
+-
+-**발표 품질을 위해서는 1 또는 2를 권장**합니다. Full suite fallback은 시연 시간이 길 수 있습니다.
+-
+-## 5. Verification Uncertain — 3D world + 실제 uncertain 평가
+-
+-```bash
+-./demo_3d/scripts/03_verification_uncertain_3d.sh
+-```
+-
+-대상 canonical scenario:
+-`SIM009-VERIFY-UNCERTAIN`
+-
+-Verification uncertainty가 실제로 robot motion을 발생시키는 scenario가 아닐 수 있으므로, 이 경우 Gazebo world를 live 3D context로 유지하면서 실제 Verification evaluation을 실행합니다.
+-
+-HUD에 다음 disclosure가 표시됩니다:
+-
+-> 3D world is visual context when the Verification fixture itself has no physical motion.
+-
+-즉 **3D context를 semantic execution으로 속이지 않습니다.**
+-
+-## 6. Final Qualification — 3D context + 실제 Gate
+-
+-```bash
+-./demo_3d/scripts/04_final_qualification_3d.sh
+-```
+-
+-이 단계는:
+-- canonical world를 **paused 3D context**로 표시
+-- 실제 `verify_simulation_e2e_qualification.py` 실행
+-- 결과를 `results/demo/SIM-E2E_qualification_demo.json`에 기록
+-- stdout decision을 그대로 표시
+-
+-중요:
+-`TASK-SIM-E2E` 자체는 simulator를 실행하지 않습니다. 3D 화면은 발표 맥락을 유지하기 위한 paused context입니다.
+-
+-## 7. 전체 Showcase
+-
+-```bash
+-./demo_3d/scripts/run_3d_showcase.sh
+-```
+-
+-순서:
+-1. Normal E2E 3D
+-2. Navigation Timeout 3D
+-3. Verification Uncertain 3D
+-4. Final Qualification + paused 3D context
+-
+-각 장면은 Enter 후 다음으로 넘어갑니다.
+-
+-
+----
+-
+-## v1.1 — Runtime-owned Gazebo server attach
+-
+-이 패키지는 더 이상 Demo가 먼저 `GZ_PARTITION`을 만들고 `gz sim -g`를 실행하지 않습니다.
+-
+-실제 실행 순서:
+-
+-```text
+-canonical runner start
+-        ↓
+-new `gz sim ... -s ...` server 자동 탐지
+-        ↓
+-같은 polling iteration에서 /proc/<PID>/environ 캡처
+-        ↓
+-GZ_PARTITION / ROS_DOMAIN_ID / GZ_* / IGN_* 추출
+-        ↓
+-동일 transport 환경으로 `gz sim -g`
+-```
+-
+-따라서 SIM-008/SIM-009 runner가 매 실행마다 동적으로 만드는 partition/domain을 GUI가 그대로 따라갑니다.
+-
+-예:
+-
+-```text
+-server:
+-  GZ_PARTITION=sim004-xxxxxxxxxxxx
+-  ROS_DOMAIN_ID=125
+-
+-GUI:
+-  GZ_PARTITION=sim004-xxxxxxxxxxxx
+-  ROS_DOMAIN_ID=125
+-```
+-
+-### 이전 오류가 해결되는 이유
+-
+-이전 버전:
+-
+-```text
+-GUI partition = sim-first-demo-...
+-server partition = sim004-...
+-→ 서로 다른 Transport graph
+-→ 검은 Gazebo viewport
+-```
+-
+-수정 버전:
+-
+-```text
+-server 생성
+-→ server 환경 캡처
+-→ GUI가 server partition을 상속
+-→ 동일 world 표시
+-```
+-
+-`/proc/<PID>/environ`은 server 발견 즉시 읽으므로 짧은 실행이 끝난 뒤 PID가 사라지는 race도 줄였습니다.
+-
+-### 실제 저장소 failure runner
+-
+-다음 두 이름을 자동 탐지합니다.
+-
+-```text
+-scripts/run_simulation_failure_recovery.py
+-scripts/run_simulation_failure_suite.py
+-```
+-
+-둘 다 존재하면 임의 선택하지 않고 `DEMO_FAILURE_RUNNER` 지정이 필요합니다.
+-
+-
+----
+-
+-## v1.2 — Gazebo GUI world-load race 해결
+-
+-v1.1에서는 partition/domain attach는 성공했지만 canonical runner가 매우 빠르게 완료되어,
+-Gazebo GUI가 world/entity graph를 수신하기 전에 runtime cleanup이 server를 종료할 수 있었습니다.
+-
+-관찰 예:
+-
+-```text
+-server  : gz sim -r -s /tmp/nav2_....sdf
+-GUI     : gz sim -g
+-attach  : same GZ_PARTITION / ROS_DOMAIN_ID
+-runner  : rc=0
+-server  : bounded cleanup으로 종료
+-GUI     : Entity Tree empty
+-```
+-
+-v1.2 실행 순서:
+-
+-```text
+-canonical runner start
+-        ↓
+-runtime-owned Gazebo server 발견
+-        ↓
+-runner parent만 SIGSTOP
+-        ↓
+-같은 partition/domain으로 GUI attach
+-        ↓
+-DEMO_GUI_WARMUP_SECONDS (기본 4초)
+-        ↓
+-runner parent SIGCONT
+-        ↓
+-실제 mission execution
+-        ↓
+-canonical bounded cleanup
+-```
+-
+-중요:
+-- Gazebo/Nav2 child server 자체는 warm-up 동안 계속 살아 있습니다.
+-- accepted runtime/Evidence는 수정하지 않습니다.
+-- presentation orchestration에서 runner parent의 진행만 짧게 지연합니다.
+-- 기본 4초이며 최대 8초로 제한됩니다.
+-
+-정상 출력 예:
+-
+-```text
+-[3D DEMO] attached GUI to runtime-owned server \
+-pid=... partition=sim004-... ROS_DOMAIN_ID=... warmup=4.0s
+-```
+-
+-GUI가 여전히 늦게 뜨면 `demo.env`에서:
+-
+-```bash
+-export DEMO_GUI_WARMUP_SECONDS=5.0
+-```
+-
+-정도로만 올리는 것을 권장합니다.
+-
+-
+----
+-
+-## v1.3 — Current runtime server follow
+-
+-진단 결과 v1.2에는 두 문제가 있었습니다.
+-
+-1. GUI가 이전 Gazebo server의 partition/domain을 유지한 채 새 server가 생성될 수 있었습니다.
+-2. GUI warm-up을 위해 runner parent를 `SIGSTOP`한 실행에서 `NAVIGATION_LIFECYCLE_START_FAILED`가 관찰되었습니다.
+-
+-v1.3은 canonical runtime timing을 변경하지 않습니다.
+-
+-```text
+-canonical runner
+-      ↓
+-runner process tree의 gz server 탐색
+-      ↓
+-server A 발견
+-      ↓
+-server A transport로 GUI attach + /proc 재검증
+-      ↓
+-server A 종료 / server B 생성
+-      ↓
+-stale GUI 즉시 종료
+-      ↓
+-server B transport로 새 GUI attach
+-      ↓
+-runner 완료
+-      ↓
+-canonical bounded cleanup
+-      ↓
+-GUI도 자동 종료
+-```
+-
+-따라서 `Enter` prompt 이후 빈 Gazebo 창을 남기지 않습니다. 3D 화면은 **canonical runner가 실제로 실행되는 동안** 보여주는 것이 정상입니다.
+-
+-### 시작 전에 기존 GUI를 닫아야 함
+-
+-v1.3은 stale GUI 혼입을 방지하기 위해 demo 시작 전에 `gz sim -g`가 이미 실행 중이면 fail-closed합니다.
+-
+-확인:
+-
+-```bash
+-pgrep -af 'gz sim -g'
+-```
+-
+-기존 GUI만 종료한 뒤 실행하십시오.
+-
+-```bash
+-kill <GUI_PID>
+ ./demo_3d/scripts/01_normal_e2e_3d.sh
++./demo_3d/scripts/05_verify_3d_runtime.sh
+ ```
+ 
+-정상적인 핵심 출력:
+-
+-```text
+-[3D DEMO] GUI transport verified \
+-server_pid=... gui_pid=... \
+-partition=sim004-... ROS_DOMAIN_ID=...
+-```
+-
+-runtime이 Gazebo server를 교체하면 동일 메시지가 새 PID로 다시 출력됩니다.
+-
+-
+----
+-
+-## v1.4 — Demo-only SceneBroadcaster injection
+-
+-### Why v1.4 changed direction
+-
+-Gazebo Harmonic and earlier ignore `GZ_SIM_SERVER_CONFIG_PATH` when the loaded SDF already contains system `<plugin>` elements. The accepted SIM-008 world already contains Physics / UserCommands / Sensors / Imu, so an external server config alone cannot reliably add SceneBroadcaster.
+-
+-v1.4 therefore does **not** modify:
++One authoritative path: disposable detached worktree → resolve `headless:=True` xacro → add the installed SceneBroadcaster at world scope → unchanged SIM-008 runner → unchanged installed Nav2 launch → capture its actual `/tmp/nav2_*.sdf` → attach GUI using server `/proc` environment → verify live scene and mission → bounded cleanup.
+ 
+-```text
+-data/simulation/sim008_normal_system_world.sdf
+-results/simulation/*
+-results/reviews/*
+-```
+-
+-Instead it prepends:
+-
+-```text
+-demo_3d/bin/
+-```
+-
+-to the canonical runner's `PATH`.
+-
+-When the runtime launches:
+-
+-```text
+-gz sim -r -s /tmp/nav2_xxxxx.sdf
+-```
+-
+-the demo wrapper:
+-
+-```text
+-temporary /tmp/nav2_xxxxx.sdf
+-        ↓
+-add SceneBroadcaster if missing
+-        ↓
+-exec real gz
+-```
++This is **DEMO_VISUALIZATION_AUGMENTATION**. The world is augmented for presentation. The mission, Nav2, semantic state and retry logic use the existing runtime. The generated demo Evidence differs from frozen accepted Evidence and grants no new canonical acceptance. MuJoCo remains supporting component Evidence, without a live Gazebo coupling.
+ 
+-The original repository world remains unchanged.
++Normal proof goes to `results/demo/latest_validation/`. Set `DEMO_VALIDATION_DIR` to select another directory. The package qualification proof is in `results/demo/final_validation/` and summarized in [FINAL_VALIDATION.md](FINAL_VALIDATION.md). The GUI closes when the mission ends; it is expected to disappear after cleanup.
+ 
+-### Expected runtime plugin
+-
+-The temporary runtime SDF should contain:
+-
+-```xml
+-<plugin
+-  filename="gz-sim-scene-broadcaster-system"
+-  name="gz::sim::systems::SceneBroadcaster"/>
+-```
+-
+-### Transparency
+-
+-Every runtime patch is recorded in:
+-
+-```text
+-results/demo/visual_runtime_patch.jsonl
+-```
+-
+-including original and patched SHA256 values.
+-
+-This output is **demo-only visualization evidence** and must not be used as canonical TASK-SIM-008 acceptance Evidence.
+-
+-### Verify during Normal E2E
+-
+-Terminal 1:
+-
+-```bash
+-./demo_3d/scripts/01_normal_e2e_3d.sh
+-```
+-
+-During the live run, Terminal 2:
+-
+-```bash
+-./demo_3d/scripts/05_verify_scene_broadcaster.sh
+-```
+-
+-Expected:
+-
+-```text
+-[VERIFY] SceneBroadcaster service is available.
+-```
+-
+-The Normal runner should also report:
+-
+-```text
+-scene_service=/world/sim008_normal_system_world/scene/info
+-```
+-
+-
+----
+-
+-## v1.5 — Worktree-world SceneBroadcaster injection
+-
+-v1.4의 `PATH -> demo_3d/bin/gz` interception은 ROS 2 / Nav2가 실제 Gazebo
+-child를 만드는 경로에서 사용되지 않는 경우가 확인되었습니다.
+-
+-v1.5는 더 단순하고 강한 경계를 사용합니다.
+-
+-```text
+-canonical repository world
+-        │  수정 안 함
+-        ▼
+-detached Git worktree
+-        │
+-        ├─ world copy에 SceneBroadcaster 추가
+-        │
+-        └─ canonical runner 실행
+-                ↓
+-           Nav2 temporary SDF
+-                ↓
+-           Gazebo server + scene service
+-```
+-
+-### Canonical 보호
+-
+-다음은 변경하지 않습니다.
+-
+-```text
+-data/simulation/*
+-results/simulation/*
+-results/reviews/*
+-```
+-
+-main repository에서의 변경 여부는 다음으로 확인합니다.
+-
+-```bash
+-git status --short -- data/simulation results/simulation results/reviews
+-```
+-
+-출력이 없어야 합니다.
+-
+-### Demo patch provenance
+-
+-```bash
+-cat results/demo/visual_worktree_patch.jsonl
+-```
++[3D_DEMO_GUIDE.md](3D_DEMO_GUIDE.md) explains live checks and the optional failure/qualification presentations. [FINAL_ROOT_CAUSE.md](FINAL_ROOT_CAUSE.md) explains the repair. The browser HUD is optional and secondary.
+ 
+-각 행은 `original_sha256`, `patched_sha256`, `scope=isolated_git_worktree_only`
+-를 기록합니다.
++Prerequisites: the existing Ubuntu/WSL ROS 2 Jazzy + Gazebo Harmonic installation, `.venv-sim`, Fuel Depot resources, GUI display access and this Git repository's accepted runtime files. This package is an overlay for this repository, not a standalone simulator distribution.
+diff --git a/demo_3d/VERSION b/demo_3d/VERSION
+index c239c60..810ee4e 100644
+--- a/demo_3d/VERSION
++++ b/demo_3d/VERSION
+@@ -1 +1 @@
+-1.5
++1.6
+diff --git a/demo_3d/bin/gz b/demo_3d/bin/gz
+deleted file mode 100755
+index 0b63693..0000000
+--- a/demo_3d/bin/gz
++++ /dev/null
+@@ -1,139 +0,0 @@
+-#!/usr/bin/env python3
+-from __future__ import annotations
+-
+-import hashlib
+-import json
+-import os
+-import re
+-import sys
+-import time
+-from pathlib import Path
+-
+-PLUGIN = """    <plugin filename="gz-sim-scene-broadcaster-system" name="gz::sim::systems::SceneBroadcaster"/>
+-"""
+-
+-def sha256(path: Path) -> str:
+-    h = hashlib.sha256()
+-    with path.open("rb") as f:
+-        for chunk in iter(lambda: f.read(1024 * 1024), b""):
+-            h.update(chunk)
+-    return h.hexdigest()
+-
+-def is_server_sim(argv: list[str]) -> bool:
+-    if not argv or argv[0] != "sim":
+-        return False
+-    return (
+-        "-s" in argv
+-        or "--server-only" in argv
+-        or "--server" in argv
+-    )
+-
+-def find_sdf(argv: list[str]) -> Path | None:
+-    for arg in reversed(argv):
+-        if arg.endswith(".sdf") or arg.endswith(".world"):
+-            p = Path(arg)
+-            if p.is_file():
+-                return p
+-    return None
+-
+-def inject_scene_broadcaster(path: Path) -> dict:
+-    text = path.read_text(encoding="utf-8")
+-    original_sha = sha256(path)
+-
+-    already = (
+-        "gz::sim::systems::SceneBroadcaster" in text
+-        or "gz-sim-scene-broadcaster-system" in text
+-    )
+-    if already:
+-        return {
+-            "path": str(path),
+-            "changed": False,
+-            "reason": "already_present",
+-            "original_sha256": original_sha,
+-            "patched_sha256": original_sha,
+-        }
+-
+-    match = re.search(r"<world\b[^>]*>", text)
+-    if not match:
+-        return {
+-            "path": str(path),
+-            "changed": False,
+-            "reason": "world_element_not_found",
+-            "original_sha256": original_sha,
+-            "patched_sha256": original_sha,
+-        }
+-
+-    insert_at = match.end()
+-    patched = text[:insert_at] + "\n" + PLUGIN + text[insert_at:]
+-
+-    backup = path.with_suffix(path.suffix + ".pre_demo_scene_broadcaster")
+-    if not backup.exists():
+-        backup.write_text(text, encoding="utf-8")
+-
+-    path.write_text(patched, encoding="utf-8")
+-    patched_sha = sha256(path)
+-
+-    return {
+-        "path": str(path),
+-        "backup": str(backup),
+-        "changed": True,
+-        "reason": "scene_broadcaster_injected",
+-        "original_sha256": original_sha,
+-        "patched_sha256": patched_sha,
+-    }
+-
+-def append_log(record: dict):
+-    log_path = os.environ.get("DEMO_VISUAL_PATCH_LOG")
+-    if not log_path:
+-        return
+-    p = Path(log_path)
+-    p.parent.mkdir(parents=True, exist_ok=True)
+-    record = {"time": time.time(), **record}
+-    with p.open("a", encoding="utf-8") as f:
+-        f.write(json.dumps(record, ensure_ascii=False) + "\n")
+-
+-def main():
+-    real_gz = os.environ.get("DEMO_REAL_GZ")
+-    if not real_gz:
+-        print(
+-            "[DEMO GZ WRAPPER] DEMO_REAL_GZ is not set",
+-            file=sys.stderr,
+-        )
+-        return 127
+-
+-    argv = sys.argv[1:]
+-    if is_server_sim(argv):
+-        sdf = find_sdf(argv)
+-        if sdf:
+-            try:
+-                record = inject_scene_broadcaster(sdf)
+-                append_log(record)
+-                if record["changed"]:
+-                    print(
+-                        "[DEMO GZ WRAPPER] SceneBroadcaster injected into "
+-                        f"{sdf}",
+-                        file=sys.stderr,
+-                    )
+-                else:
+-                    print(
+-                        "[DEMO GZ WRAPPER] SceneBroadcaster injection skipped: "
+-                        f"{record['reason']} ({sdf})",
+-                        file=sys.stderr,
+-                    )
+-            except Exception as exc:
+-                append_log({
+-                    "path": str(sdf),
+-                    "changed": False,
+-                    "reason": "exception",
+-                    "error": repr(exc),
+-                })
+-                print(
+-                    f"[DEMO GZ WRAPPER] injection failed: {exc}",
+-                    file=sys.stderr,
+-                )
+-                return 126
+-
+-    os.execv(real_gz, [real_gz, *argv])
+-
+-if __name__ == "__main__":
+-    raise SystemExit(main())
+diff --git a/demo_3d/config/demo.env b/demo_3d/config/demo.env
+index f78e313..bdfffd6 100644
+--- a/demo_3d/config/demo.env
++++ b/demo_3d/config/demo.env
+@@ -1,52 +1,8 @@
+-# Copy to demo_3d/config/demo.env and source it before the demo if needed.
+-
+-# Repository overrides
+-# export REPO_ROOT="$HOME/projects/factory_physical_ai_simDemo"
+-# export DEMO_NORMAL_RUNNER="scripts/run_simulation_normal_system_e2e.py"
+-# export DEMO_SIM008_EVIDENCE="results/simulation/SIM-008_normal_system_e2e.json"
+-
+-# Explicit canonical world if automatic resolution is ambiguous.
+-# export DEMO_WORLD="data/worlds/factory.sdf"
+-
+-# Fixed isolation values for all 3D demo processes.
+-export DEMO_ROS_DOMAIN_ID=42
+-# export DEMO_GZ_PARTITION="sim-first-portfolio-demo"
+-
+-# If the failure-suite CLI does not expose --scenario/--scenario-id/--only,
+-# bind a task-specific live command here. It must be a real scenario execution,
+-# not a fabricated Evidence writer.
+-#
+-# export DEMO_NAV_TIMEOUT_COMMAND='python3 scripts/... <real canonical timeout scenario command>'
+-# export DEMO_VERIFY_UNCERTAIN_COMMAND='python3 scripts/... <real canonical uncertain scenario command>'
+-
+-# For Verification Uncertain, keep a live Gazebo context world visible when
+-# the verification fixture itself has no physical-motion workload.
+-export DEMO_UNCERTAIN_CONTEXT_WORLD=1
+-
+-# Set to 1 for automated runs that should not wait for Enter before closing GUI.
+-# export DEMO_NO_WAIT=1
+-
+-
+-# Canonical runner가 생성한 Gazebo server를 자동 탐지하는 최대 시간.
+-export DEMO_GZ_DISCOVERY_TIMEOUT=20
+-
+-# 중요:
+-# canonical Normal/SIM-009 runner에는 DEMO_GZ_PARTITION을 강제하지 않습니다.
+-# GUI는 실제 server의 GZ_PARTITION / ROS_DOMAIN_ID를 자동 상속합니다.
+-
+-
+-# v1.2: Gazebo server 발견 후 canonical runner parent를 잠깐 멈추고
+-# GUI가 실제 world/entity graph를 로드할 시간을 확보합니다.
+-# 3~5초 권장. canonical startup budget을 과도하게 소비하지 않도록 최대 8초로 clamp됩니다.
+-export DEMO_GUI_WARMUP_SECONDS=4.0
+-
+-# 문제 진단용: warm-up pause를 끄려면 1.
+-# export DEMO_DISABLE_GUI_WARMUP=0
+-
+-
+-# v1.3: runtime-owned Gazebo server process tree를 따라가는 polling interval.
+-# 보통 0.10초면 충분합니다.
++# Demo-only configuration. The runner chooses GZ_PARTITION / ROS_DOMAIN_ID.
+ export DEMO_SERVER_FOLLOW_POLL_SECONDS=0.10
+-
+-# v1.3에서는 SIGSTOP GUI warm-up을 사용하지 않습니다.
+-# DEMO_GUI_WARMUP_SECONDS는 더 이상 Normal/SIM-009 canonical run에 적용되지 않습니다.
++export DEMO_SCENE_SERVICE_TIMEOUT=5
++# Secondary presentation context after the SIM-009 verification suite exits.
++export DEMO_UNCERTAIN_CONTEXT_WORLD=1
++# Set DEMO_NO_WAIT=1 for unattended optional presentation steps.
++# Set DEMO_VALIDATION_DIR to select the Normal run's evidence directory.
++# Set LIBGL_ALWAYS_SOFTWARE=1 only when diagnosing a renderer failure.
+diff --git a/demo_3d/config/demo.env.example b/demo_3d/config/demo.env.example
+index 0a32bb2..bdfffd6 100644
+--- a/demo_3d/config/demo.env.example
++++ b/demo_3d/config/demo.env.example
+@@ -1,60 +1,8 @@
+-# Copy to demo_3d/config/demo.env and source it before the demo if needed.
+-
+-# Repository overrides
+-# export REPO_ROOT="$HOME/projects/factory_physical_ai_simDemo"
+-# export DEMO_NORMAL_RUNNER="scripts/run_simulation_normal_system_e2e.py"
+-# export DEMO_SIM008_EVIDENCE="results/simulation/SIM-008_normal_system_e2e.json"
+-
+-# Explicit canonical world if automatic resolution is ambiguous.
+-# export DEMO_WORLD="data/worlds/factory.sdf"
+-
+-# Fixed isolation values for all 3D demo processes.
+-export DEMO_ROS_DOMAIN_ID=42
+-# export DEMO_GZ_PARTITION="sim-first-portfolio-demo"
+-
+-# If the failure-suite CLI does not expose --scenario/--scenario-id/--only,
+-# bind a task-specific live command here. It must be a real scenario execution,
+-# not a fabricated Evidence writer.
+-#
+-# export DEMO_NAV_TIMEOUT_COMMAND='python3 scripts/... <real canonical timeout scenario command>'
+-# export DEMO_VERIFY_UNCERTAIN_COMMAND='python3 scripts/... <real canonical uncertain scenario command>'
+-
+-# For Verification Uncertain, keep a live Gazebo context world visible when
+-# the verification fixture itself has no physical-motion workload.
+-export DEMO_UNCERTAIN_CONTEXT_WORLD=1
+-
+-# Set to 1 for automated runs that should not wait for Enter before closing GUI.
+-# export DEMO_NO_WAIT=1
+-
+-
+-# Canonical runner가 생성한 Gazebo server를 자동 탐지하는 최대 시간.
+-export DEMO_GZ_DISCOVERY_TIMEOUT=20
+-
+-# 중요:
+-# canonical Normal/SIM-009 runner에는 DEMO_GZ_PARTITION을 강제하지 않습니다.
+-# GUI는 실제 server의 GZ_PARTITION / ROS_DOMAIN_ID를 자동 상속합니다.
+-
+-
+-# v1.2: Gazebo server 발견 후 canonical runner parent를 잠깐 멈추고
+-# GUI가 실제 world/entity graph를 로드할 시간을 확보합니다.
+-# 3~5초 권장. canonical startup budget을 과도하게 소비하지 않도록 최대 8초로 clamp됩니다.
+-export DEMO_GUI_WARMUP_SECONDS=4.0
+-
+-# 문제 진단용: warm-up pause를 끄려면 1.
+-# export DEMO_DISABLE_GUI_WARMUP=0
+-
+-
+-# v1.3: runtime-owned Gazebo server process tree를 따라가는 polling interval.
+-# 보통 0.10초면 충분합니다.
++# Demo-only configuration. The runner chooses GZ_PARTITION / ROS_DOMAIN_ID.
+ export DEMO_SERVER_FOLLOW_POLL_SECONDS=0.10
+-
+-# v1.3에서는 SIGSTOP GUI warm-up을 사용하지 않습니다.
+-# DEMO_GUI_WARMUP_SECONDS는 더 이상 Normal/SIM-009 canonical run에 적용되지 않습니다.
+-
+-
+-# v1.4: SceneBroadcaster service detection timeout.
+ export DEMO_SCENE_SERVICE_TIMEOUT=5
+-
+-# v1.4 does NOT modify canonical world files.
+-# A PATH wrapper injects SceneBroadcaster only into temporary runtime SDFs
+-# passed to `gz sim -s`.
++# Secondary presentation context after the SIM-009 verification suite exits.
++export DEMO_UNCERTAIN_CONTEXT_WORLD=1
++# Set DEMO_NO_WAIT=1 for unattended optional presentation steps.
++# Set DEMO_VALIDATION_DIR to select the Normal run's evidence directory.
++# Set LIBGL_ALWAYS_SOFTWARE=1 only when diagnosing a renderer failure.
+diff --git a/demo_3d/scripts/05_verify_scene_broadcaster.sh b/demo_3d/scripts/05_verify_scene_broadcaster.sh
+deleted file mode 100755
+index 88f2c7a..0000000
+--- a/demo_3d/scripts/05_verify_scene_broadcaster.sh
++++ /dev/null
+@@ -1,75 +0,0 @@
+-#!/usr/bin/env bash
+-set -euo pipefail
+-
+-ROOT="${REPO_ROOT:-$(git rev-parse --show-toplevel 2>/dev/null || pwd)}"
+-
+-SERVER_PID="$(
+-  for p in $(pgrep -f 'gz sim|ign gazebo' 2>/dev/null || true); do
+-    [[ -r "/proc/$p/cmdline" ]] || continue
+-    cmd="$(tr '\0' ' ' <"/proc/$p/cmdline" 2>/dev/null)"
+-    if [[ "$cmd" == *"gz sim"* && "$cmd" == *" -s "* ]]; then
+-      echo "$p"
+-    fi
+-  done | tail -1
+-)"
+-
+-if [[ -z "${SERVER_PID:-}" ]]; then
+-  echo "[VERIFY] No live Gazebo server found." >&2
+-  exit 2
+-fi
+-
+-GZ_PARTITION="$(
+-  tr '\0' '\n' <"/proc/$SERVER_PID/environ" \
+-    | sed -n 's/^GZ_PARTITION=//p' | head -1
+-)"
+-ROS_DOMAIN_ID="$(
+-  tr '\0' '\n' <"/proc/$SERVER_PID/environ" \
+-    | sed -n 's/^ROS_DOMAIN_ID=//p' | head -1
+-)"
+-export GZ_PARTITION
+-export IGN_PARTITION="$GZ_PARTITION"
+-export ROS_DOMAIN_ID
+-
+-echo "[VERIFY] server_pid=$SERVER_PID"
+-echo "[VERIFY] GZ_PARTITION=$GZ_PARTITION"
+-echo "[VERIFY] ROS_DOMAIN_ID=$ROS_DOMAIN_ID"
+-
+-echo
+-echo "[VERIFY] Scene service:"
+-SCENE="$(
+-  gz service -l \
+-    | grep -E '^/world/.+/scene/info$' \
+-    | head -1 || true
+-)"
+-echo "${SCENE:-MISSING}"
+-
+-echo
+-echo "[VERIFY] Runtime SDF:"
+-SDF="$(
+-  tr '\0' ' ' <"/proc/$SERVER_PID/cmdline" \
+-    | grep -oE '/[^ ]+\.(sdf|world)' \
+-    | head -1
+-)"
+-echo "${SDF:-MISSING}"
+-
+-if [[ -n "${SDF:-}" && -f "$SDF" ]]; then
+-  echo
+-  echo "[VERIFY] SceneBroadcaster in runtime SDF:"
+-  grep -n -A1 -B1 \
+-    'SceneBroadcaster\|scene-broadcaster' \
+-    "$SDF" || true
+-fi
+-
+-echo
+-echo "[VERIFY] Demo worktree patch log:"
+-tail -n 8 "$ROOT/results/demo/visual_worktree_patch.jsonl" \
+-  2>/dev/null || true
+-
+-if [[ -z "$SCENE" ]]; then
+-  echo
+-  echo "[VERIFY] FAIL: /world/.../scene/info is missing."
+-  exit 3
+-fi
+-
+-echo
+-echo "[VERIFY] PASS: SceneBroadcaster service is available."
+diff --git a/demo_3d/scripts/run_3d_showcase.sh b/demo_3d/scripts/run_3d_showcase.sh
+index d4d28a4..135851c 100755
+--- a/demo_3d/scripts/run_3d_showcase.sh
++++ b/demo_3d/scripts/run_3d_showcase.sh
+@@ -1,13 +1,9 @@
+ #!/usr/bin/env bash
+ set -euo pipefail
+-ROOT="${REPO_ROOT:-$(git rev-parse --show-toplevel 2>/dev/null || pwd)}"
++ROOT="${REPO_ROOT:-$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/../.." && pwd)}"
+ "$ROOT/demo_3d/scripts/00_preflight_3d.sh"
+-read -r -p "Normal E2E 3D 시작 [Enter] "
+-"$ROOT/demo_3d/scripts/01_normal_e2e_3d.sh"
+-read -r -p "Navigation Timeout 3D 시작 [Enter] "
+-"$ROOT/demo_3d/scripts/02_navigation_timeout_3d.sh"
+-read -r -p "Verification Uncertain 3D 시작 [Enter] "
+-"$ROOT/demo_3d/scripts/03_verification_uncertain_3d.sh"
+-read -r -p "Final Qualification 3D context 시작 [Enter] "
+-"$ROOT/demo_3d/scripts/04_final_qualification_3d.sh"
++for step in 01_normal_e2e_3d 02_navigation_timeout_3d 03_verification_uncertain_3d 04_final_qualification_3d; do
++  if [[ "${DEMO_NO_WAIT:-0}" != 1 ]]; then read -r -p "Run $step [Enter] "; fi
++  "$ROOT/demo_3d/scripts/$step.sh"
++done
+ echo "[3D SHOWCASE] complete"
+diff --git a/demo_3d/tools/demo3d_common.py b/demo_3d/tools/demo3d_common.py
+index af20fc6..9182985 100644
+--- a/demo_3d/tools/demo3d_common.py
++++ b/demo_3d/tools/demo3d_common.py
+@@ -43,21 +43,21 @@ def write_state(root: Path, **kw):
+     )
+ 
+ 
+-def run_help(script: Path) -> str:
+-    cp = subprocess.run(
+-        [sys.executable, str(script), "--help"],
+-        capture_output=True,
+-        text=True,
+-    )
+-    return (cp.stdout or "") + "\n" + (cp.stderr or "")
+-
+-
+ def has_flag(script: Path, *flags: str) -> str | None:
+-    help_text = run_help(script)
+-    for flag in flags:
+-        if flag in help_text:
+-            return flag
+-    return None
++    """Read literal argparse declarations without executing the runner.
++
++    SIM-008 and SIM-009 ignore --help and execute missions. Capability
++    discovery must never spawn those scripts in the canonical checkout.
++    """
++    import ast
++    tree = ast.parse(script.read_text())
++    declared = set()
++    for node in ast.walk(tree):
++        if (isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute)
++                and node.func.attr == "add_argument"):
++            declared.update(arg.value for arg in node.args
++                            if isinstance(arg, ast.Constant) and isinstance(arg.value, str))
++    return next((flag for flag in flags if flag in declared), None)
+ 
+ 
+ def normal_runner(root: Path) -> Path:
+@@ -365,6 +365,12 @@ def transport_matches(
+ def _is_gazebo_server(tokens: list[str] | None) -> bool:
+     if not tokens:
+         return False
++    import shlex
++    if len(tokens) == 1 and tokens[0].startswith(("gz sim ", "ign gazebo ")):
++        try:
++            tokens = shlex.split(tokens[0])
++        except ValueError:
++            return False
+     joined = " ".join(tokens)
+ 
+     looks_like_gz = ("gz sim" in joined) or ("ign gazebo" in joined)
+@@ -497,7 +503,7 @@ def start_gui_attach_to_server(
+ 
+     try:
+         proc = subprocess.Popen(
+-            cli + ["-g"],
++            cli + ["-v", "4", "-g"],
+             stdout=log,
+             stderr=subprocess.STDOUT,
+             env=env,
+@@ -589,22 +595,35 @@ def _sha256_file(path: Path) -> str:
+ 
+ 
+ def inject_scene_broadcaster_text(text: str) -> tuple[str, bool]:
+-    if (
+-        "gz::sim::systems::SceneBroadcaster" in text
+-        or "gz-sim-scene-broadcaster-system" in text
+-    ):
+-        return text, False
++    """Resolve Nav2's headless xacro, then augment its actual world plugins.
+ 
++    A plugin nested in xacro:unless is not an active world plugin. Resolve
++    that boundary first so Nav2's subsequent xacro pass cannot remove ours.
++    """
+     import re
++    import xml.etree.ElementTree as ET
++    original = text
++    if "xacro:" in text:
++        result = subprocess.run(
++            ["/opt/ros/jazzy/bin/xacro", "headless:=True", "/dev/stdin"],
++            input=text, text=True, capture_output=True, check=True, timeout=10,
++        )
++        text = result.stdout
++    world = ET.fromstring(text).find("world")
++    if world is None:
++        raise ValueError("Expected a world SDF for demo augmentation")
++    if any(p.get("name") == "gz::sim::systems::SceneBroadcaster"
++           for p in world.findall("plugin")):
++        return text, text != original
++    # Discover the definition from this installation, not a remembered name.
++    example = Path("/opt/ros/jazzy/share/ros_gz_sim_demos/worlds/default.sdf")
++    installed = ET.parse(example).getroot().find("world")
++    plugin = next(p for p in installed.findall("plugin")
++                  if p.get("name") == "gz::sim::systems::SceneBroadcaster")
+     match = re.search(r"<world\b[^>]*>", text)
+-    if not match:
+-        return text, False
+-
+-    plugin = (
+-        '\n    <plugin filename="gz-sim-scene-broadcaster-system" '
+-        'name="gz::sim::systems::SceneBroadcaster"/>\n'
+-    )
+-    return text[:match.end()] + plugin + text[match.end():], True
++    addition = "\n    <!-- DEMO_VISUALIZATION_AUGMENTATION -->\n    " + ET.tostring(plugin, encoding="unicode") + "\n"
++    text = text[:match.end()] + addition + text[match.end():]
++    return text, True
+ 
+ 
+ def make_visual_context_world(
+@@ -781,7 +800,7 @@ def visual_runner_env(
+     base_env: dict[str, str],
+ ) -> dict[str, str]:
+     """
+-    v1.5 compatibility helper.
++    Demo-only environment boundary.
+ 
+     Do NOT intercept `gz` through PATH. ros2/nav2 launch may materialize its
+     own ROS environment and resolve Gazebo independently. Visualization is
+@@ -1030,7 +1049,7 @@ def prepare_normal_session(
+     """
+     Always use a detached worktree for the 3D Normal E2E demo.
+ 
+-    v1.5 patches only the worktree copy of the accepted world with
++    Resolve headless xacro and augment only the worktree copy with
+     SceneBroadcaster. This avoids both canonical mutation and unreliable PATH
+     interception of Gazebo launched through ROS 2.
+     """
+@@ -1051,20 +1070,10 @@ def prepare_normal_session(
+         "1" if patch_record.get("changed") else "0"
+     )
+ 
+-    # If the canonical runner supports --output, keep even its generated
+-    # artifact inside the worktree. Never point it at the main repository.
+-    output_flag = has_flag(tmp / rel_runner, "--output")
++    # The SIM-008 runner has no CLI; it writes only inside this worktree.
+     generated = tmp / rel_canon
+     cmd = [sys.executable, str(tmp / rel_runner)]
+ 
+-    if output_flag:
+-        generated = (
+-            tmp
+-            / "results/demo/SIM-008_normal_e2e_demo.json"
+-        )
+-        generated.parent.mkdir(parents=True, exist_ok=True)
+-        cmd += [output_flag, str(generated)]
+-
+     return RunnerSession(
+         root=root,
+         runner=runner,
+@@ -1101,7 +1110,7 @@ def prepare_failure_session(
+         "--only",
+     )
+ 
+-    # v1.5: all live 3D failure execution occurs in an isolated worktree,
++    # All live 3D failure execution occurs in an isolated worktree,
+     # because the visualization world copy is augmented with SceneBroadcaster.
+     tmp = _create_detached_worktree(root, "sim009-3d-demo-")
+     patch_failure_worktree_worlds(root, tmp)
+diff --git a/demo_3d/tools/demo3d_runtime.py b/demo_3d/tools/demo3d_runtime.py
+index 618a560..1493a46 100644
+--- a/demo_3d/tools/demo3d_runtime.py
++++ b/demo_3d/tools/demo3d_runtime.py
+@@ -213,76 +213,8 @@ def _run_with_gui_follow(
+ 
+ 
+ def normal(root: Path):
+-    env = visual_runner_env(root, runner_env())
+-    out = root / "results/demo/SIM-008_normal_e2e_demo.json"
+-    session = prepare_normal_session(root, env, out)
+-
+-    write_state(
+-        root,
+-        scene="normal",
+-        mode="LIVE_CANONICAL_RUN",
+-        phase="starting",
+-        headline="Starting canonical Normal E2E",
+-        gazebo_3d=False,
+-        strategy=session.strategy,
+-    )
+-
+-    try:
+-        rc, server, attached, history = _run_with_gui_follow(
+-            root,
+-            session,
+-            "normal",
+-            "Normal E2E executing in Gazebo",
+-        )
+-
+-        info = _server_public_info(server)
+-        write_state(
+-            root,
+-            scene="normal",
+-            mode="LIVE_CANONICAL_RUN",
+-            phase="complete" if rc == 0 else "failed",
+-            headline=(
+-                "Normal E2E complete"
+-                if rc == 0
+-                else "Normal E2E failed"
+-            ),
+-            output=(
+-                str(out.relative_to(root))
+-                if out.exists()
+-                else None
+-            ),
+-            runner=(
+-                str(session.runner.relative_to(root))
+-                if session.runner
+-                else None
+-            ),
+-            strategy=session.strategy,
+-            exit_code=rc,
+-            gazebo_3d=False,
+-            transport_verified_during_run=attached,
+-            server_history=history,
+-            disclosure=(
+-                "Gazebo GUI is intentionally closed when the canonical "
+-                "runner finishes because the runtime also performs bounded "
+-                "server cleanup."
+-            ),
+-            **info,
+-        )
+-
+-        print(
+-            f"[3D DEMO] strategy={session.strategy} "
+-            f"runner={session.runner.relative_to(root)} rc={rc}"
+-        )
+-        print(
+-            f"[3D DEMO] GUI transport verified during run={attached}"
+-        )
+-        if out.exists():
+-            print(f"[3D DEMO] evidence={out.relative_to(root)}")
+-
+-        return rc
+-    finally:
+-        session.cleanup()
+-
++    from verified_normal import run
++    return run(root)
+ 
+ 
+ def run_failure(root: Path, scenario_id: str, scene: str):
+diff --git a/demo_3d/tools/preflight_3d.py b/demo_3d/tools/preflight_3d.py
+index e6b8035..5d61dcf 100644
+--- a/demo_3d/tools/preflight_3d.py
++++ b/demo_3d/tools/preflight_3d.py
+@@ -1,87 +1,33 @@
+ #!/usr/bin/env python3
++"""Read-only preflight; never execute mission runners to discover CLI flags."""
++import os
++import shutil
+ import subprocess
+-
+-from demo3d_common import *
+-
+-root = repo_root()
+-print(f"[3D PREFLIGHT] repo={root}")
+-
+-for rel in [
+-    "results/reviews/SIM-008_acceptance.json",
+-    "results/reviews/SIM-009_acceptance.json",
+-    "results/reviews/SIM-010_acceptance.json",
+-    "results/reviews/SIM-E2E_acceptance.json",
+-    "results/simulation/SIM-009_failure_recovery.json",
+-    "scripts/verify_simulation_e2e_qualification.py",
+-]:
+-    p = root / rel
+-    if not p.exists():
+-        raise SystemExit(f"[FAIL] missing: {rel}")
+-
+-dirty = subprocess.run(
+-    [
+-        "git",
+-        "-C",
+-        str(root),
+-        "status",
+-        "--porcelain",
+-        "--",
+-        "results/simulation",
+-        "results/reviews",
+-    ],
+-    capture_output=True,
+-    text=True,
+-).stdout.strip()
+-if dirty:
+-    print(dirty)
+-    raise SystemExit("[FAIL] canonical results tree is dirty.")
+-
+-nr = normal_runner(root)
+-fr = failure_runner(root)
+-world = resolve_world(root)
+-cli = gazebo_cli()
+-
+-print(f"[3D PREFLIGHT] normal runner={nr.relative_to(root)}")
+-print(
+-    "[3D PREFLIGHT] SIM-008 Evidence="
+-    f"{accepted_sim008(root).relative_to(root)}"
+-)
+-print(
+-    "[3D PREFLIGHT] Gazebo CLI="
+-    f"{' '.join(cli or []) or 'NOT FOUND'}"
+-)
+-print(
+-    "[3D PREFLIGHT] world="
+-    f"{world.relative_to(root) if world and str(world).startswith(str(root)) else world or 'UNRESOLVED'}"
+-)
+-print(f"[3D PREFLIGHT] failure runner={fr.relative_to(root)}")
+-print(
+-    "[3D PREFLIGHT] failure output="
+-    f"{'--output' if has_flag(fr, '--output') else 'isolated-worktree fallback'}"
+-)
+-print(
+-    "[3D PREFLIGHT] scenario filter="
+-    f"{has_flag(fr, '--scenario', '--scenario-id', '--only') or 'NOT EXPOSED (full suite fallback)'}"
+-)
+-print(
+-    "[3D PREFLIGHT] GUI attach="
+-    "runner-owned Gazebo server auto-discovery"
+-)
+-
+-print(
+-    "[3D PREFLIGHT] scene broadcaster injection="
+-    "ISOLATED_WORKTREE_WORLD_COPY"
+-)
+-print(
+-    "[3D PREFLIGHT] canonical world mutation="
+-    "DISABLED"
+-)
+-print(
+-    "[3D PREFLIGHT] discovery timeout="
+-    f"{os.environ.get('DEMO_GZ_DISCOVERY_TIMEOUT', '20')}s"
+-)
+-
+-if not cli:
+-    raise SystemExit("[FAIL] Gazebo CLI not found.")
+-
+-print("[3D PREFLIGHT] PASS")
++import xml.etree.ElementTree as ET
++from pathlib import Path
++from demo3d_common import repo_root, gazebo_cli, gazebo_server_snapshots
++from verified_normal import alive
++import json
++
++root=repo_root()
++for rel in ['scripts/run_simulation_normal_system_e2e.py','data/simulation/sim008_normal_system_world.sdf',
++            'results/simulation/SIM-008_normal_system_e2e.json','results/reviews/SIM-008_acceptance.json',
++            'results/simulation/SIM-009_failure_recovery.json','scripts/verify_simulation_e2e_qualification.py']:
++    if not (root/rel).is_file():raise SystemExit('[FAIL] missing: '+rel)
++status=subprocess.check_output(['git','-C',str(root),'status','--short','--','data/simulation','results/simulation','results/reviews'],text=True)
++if status.strip():raise SystemExit('[FAIL] protected canonical tree is dirty:\n'+status)
++if not gazebo_cli():raise SystemExit('[FAIL] gz sim unavailable')
++if not Path('/opt/ros/jazzy/bin/xacro').is_file():raise SystemExit('[FAIL] installed xacro unavailable')
++example=Path('/opt/ros/jazzy/share/ros_gz_sim_demos/worlds/default.sdf')
++plugin=next(p for p in ET.parse(example).getroot().find('world').findall('plugin') if p.get('name','').endswith('SceneBroadcaster'))
++print('[3D PREFLIGHT] installed SceneBroadcaster:',plugin.attrib)
++if not (os.environ.get('DISPLAY') or os.environ.get('WAYLAND_DISPLAY')):raise SystemExit('[FAIL] no GUI display')
++for rel in ['results/demo/latest_validation/01_processes.txt','results/demo/final_validation/01_processes.txt']:
++    path=root/rel
++    if path.is_file():
++        stale=[r['pid'] for r in json.loads(path.read_text()) if alive(r)]
++        if stale:raise SystemExit('[FAIL] previously owned processes still live: '+str(stale))
++print('[3D PREFLIGHT] pre-existing servers (left untouched):',list(gazebo_server_snapshots()))
++print('[3D PREFLIGHT] authority: headless-xacro-resolved demo worktree -> unchanged Nav2 launch -> actual runtime SDF -> exact GUI transport')
++print('[3D PREFLIGHT] protected canonical tree clean; no stale recorded owned processes')
++print('[3D PREFLIGHT] PASS')

@@ -1,0 +1,1249 @@
+#!/usr/bin/env python3
+from __future__ import annotations
+
+import json
+import os
+import shutil
+import subprocess
+import sys
+import tempfile
+import time
+from dataclasses import dataclass
+from pathlib import Path
+
+SCENARIO_NAV_TIMEOUT = "SIM009-NAV-TIMEOUT-RETRY"
+SCENARIO_VERIFY_UNCERTAIN = "SIM009-VERIFY-UNCERTAIN"
+
+
+def repo_root() -> Path:
+    env = os.environ.get("REPO_ROOT")
+    if env:
+        return Path(env).expanduser().resolve()
+    cp = subprocess.run(
+        ["git", "rev-parse", "--show-toplevel"],
+        capture_output=True,
+        text=True,
+    )
+    if cp.returncode != 0:
+        raise SystemExit("Repository root not found. Set REPO_ROOT.")
+    return Path(cp.stdout.strip()).resolve()
+
+
+def state_path(root: Path) -> Path:
+    p = root / "results/demo/3d_demo_state.json"
+    p.parent.mkdir(parents=True, exist_ok=True)
+    return p
+
+
+def write_state(root: Path, **kw):
+    payload = {"updated_at": time.time(), **kw}
+    state_path(root).write_text(
+        json.dumps(payload, indent=2, ensure_ascii=False),
+        encoding="utf-8",
+    )
+
+
+def has_flag(script: Path, *flags: str) -> str | None:
+    """Read literal argparse declarations without executing the runner.
+
+    SIM-008 and SIM-009 ignore --help and execute missions. Capability
+    discovery must never spawn those scripts in the canonical checkout.
+    """
+    import ast
+    tree = ast.parse(script.read_text())
+    declared = set()
+    for node in ast.walk(tree):
+        if (isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute)
+                and node.func.attr == "add_argument"):
+            declared.update(arg.value for arg in node.args
+                            if isinstance(arg, ast.Constant) and isinstance(arg.value, str))
+    return next((flag for flag in flags if flag in declared), None)
+
+
+def normal_runner(root: Path) -> Path:
+    override = os.environ.get("DEMO_NORMAL_RUNNER")
+    if override:
+        p = root / override
+        if not p.is_file():
+            raise SystemExit(f"DEMO_NORMAL_RUNNER missing: {p}")
+        return p
+
+    candidates = [
+        root / "scripts/run_simulation_normal_system_e2e.py",
+        root / "scripts/run_simulation_normal_e2e.py",
+    ]
+    found = [p for p in candidates if p.is_file()]
+    if len(found) == 1:
+        return found[0]
+    if not found:
+        raise SystemExit("Normal E2E runner not found.")
+    raise SystemExit(
+        "Multiple normal runners found. "
+        "Set DEMO_NORMAL_RUNNER to the acceptance-bound runner."
+    )
+
+
+def failure_runner(root: Path) -> Path:
+    override = os.environ.get("DEMO_FAILURE_RUNNER")
+    if override:
+        p = root / override
+        if not p.is_file():
+            raise SystemExit(f"DEMO_FAILURE_RUNNER missing: {p}")
+        return p
+
+    # Current repositories may use either historical name.
+    candidates = [
+        root / "scripts/run_simulation_failure_recovery.py",
+        root / "scripts/run_simulation_failure_suite.py",
+    ]
+    found = [p for p in candidates if p.is_file()]
+    if len(found) == 1:
+        return found[0]
+    if not found:
+        raise SystemExit(
+            "Simulation failure runner not found. Expected one of: "
+            "scripts/run_simulation_failure_recovery.py, "
+            "scripts/run_simulation_failure_suite.py"
+        )
+    raise SystemExit(
+        "Multiple failure runners found. "
+        "Set DEMO_FAILURE_RUNNER to the acceptance-bound runner."
+    )
+
+
+def qualifier(root: Path) -> Path:
+    p = root / "scripts/verify_simulation_e2e_qualification.py"
+    if not p.is_file():
+        raise SystemExit("Qualification verifier not found.")
+    return p
+
+
+def accepted_sim008(root: Path) -> Path:
+    override = os.environ.get("DEMO_SIM008_EVIDENCE")
+    if override:
+        p = root / override
+        if not p.is_file():
+            raise SystemExit(f"DEMO_SIM008_EVIDENCE missing: {p}")
+        return p
+
+    candidates = [
+        root / "results/simulation/SIM-008_normal_system_e2e.json",
+        root / "results/simulation/SIM-008_normal_e2e.json",
+    ]
+    found = [p for p in candidates if p.is_file()]
+    if len(found) == 1:
+        return found[0]
+    if not found:
+        raise SystemExit("SIM-008 accepted Evidence not found.")
+    raise SystemExit(
+        "Multiple SIM-008 Evidence variants found. "
+        "Set DEMO_SIM008_EVIDENCE."
+    )
+
+
+def accepted_sim009(root: Path) -> Path:
+    p = root / "results/simulation/SIM-009_failure_recovery.json"
+    if not p.is_file():
+        raise SystemExit("SIM-009 accepted Evidence not found.")
+    return p
+
+
+def find_strings(node, key_hint=""):
+    if isinstance(node, dict):
+        for key, value in node.items():
+            yield from find_strings(value, str(key))
+    elif isinstance(node, list):
+        for value in node:
+            yield from find_strings(value, key_hint)
+    elif isinstance(node, str):
+        yield key_hint, node
+
+
+def resolve_world(root: Path) -> Path | None:
+    override = os.environ.get("DEMO_WORLD")
+    if override:
+        p = Path(override)
+        if not p.is_absolute():
+            p = root / p
+        return p.resolve() if p.exists() else None
+
+    try:
+        data = json.loads(
+            accepted_sim008(root).read_text(encoding="utf-8")
+        )
+    except Exception:
+        return None
+
+    scored = []
+    for key, value in find_strings(data):
+        low = value.lower()
+        if not (low.endswith(".sdf") or low.endswith(".world")):
+            continue
+        p = Path(value)
+        if not p.is_absolute():
+            p = root / p
+        if not p.exists():
+            continue
+        score = 0
+        kl = key.lower()
+        if "world" in kl:
+            score += 5
+        if "model" in kl:
+            score -= 2
+        if "scene" in kl:
+            score += 1
+        scored.append((score, p.resolve()))
+
+    if not scored:
+        return None
+
+    scored.sort(key=lambda item: (-item[0], len(str(item[1]))))
+    best_score = scored[0][0]
+    best = []
+    seen = set()
+    for score, p in scored:
+        if score != best_score:
+            continue
+        if str(p) not in seen:
+            best.append(p)
+            seen.add(str(p))
+    return best[0] if len(best) == 1 else None
+
+
+def gazebo_cli():
+    if shutil.which("gz"):
+        cp = subprocess.run(
+            ["gz", "sim", "--help"],
+            capture_output=True,
+            text=True,
+        )
+        if cp.returncode == 0:
+            return ["gz", "sim"]
+
+    if shutil.which("ign"):
+        cp = subprocess.run(
+            ["ign", "gazebo", "--help"],
+            capture_output=True,
+            text=True,
+        )
+        if cp.returncode == 0:
+            return ["ign", "gazebo"]
+
+    return None
+
+
+def _read_proc_cmdline(pid: int) -> list[str] | None:
+    try:
+        raw = Path(f"/proc/{pid}/cmdline").read_bytes()
+        return [
+            part.decode(errors="replace")
+            for part in raw.split(b"\0")
+            if part
+        ]
+    except (FileNotFoundError, ProcessLookupError, PermissionError):
+        return None
+
+
+def _read_proc_environ(pid: int) -> dict[str, str] | None:
+    """
+    Capture the process environment immediately.
+
+    A short-lived Gazebo server may disappear between PID discovery and a
+    later /proc read, so discovery calls this in the same polling iteration.
+    """
+    try:
+        raw = Path(f"/proc/{pid}/environ").read_bytes()
+    except (FileNotFoundError, ProcessLookupError, PermissionError):
+        return None
+
+    env = {}
+    for item in raw.split(b"\0"):
+        if not item or b"=" not in item:
+            continue
+        key, value = item.split(b"=", 1)
+        env[key.decode(errors="replace")] = value.decode(errors="replace")
+    return env
+
+
+
+def _read_proc_ppid(pid: int) -> int | None:
+    try:
+        for line in Path(f"/proc/{pid}/status").read_text(
+            encoding="utf-8",
+            errors="replace",
+        ).splitlines():
+            if line.startswith("PPid:"):
+                return int(line.split(":", 1)[1].strip())
+    except (FileNotFoundError, ProcessLookupError, PermissionError, ValueError):
+        return None
+    return None
+
+
+def process_is_descendant(
+    pid: int,
+    ancestor_pid: int,
+    max_depth: int = 32,
+) -> bool:
+    current = pid
+    seen = set()
+
+    for _ in range(max_depth):
+        if current == ancestor_pid:
+            return True
+        if current in seen or current <= 1:
+            return False
+        seen.add(current)
+
+        parent = _read_proc_ppid(current)
+        if parent is None:
+            return False
+        current = parent
+
+    return False
+
+
+def gazebo_gui_snapshots() -> dict[int, dict]:
+    snapshots = {}
+    proc = Path("/proc")
+    for entry in proc.iterdir():
+        if not entry.name.isdigit():
+            continue
+        pid = int(entry.name)
+        tokens = _read_proc_cmdline(pid)
+        if not tokens:
+            continue
+
+        joined = " ".join(tokens)
+        looks_like_gz = (
+            ("gz sim" in joined)
+            or ("ign gazebo" in joined)
+        )
+        if not looks_like_gz or "-g" not in tokens:
+            continue
+
+        env = _read_proc_environ(pid)
+        if env is None:
+            continue
+
+        snapshots[pid] = {
+            "pid": pid,
+            "cmdline": tokens,
+            "env": env,
+        }
+    return snapshots
+
+
+def transport_identity(env: dict[str, str]) -> dict[str, str | None]:
+    return {
+        "GZ_PARTITION": env.get("GZ_PARTITION"),
+        "IGN_PARTITION": env.get("IGN_PARTITION"),
+        "ROS_DOMAIN_ID": env.get("ROS_DOMAIN_ID"),
+    }
+
+
+def normalized_transport_identity(
+    env: dict[str, str],
+) -> dict[str, str | None]:
+    gz = env.get("GZ_PARTITION")
+    ign = env.get("IGN_PARTITION") or gz
+    return {
+        "GZ_PARTITION": gz,
+        "IGN_PARTITION": ign,
+        "ROS_DOMAIN_ID": env.get("ROS_DOMAIN_ID"),
+    }
+
+
+def transport_matches(
+    server_env: dict[str, str],
+    gui_env: dict[str, str],
+) -> bool:
+    return (
+        normalized_transport_identity(server_env)
+        == normalized_transport_identity(gui_env)
+    )
+
+def _is_gazebo_server(tokens: list[str] | None) -> bool:
+    if not tokens:
+        return False
+    import shlex
+    if len(tokens) == 1 and tokens[0].startswith(("gz sim ", "ign gazebo ")):
+        try:
+            tokens = shlex.split(tokens[0])
+        except ValueError:
+            return False
+    joined = " ".join(tokens)
+
+    looks_like_gz = ("gz sim" in joined) or ("ign gazebo" in joined)
+    if not looks_like_gz:
+        return False
+
+    # Canonical runners observed in this project use e.g.
+    #   gz sim -r -s /tmp/nav2_xxx.sdf
+    # Do not classify GUI-only `gz sim -g` as a server.
+    has_server_flag = (
+        "-s" in tokens
+        or "--server-only" in tokens
+        or "--server" in tokens
+    )
+    gui_only = "-g" in tokens and not has_server_flag
+    return has_server_flag and not gui_only
+
+
+def gazebo_server_snapshots() -> dict[int, dict]:
+    snapshots = {}
+    proc = Path("/proc")
+    for entry in proc.iterdir():
+        if not entry.name.isdigit():
+            continue
+        pid = int(entry.name)
+        tokens = _read_proc_cmdline(pid)
+        if not _is_gazebo_server(tokens):
+            continue
+        env = _read_proc_environ(pid)
+        if env is None:
+            # It exited between cmdline and environ reads.
+            continue
+        snapshots[pid] = {
+            "pid": pid,
+            "cmdline": tokens,
+            "env": env,
+        }
+    return snapshots
+
+
+def discover_new_gazebo_server(
+    before_pids: set[int],
+    runner_proc: subprocess.Popen,
+    timeout: float = 20.0,
+) -> dict | None:
+    """
+    Discover the Gazebo server spawned by the canonical runner.
+
+    Crucially, environment is captured during discovery, before the short-lived
+    server can disappear. This avoids the /proc/<pid>/environ race observed in
+    the first demo package.
+    """
+    deadline = time.monotonic() + timeout
+    runner_exit_seen_at = None
+
+    while time.monotonic() < deadline:
+        snapshots = gazebo_server_snapshots()
+        candidates = [
+            snap
+            for pid, snap in snapshots.items()
+            if pid not in before_pids
+        ]
+        if candidates:
+            # Prefer the newest PID. The canonical server is normally the
+            # newest server created immediately after the runner starts.
+            candidates.sort(key=lambda snap: snap["pid"], reverse=True)
+            return candidates[0]
+
+        if runner_proc.poll() is not None:
+            if runner_exit_seen_at is None:
+                runner_exit_seen_at = time.monotonic()
+            # Keep a short grace window because process creation / cleanup can
+            # race with polling on very short scenarios.
+            if time.monotonic() - runner_exit_seen_at > 0.8:
+                break
+
+        time.sleep(0.05)
+
+    return None
+
+
+def gui_env_from_server(
+    base_env: dict[str, str],
+    server_env: dict[str, str],
+) -> dict[str, str]:
+    """
+    Build a clean GUI environment from the desktop environment plus the exact
+    runtime-owned Gazebo / ROS transport identity.
+
+    Transport identity keys are removed first so stale values from a previous
+    demo run cannot survive when the new server omits one of them.
+    """
+    env = dict(base_env)
+
+    # Clear stale identity first.
+    for key in ("GZ_PARTITION", "IGN_PARTITION", "ROS_DOMAIN_ID"):
+        env.pop(key, None)
+
+    # Reuse server-owned Gazebo / Ignition environment and ROS domain.
+    for key, value in server_env.items():
+        if (
+            key == "ROS_DOMAIN_ID"
+            or key.startswith("GZ_")
+            or key.startswith("IGN_")
+        ):
+            env[key] = value
+
+    # Gazebo / Ignition transport compatibility.
+    if env.get("GZ_PARTITION") and not env.get("IGN_PARTITION"):
+        env["IGN_PARTITION"] = env["GZ_PARTITION"]
+
+    return env
+
+
+def start_gui_attach_to_server(
+    server_snapshot: dict,
+    base_env: dict[str, str],
+    log_path: Path,
+):
+    cli = gazebo_cli()
+    if not cli:
+        return None
+
+    env = gui_env_from_server(
+        base_env,
+        server_snapshot["env"],
+    )
+    log_path.parent.mkdir(parents=True, exist_ok=True)
+    log = open(log_path, "a", encoding="utf-8")
+
+    try:
+        proc = subprocess.Popen(
+            cli + ["-v", "4", "-g"],
+            stdout=log,
+            stderr=subprocess.STDOUT,
+            env=env,
+        )
+        proc._demo_log_handle = log
+        proc._expected_transport = normalized_transport_identity(
+            server_snapshot["env"]
+        )
+
+        # Verify the environment actually seen by the GUI process.
+        deadline = time.monotonic() + 2.0
+        actual = None
+        while time.monotonic() < deadline:
+            if proc.poll() is not None:
+                break
+            actual_env = _read_proc_environ(proc.pid)
+            if actual_env is not None:
+                actual = normalized_transport_identity(actual_env)
+                break
+            time.sleep(0.05)
+
+        proc._actual_transport = actual
+        proc._transport_verified = (
+            actual == proc._expected_transport
+        )
+
+        if not proc._transport_verified:
+            stop_proc(proc)
+            return None
+
+        return proc
+    except Exception:
+        log.close()
+        return None
+
+
+def runner_gazebo_servers(
+    runner_pid: int,
+) -> list[dict]:
+    """
+    Return live Gazebo server processes that belong to the canonical runner
+    process tree. This avoids attaching to unrelated or stale servers.
+    """
+    out = []
+    for snap in gazebo_server_snapshots().values():
+        if process_is_descendant(
+            snap["pid"],
+            runner_pid,
+        ):
+            out.append(snap)
+
+    out.sort(key=lambda snap: snap["pid"])
+    return out
+
+
+def newest_runner_gazebo_server(
+    runner_pid: int,
+) -> dict | None:
+    servers = runner_gazebo_servers(runner_pid)
+    return servers[-1] if servers else None
+
+
+def context_env() -> dict[str, str]:
+    """
+    Isolated environment only for presentation-only context worlds.
+
+    This is intentionally NOT used for canonical Normal/SIM-009 runners.
+    """
+    env = os.environ.copy()
+    partition = (
+        env.get("DEMO_GZ_PARTITION")
+        or f"sim-first-context-{os.getpid()}"
+    )
+    env["GZ_PARTITION"] = partition
+    env["IGN_PARTITION"] = partition
+    if os.environ.get("DEMO_CONTEXT_ROS_DOMAIN_ID"):
+        env["ROS_DOMAIN_ID"] = os.environ["DEMO_CONTEXT_ROS_DOMAIN_ID"]
+    return env
+
+
+
+def _sha256_file(path: Path) -> str:
+    import hashlib
+    h = hashlib.sha256()
+    with path.open("rb") as f:
+        for chunk in iter(lambda: f.read(1024 * 1024), b""):
+            h.update(chunk)
+    return h.hexdigest()
+
+
+def inject_scene_broadcaster_text(text: str) -> tuple[str, bool]:
+    """Resolve Nav2's headless xacro, then augment its actual world plugins.
+
+    A plugin nested in xacro:unless is not an active world plugin. Resolve
+    that boundary first so Nav2's subsequent xacro pass cannot remove ours.
+    """
+    import re
+    import xml.etree.ElementTree as ET
+    original = text
+    if "xacro:" in text:
+        result = subprocess.run(
+            ["/opt/ros/jazzy/bin/xacro", "headless:=True", "/dev/stdin"],
+            input=text, text=True, capture_output=True, check=True, timeout=10,
+        )
+        text = result.stdout
+    world = ET.fromstring(text).find("world")
+    if world is None:
+        raise ValueError("Expected a world SDF for demo augmentation")
+    if any(p.get("name") == "gz::sim::systems::SceneBroadcaster"
+           for p in world.findall("plugin")):
+        return text, text != original
+    # Discover the definition from this installation, not a remembered name.
+    example = Path("/opt/ros/jazzy/share/ros_gz_sim_demos/worlds/default.sdf")
+    installed = ET.parse(example).getroot().find("world")
+    plugin = next(p for p in installed.findall("plugin")
+                  if p.get("name") == "gz::sim::systems::SceneBroadcaster")
+    match = re.search(r"<world\b[^>]*>", text)
+    addition = "\n    <!-- DEMO_VISUALIZATION_AUGMENTATION -->\n    " + ET.tostring(plugin, encoding="unicode") + "\n"
+    text = text[:match.end()] + addition + text[match.end():]
+    return text, True
+
+
+def make_visual_context_world(
+    root: Path,
+    source_world: Path,
+    label: str,
+) -> tuple[Path, dict]:
+    """
+    Create a demo-only copy of a world with SceneBroadcaster injected.
+    Used only for presentation-only context worlds such as Verification
+    Uncertain fallback and Final Qualification.
+    """
+    out_dir = root / "results/demo/runtime"
+    out_dir.mkdir(parents=True, exist_ok=True)
+    out = out_dir / f"{label}_{source_world.name}"
+
+    original = source_world.read_text(encoding="utf-8")
+    patched, changed = inject_scene_broadcaster_text(original)
+    out.write_text(patched, encoding="utf-8")
+
+    record = {
+        "source": str(source_world),
+        "output": str(out),
+        "scene_broadcaster_added": changed,
+        "source_sha256": _sha256_file(source_world),
+        "output_sha256": _sha256_file(out),
+        "demo_only": True,
+    }
+    return out, record
+
+
+
+def _append_jsonl(path: Path, record: dict):
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with path.open("a", encoding="utf-8") as f:
+        f.write(json.dumps(record, ensure_ascii=False) + "\n")
+
+
+def patch_world_file_for_demo(
+    source: Path,
+    log_root: Path,
+    label: str,
+) -> dict:
+    """
+    Add SceneBroadcaster to a world file that lives ONLY inside an isolated
+    detached Git worktree.
+
+    Canonical repository assets are never modified by this function.
+    """
+    if not source.is_file():
+        return {
+            "label": label,
+            "path": str(source),
+            "changed": False,
+            "reason": "missing",
+            "demo_only": True,
+        }
+
+    original = source.read_text(encoding="utf-8")
+    original_sha = _sha256_file(source)
+    patched, changed = inject_scene_broadcaster_text(original)
+
+    if "<world" not in original:
+        record = {
+            "label": label,
+            "path": str(source),
+            "changed": False,
+            "reason": "not_world_sdf",
+            "original_sha256": original_sha,
+            "patched_sha256": original_sha,
+            "demo_only": True,
+        }
+        _append_jsonl(
+            log_root / "results/demo/visual_worktree_patch.jsonl",
+            record,
+        )
+        return record
+
+    if changed:
+        source.write_text(patched, encoding="utf-8")
+
+    patched_sha = _sha256_file(source)
+    record = {
+        "label": label,
+        "path": str(source),
+        "changed": changed,
+        "reason": (
+            "scene_broadcaster_injected"
+            if changed
+            else "already_present"
+        ),
+        "original_sha256": original_sha,
+        "patched_sha256": patched_sha,
+        "demo_only": True,
+        "scope": "isolated_git_worktree_only",
+    }
+    _append_jsonl(
+        log_root / "results/demo/visual_worktree_patch.jsonl",
+        record,
+    )
+    return record
+
+
+def sim008_world_relative_path(root: Path) -> Path:
+    """
+    Resolve the accepted SIM-008 scenario world path without modifying the
+    accepted Evidence.
+    """
+    data = json.loads(
+        accepted_sim008(root).read_text(encoding="utf-8")
+    )
+    scenario = data.get("scenario")
+    if not isinstance(scenario, dict):
+        raise RuntimeError("SIM-008 Evidence has no scenario mapping")
+    value = scenario.get("world")
+    if not isinstance(value, str) or not value:
+        raise RuntimeError("SIM-008 Evidence has no scenario.world")
+    p = Path(value)
+    if p.is_absolute():
+        try:
+            return p.relative_to(root)
+        except ValueError:
+            raise RuntimeError(
+                "SIM-008 world is outside repository; "
+                "cannot patch isolated worktree safely"
+            )
+    return p
+
+
+def patch_sim008_worktree_world(
+    main_root: Path,
+    worktree: Path,
+) -> dict:
+    rel = sim008_world_relative_path(main_root)
+    return patch_world_file_for_demo(
+        worktree / rel,
+        main_root,
+        "SIM-008_NORMAL_WORLD",
+    )
+
+
+def patch_failure_worktree_worlds(
+    main_root: Path,
+    worktree: Path,
+) -> list[dict]:
+    """
+    SIM-009 navigation can reuse the shared SIM-004 world. Patch only
+    world-level SDF files in the isolated worktree's data/simulation tree.
+    """
+    records = []
+    data_dir = worktree / "data/simulation"
+    if not data_dir.is_dir():
+        return records
+
+    for p in sorted(data_dir.glob("*.sdf")):
+        try:
+            text = p.read_text(encoding="utf-8")
+        except Exception:
+            continue
+        if "<world" not in text:
+            continue
+        records.append(
+            patch_world_file_for_demo(
+                p,
+                main_root,
+                f"SIM-009_WORLD:{p.name}",
+            )
+        )
+    return records
+
+
+def visual_runner_env(
+    root: Path,
+    base_env: dict[str, str],
+) -> dict[str, str]:
+    """
+    Demo-only environment boundary.
+
+    Do NOT intercept `gz` through PATH. ros2/nav2 launch may materialize its
+    own ROS environment and resolve Gazebo independently. Visualization is
+    instead enabled by patching only the isolated worktree's world copy.
+    """
+    env = dict(base_env)
+    env["DEMO_VISUALIZATION_MODE"] = "ISOLATED_WORKTREE_WORLD_COPY"
+    # Demo middleware adaptation proven on the WSL host. Explicit custom UDP
+    # prevents Jazzy LOCALHOST mode from silently reintroducing shared memory.
+    profile = root / "demo_3d/config/fastdds_loopback.xml"
+    env["RMW_IMPLEMENTATION"] = "rmw_fastrtps_cpp"
+    env["ROS_AUTOMATIC_DISCOVERY_RANGE"] = "SYSTEM_DEFAULT"
+    env["FASTRTPS_DEFAULT_PROFILES_FILE"] = str(profile)
+    env["FASTDDS_DEFAULT_PROFILES_FILE"] = str(profile)
+    env.pop("FASTDDS_BUILTIN_TRANSPORTS", None)
+    return env
+
+
+
+def _transport_env_for_server(
+    base_env: dict[str, str],
+    server_env: dict[str, str],
+) -> dict[str, str]:
+    env = dict(base_env)
+    for key in ("GZ_PARTITION", "IGN_PARTITION", "ROS_DOMAIN_ID"):
+        env.pop(key, None)
+
+    for key, value in server_env.items():
+        if (
+            key == "ROS_DOMAIN_ID"
+            or key.startswith("GZ_")
+            or key.startswith("IGN_")
+        ):
+            env[key] = value
+
+    if env.get("GZ_PARTITION") and not env.get("IGN_PARTITION"):
+        env["IGN_PARTITION"] = env["GZ_PARTITION"]
+    return env
+
+
+def list_gazebo_services(
+    server_env: dict[str, str],
+) -> list[str]:
+    real_gz = shutil.which("gz")
+    if not real_gz:
+        return []
+    env = _transport_env_for_server(os.environ.copy(), server_env)
+    try:
+        cp = subprocess.run(
+            [real_gz, "service", "-l"],
+            env=env,
+            capture_output=True,
+            text=True,
+            timeout=3,
+        )
+    except Exception:
+        return []
+    if cp.returncode != 0:
+        return []
+    return [
+        line.strip()
+        for line in cp.stdout.splitlines()
+        if line.strip()
+    ]
+
+
+def wait_for_scene_service(
+    server_env: dict[str, str],
+    timeout: float = 5.0,
+) -> str | None:
+    deadline = time.monotonic() + timeout
+    while time.monotonic() < deadline:
+        for service in list_gazebo_services(server_env):
+            if (
+                service.startswith("/world/")
+                and service.endswith("/scene/info")
+            ):
+                return service
+        time.sleep(0.20)
+    return None
+
+
+def runner_env() -> dict[str, str]:
+    """
+    Preserve the caller environment but do not inject demo-owned transport
+    isolation into canonical runners. The runner owns its per-run partition and
+    ROS domain.
+    """
+    env = os.environ.copy()
+
+    # Remove accidental values from older demo package usage when explicitly
+    # marked as demo-owned.
+    if env.get("GZ_PARTITION", "").startswith("sim-first-demo-"):
+        env.pop("GZ_PARTITION", None)
+    if env.get("IGN_PARTITION", "").startswith("sim-first-demo-"):
+        env.pop("IGN_PARTITION", None)
+
+    return env
+
+
+def start_context_world(
+    env: dict,
+    world: Path,
+    paused: bool,
+    log_path: Path,
+):
+    cli = gazebo_cli()
+    if not cli:
+        return None
+    log_path.parent.mkdir(parents=True, exist_ok=True)
+    log = open(log_path, "w", encoding="utf-8")
+    cmd = cli + [str(world)]
+    if not paused:
+        cmd += ["-r"]
+    try:
+        proc = subprocess.Popen(
+            cmd,
+            stdout=log,
+            stderr=subprocess.STDOUT,
+            env=env,
+        )
+        proc._demo_log_handle = log
+        return proc
+    except Exception:
+        log.close()
+        return None
+
+
+def stop_proc(proc):
+    if not proc:
+        return
+    try:
+        if proc.poll() is None:
+            proc.terminate()
+            proc.wait(timeout=3)
+    except Exception:
+        try:
+            proc.kill()
+        except Exception:
+            pass
+    handle = getattr(proc, "_demo_log_handle", None)
+    if handle:
+        try:
+            handle.close()
+        except Exception:
+            pass
+
+
+
+
+
+@dataclass
+class RunnerSession:
+    root: Path
+    runner: Path | None
+    cmd: list[str]
+    cwd: Path
+    env: dict[str, str]
+    log_path: Path
+    strategy: str
+    final_output: Path | None = None
+    generated_output: Path | None = None
+    worktree: Path | None = None
+    proc: subprocess.Popen | None = None
+    log_handle: object | None = None
+
+    def start(self):
+        self.log_path.parent.mkdir(parents=True, exist_ok=True)
+        self.log_handle = open(
+            self.log_path,
+            "w",
+            encoding="utf-8",
+        )
+        self.proc = subprocess.Popen(
+            self.cmd,
+            cwd=str(self.cwd),
+            env=self.env,
+            stdout=self.log_handle,
+            stderr=subprocess.STDOUT,
+        )
+        return self.proc
+
+    def wait(self) -> int:
+        if self.proc is None:
+            raise RuntimeError("RunnerSession.start() was not called.")
+        rc = self.proc.wait()
+        if self.log_handle:
+            self.log_handle.close()
+            self.log_handle = None
+
+        if (
+            rc == 0
+            and self.final_output is not None
+            and self.generated_output is not None
+            and self.generated_output != self.final_output
+            and self.generated_output.is_file()
+        ):
+            self.final_output.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(self.generated_output, self.final_output)
+        return rc
+
+    def cleanup(self):
+        if self.log_handle:
+            try:
+                self.log_handle.close()
+            except Exception:
+                pass
+            self.log_handle = None
+
+        if self.worktree:
+            subprocess.run(
+                [
+                    "git",
+                    "-C",
+                    str(self.root),
+                    "worktree",
+                    "remove",
+                    str(self.worktree),
+                    "--force",
+                ],
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+            )
+            shutil.rmtree(self.worktree, ignore_errors=True)
+            self.worktree = None
+
+
+def _create_detached_worktree(root: Path, prefix: str) -> Path:
+    tmp = Path(tempfile.mkdtemp(prefix=prefix))
+    # git worktree wants the target not to pre-exist.
+    shutil.rmtree(tmp)
+    subprocess.run(
+        [
+            "git",
+            "-C",
+            str(root),
+            "worktree",
+            "add",
+            "--detach",
+            str(tmp),
+            "HEAD",
+        ],
+        check=True,
+        stdout=subprocess.DEVNULL,
+    )
+    return tmp
+
+
+def prepare_normal_session(
+    root: Path,
+    env: dict[str, str],
+    output: Path,
+) -> RunnerSession:
+    """
+    Always use a detached worktree for the 3D Normal E2E demo.
+
+    Resolve headless xacro and augment only the worktree copy with
+    SceneBroadcaster. This avoids both canonical mutation and unreliable PATH
+    interception of Gazebo launched through ROS 2.
+    """
+    runner = normal_runner(root)
+    canon = accepted_sim008(root)
+    rel_runner = runner.relative_to(root)
+    rel_canon = canon.relative_to(root)
+
+    tmp = _create_detached_worktree(root, "sim008-3d-demo-")
+    try:
+        patch_record = patch_sim008_worktree_world(root, tmp)
+    except BaseException:
+        subprocess.run(["git", "-C", str(root), "worktree", "remove", "--force", str(tmp)], check=True)
+        raise
+
+    env2 = dict(env)
+    env2["PYTHONPATH"] = (
+        f"{tmp / 'src'}:{tmp}:{env2.get('PYTHONPATH', '')}"
+    )
+    env2["REPO_ROOT"] = str(tmp)
+    env2["DEMO_VISUAL_WORLD_PATCHED"] = (
+        "1" if patch_record.get("changed") else "0"
+    )
+
+    # The SIM-008 runner has no CLI; it writes only inside this worktree.
+    generated = tmp / rel_canon
+    cmd = [sys.executable, str(root / "demo_3d/tools/observed_normal_entry.py"),
+           "--runner", str(tmp / rel_runner),
+           "--observations", str(output.parent / "runtime_observations.json")]
+
+    return RunnerSession(
+        root=root,
+        runner=runner,
+        cmd=cmd,
+        cwd=tmp,
+        env=env2,
+        log_path=root / "results/demo/logs/normal_runner.log",
+        strategy="visual-isolated-worktree",
+        final_output=output,
+        generated_output=generated,
+        worktree=tmp,
+    )
+
+
+
+def prepare_failure_session(
+    root: Path,
+    env: dict[str, str],
+    scenario_id: str,
+    output: Path,
+) -> RunnerSession:
+    envkey = (
+        "DEMO_NAV_TIMEOUT_COMMAND"
+        if scenario_id == SCENARIO_NAV_TIMEOUT
+        else "DEMO_VERIFY_UNCERTAIN_COMMAND"
+    )
+    override = os.environ.get(envkey)
+
+    runner = failure_runner(root)
+    scenario_flag = has_flag(
+        runner,
+        "--scenario",
+        "--scenario-id",
+        "--only",
+    )
+
+    # All live 3D failure execution occurs in an isolated worktree,
+    # because the visualization world copy is augmented with SceneBroadcaster.
+    tmp = _create_detached_worktree(root, "sim009-3d-demo-")
+    patch_failure_worktree_worlds(root, tmp)
+
+    rel_runner = runner.relative_to(root)
+    runner_in_tmp = tmp / rel_runner
+    output_flag = has_flag(runner_in_tmp, "--output")
+
+    env2 = dict(env)
+    env2["PYTHONPATH"] = (
+        f"{tmp / 'src'}:{tmp}:{env2.get('PYTHONPATH', '')}"
+    )
+    env2["REPO_ROOT"] = str(tmp)
+    env2["DEMO_VISUAL_WORLD_PATCHED"] = "1"
+
+    generated = (
+        tmp / "results/simulation/SIM-009_failure_recovery.json"
+    )
+
+    if override:
+        cmd = ["bash", "-lc", override]
+        strategy = "visual-override-isolated-worktree"
+    else:
+        extra = []
+        if scenario_flag:
+            extra += [scenario_flag, scenario_id]
+        cmd = [sys.executable, str(runner_in_tmp), *extra]
+        strategy = (
+            "visual-filtered-isolated-worktree"
+            if scenario_flag
+            else "visual-full-suite-isolated-worktree"
+        )
+
+        if output_flag:
+            generated = (
+                tmp
+                / "results/demo/SIM-009_failure_recovery_demo.json"
+            )
+            generated.parent.mkdir(parents=True, exist_ok=True)
+            cmd += [output_flag, str(generated)]
+
+    return RunnerSession(
+        root=root,
+        runner=runner,
+        cmd=cmd,
+        cwd=tmp,
+        env=env2,
+        log_path=root
+        / f"results/demo/logs/{scenario_id}_runner.log",
+        strategy=strategy,
+        final_output=output,
+        generated_output=generated,
+        worktree=tmp,
+    )
+
+
+
+def find_scenario(path: Path, scenario_id: str):
+    data = json.loads(path.read_text(encoding="utf-8"))
+    best = None
+    score = -1
+
+    def walk(node):
+        nonlocal best, score
+        if isinstance(node, dict):
+            sid = node.get("id") or node.get("scenario_id")
+            if sid == scenario_id:
+                current = sum(
+                    key in node
+                    for key in (
+                        "layer",
+                        "outcome_kind",
+                        "expected_decision",
+                        "decision",
+                        "mission",
+                        "pass",
+                    )
+                )
+                if current > score:
+                    best = node
+                    score = current
+            for value in node.values():
+                walk(value)
+        elif isinstance(node, list):
+            for value in node:
+                walk(value)
+
+    walk(data)
+    return best
+
+
+def print_scenario(row):
+    if not row:
+        print("Scenario result not found.")
+        return
+
+    mission = (
+        row.get("mission")
+        if isinstance(row.get("mission"), dict)
+        else {}
+    )
+    keys = [
+        "id",
+        "layer",
+        "backend",
+        "outcome_kind",
+        "expected_decision",
+        "decision",
+        "route",
+        "pass",
+        "within_budget",
+        "cleanup_complete",
+    ]
+    out = {key: row.get(key) for key in keys if key in row}
+    out["mission_state"] = mission.get("mission_state")
+    out["mission_success_committed"] = mission.get(
+        "mission_success_committed"
+    )
+    out["verification_verdict"] = mission.get(
+        "verification_verdict"
+    )
+    print(json.dumps(out, indent=2, ensure_ascii=False))

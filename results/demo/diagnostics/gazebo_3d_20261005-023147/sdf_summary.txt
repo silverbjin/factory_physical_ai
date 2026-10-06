@@ -1,0 +1,8 @@
+world_count= 1
+world_name= sim008_normal_system_world
+direct_models= 1
+direct_includes= 1
+direct_lights= 0
+direct_plugins= 4
+model= brake_ecu_type_b_001
+include=  https://fuel.gazebosim.org/1.0/OpenRobotics/models/Depot

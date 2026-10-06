@@ -1,0 +1,13 @@
+F..
+======================================================================
+FAIL: test_capability_probe_never_executes_a_runner (__main__.SceneAugmentation.test_capability_probe_never_executes_a_runner)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/home/jinho/projects/factory_physical_ai_simDemo/demo_3d/diagnostics/test_scene_augmentation.py", line 24, in test_capability_probe_never_executes_a_runner
+    self.assertFalse(marker.exists(), 'Capability discovery executed the mission')
+AssertionError: True is not false : Capability discovery executed the mission
+
+----------------------------------------------------------------------
+Ran 3 tests in 0.224s
+
+FAILED (failures=1)

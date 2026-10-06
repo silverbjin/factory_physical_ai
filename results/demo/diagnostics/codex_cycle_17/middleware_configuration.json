@@ -1,0 +1,12 @@
+{
+  "actual_server_environment": {
+    "FASTDDS_DEFAULT_PROFILES_FILE": "/home/jinho/projects/factory_physical_ai_simDemo/demo_3d/config/fastdds_loopback.xml",
+    "FASTRTPS_DEFAULT_PROFILES_FILE": "/home/jinho/projects/factory_physical_ai_simDemo/demo_3d/config/fastdds_loopback.xml",
+    "RMW_IMPLEMENTATION": "rmw_fastrtps_cpp",
+    "ROS_AUTOMATIC_DISCOVERY_RANGE": "SYSTEM_DEFAULT"
+  },
+  "disclosure": "DEMO_MIDDLEWARE_ADAPTATION",
+  "mission_deadlines_and_retries_changed": false,
+  "profile_path": "/home/jinho/projects/factory_physical_ai_simDemo/demo_3d/config/fastdds_loopback.xml",
+  "profile_sha256": "76b59e79c49e05368a45d794e8f8985415f52bd0a2679230775cc655342aa6c3"
+}

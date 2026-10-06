@@ -1,0 +1,24 @@
+{
+  "capture_phase": "late shutdown; only one ROS CLI daemon remained at descriptor sampling; cycle16 contains earlier four-participant live descriptor control",
+  "participants": [
+    {
+      "pid": 203883,
+      "cmd": [
+        "/bin/bash",
+        "-c",
+        "python3 - <<'PY'\nfrom pathlib import Path\nimport json,sys,os,hashlib,shutil\nroot=Path.cwd();out=root/'results/demo/final_validation';sys.path.insert(0,str(root/'demo_3d/tools'));import demo3d_common as c\npair=json.loads((out/'runtime_identity.json').read_text())[-1];env=c._read_proc_environ(pair['server']['pid']) or {};samples=[]\nfor e in Path('/proc').iterdir():\n if not e.name.isdigit():continue\n pid=int(e.name);penv=c._read_proc_environ(pid) or {}\n if penv.get('ROS_LOG_DIR')!=env.get('ROS_LOG_DIR'):continue\n cmd=c._read_proc_cmdline(pid) or []\n if any(s in ' '.join(cmd) for s in ['parameter_bridge','component_container','robot_state_publisher','tb4_simulation_launch']):\n  try:samples.append({'pid':pid,'cmd':cmd,'env':{k:v for k,v in penv.items() if k.startswith(('FAST','RMW','ROS_'))},'fds':{fd.name:os.readlink(fd) for fd in (e/'fd').iterdir()}})\n  except OSError:pass\n(out/'middleware_live_participants.json').write_text(json.dumps(samples,indent=2)+'\\n');print('live ROS participants',len(samples),'SHM descriptors',sum('fastrtps' in v for x in samples for v in x['fds'].values()))\nlaunch=next(x for x in samples if 'tb4_simulation_launch.py' in x['cmd']);world=next(a.split(':=',1)[1] for a in launch['cmd'] if a.startswith('world:='));worktree=Path(world).parents[2]\nproof={}\nfor rel in ['scripts/run_simulation_normal_system_e2e.py','scripts/run_simulation_navigation.py']:\n a=(root/rel).read_bytes();b=(worktree/rel).read_bytes();proof[rel]={'canonical_sha256':hashlib.sha256(a).hexdigest(),'executed_sha256':hashlib.sha256(b).hexdigest(),'byte_identical':a==b}\n(out/'runtime_code_integrity.json').write_text(json.dumps(proof,indent=2)+'\\n')\nshutil.copy2(root/'data/simulation/sim008_normal_system_world.sdf',out/'canonical_source_world.sdf')\nPY"
+      ],
+      "env": {
+        "ROS_VERSION": "2",
+        "ROS_PYTHON_VERSION": "3",
+        "ROS_AUTOMATIC_DISCOVERY_RANGE": "SUBNET",
+        "ROS_DISTRO": "jazzy"
+      },
+      "fds": {
+        "0": "/dev/null",
+        "1": "pipe:[3524824]",
+        "2": "pipe:[3524825]"
+      }
+    }
+  ]
+}

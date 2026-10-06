@@ -1,0 +1,1 @@
+Captured exact GUI PID202885 window inspected after run: warehouse meshes/objects rendered; expected world shown in inspector; populated tree contains Depot, brake_ecu_type_b_001, turtlebot4. Pixel variance is a nonblank heuristic; direct image inspection supplies semantic visual confirmation.

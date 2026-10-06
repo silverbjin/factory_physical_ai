@@ -1,0 +1,12 @@
+{
+  "alive_on_attach": true,
+  "fatal_errors": [],
+  "scene_received_in_log": false,
+  "screenshot": {
+    "height": 845,
+    "path": "/home/jinho/projects/factory_physical_ai_simDemo/results/demo/diagnostics/codex_cycle_03/gazebo_3d.png",
+    "title": "Gazebo Sim",
+    "width": 1000,
+    "window_id": "0x600012"
+  }
+}

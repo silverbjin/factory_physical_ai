@@ -1,0 +1,151 @@
+{
+  "canonical_source.sdf": {
+    "sha256": "fff98b8a19feb8874a65c9dd66f029145ff0be46990dcfd668376df2b30b8ee1",
+    "world_name": "sim008_normal_system_world",
+    "all_plugins": [
+      {
+        "filename": "gz-sim-physics-system",
+        "name": "gz::sim::systems::Physics"
+      },
+      {
+        "filename": "gz-sim-user-commands-system",
+        "name": "gz::sim::systems::UserCommands"
+      },
+      {
+        "filename": "gz-sim-scene-broadcaster-system",
+        "name": "gz::sim::systems::SceneBroadcaster"
+      },
+      {
+        "filename": "gz-sim-sensors-system",
+        "name": "gz::sim::systems::Sensors"
+      },
+      {
+        "filename": "gz-sim-imu-system",
+        "name": "gz::sim::systems::Imu"
+      }
+    ],
+    "world_plugins": [
+      {
+        "filename": "gz-sim-physics-system",
+        "name": "gz::sim::systems::Physics"
+      },
+      {
+        "filename": "gz-sim-user-commands-system",
+        "name": "gz::sim::systems::UserCommands"
+      },
+      {
+        "filename": "gz-sim-sensors-system",
+        "name": "gz::sim::systems::Sensors"
+      },
+      {
+        "filename": "gz-sim-imu-system",
+        "name": "gz::sim::systems::Imu"
+      }
+    ],
+    "scene_broadcaster_active_at_world_scope": false,
+    "model_count": 1,
+    "include_count": 1
+  },
+  "03_source_world.sdf": {
+    "sha256": "0c3cbb88f084096281a5882214c22cefd652fc7b7ff5681a2ecf76a91629ed96",
+    "world_name": "sim008_normal_system_world",
+    "all_plugins": [
+      {
+        "name": "gz::sim::systems::SceneBroadcaster",
+        "filename": "gz-sim-scene-broadcaster-system"
+      },
+      {
+        "filename": "gz-sim-physics-system",
+        "name": "gz::sim::systems::Physics"
+      },
+      {
+        "filename": "gz-sim-user-commands-system",
+        "name": "gz::sim::systems::UserCommands"
+      },
+      {
+        "filename": "gz-sim-sensors-system",
+        "name": "gz::sim::systems::Sensors"
+      },
+      {
+        "filename": "gz-sim-imu-system",
+        "name": "gz::sim::systems::Imu"
+      }
+    ],
+    "world_plugins": [
+      {
+        "name": "gz::sim::systems::SceneBroadcaster",
+        "filename": "gz-sim-scene-broadcaster-system"
+      },
+      {
+        "filename": "gz-sim-physics-system",
+        "name": "gz::sim::systems::Physics"
+      },
+      {
+        "filename": "gz-sim-user-commands-system",
+        "name": "gz::sim::systems::UserCommands"
+      },
+      {
+        "filename": "gz-sim-sensors-system",
+        "name": "gz::sim::systems::Sensors"
+      },
+      {
+        "filename": "gz-sim-imu-system",
+        "name": "gz::sim::systems::Imu"
+      }
+    ],
+    "scene_broadcaster_active_at_world_scope": true,
+    "model_count": 1,
+    "include_count": 1
+  },
+  "04_runtime_world.sdf": {
+    "sha256": "570464dc1980e4066e088edfc973383aa7790f557795d5a72153d8abe9f938af",
+    "world_name": "sim008_normal_system_world",
+    "all_plugins": [
+      {
+        "filename": "gz-sim-scene-broadcaster-system",
+        "name": "gz::sim::systems::SceneBroadcaster"
+      },
+      {
+        "filename": "gz-sim-physics-system",
+        "name": "gz::sim::systems::Physics"
+      },
+      {
+        "filename": "gz-sim-user-commands-system",
+        "name": "gz::sim::systems::UserCommands"
+      },
+      {
+        "filename": "gz-sim-sensors-system",
+        "name": "gz::sim::systems::Sensors"
+      },
+      {
+        "filename": "gz-sim-imu-system",
+        "name": "gz::sim::systems::Imu"
+      }
+    ],
+    "world_plugins": [
+      {
+        "filename": "gz-sim-scene-broadcaster-system",
+        "name": "gz::sim::systems::SceneBroadcaster"
+      },
+      {
+        "filename": "gz-sim-physics-system",
+        "name": "gz::sim::systems::Physics"
+      },
+      {
+        "filename": "gz-sim-user-commands-system",
+        "name": "gz::sim::systems::UserCommands"
+      },
+      {
+        "filename": "gz-sim-sensors-system",
+        "name": "gz::sim::systems::Sensors"
+      },
+      {
+        "filename": "gz-sim-imu-system",
+        "name": "gz::sim::systems::Imu"
+      }
+    ],
+    "scene_broadcaster_active_at_world_scope": true,
+    "model_count": 1,
+    "include_count": 1
+  }
+}

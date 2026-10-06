@@ -1,0 +1,7 @@
+{
+  "service": "/gazebo/worlds",
+  "server_pid": 198657,
+  "partition": "sim004-22f4befcda61",
+  "response": "Service call timed out\n",
+  "pass": false
+}

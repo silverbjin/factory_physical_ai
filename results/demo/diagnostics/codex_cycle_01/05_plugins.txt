@@ -1,0 +1,139 @@
+{
+  "canonical_source.sdf": {
+    "path": "/home/jinho/projects/factory_physical_ai_simDemo/results/demo/diagnostics/codex_cycle_01/canonical_source.sdf",
+    "sha256": "fff98b8a19feb8874a65c9dd66f029145ff0be46990dcfd668376df2b30b8ee1",
+    "world": "sim008_normal_system_world",
+    "plugins": [
+      {
+        "filename": "gz-sim-physics-system",
+        "name": "gz::sim::systems::Physics"
+      },
+      {
+        "filename": "gz-sim-user-commands-system",
+        "name": "gz::sim::systems::UserCommands"
+      },
+      {
+        "filename": "gz-sim-scene-broadcaster-system",
+        "name": "gz::sim::systems::SceneBroadcaster"
+      },
+      {
+        "filename": "gz-sim-sensors-system",
+        "name": "gz::sim::systems::Sensors"
+      },
+      {
+        "filename": "gz-sim-imu-system",
+        "name": "gz::sim::systems::Imu"
+      }
+    ],
+    "direct_plugins": [
+      {
+        "filename": "gz-sim-physics-system",
+        "name": "gz::sim::systems::Physics"
+      },
+      {
+        "filename": "gz-sim-user-commands-system",
+        "name": "gz::sim::systems::UserCommands"
+      },
+      {
+        "filename": "gz-sim-sensors-system",
+        "name": "gz::sim::systems::Sensors"
+      },
+      {
+        "filename": "gz-sim-imu-system",
+        "name": "gz::sim::systems::Imu"
+      }
+    ],
+    "models": 1,
+    "includes": 1
+  },
+  "03_source_world.sdf": {
+    "path": "/home/jinho/projects/factory_physical_ai_simDemo/results/demo/diagnostics/codex_cycle_01/03_source_world.sdf",
+    "sha256": "fff98b8a19feb8874a65c9dd66f029145ff0be46990dcfd668376df2b30b8ee1",
+    "world": "sim008_normal_system_world",
+    "plugins": [
+      {
+        "filename": "gz-sim-physics-system",
+        "name": "gz::sim::systems::Physics"
+      },
+      {
+        "filename": "gz-sim-user-commands-system",
+        "name": "gz::sim::systems::UserCommands"
+      },
+      {
+        "filename": "gz-sim-scene-broadcaster-system",
+        "name": "gz::sim::systems::SceneBroadcaster"
+      },
+      {
+        "filename": "gz-sim-sensors-system",
+        "name": "gz::sim::systems::Sensors"
+      },
+      {
+        "filename": "gz-sim-imu-system",
+        "name": "gz::sim::systems::Imu"
+      }
+    ],
+    "direct_plugins": [
+      {
+        "filename": "gz-sim-physics-system",
+        "name": "gz::sim::systems::Physics"
+      },
+      {
+        "filename": "gz-sim-user-commands-system",
+        "name": "gz::sim::systems::UserCommands"
+      },
+      {
+        "filename": "gz-sim-sensors-system",
+        "name": "gz::sim::systems::Sensors"
+      },
+      {
+        "filename": "gz-sim-imu-system",
+        "name": "gz::sim::systems::Imu"
+      }
+    ],
+    "models": 1,
+    "includes": 1
+  },
+  "04_runtime_world.sdf": {
+    "path": "/home/jinho/projects/factory_physical_ai_simDemo/results/demo/diagnostics/codex_cycle_01/04_runtime_world.sdf",
+    "sha256": "bd5815a92dec8d2ffada2d3ed4b979be18bc5cecb2cf36116f610679b405d7c2",
+    "world": "sim008_normal_system_world",
+    "plugins": [
+      {
+        "filename": "gz-sim-physics-system",
+        "name": "gz::sim::systems::Physics"
+      },
+      {
+        "filename": "gz-sim-user-commands-system",
+        "name": "gz::sim::systems::UserCommands"
+      },
+      {
+        "filename": "gz-sim-sensors-system",
+        "name": "gz::sim::systems::Sensors"
+      },
+      {
+        "filename": "gz-sim-imu-system",
+        "name": "gz::sim::systems::Imu"
+      }
+    ],
+    "direct_plugins": [
+      {
+        "filename": "gz-sim-physics-system",
+        "name": "gz::sim::systems::Physics"
+      },
+      {
+        "filename": "gz-sim-user-commands-system",
+        "name": "gz::sim::systems::UserCommands"
+      },
+      {
+        "filename": "gz-sim-sensors-system",
+        "name": "gz::sim::systems::Sensors"
+      },
+      {
+        "filename": "gz-sim-imu-system",
+        "name": "gz::sim::systems::Imu"
+      }
+    ],
+    "models": 1,
+    "includes": 1
+  }
+}

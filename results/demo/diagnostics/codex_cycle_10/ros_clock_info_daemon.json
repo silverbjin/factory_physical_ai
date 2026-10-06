@@ -1,0 +1,12 @@
+{
+  "command": [
+    "/opt/ros/jazzy/bin/ros2",
+    "topic",
+    "info",
+    "/clock",
+    "-v"
+  ],
+  "returncode": 1,
+  "stdout": "",
+  "stderr": "Unknown topic '/clock'\n"
+}

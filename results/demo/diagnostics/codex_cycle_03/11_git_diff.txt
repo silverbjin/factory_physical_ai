@@ -1,0 +1,182 @@
+diff --git a/demo_3d/tools/demo3d_common.py b/demo_3d/tools/demo3d_common.py
+index af20fc6..75ba5dd 100644
+--- a/demo_3d/tools/demo3d_common.py
++++ b/demo_3d/tools/demo3d_common.py
+@@ -365,6 +365,8 @@ def transport_matches(
+ def _is_gazebo_server(tokens: list[str] | None) -> bool:
+     if not tokens:
+         return False
++    import shlex
++    tokens = shlex.split(" ".join(tokens))
+     joined = " ".join(tokens)
+ 
+     looks_like_gz = ("gz sim" in joined) or ("ign gazebo" in joined)
+@@ -497,7 +499,7 @@ def start_gui_attach_to_server(
+ 
+     try:
+         proc = subprocess.Popen(
+-            cli + ["-g"],
++            cli + ["-v", "4", "-g"],
+             stdout=log,
+             stderr=subprocess.STDOUT,
+             env=env,
+@@ -589,22 +591,35 @@ def _sha256_file(path: Path) -> str:
+ 
+ 
+ def inject_scene_broadcaster_text(text: str) -> tuple[str, bool]:
+-    if (
+-        "gz::sim::systems::SceneBroadcaster" in text
+-        or "gz-sim-scene-broadcaster-system" in text
+-    ):
+-        return text, False
++    """Resolve Nav2's headless xacro, then augment its actual world plugins.
+ 
++    A plugin nested in xacro:unless is not an active world plugin. Resolve
++    that boundary first so Nav2's subsequent xacro pass cannot remove ours.
++    """
+     import re
++    import xml.etree.ElementTree as ET
++    original = text
++    if "xacro:" in text:
++        result = subprocess.run(
++            ["/opt/ros/jazzy/bin/xacro", "headless:=True", "/dev/stdin"],
++            input=text, text=True, capture_output=True, check=True, timeout=10,
++        )
++        text = result.stdout
++    world = ET.fromstring(text).find("world")
++    if world is None:
++        raise ValueError("Expected a world SDF for demo augmentation")
++    if any(p.get("name") == "gz::sim::systems::SceneBroadcaster"
++           for p in world.findall("plugin")):
++        return text, text != original
++    # Discover the definition from this installation, not a remembered name.
++    example = Path("/opt/ros/jazzy/share/ros_gz_sim_demos/worlds/default.sdf")
++    installed = ET.parse(example).getroot().find("world")
++    plugin = next(p for p in installed.findall("plugin")
++                  if p.get("name") == "gz::sim::systems::SceneBroadcaster")
+     match = re.search(r"<world\b[^>]*>", text)
+-    if not match:
+-        return text, False
+-
+-    plugin = (
+-        '\n    <plugin filename="gz-sim-scene-broadcaster-system" '
+-        'name="gz::sim::systems::SceneBroadcaster"/>\n'
+-    )
+-    return text[:match.end()] + plugin + text[match.end():], True
++    addition = "\n    <!-- DEMO_VISUALIZATION_AUGMENTATION -->\n    " + ET.tostring(plugin, encoding="unicode") + "\n"
++    text = text[:match.end()] + addition + text[match.end():]
++    return text, True
+ 
+ 
+ def make_visual_context_world(
+@@ -1030,7 +1045,7 @@ def prepare_normal_session(
+     """
+     Always use a detached worktree for the 3D Normal E2E demo.
+ 
+-    v1.5 patches only the worktree copy of the accepted world with
++    Resolve headless xacro and augment only the worktree copy with
+     SceneBroadcaster. This avoids both canonical mutation and unreliable PATH
+     interception of Gazebo launched through ROS 2.
+     """
+@@ -1053,18 +1068,9 @@ def prepare_normal_session(
+ 
+     # If the canonical runner supports --output, keep even its generated
+     # artifact inside the worktree. Never point it at the main repository.
+-    output_flag = has_flag(tmp / rel_runner, "--output")
+     generated = tmp / rel_canon
+     cmd = [sys.executable, str(tmp / rel_runner)]
+ 
+-    if output_flag:
+-        generated = (
+-            tmp
+-            / "results/demo/SIM-008_normal_e2e_demo.json"
+-        )
+-        generated.parent.mkdir(parents=True, exist_ok=True)
+-        cmd += [output_flag, str(generated)]
+-
+     return RunnerSession(
+         root=root,
+         runner=runner,
+diff --git a/demo_3d/tools/demo3d_runtime.py b/demo_3d/tools/demo3d_runtime.py
+index 618a560..1493a46 100644
+--- a/demo_3d/tools/demo3d_runtime.py
++++ b/demo_3d/tools/demo3d_runtime.py
+@@ -213,76 +213,8 @@ def _run_with_gui_follow(
+ 
+ 
+ def normal(root: Path):
+-    env = visual_runner_env(root, runner_env())
+-    out = root / "results/demo/SIM-008_normal_e2e_demo.json"
+-    session = prepare_normal_session(root, env, out)
+-
+-    write_state(
+-        root,
+-        scene="normal",
+-        mode="LIVE_CANONICAL_RUN",
+-        phase="starting",
+-        headline="Starting canonical Normal E2E",
+-        gazebo_3d=False,
+-        strategy=session.strategy,
+-    )
+-
+-    try:
+-        rc, server, attached, history = _run_with_gui_follow(
+-            root,
+-            session,
+-            "normal",
+-            "Normal E2E executing in Gazebo",
+-        )
+-
+-        info = _server_public_info(server)
+-        write_state(
+-            root,
+-            scene="normal",
+-            mode="LIVE_CANONICAL_RUN",
+-            phase="complete" if rc == 0 else "failed",
+-            headline=(
+-                "Normal E2E complete"
+-                if rc == 0
+-                else "Normal E2E failed"
+-            ),
+-            output=(
+-                str(out.relative_to(root))
+-                if out.exists()
+-                else None
+-            ),
+-            runner=(
+-                str(session.runner.relative_to(root))
+-                if session.runner
+-                else None
+-            ),
+-            strategy=session.strategy,
+-            exit_code=rc,
+-            gazebo_3d=False,
+-            transport_verified_during_run=attached,
+-            server_history=history,
+-            disclosure=(
+-                "Gazebo GUI is intentionally closed when the canonical "
+-                "runner finishes because the runtime also performs bounded "
+-                "server cleanup."
+-            ),
+-            **info,
+-        )
+-
+-        print(
+-            f"[3D DEMO] strategy={session.strategy} "
+-            f"runner={session.runner.relative_to(root)} rc={rc}"
+-        )
+-        print(
+-            f"[3D DEMO] GUI transport verified during run={attached}"
+-        )
+-        if out.exists():
+-            print(f"[3D DEMO] evidence={out.relative_to(root)}")
+-
+-        return rc
+-    finally:
+-        session.cleanup()
+-
++    from verified_normal import run
++    return run(root)
+ 
+ 
+ def run_failure(root: Path, scenario_id: str, scene: str):

@@ -1,0 +1,4 @@
+Normal E2E -> SIM_NORMAL_E2E_READY
+NAV timeout -> SIM009-NAV-TIMEOUT-RETRY
+Verification uncertain -> SIM009-VERIFY-UNCERTAIN / RECONCILE / no auto-success
+Final gate -> SIM_E2E_QUALIFIED when canonical bindings validate

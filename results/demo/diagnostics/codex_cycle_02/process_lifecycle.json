@@ -1,0 +1,37 @@
+{
+  "alive_after_cleanup": [],
+  "elapsed_seconds": 8.94,
+  "exception": "Exact live runtime SDF is unavailable",
+  "owned_pids": [
+    182342,
+    182343,
+    182351,
+    182352,
+    182377,
+    182392,
+    182433,
+    182443,
+    182444,
+    182445,
+    182446,
+    182447,
+    182448,
+    182451,
+    182454
+  ],
+  "preexisting_pids_untouched": [
+    176573
+  ],
+  "runner_exit_code": 1,
+  "supplemental_cleanup_pids": [
+    182342,
+    182351,
+    182377,
+    182444,
+    182445,
+    182446,
+    182448,
+    182451,
+    182454
+  ]
+}

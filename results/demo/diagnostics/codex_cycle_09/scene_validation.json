@@ -1,0 +1,13 @@
+{
+  "expected_entity": "brake_ecu_type_b_001",
+  "expected_entity_present": true,
+  "link_count": 4,
+  "model_count": 2,
+  "non_empty": true,
+  "pass": true,
+  "scene_name_confirmed": false,
+  "service": "/world/sim008_normal_system_world/scene/info",
+  "service_available": true,
+  "visual_count": 13,
+  "world_name": "sim008_normal_system_world"
+}

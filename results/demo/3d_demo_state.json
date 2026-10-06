@@ -1,0 +1,16 @@
+{
+  "updated_at": 1791163453.046349,
+  "scene": "normal",
+  "phase": "failed",
+  "validation": "/home/jinho/projects/factory_physical_ai_simDemo/results/demo/runs/3a872aa7c7b640dcab449dbf2571737c",
+  "gates": {
+    "A": true,
+    "B": true,
+    "C": true,
+    "D": true,
+    "E": true,
+    "F": true,
+    "G": false,
+    "H": true
+  }
+}

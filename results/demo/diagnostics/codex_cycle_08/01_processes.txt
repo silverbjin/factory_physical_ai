@@ -1,0 +1,848 @@
+[
+  {
+    "cmdline": [
+      "/home/jinho/projects/factory_physical_ai/.venv-sim/bin/python3",
+      "/tmp/sim008-3d-demo-vyhdzvhb/scripts/run_simulation_normal_system_e2e.py"
+    ],
+    "cwd": "/tmp/sim008-3d-demo-vyhdzvhb",
+    "env": {
+      "DISPLAY": ":0",
+      "GZ_CONFIG_PATH": "/opt/ros/jazzy/opt/gz_sim_vendor/share/gz:/opt/ros/jazzy/opt/sdformat_vendor/share/gz:/opt/ros/jazzy/opt/gz_gui_vendor/share/gz:/opt/ros/jazzy/opt/gz_transport_vendor/share/gz:/opt/ros/jazzy/opt/gz_rendering_vendor/share/gz:/opt/ros/jazzy/opt/gz_plugin_vendor/share/gz:/opt/ros/jazzy/opt/gz_fuel_tools_vendor/share/gz:/opt/ros/jazzy/opt/gz_msgs_vendor/share/gz:/opt/ros/jazzy/opt/gz_common_vendor/share/gz",
+      "GZ_SIM_RESOURCE_PATH": "/opt/ros/jazzy/share",
+      "GZ_SIM_SYSTEM_PLUGIN_PATH": "/opt/ros/jazzy/lib",
+      "PATH": "/home/jinho/projects/factory_physical_ai/.venv-sim/bin:/home/jinho/.local/bin:/home/jinho/.codex/tmp/arg0/codex-arg0tRIgs2:/home/jinho/.vscode-server/bin/07f806f999227108933c2e30515b26eecc1fda74/bin/remote-cli:/home/jinho/.local/bin:/home/jinho/.local/bin:/opt/ros/jazzy/opt/gz_msgs_vendor/bin:/opt/ros/jazzy/opt/gz_tools_vendor/bin:/opt/ros/jazzy/opt/gz_ogre_next_vendor/bin:/opt/ros/jazzy/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/usr/lib/wsl/lib:/mnt/c/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v10.0/bin:/mnt/c/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v10.0/libnvvp:/mnt/c/Program Files (x86)/VMware/VMware Player/bin/:/mnt/c/Windows/system32:/mnt/c/Windows:/mnt/c/Windows/System32/Wbem:/mnt/c/Windows/System32/WindowsPowerShell/v1.0/:/mnt/c/Windows/System32/OpenSSH/:/mnt/c/WINDOWS/system32:/mnt/c/WINDOWS:/mnt/c/WINDOWS/System32/Wbem:/mnt/c/WINDOWS/System32/WindowsPowerShell/v1.0/:/mnt/c/WINDOWS/System32/OpenSSH/:/mnt/c/Program Files (x86)/PuTTY/:/mnt/c/Program Files (x86)/NVIDIA Corporation/PhysX/Common:/mnt/c/swigwin-3.0.12:/mnt/c/mingw64/bin:/mnt/c/Program Files/CMake/bin:/mnt/c/Program Files (x86)/GnuWin32/bin:/mnt/c/Program Files/vcpkg:/mnt/c/Program Files/OpenNI2/Redist:/mnt/c/Program Files/PCL 1.13.0/3rdParty:/mnt/c/Program Files/PCL 1.13.0/3rdParty/VTK/bin:/mnt/c/Users/Jinho/Documents/Projects/TF_src/DeepLearningMath/ffmpeg/bin:/mnt/c/Program Files/NVIDIA Corporation/NVIDIA app/NvDLISR:/mnt/c/Users/Jinho/AppData/Roaming/Python/Python310/Scripts:/mnt/c/Program Files/Git/cmd:/mnt/c/Program Files/WSL/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python310/Scripts/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python310/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python313/Scripts/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python313/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python37/Scripts/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python37/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python36/Scripts/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python36/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python39/Scripts/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python39/:/mnt/c/Users/Jinho/AppData/Local/Microsoft/WindowsApps:/mnt/c/Users/Jinho/AppData/Local/Programs/Microsoft VS Code/bin:/mnt/c/Users/Jinho/AppData/Local/Programs/DockerDesktop/resources/bin:/snap/bin:/home/jinho/.vscode-server/extensions/openai.chatgpt-26.930.41038-linux-x64/bin/linux-x86_64",
+      "WAYLAND_DISPLAY": "wayland-0"
+    },
+    "exe": "/usr/bin/python3.12",
+    "pid": 191830,
+    "start_ticks": "4795215"
+  },
+  {
+    "cmdline": [
+      "/bin/bash",
+      "--noprofile",
+      "--norc",
+      "-c",
+      "source \"$1\" && env -0",
+      "q01-ros-runtime",
+      "/opt/ros/jazzy/setup.bash"
+    ],
+    "cwd": "/tmp/sim008-3d-demo-vyhdzvhb",
+    "env": {
+      "DISPLAY": ":0",
+      "GZ_CONFIG_PATH": "/opt/ros/jazzy/opt/gz_sim_vendor/share/gz:/opt/ros/jazzy/opt/sdformat_vendor/share/gz:/opt/ros/jazzy/opt/gz_gui_vendor/share/gz:/opt/ros/jazzy/opt/gz_transport_vendor/share/gz:/opt/ros/jazzy/opt/gz_rendering_vendor/share/gz:/opt/ros/jazzy/opt/gz_plugin_vendor/share/gz:/opt/ros/jazzy/opt/gz_fuel_tools_vendor/share/gz:/opt/ros/jazzy/opt/gz_msgs_vendor/share/gz:/opt/ros/jazzy/opt/gz_common_vendor/share/gz",
+      "GZ_SIM_RESOURCE_PATH": "/opt/ros/jazzy/share",
+      "GZ_SIM_SYSTEM_PLUGIN_PATH": "/opt/ros/jazzy/lib",
+      "PATH": "/home/jinho/projects/factory_physical_ai/.venv-sim/bin:/home/jinho/.local/bin:/home/jinho/.codex/tmp/arg0/codex-arg0tRIgs2:/home/jinho/.vscode-server/bin/07f806f999227108933c2e30515b26eecc1fda74/bin/remote-cli:/home/jinho/.local/bin:/home/jinho/.local/bin:/opt/ros/jazzy/opt/gz_msgs_vendor/bin:/opt/ros/jazzy/opt/gz_tools_vendor/bin:/opt/ros/jazzy/opt/gz_ogre_next_vendor/bin:/opt/ros/jazzy/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/usr/lib/wsl/lib:/mnt/c/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v10.0/bin:/mnt/c/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v10.0/libnvvp:/mnt/c/Program Files (x86)/VMware/VMware Player/bin/:/mnt/c/Windows/system32:/mnt/c/Windows:/mnt/c/Windows/System32/Wbem:/mnt/c/Windows/System32/WindowsPowerShell/v1.0/:/mnt/c/Windows/System32/OpenSSH/:/mnt/c/WINDOWS/system32:/mnt/c/WINDOWS:/mnt/c/WINDOWS/System32/Wbem:/mnt/c/WINDOWS/System32/WindowsPowerShell/v1.0/:/mnt/c/WINDOWS/System32/OpenSSH/:/mnt/c/Program Files (x86)/PuTTY/:/mnt/c/Program Files (x86)/NVIDIA Corporation/PhysX/Common:/mnt/c/swigwin-3.0.12:/mnt/c/mingw64/bin:/mnt/c/Program Files/CMake/bin:/mnt/c/Program Files (x86)/GnuWin32/bin:/mnt/c/Program Files/vcpkg:/mnt/c/Program Files/OpenNI2/Redist:/mnt/c/Program Files/PCL 1.13.0/3rdParty:/mnt/c/Program Files/PCL 1.13.0/3rdParty/VTK/bin:/mnt/c/Users/Jinho/Documents/Projects/TF_src/DeepLearningMath/ffmpeg/bin:/mnt/c/Program Files/NVIDIA Corporation/NVIDIA app/NvDLISR:/mnt/c/Users/Jinho/AppData/Roaming/Python/Python310/Scripts:/mnt/c/Program Files/Git/cmd:/mnt/c/Program Files/WSL/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python310/Scripts/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python310/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python313/Scripts/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python313/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python37/Scripts/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python37/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python36/Scripts/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python36/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python39/Scripts/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python39/:/mnt/c/Users/Jinho/AppData/Local/Microsoft/WindowsApps:/mnt/c/Users/Jinho/AppData/Local/Programs/Microsoft VS Code/bin:/mnt/c/Users/Jinho/AppData/Local/Programs/DockerDesktop/resources/bin:/snap/bin:/home/jinho/.vscode-server/extensions/openai.chatgpt-26.930.41038-linux-x64/bin/linux-x86_64",
+      "WAYLAND_DISPLAY": "wayland-0"
+    },
+    "exe": "/usr/bin/bash",
+    "pid": 191831,
+    "start_ticks": "4795229"
+  },
+  {
+    "cmdline": [
+      "/usr/bin/python3",
+      "/opt/ros/jazzy/_local_setup_util.py",
+      "sh",
+      "bash"
+    ],
+    "cwd": "/tmp/sim008-3d-demo-vyhdzvhb",
+    "env": {
+      "DISPLAY": ":0",
+      "GZ_CONFIG_PATH": "/opt/ros/jazzy/opt/gz_sim_vendor/share/gz:/opt/ros/jazzy/opt/sdformat_vendor/share/gz:/opt/ros/jazzy/opt/gz_gui_vendor/share/gz:/opt/ros/jazzy/opt/gz_transport_vendor/share/gz:/opt/ros/jazzy/opt/gz_rendering_vendor/share/gz:/opt/ros/jazzy/opt/gz_plugin_vendor/share/gz:/opt/ros/jazzy/opt/gz_fuel_tools_vendor/share/gz:/opt/ros/jazzy/opt/gz_msgs_vendor/share/gz:/opt/ros/jazzy/opt/gz_common_vendor/share/gz",
+      "GZ_SIM_RESOURCE_PATH": "/opt/ros/jazzy/share",
+      "GZ_SIM_SYSTEM_PLUGIN_PATH": "/opt/ros/jazzy/lib",
+      "PATH": "/home/jinho/projects/factory_physical_ai/.venv-sim/bin:/home/jinho/.local/bin:/home/jinho/.codex/tmp/arg0/codex-arg0tRIgs2:/home/jinho/.vscode-server/bin/07f806f999227108933c2e30515b26eecc1fda74/bin/remote-cli:/home/jinho/.local/bin:/home/jinho/.local/bin:/opt/ros/jazzy/opt/gz_msgs_vendor/bin:/opt/ros/jazzy/opt/gz_tools_vendor/bin:/opt/ros/jazzy/opt/gz_ogre_next_vendor/bin:/opt/ros/jazzy/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/usr/lib/wsl/lib:/mnt/c/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v10.0/bin:/mnt/c/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v10.0/libnvvp:/mnt/c/Program Files (x86)/VMware/VMware Player/bin/:/mnt/c/Windows/system32:/mnt/c/Windows:/mnt/c/Windows/System32/Wbem:/mnt/c/Windows/System32/WindowsPowerShell/v1.0/:/mnt/c/Windows/System32/OpenSSH/:/mnt/c/WINDOWS/system32:/mnt/c/WINDOWS:/mnt/c/WINDOWS/System32/Wbem:/mnt/c/WINDOWS/System32/WindowsPowerShell/v1.0/:/mnt/c/WINDOWS/System32/OpenSSH/:/mnt/c/Program Files (x86)/PuTTY/:/mnt/c/Program Files (x86)/NVIDIA Corporation/PhysX/Common:/mnt/c/swigwin-3.0.12:/mnt/c/mingw64/bin:/mnt/c/Program Files/CMake/bin:/mnt/c/Program Files (x86)/GnuWin32/bin:/mnt/c/Program Files/vcpkg:/mnt/c/Program Files/OpenNI2/Redist:/mnt/c/Program Files/PCL 1.13.0/3rdParty:/mnt/c/Program Files/PCL 1.13.0/3rdParty/VTK/bin:/mnt/c/Users/Jinho/Documents/Projects/TF_src/DeepLearningMath/ffmpeg/bin:/mnt/c/Program Files/NVIDIA Corporation/NVIDIA app/NvDLISR:/mnt/c/Users/Jinho/AppData/Roaming/Python/Python310/Scripts:/mnt/c/Program Files/Git/cmd:/mnt/c/Program Files/WSL/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python310/Scripts/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python310/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python313/Scripts/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python313/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python37/Scripts/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python37/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python36/Scripts/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python36/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python39/Scripts/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python39/:/mnt/c/Users/Jinho/AppData/Local/Microsoft/WindowsApps:/mnt/c/Users/Jinho/AppData/Local/Programs/Microsoft VS Code/bin:/mnt/c/Users/Jinho/AppData/Local/Programs/DockerDesktop/resources/bin:/snap/bin:/home/jinho/.vscode-server/extensions/openai.chatgpt-26.930.41038-linux-x64/bin/linux-x86_64",
+      "WAYLAND_DISPLAY": "wayland-0"
+    },
+    "exe": "/usr/bin/python3.12",
+    "pid": 191836,
+    "start_ticks": "4795230"
+  },
+  {
+    "cmdline": [
+      "/usr/bin/python3",
+      "/usr/bin/register-python-argcomplete",
+      "ros2"
+    ],
+    "cwd": "/tmp/sim008-3d-demo-vyhdzvhb",
+    "env": {
+      "DISPLAY": ":0",
+      "GZ_CONFIG_PATH": "/opt/ros/jazzy/opt/gz_sim_vendor/share/gz:/opt/ros/jazzy/opt/sdformat_vendor/share/gz:/opt/ros/jazzy/opt/gz_gui_vendor/share/gz:/opt/ros/jazzy/opt/gz_transport_vendor/share/gz:/opt/ros/jazzy/opt/gz_rendering_vendor/share/gz:/opt/ros/jazzy/opt/gz_plugin_vendor/share/gz:/opt/ros/jazzy/opt/gz_fuel_tools_vendor/share/gz:/opt/ros/jazzy/opt/gz_msgs_vendor/share/gz:/opt/ros/jazzy/opt/gz_common_vendor/share/gz",
+      "GZ_SIM_RESOURCE_PATH": "/opt/ros/jazzy/share",
+      "GZ_SIM_SYSTEM_PLUGIN_PATH": "/opt/ros/jazzy/lib",
+      "PATH": "/home/jinho/projects/factory_physical_ai/.venv-sim/bin:/home/jinho/.local/bin:/home/jinho/.codex/tmp/arg0/codex-arg0tRIgs2:/home/jinho/.vscode-server/bin/07f806f999227108933c2e30515b26eecc1fda74/bin/remote-cli:/home/jinho/.local/bin:/home/jinho/.local/bin:/opt/ros/jazzy/opt/gz_msgs_vendor/bin:/opt/ros/jazzy/opt/gz_tools_vendor/bin:/opt/ros/jazzy/opt/gz_ogre_next_vendor/bin:/opt/ros/jazzy/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/usr/lib/wsl/lib:/mnt/c/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v10.0/bin:/mnt/c/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v10.0/libnvvp:/mnt/c/Program Files (x86)/VMware/VMware Player/bin/:/mnt/c/Windows/system32:/mnt/c/Windows:/mnt/c/Windows/System32/Wbem:/mnt/c/Windows/System32/WindowsPowerShell/v1.0/:/mnt/c/Windows/System32/OpenSSH/:/mnt/c/WINDOWS/system32:/mnt/c/WINDOWS:/mnt/c/WINDOWS/System32/Wbem:/mnt/c/WINDOWS/System32/WindowsPowerShell/v1.0/:/mnt/c/WINDOWS/System32/OpenSSH/:/mnt/c/Program Files (x86)/PuTTY/:/mnt/c/Program Files (x86)/NVIDIA Corporation/PhysX/Common:/mnt/c/swigwin-3.0.12:/mnt/c/mingw64/bin:/mnt/c/Program Files/CMake/bin:/mnt/c/Program Files (x86)/GnuWin32/bin:/mnt/c/Program Files/vcpkg:/mnt/c/Program Files/OpenNI2/Redist:/mnt/c/Program Files/PCL 1.13.0/3rdParty:/mnt/c/Program Files/PCL 1.13.0/3rdParty/VTK/bin:/mnt/c/Users/Jinho/Documents/Projects/TF_src/DeepLearningMath/ffmpeg/bin:/mnt/c/Program Files/NVIDIA Corporation/NVIDIA app/NvDLISR:/mnt/c/Users/Jinho/AppData/Roaming/Python/Python310/Scripts:/mnt/c/Program Files/Git/cmd:/mnt/c/Program Files/WSL/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python310/Scripts/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python310/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python313/Scripts/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python313/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python37/Scripts/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python37/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python36/Scripts/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python36/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python39/Scripts/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python39/:/mnt/c/Users/Jinho/AppData/Local/Microsoft/WindowsApps:/mnt/c/Users/Jinho/AppData/Local/Programs/Microsoft VS Code/bin:/mnt/c/Users/Jinho/AppData/Local/Programs/DockerDesktop/resources/bin:/snap/bin:/home/jinho/.vscode-server/extensions/openai.chatgpt-26.930.41038-linux-x64/bin/linux-x86_64",
+      "WAYLAND_DISPLAY": "wayland-0"
+    },
+    "exe": "/usr/bin/python3.12",
+    "pid": 191837,
+    "start_ticks": "4795251"
+  },
+  {
+    "cmdline": [
+      "/usr/bin/python3",
+      "/opt/ros/jazzy/bin/ros2",
+      "launch",
+      "nav2_bringup",
+      "tb4_simulation_launch.py",
+      "headless:=True",
+      "use_rviz:=False",
+      "autostart:=False",
+      "x_pose:=-6.5",
+      "y_pose:=0.0",
+      "yaw:=0.0",
+      "world:=/tmp/sim008-3d-demo-vyhdzvhb/data/simulation/sim008_normal_system_world.sdf"
+    ],
+    "cwd": "/tmp/sim008-3d-demo-vyhdzvhb",
+    "env": {
+      "DISPLAY": ":0",
+      "GZ_CONFIG_PATH": "/opt/ros/jazzy/opt/gz_sim_vendor/share/gz:/opt/ros/jazzy/opt/sdformat_vendor/share/gz:/opt/ros/jazzy/opt/gz_gui_vendor/share/gz:/opt/ros/jazzy/opt/gz_transport_vendor/share/gz:/opt/ros/jazzy/opt/gz_rendering_vendor/share/gz:/opt/ros/jazzy/opt/gz_plugin_vendor/share/gz:/opt/ros/jazzy/opt/gz_fuel_tools_vendor/share/gz:/opt/ros/jazzy/opt/gz_msgs_vendor/share/gz:/opt/ros/jazzy/opt/gz_common_vendor/share/gz",
+      "GZ_PARTITION": "sim004-24d450e36346",
+      "GZ_SIM_RESOURCE_PATH": "/opt/ros/jazzy/share",
+      "GZ_SIM_SYSTEM_PLUGIN_PATH": "/opt/ros/jazzy/lib",
+      "PATH": "/home/jinho/projects/factory_physical_ai/.venv-sim/bin:/home/jinho/.local/bin:/home/jinho/.codex/tmp/arg0/codex-arg0tRIgs2:/home/jinho/.vscode-server/bin/07f806f999227108933c2e30515b26eecc1fda74/bin/remote-cli:/home/jinho/.local/bin:/home/jinho/.local/bin:/opt/ros/jazzy/opt/gz_msgs_vendor/bin:/opt/ros/jazzy/opt/gz_tools_vendor/bin:/opt/ros/jazzy/opt/gz_ogre_next_vendor/bin:/opt/ros/jazzy/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/usr/lib/wsl/lib:/mnt/c/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v10.0/bin:/mnt/c/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v10.0/libnvvp:/mnt/c/Program Files (x86)/VMware/VMware Player/bin/:/mnt/c/Windows/system32:/mnt/c/Windows:/mnt/c/Windows/System32/Wbem:/mnt/c/Windows/System32/WindowsPowerShell/v1.0/:/mnt/c/Windows/System32/OpenSSH/:/mnt/c/WINDOWS/system32:/mnt/c/WINDOWS:/mnt/c/WINDOWS/System32/Wbem:/mnt/c/WINDOWS/System32/WindowsPowerShell/v1.0/:/mnt/c/WINDOWS/System32/OpenSSH/:/mnt/c/Program Files (x86)/PuTTY/:/mnt/c/Program Files (x86)/NVIDIA Corporation/PhysX/Common:/mnt/c/swigwin-3.0.12:/mnt/c/mingw64/bin:/mnt/c/Program Files/CMake/bin:/mnt/c/Program Files (x86)/GnuWin32/bin:/mnt/c/Program Files/vcpkg:/mnt/c/Program Files/OpenNI2/Redist:/mnt/c/Program Files/PCL 1.13.0/3rdParty:/mnt/c/Program Files/PCL 1.13.0/3rdParty/VTK/bin:/mnt/c/Users/Jinho/Documents/Projects/TF_src/DeepLearningMath/ffmpeg/bin:/mnt/c/Program Files/NVIDIA Corporation/NVIDIA app/NvDLISR:/mnt/c/Users/Jinho/AppData/Roaming/Python/Python310/Scripts:/mnt/c/Program Files/Git/cmd:/mnt/c/Program Files/WSL/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python310/Scripts/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python310/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python313/Scripts/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python313/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python37/Scripts/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python37/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python36/Scripts/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python36/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python39/Scripts/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python39/:/mnt/c/Users/Jinho/AppData/Local/Microsoft/WindowsApps:/mnt/c/Users/Jinho/AppData/Local/Programs/Microsoft VS Code/bin:/mnt/c/Users/Jinho/AppData/Local/Programs/DockerDesktop/resources/bin:/snap/bin:/home/jinho/.vscode-server/extensions/openai.chatgpt-26.930.41038-linux-x64/bin/linux-x86_64",
+      "ROS_DOMAIN_ID": "164",
+      "ROS_LOG_DIR": "/tmp/sim004-ros-9uakungz",
+      "WAYLAND_DISPLAY": "wayland-0"
+    },
+    "exe": "/usr/bin/python3.12",
+    "pid": 191847,
+    "start_ticks": "4795268"
+  },
+  {
+    "cmdline": [
+      "/usr/bin/python3",
+      "/opt/ros/jazzy/bin/ros2",
+      "action",
+      "list",
+      "-t"
+    ],
+    "cwd": "/tmp/sim008-3d-demo-vyhdzvhb",
+    "env": {
+      "DISPLAY": ":0",
+      "GZ_CONFIG_PATH": "/opt/ros/jazzy/opt/gz_sim_vendor/share/gz:/opt/ros/jazzy/opt/sdformat_vendor/share/gz:/opt/ros/jazzy/opt/gz_gui_vendor/share/gz:/opt/ros/jazzy/opt/gz_transport_vendor/share/gz:/opt/ros/jazzy/opt/gz_rendering_vendor/share/gz:/opt/ros/jazzy/opt/gz_plugin_vendor/share/gz:/opt/ros/jazzy/opt/gz_fuel_tools_vendor/share/gz:/opt/ros/jazzy/opt/gz_msgs_vendor/share/gz:/opt/ros/jazzy/opt/gz_common_vendor/share/gz",
+      "GZ_PARTITION": "sim004-24d450e36346",
+      "GZ_SIM_RESOURCE_PATH": "/opt/ros/jazzy/share",
+      "GZ_SIM_SYSTEM_PLUGIN_PATH": "/opt/ros/jazzy/lib",
+      "PATH": "/home/jinho/projects/factory_physical_ai/.venv-sim/bin:/home/jinho/.local/bin:/home/jinho/.codex/tmp/arg0/codex-arg0tRIgs2:/home/jinho/.vscode-server/bin/07f806f999227108933c2e30515b26eecc1fda74/bin/remote-cli:/home/jinho/.local/bin:/home/jinho/.local/bin:/opt/ros/jazzy/opt/gz_msgs_vendor/bin:/opt/ros/jazzy/opt/gz_tools_vendor/bin:/opt/ros/jazzy/opt/gz_ogre_next_vendor/bin:/opt/ros/jazzy/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/usr/lib/wsl/lib:/mnt/c/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v10.0/bin:/mnt/c/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v10.0/libnvvp:/mnt/c/Program Files (x86)/VMware/VMware Player/bin/:/mnt/c/Windows/system32:/mnt/c/Windows:/mnt/c/Windows/System32/Wbem:/mnt/c/Windows/System32/WindowsPowerShell/v1.0/:/mnt/c/Windows/System32/OpenSSH/:/mnt/c/WINDOWS/system32:/mnt/c/WINDOWS:/mnt/c/WINDOWS/System32/Wbem:/mnt/c/WINDOWS/System32/WindowsPowerShell/v1.0/:/mnt/c/WINDOWS/System32/OpenSSH/:/mnt/c/Program Files (x86)/PuTTY/:/mnt/c/Program Files (x86)/NVIDIA Corporation/PhysX/Common:/mnt/c/swigwin-3.0.12:/mnt/c/mingw64/bin:/mnt/c/Program Files/CMake/bin:/mnt/c/Program Files (x86)/GnuWin32/bin:/mnt/c/Program Files/vcpkg:/mnt/c/Program Files/OpenNI2/Redist:/mnt/c/Program Files/PCL 1.13.0/3rdParty:/mnt/c/Program Files/PCL 1.13.0/3rdParty/VTK/bin:/mnt/c/Users/Jinho/Documents/Projects/TF_src/DeepLearningMath/ffmpeg/bin:/mnt/c/Program Files/NVIDIA Corporation/NVIDIA app/NvDLISR:/mnt/c/Users/Jinho/AppData/Roaming/Python/Python310/Scripts:/mnt/c/Program Files/Git/cmd:/mnt/c/Program Files/WSL/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python310/Scripts/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python310/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python313/Scripts/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python313/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python37/Scripts/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python37/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python36/Scripts/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python36/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python39/Scripts/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python39/:/mnt/c/Users/Jinho/AppData/Local/Microsoft/WindowsApps:/mnt/c/Users/Jinho/AppData/Local/Programs/Microsoft VS Code/bin:/mnt/c/Users/Jinho/AppData/Local/Programs/DockerDesktop/resources/bin:/snap/bin:/home/jinho/.vscode-server/extensions/openai.chatgpt-26.930.41038-linux-x64/bin/linux-x86_64",
+      "ROS_DOMAIN_ID": "164",
+      "ROS_LOG_DIR": "/tmp/sim004-ros-9uakungz",
+      "WAYLAND_DISPLAY": "wayland-0"
+    },
+    "exe": "/usr/bin/python3.12",
+    "pid": 191848,
+    "start_ticks": "4795268"
+  },
+  {
+    "cmdline": [
+      "/usr/bin/python3",
+      "/opt/ros/jazzy/bin/xacro",
+      "/opt/ros/jazzy/share/nav2_minimal_tb4_description/urdf/standard/turtlebot4.urdf.xacro"
+    ],
+    "cwd": "/tmp/sim008-3d-demo-vyhdzvhb",
+    "env": {
+      "DISPLAY": ":0",
+      "GZ_CONFIG_PATH": "/opt/ros/jazzy/opt/gz_sim_vendor/share/gz:/opt/ros/jazzy/opt/sdformat_vendor/share/gz:/opt/ros/jazzy/opt/gz_gui_vendor/share/gz:/opt/ros/jazzy/opt/gz_transport_vendor/share/gz:/opt/ros/jazzy/opt/gz_rendering_vendor/share/gz:/opt/ros/jazzy/opt/gz_plugin_vendor/share/gz:/opt/ros/jazzy/opt/gz_fuel_tools_vendor/share/gz:/opt/ros/jazzy/opt/gz_msgs_vendor/share/gz:/opt/ros/jazzy/opt/gz_common_vendor/share/gz",
+      "GZ_PARTITION": "sim004-24d450e36346",
+      "GZ_SIM_RESOURCE_PATH": "/opt/ros/jazzy/share:/opt/ros/jazzy/share/nav2_minimal_tb4_sim/worlds:/opt/ros/jazzy/share",
+      "GZ_SIM_SYSTEM_PLUGIN_PATH": "/opt/ros/jazzy/lib",
+      "PATH": "/home/jinho/projects/factory_physical_ai/.venv-sim/bin:/home/jinho/.local/bin:/home/jinho/.codex/tmp/arg0/codex-arg0tRIgs2:/home/jinho/.vscode-server/bin/07f806f999227108933c2e30515b26eecc1fda74/bin/remote-cli:/home/jinho/.local/bin:/home/jinho/.local/bin:/opt/ros/jazzy/opt/gz_msgs_vendor/bin:/opt/ros/jazzy/opt/gz_tools_vendor/bin:/opt/ros/jazzy/opt/gz_ogre_next_vendor/bin:/opt/ros/jazzy/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/usr/lib/wsl/lib:/mnt/c/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v10.0/bin:/mnt/c/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v10.0/libnvvp:/mnt/c/Program Files (x86)/VMware/VMware Player/bin/:/mnt/c/Windows/system32:/mnt/c/Windows:/mnt/c/Windows/System32/Wbem:/mnt/c/Windows/System32/WindowsPowerShell/v1.0/:/mnt/c/Windows/System32/OpenSSH/:/mnt/c/WINDOWS/system32:/mnt/c/WINDOWS:/mnt/c/WINDOWS/System32/Wbem:/mnt/c/WINDOWS/System32/WindowsPowerShell/v1.0/:/mnt/c/WINDOWS/System32/OpenSSH/:/mnt/c/Program Files (x86)/PuTTY/:/mnt/c/Program Files (x86)/NVIDIA Corporation/PhysX/Common:/mnt/c/swigwin-3.0.12:/mnt/c/mingw64/bin:/mnt/c/Program Files/CMake/bin:/mnt/c/Program Files (x86)/GnuWin32/bin:/mnt/c/Program Files/vcpkg:/mnt/c/Program Files/OpenNI2/Redist:/mnt/c/Program Files/PCL 1.13.0/3rdParty:/mnt/c/Program Files/PCL 1.13.0/3rdParty/VTK/bin:/mnt/c/Users/Jinho/Documents/Projects/TF_src/DeepLearningMath/ffmpeg/bin:/mnt/c/Program Files/NVIDIA Corporation/NVIDIA app/NvDLISR:/mnt/c/Users/Jinho/AppData/Roaming/Python/Python310/Scripts:/mnt/c/Program Files/Git/cmd:/mnt/c/Program Files/WSL/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python310/Scripts/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python310/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python313/Scripts/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python313/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python37/Scripts/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python37/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python36/Scripts/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python36/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python39/Scripts/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python39/:/mnt/c/Users/Jinho/AppData/Local/Microsoft/WindowsApps:/mnt/c/Users/Jinho/AppData/Local/Programs/Microsoft VS Code/bin:/mnt/c/Users/Jinho/AppData/Local/Programs/DockerDesktop/resources/bin:/snap/bin:/home/jinho/.vscode-server/extensions/openai.chatgpt-26.930.41038-linux-x64/bin/linux-x86_64",
+      "ROS_DOMAIN_ID": "164",
+      "ROS_LOG_DIR": "/tmp/sim004-ros-9uakungz",
+      "WAYLAND_DISPLAY": "wayland-0"
+    },
+    "exe": "/usr/bin/python3.12",
+    "pid": 191867,
+    "start_ticks": "4795327"
+  },
+  {
+    "cmdline": [
+      "/usr/bin/python3",
+      "/opt/ros/jazzy/bin/ros2",
+      "lifecycle",
+      "get",
+      "/map_server"
+    ],
+    "cwd": "/tmp/sim008-3d-demo-vyhdzvhb",
+    "env": {
+      "DISPLAY": ":0",
+      "GZ_CONFIG_PATH": "/opt/ros/jazzy/opt/gz_sim_vendor/share/gz:/opt/ros/jazzy/opt/sdformat_vendor/share/gz:/opt/ros/jazzy/opt/gz_gui_vendor/share/gz:/opt/ros/jazzy/opt/gz_transport_vendor/share/gz:/opt/ros/jazzy/opt/gz_rendering_vendor/share/gz:/opt/ros/jazzy/opt/gz_plugin_vendor/share/gz:/opt/ros/jazzy/opt/gz_fuel_tools_vendor/share/gz:/opt/ros/jazzy/opt/gz_msgs_vendor/share/gz:/opt/ros/jazzy/opt/gz_common_vendor/share/gz",
+      "GZ_PARTITION": "sim004-24d450e36346",
+      "GZ_SIM_RESOURCE_PATH": "/opt/ros/jazzy/share",
+      "GZ_SIM_SYSTEM_PLUGIN_PATH": "/opt/ros/jazzy/lib",
+      "PATH": "/home/jinho/projects/factory_physical_ai/.venv-sim/bin:/home/jinho/.local/bin:/home/jinho/.codex/tmp/arg0/codex-arg0tRIgs2:/home/jinho/.vscode-server/bin/07f806f999227108933c2e30515b26eecc1fda74/bin/remote-cli:/home/jinho/.local/bin:/home/jinho/.local/bin:/opt/ros/jazzy/opt/gz_msgs_vendor/bin:/opt/ros/jazzy/opt/gz_tools_vendor/bin:/opt/ros/jazzy/opt/gz_ogre_next_vendor/bin:/opt/ros/jazzy/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/usr/lib/wsl/lib:/mnt/c/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v10.0/bin:/mnt/c/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v10.0/libnvvp:/mnt/c/Program Files (x86)/VMware/VMware Player/bin/:/mnt/c/Windows/system32:/mnt/c/Windows:/mnt/c/Windows/System32/Wbem:/mnt/c/Windows/System32/WindowsPowerShell/v1.0/:/mnt/c/Windows/System32/OpenSSH/:/mnt/c/WINDOWS/system32:/mnt/c/WINDOWS:/mnt/c/WINDOWS/System32/Wbem:/mnt/c/WINDOWS/System32/WindowsPowerShell/v1.0/:/mnt/c/WINDOWS/System32/OpenSSH/:/mnt/c/Program Files (x86)/PuTTY/:/mnt/c/Program Files (x86)/NVIDIA Corporation/PhysX/Common:/mnt/c/swigwin-3.0.12:/mnt/c/mingw64/bin:/mnt/c/Program Files/CMake/bin:/mnt/c/Program Files (x86)/GnuWin32/bin:/mnt/c/Program Files/vcpkg:/mnt/c/Program Files/OpenNI2/Redist:/mnt/c/Program Files/PCL 1.13.0/3rdParty:/mnt/c/Program Files/PCL 1.13.0/3rdParty/VTK/bin:/mnt/c/Users/Jinho/Documents/Projects/TF_src/DeepLearningMath/ffmpeg/bin:/mnt/c/Program Files/NVIDIA Corporation/NVIDIA app/NvDLISR:/mnt/c/Users/Jinho/AppData/Roaming/Python/Python310/Scripts:/mnt/c/Program Files/Git/cmd:/mnt/c/Program Files/WSL/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python310/Scripts/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python310/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python313/Scripts/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python313/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python37/Scripts/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python37/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python36/Scripts/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python36/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python39/Scripts/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python39/:/mnt/c/Users/Jinho/AppData/Local/Microsoft/WindowsApps:/mnt/c/Users/Jinho/AppData/Local/Programs/Microsoft VS Code/bin:/mnt/c/Users/Jinho/AppData/Local/Programs/DockerDesktop/resources/bin:/snap/bin:/home/jinho/.vscode-server/extensions/openai.chatgpt-26.930.41038-linux-x64/bin/linux-x86_64",
+      "ROS_DOMAIN_ID": "164",
+      "ROS_LOG_DIR": "/tmp/sim004-ros-9uakungz",
+      "WAYLAND_DISPLAY": "wayland-0"
+    },
+    "exe": "/usr/bin/python3.12",
+    "pid": 191868,
+    "start_ticks": "4795331"
+  },
+  {
+    "cmdline": [
+      "/usr/bin/python3",
+      "/opt/ros/jazzy/bin/xacro",
+      "-o",
+      "/tmp/nav2_e89c4g10.sdf",
+      "headless:=True",
+      "/tmp/sim008-3d-demo-vyhdzvhb/data/simulation/sim008_normal_system_world.sdf"
+    ],
+    "cwd": "/tmp/sim008-3d-demo-vyhdzvhb",
+    "env": {
+      "DISPLAY": ":0",
+      "GZ_CONFIG_PATH": "/opt/ros/jazzy/opt/gz_sim_vendor/share/gz:/opt/ros/jazzy/opt/sdformat_vendor/share/gz:/opt/ros/jazzy/opt/gz_gui_vendor/share/gz:/opt/ros/jazzy/opt/gz_transport_vendor/share/gz:/opt/ros/jazzy/opt/gz_rendering_vendor/share/gz:/opt/ros/jazzy/opt/gz_plugin_vendor/share/gz:/opt/ros/jazzy/opt/gz_fuel_tools_vendor/share/gz:/opt/ros/jazzy/opt/gz_msgs_vendor/share/gz:/opt/ros/jazzy/opt/gz_common_vendor/share/gz",
+      "GZ_PARTITION": "sim004-24d450e36346",
+      "GZ_SIM_RESOURCE_PATH": "/opt/ros/jazzy/share:/opt/ros/jazzy/share/nav2_minimal_tb4_sim/worlds",
+      "GZ_SIM_SYSTEM_PLUGIN_PATH": "/opt/ros/jazzy/lib",
+      "PATH": "/home/jinho/projects/factory_physical_ai/.venv-sim/bin:/home/jinho/.local/bin:/home/jinho/.codex/tmp/arg0/codex-arg0tRIgs2:/home/jinho/.vscode-server/bin/07f806f999227108933c2e30515b26eecc1fda74/bin/remote-cli:/home/jinho/.local/bin:/home/jinho/.local/bin:/opt/ros/jazzy/opt/gz_msgs_vendor/bin:/opt/ros/jazzy/opt/gz_tools_vendor/bin:/opt/ros/jazzy/opt/gz_ogre_next_vendor/bin:/opt/ros/jazzy/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/usr/lib/wsl/lib:/mnt/c/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v10.0/bin:/mnt/c/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v10.0/libnvvp:/mnt/c/Program Files (x86)/VMware/VMware Player/bin/:/mnt/c/Windows/system32:/mnt/c/Windows:/mnt/c/Windows/System32/Wbem:/mnt/c/Windows/System32/WindowsPowerShell/v1.0/:/mnt/c/Windows/System32/OpenSSH/:/mnt/c/WINDOWS/system32:/mnt/c/WINDOWS:/mnt/c/WINDOWS/System32/Wbem:/mnt/c/WINDOWS/System32/WindowsPowerShell/v1.0/:/mnt/c/WINDOWS/System32/OpenSSH/:/mnt/c/Program Files (x86)/PuTTY/:/mnt/c/Program Files (x86)/NVIDIA Corporation/PhysX/Common:/mnt/c/swigwin-3.0.12:/mnt/c/mingw64/bin:/mnt/c/Program Files/CMake/bin:/mnt/c/Program Files (x86)/GnuWin32/bin:/mnt/c/Program Files/vcpkg:/mnt/c/Program Files/OpenNI2/Redist:/mnt/c/Program Files/PCL 1.13.0/3rdParty:/mnt/c/Program Files/PCL 1.13.0/3rdParty/VTK/bin:/mnt/c/Users/Jinho/Documents/Projects/TF_src/DeepLearningMath/ffmpeg/bin:/mnt/c/Program Files/NVIDIA Corporation/NVIDIA app/NvDLISR:/mnt/c/Users/Jinho/AppData/Roaming/Python/Python310/Scripts:/mnt/c/Program Files/Git/cmd:/mnt/c/Program Files/WSL/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python310/Scripts/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python310/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python313/Scripts/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python313/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python37/Scripts/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python37/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python36/Scripts/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python36/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python39/Scripts/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python39/:/mnt/c/Users/Jinho/AppData/Local/Microsoft/WindowsApps:/mnt/c/Users/Jinho/AppData/Local/Programs/Microsoft VS Code/bin:/mnt/c/Users/Jinho/AppData/Local/Programs/DockerDesktop/resources/bin:/snap/bin:/home/jinho/.vscode-server/extensions/openai.chatgpt-26.930.41038-linux-x64/bin/linux-x86_64",
+      "ROS_DOMAIN_ID": "164",
+      "ROS_LOG_DIR": "/tmp/sim004-ros-9uakungz",
+      "WAYLAND_DISPLAY": "wayland-0"
+    },
+    "exe": "/usr/bin/python3.12",
+    "pid": 191887,
+    "start_ticks": "4795463"
+  },
+  {
+    "cmdline": [
+      "/opt/ros/jazzy/lib/ros_gz_bridge/parameter_bridge",
+      "--ros-args",
+      "-r",
+      "__node:=bridge_ros_gz",
+      "--params-file",
+      "/tmp/launch_params_cz6o7ve1"
+    ],
+    "cwd": "/tmp/sim008-3d-demo-vyhdzvhb",
+    "env": {
+      "DISPLAY": ":0",
+      "GZ_CONFIG_PATH": "/opt/ros/jazzy/opt/gz_sim_vendor/share/gz:/opt/ros/jazzy/opt/sdformat_vendor/share/gz:/opt/ros/jazzy/opt/gz_gui_vendor/share/gz:/opt/ros/jazzy/opt/gz_transport_vendor/share/gz:/opt/ros/jazzy/opt/gz_rendering_vendor/share/gz:/opt/ros/jazzy/opt/gz_plugin_vendor/share/gz:/opt/ros/jazzy/opt/gz_fuel_tools_vendor/share/gz:/opt/ros/jazzy/opt/gz_msgs_vendor/share/gz:/opt/ros/jazzy/opt/gz_common_vendor/share/gz",
+      "GZ_PARTITION": "sim004-24d450e36346",
+      "GZ_SIM_RESOURCE_PATH": "/opt/ros/jazzy/share:/opt/ros/jazzy/share/nav2_minimal_tb4_sim/worlds:/opt/ros/jazzy/share",
+      "GZ_SIM_SYSTEM_PLUGIN_PATH": "/opt/ros/jazzy/lib",
+      "PATH": "/home/jinho/projects/factory_physical_ai/.venv-sim/bin:/home/jinho/.local/bin:/home/jinho/.codex/tmp/arg0/codex-arg0tRIgs2:/home/jinho/.vscode-server/bin/07f806f999227108933c2e30515b26eecc1fda74/bin/remote-cli:/home/jinho/.local/bin:/home/jinho/.local/bin:/opt/ros/jazzy/opt/gz_msgs_vendor/bin:/opt/ros/jazzy/opt/gz_tools_vendor/bin:/opt/ros/jazzy/opt/gz_ogre_next_vendor/bin:/opt/ros/jazzy/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/usr/lib/wsl/lib:/mnt/c/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v10.0/bin:/mnt/c/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v10.0/libnvvp:/mnt/c/Program Files (x86)/VMware/VMware Player/bin/:/mnt/c/Windows/system32:/mnt/c/Windows:/mnt/c/Windows/System32/Wbem:/mnt/c/Windows/System32/WindowsPowerShell/v1.0/:/mnt/c/Windows/System32/OpenSSH/:/mnt/c/WINDOWS/system32:/mnt/c/WINDOWS:/mnt/c/WINDOWS/System32/Wbem:/mnt/c/WINDOWS/System32/WindowsPowerShell/v1.0/:/mnt/c/WINDOWS/System32/OpenSSH/:/mnt/c/Program Files (x86)/PuTTY/:/mnt/c/Program Files (x86)/NVIDIA Corporation/PhysX/Common:/mnt/c/swigwin-3.0.12:/mnt/c/mingw64/bin:/mnt/c/Program Files/CMake/bin:/mnt/c/Program Files (x86)/GnuWin32/bin:/mnt/c/Program Files/vcpkg:/mnt/c/Program Files/OpenNI2/Redist:/mnt/c/Program Files/PCL 1.13.0/3rdParty:/mnt/c/Program Files/PCL 1.13.0/3rdParty/VTK/bin:/mnt/c/Users/Jinho/Documents/Projects/TF_src/DeepLearningMath/ffmpeg/bin:/mnt/c/Program Files/NVIDIA Corporation/NVIDIA app/NvDLISR:/mnt/c/Users/Jinho/AppData/Roaming/Python/Python310/Scripts:/mnt/c/Program Files/Git/cmd:/mnt/c/Program Files/WSL/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python310/Scripts/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python310/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python313/Scripts/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python313/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python37/Scripts/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python37/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python36/Scripts/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python36/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python39/Scripts/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python39/:/mnt/c/Users/Jinho/AppData/Local/Microsoft/WindowsApps:/mnt/c/Users/Jinho/AppData/Local/Programs/Microsoft VS Code/bin:/mnt/c/Users/Jinho/AppData/Local/Programs/DockerDesktop/resources/bin:/snap/bin:/home/jinho/.vscode-server/extensions/openai.chatgpt-26.930.41038-linux-x64/bin/linux-x86_64",
+      "ROS_DOMAIN_ID": "164",
+      "ROS_LOG_DIR": "/tmp/sim004-ros-9uakungz",
+      "WAYLAND_DISPLAY": "wayland-0"
+    },
+    "exe": "/opt/ros/jazzy/lib/ros_gz_bridge/parameter_bridge",
+    "pid": 191888,
+    "start_ticks": "4795463"
+  },
+  {
+    "cmdline": [
+      "/opt/ros/jazzy/lib/ros_gz_image/image_bridge",
+      "/rgbd_camera/image",
+      "--ros-args",
+      "-r",
+      "__node:=bridge_gz_ros_camera_image",
+      "--params-file",
+      "/tmp/launch_params_f1dbgyuu"
+    ],
+    "cwd": "/tmp/sim008-3d-demo-vyhdzvhb",
+    "env": {
+      "DISPLAY": ":0",
+      "GZ_CONFIG_PATH": "/opt/ros/jazzy/opt/gz_sim_vendor/share/gz:/opt/ros/jazzy/opt/sdformat_vendor/share/gz:/opt/ros/jazzy/opt/gz_gui_vendor/share/gz:/opt/ros/jazzy/opt/gz_transport_vendor/share/gz:/opt/ros/jazzy/opt/gz_rendering_vendor/share/gz:/opt/ros/jazzy/opt/gz_plugin_vendor/share/gz:/opt/ros/jazzy/opt/gz_fuel_tools_vendor/share/gz:/opt/ros/jazzy/opt/gz_msgs_vendor/share/gz:/opt/ros/jazzy/opt/gz_common_vendor/share/gz",
+      "GZ_PARTITION": "sim004-24d450e36346",
+      "GZ_SIM_RESOURCE_PATH": "/opt/ros/jazzy/share:/opt/ros/jazzy/share/nav2_minimal_tb4_sim/worlds:/opt/ros/jazzy/share",
+      "GZ_SIM_SYSTEM_PLUGIN_PATH": "/opt/ros/jazzy/lib",
+      "PATH": "/home/jinho/projects/factory_physical_ai/.venv-sim/bin:/home/jinho/.local/bin:/home/jinho/.codex/tmp/arg0/codex-arg0tRIgs2:/home/jinho/.vscode-server/bin/07f806f999227108933c2e30515b26eecc1fda74/bin/remote-cli:/home/jinho/.local/bin:/home/jinho/.local/bin:/opt/ros/jazzy/opt/gz_msgs_vendor/bin:/opt/ros/jazzy/opt/gz_tools_vendor/bin:/opt/ros/jazzy/opt/gz_ogre_next_vendor/bin:/opt/ros/jazzy/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/usr/lib/wsl/lib:/mnt/c/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v10.0/bin:/mnt/c/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v10.0/libnvvp:/mnt/c/Program Files (x86)/VMware/VMware Player/bin/:/mnt/c/Windows/system32:/mnt/c/Windows:/mnt/c/Windows/System32/Wbem:/mnt/c/Windows/System32/WindowsPowerShell/v1.0/:/mnt/c/Windows/System32/OpenSSH/:/mnt/c/WINDOWS/system32:/mnt/c/WINDOWS:/mnt/c/WINDOWS/System32/Wbem:/mnt/c/WINDOWS/System32/WindowsPowerShell/v1.0/:/mnt/c/WINDOWS/System32/OpenSSH/:/mnt/c/Program Files (x86)/PuTTY/:/mnt/c/Program Files (x86)/NVIDIA Corporation/PhysX/Common:/mnt/c/swigwin-3.0.12:/mnt/c/mingw64/bin:/mnt/c/Program Files/CMake/bin:/mnt/c/Program Files (x86)/GnuWin32/bin:/mnt/c/Program Files/vcpkg:/mnt/c/Program Files/OpenNI2/Redist:/mnt/c/Program Files/PCL 1.13.0/3rdParty:/mnt/c/Program Files/PCL 1.13.0/3rdParty/VTK/bin:/mnt/c/Users/Jinho/Documents/Projects/TF_src/DeepLearningMath/ffmpeg/bin:/mnt/c/Program Files/NVIDIA Corporation/NVIDIA app/NvDLISR:/mnt/c/Users/Jinho/AppData/Roaming/Python/Python310/Scripts:/mnt/c/Program Files/Git/cmd:/mnt/c/Program Files/WSL/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python310/Scripts/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python310/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python313/Scripts/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python313/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python37/Scripts/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python37/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python36/Scripts/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python36/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python39/Scripts/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python39/:/mnt/c/Users/Jinho/AppData/Local/Microsoft/WindowsApps:/mnt/c/Users/Jinho/AppData/Local/Programs/Microsoft VS Code/bin:/mnt/c/Users/Jinho/AppData/Local/Programs/DockerDesktop/resources/bin:/snap/bin:/home/jinho/.vscode-server/extensions/openai.chatgpt-26.930.41038-linux-x64/bin/linux-x86_64",
+      "ROS_DOMAIN_ID": "164",
+      "ROS_LOG_DIR": "/tmp/sim004-ros-9uakungz",
+      "WAYLAND_DISPLAY": "wayland-0"
+    },
+    "exe": "/opt/ros/jazzy/lib/ros_gz_image/image_bridge",
+    "pid": 191889,
+    "start_ticks": "4795463"
+  },
+  {
+    "cmdline": [
+      "/opt/ros/jazzy/lib/ros_gz_image/image_bridge",
+      "/rgbd_camera/depth_image",
+      "--ros-args",
+      "-r",
+      "__node:=bridge_gz_ros_camera_depth",
+      "--params-file",
+      "/tmp/launch_params_vwjb19cs"
+    ],
+    "cwd": "/tmp/sim008-3d-demo-vyhdzvhb",
+    "env": {
+      "DISPLAY": ":0",
+      "GZ_CONFIG_PATH": "/opt/ros/jazzy/opt/gz_sim_vendor/share/gz:/opt/ros/jazzy/opt/sdformat_vendor/share/gz:/opt/ros/jazzy/opt/gz_gui_vendor/share/gz:/opt/ros/jazzy/opt/gz_transport_vendor/share/gz:/opt/ros/jazzy/opt/gz_rendering_vendor/share/gz:/opt/ros/jazzy/opt/gz_plugin_vendor/share/gz:/opt/ros/jazzy/opt/gz_fuel_tools_vendor/share/gz:/opt/ros/jazzy/opt/gz_msgs_vendor/share/gz:/opt/ros/jazzy/opt/gz_common_vendor/share/gz",
+      "GZ_PARTITION": "sim004-24d450e36346",
+      "GZ_SIM_RESOURCE_PATH": "/opt/ros/jazzy/share:/opt/ros/jazzy/share/nav2_minimal_tb4_sim/worlds:/opt/ros/jazzy/share",
+      "GZ_SIM_SYSTEM_PLUGIN_PATH": "/opt/ros/jazzy/lib",
+      "PATH": "/home/jinho/projects/factory_physical_ai/.venv-sim/bin:/home/jinho/.local/bin:/home/jinho/.codex/tmp/arg0/codex-arg0tRIgs2:/home/jinho/.vscode-server/bin/07f806f999227108933c2e30515b26eecc1fda74/bin/remote-cli:/home/jinho/.local/bin:/home/jinho/.local/bin:/opt/ros/jazzy/opt/gz_msgs_vendor/bin:/opt/ros/jazzy/opt/gz_tools_vendor/bin:/opt/ros/jazzy/opt/gz_ogre_next_vendor/bin:/opt/ros/jazzy/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/usr/lib/wsl/lib:/mnt/c/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v10.0/bin:/mnt/c/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v10.0/libnvvp:/mnt/c/Program Files (x86)/VMware/VMware Player/bin/:/mnt/c/Windows/system32:/mnt/c/Windows:/mnt/c/Windows/System32/Wbem:/mnt/c/Windows/System32/WindowsPowerShell/v1.0/:/mnt/c/Windows/System32/OpenSSH/:/mnt/c/WINDOWS/system32:/mnt/c/WINDOWS:/mnt/c/WINDOWS/System32/Wbem:/mnt/c/WINDOWS/System32/WindowsPowerShell/v1.0/:/mnt/c/WINDOWS/System32/OpenSSH/:/mnt/c/Program Files (x86)/PuTTY/:/mnt/c/Program Files (x86)/NVIDIA Corporation/PhysX/Common:/mnt/c/swigwin-3.0.12:/mnt/c/mingw64/bin:/mnt/c/Program Files/CMake/bin:/mnt/c/Program Files (x86)/GnuWin32/bin:/mnt/c/Program Files/vcpkg:/mnt/c/Program Files/OpenNI2/Redist:/mnt/c/Program Files/PCL 1.13.0/3rdParty:/mnt/c/Program Files/PCL 1.13.0/3rdParty/VTK/bin:/mnt/c/Users/Jinho/Documents/Projects/TF_src/DeepLearningMath/ffmpeg/bin:/mnt/c/Program Files/NVIDIA Corporation/NVIDIA app/NvDLISR:/mnt/c/Users/Jinho/AppData/Roaming/Python/Python310/Scripts:/mnt/c/Program Files/Git/cmd:/mnt/c/Program Files/WSL/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python310/Scripts/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python310/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python313/Scripts/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python313/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python37/Scripts/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python37/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python36/Scripts/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python36/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python39/Scripts/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python39/:/mnt/c/Users/Jinho/AppData/Local/Microsoft/WindowsApps:/mnt/c/Users/Jinho/AppData/Local/Programs/Microsoft VS Code/bin:/mnt/c/Users/Jinho/AppData/Local/Programs/DockerDesktop/resources/bin:/snap/bin:/home/jinho/.vscode-server/extensions/openai.chatgpt-26.930.41038-linux-x64/bin/linux-x86_64",
+      "ROS_DOMAIN_ID": "164",
+      "ROS_LOG_DIR": "/tmp/sim004-ros-9uakungz",
+      "WAYLAND_DISPLAY": "wayland-0"
+    },
+    "exe": "/opt/ros/jazzy/lib/ros_gz_image/image_bridge",
+    "pid": 191890,
+    "start_ticks": "4795463"
+  },
+  {
+    "cmdline": [
+      "/opt/ros/jazzy/lib/ros_gz_sim/create",
+      "-entity",
+      "nav2_turtlebot4",
+      "-topic",
+      "robot_description",
+      "-robot_namespace",
+      "-x",
+      "-6.5",
+      "-y",
+      "0.0",
+      "-z",
+      "0.01",
+      "-R",
+      "0.00",
+      "-P",
+      "0.00",
+      "-Y",
+      "0.0",
+      "--ros-args",
+      "--params-file",
+      "/tmp/launch_params_d84tseoh"
+    ],
+    "cwd": "/tmp/sim008-3d-demo-vyhdzvhb",
+    "env": {
+      "DISPLAY": ":0",
+      "GZ_CONFIG_PATH": "/opt/ros/jazzy/opt/gz_sim_vendor/share/gz:/opt/ros/jazzy/opt/sdformat_vendor/share/gz:/opt/ros/jazzy/opt/gz_gui_vendor/share/gz:/opt/ros/jazzy/opt/gz_transport_vendor/share/gz:/opt/ros/jazzy/opt/gz_rendering_vendor/share/gz:/opt/ros/jazzy/opt/gz_plugin_vendor/share/gz:/opt/ros/jazzy/opt/gz_fuel_tools_vendor/share/gz:/opt/ros/jazzy/opt/gz_msgs_vendor/share/gz:/opt/ros/jazzy/opt/gz_common_vendor/share/gz",
+      "GZ_PARTITION": "sim004-24d450e36346",
+      "GZ_SIM_RESOURCE_PATH": "/opt/ros/jazzy/share:/opt/ros/jazzy/share/nav2_minimal_tb4_sim/worlds:/opt/ros/jazzy/share",
+      "GZ_SIM_SYSTEM_PLUGIN_PATH": "/opt/ros/jazzy/lib",
+      "PATH": "/home/jinho/projects/factory_physical_ai/.venv-sim/bin:/home/jinho/.local/bin:/home/jinho/.codex/tmp/arg0/codex-arg0tRIgs2:/home/jinho/.vscode-server/bin/07f806f999227108933c2e30515b26eecc1fda74/bin/remote-cli:/home/jinho/.local/bin:/home/jinho/.local/bin:/opt/ros/jazzy/opt/gz_msgs_vendor/bin:/opt/ros/jazzy/opt/gz_tools_vendor/bin:/opt/ros/jazzy/opt/gz_ogre_next_vendor/bin:/opt/ros/jazzy/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/usr/lib/wsl/lib:/mnt/c/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v10.0/bin:/mnt/c/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v10.0/libnvvp:/mnt/c/Program Files (x86)/VMware/VMware Player/bin/:/mnt/c/Windows/system32:/mnt/c/Windows:/mnt/c/Windows/System32/Wbem:/mnt/c/Windows/System32/WindowsPowerShell/v1.0/:/mnt/c/Windows/System32/OpenSSH/:/mnt/c/WINDOWS/system32:/mnt/c/WINDOWS:/mnt/c/WINDOWS/System32/Wbem:/mnt/c/WINDOWS/System32/WindowsPowerShell/v1.0/:/mnt/c/WINDOWS/System32/OpenSSH/:/mnt/c/Program Files (x86)/PuTTY/:/mnt/c/Program Files (x86)/NVIDIA Corporation/PhysX/Common:/mnt/c/swigwin-3.0.12:/mnt/c/mingw64/bin:/mnt/c/Program Files/CMake/bin:/mnt/c/Program Files (x86)/GnuWin32/bin:/mnt/c/Program Files/vcpkg:/mnt/c/Program Files/OpenNI2/Redist:/mnt/c/Program Files/PCL 1.13.0/3rdParty:/mnt/c/Program Files/PCL 1.13.0/3rdParty/VTK/bin:/mnt/c/Users/Jinho/Documents/Projects/TF_src/DeepLearningMath/ffmpeg/bin:/mnt/c/Program Files/NVIDIA Corporation/NVIDIA app/NvDLISR:/mnt/c/Users/Jinho/AppData/Roaming/Python/Python310/Scripts:/mnt/c/Program Files/Git/cmd:/mnt/c/Program Files/WSL/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python310/Scripts/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python310/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python313/Scripts/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python313/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python37/Scripts/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python37/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python36/Scripts/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python36/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python39/Scripts/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python39/:/mnt/c/Users/Jinho/AppData/Local/Microsoft/WindowsApps:/mnt/c/Users/Jinho/AppData/Local/Programs/Microsoft VS Code/bin:/mnt/c/Users/Jinho/AppData/Local/Programs/DockerDesktop/resources/bin:/snap/bin:/home/jinho/.vscode-server/extensions/openai.chatgpt-26.930.41038-linux-x64/bin/linux-x86_64",
+      "ROS_DOMAIN_ID": "164",
+      "ROS_LOG_DIR": "/tmp/sim004-ros-9uakungz",
+      "WAYLAND_DISPLAY": "wayland-0"
+    },
+    "exe": "/opt/ros/jazzy/lib/ros_gz_sim/create",
+    "pid": 191891,
+    "start_ticks": "4795463"
+  },
+  {
+    "cmdline": [
+      "gz sim -r -s /tmp/nav2_e89c4g10.sdf"
+    ],
+    "cwd": "/tmp/sim008-3d-demo-vyhdzvhb",
+    "env": {
+      "DISPLAY": ":0",
+      "GZ_CONFIG_PATH": "/opt/ros/jazzy/opt/gz_sim_vendor/share/gz:/opt/ros/jazzy/opt/sdformat_vendor/share/gz:/opt/ros/jazzy/opt/gz_gui_vendor/share/gz:/opt/ros/jazzy/opt/gz_transport_vendor/share/gz:/opt/ros/jazzy/opt/gz_rendering_vendor/share/gz:/opt/ros/jazzy/opt/gz_plugin_vendor/share/gz:/opt/ros/jazzy/opt/gz_fuel_tools_vendor/share/gz:/opt/ros/jazzy/opt/gz_msgs_vendor/share/gz:/opt/ros/jazzy/opt/gz_common_vendor/share/gz",
+      "GZ_PARTITION": "sim004-24d450e36346",
+      "GZ_SIM_RESOURCE_PATH": "/opt/ros/jazzy/share:/opt/ros/jazzy/share/nav2_minimal_tb4_sim/worlds:/opt/ros/jazzy/share",
+      "GZ_SIM_SYSTEM_PLUGIN_PATH": "/opt/ros/jazzy/lib",
+      "PATH": "/home/jinho/projects/factory_physical_ai/.venv-sim/bin:/home/jinho/.local/bin:/home/jinho/.codex/tmp/arg0/codex-arg0tRIgs2:/home/jinho/.vscode-server/bin/07f806f999227108933c2e30515b26eecc1fda74/bin/remote-cli:/home/jinho/.local/bin:/home/jinho/.local/bin:/opt/ros/jazzy/opt/gz_msgs_vendor/bin:/opt/ros/jazzy/opt/gz_tools_vendor/bin:/opt/ros/jazzy/opt/gz_ogre_next_vendor/bin:/opt/ros/jazzy/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/usr/lib/wsl/lib:/mnt/c/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v10.0/bin:/mnt/c/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v10.0/libnvvp:/mnt/c/Program Files (x86)/VMware/VMware Player/bin/:/mnt/c/Windows/system32:/mnt/c/Windows:/mnt/c/Windows/System32/Wbem:/mnt/c/Windows/System32/WindowsPowerShell/v1.0/:/mnt/c/Windows/System32/OpenSSH/:/mnt/c/WINDOWS/system32:/mnt/c/WINDOWS:/mnt/c/WINDOWS/System32/Wbem:/mnt/c/WINDOWS/System32/WindowsPowerShell/v1.0/:/mnt/c/WINDOWS/System32/OpenSSH/:/mnt/c/Program Files (x86)/PuTTY/:/mnt/c/Program Files (x86)/NVIDIA Corporation/PhysX/Common:/mnt/c/swigwin-3.0.12:/mnt/c/mingw64/bin:/mnt/c/Program Files/CMake/bin:/mnt/c/Program Files (x86)/GnuWin32/bin:/mnt/c/Program Files/vcpkg:/mnt/c/Program Files/OpenNI2/Redist:/mnt/c/Program Files/PCL 1.13.0/3rdParty:/mnt/c/Program Files/PCL 1.13.0/3rdParty/VTK/bin:/mnt/c/Users/Jinho/Documents/Projects/TF_src/DeepLearningMath/ffmpeg/bin:/mnt/c/Program Files/NVIDIA Corporation/NVIDIA app/NvDLISR:/mnt/c/Users/Jinho/AppData/Roaming/Python/Python310/Scripts:/mnt/c/Program Files/Git/cmd:/mnt/c/Program Files/WSL/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python310/Scripts/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python310/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python313/Scripts/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python313/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python37/Scripts/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python37/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python36/Scripts/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python36/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python39/Scripts/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python39/:/mnt/c/Users/Jinho/AppData/Local/Microsoft/WindowsApps:/mnt/c/Users/Jinho/AppData/Local/Programs/Microsoft VS Code/bin:/mnt/c/Users/Jinho/AppData/Local/Programs/DockerDesktop/resources/bin:/snap/bin:/home/jinho/.vscode-server/extensions/openai.chatgpt-26.930.41038-linux-x64/bin/linux-x86_64",
+      "ROS_DOMAIN_ID": "164",
+      "ROS_LOG_DIR": "/tmp/sim004-ros-9uakungz",
+      "WAYLAND_DISPLAY": "wayland-0"
+    },
+    "exe": "/usr/bin/ruby3.2",
+    "pid": 191892,
+    "start_ticks": "4795463"
+  },
+  {
+    "cmdline": [
+      "/opt/ros/jazzy/lib/robot_state_publisher/robot_state_publisher",
+      "--ros-args",
+      "-r",
+      "__node:=robot_state_publisher",
+      "-r",
+      "__ns:=/",
+      "--params-file",
+      "/tmp/launch_params_7wkt04in",
+      "-r",
+      "/tf:=tf",
+      "-r",
+      "/tf_static:=tf_static"
+    ],
+    "cwd": "/tmp/sim008-3d-demo-vyhdzvhb",
+    "env": {
+      "DISPLAY": ":0",
+      "GZ_CONFIG_PATH": "/opt/ros/jazzy/opt/gz_sim_vendor/share/gz:/opt/ros/jazzy/opt/sdformat_vendor/share/gz:/opt/ros/jazzy/opt/gz_gui_vendor/share/gz:/opt/ros/jazzy/opt/gz_transport_vendor/share/gz:/opt/ros/jazzy/opt/gz_rendering_vendor/share/gz:/opt/ros/jazzy/opt/gz_plugin_vendor/share/gz:/opt/ros/jazzy/opt/gz_fuel_tools_vendor/share/gz:/opt/ros/jazzy/opt/gz_msgs_vendor/share/gz:/opt/ros/jazzy/opt/gz_common_vendor/share/gz",
+      "GZ_PARTITION": "sim004-24d450e36346",
+      "GZ_SIM_RESOURCE_PATH": "/opt/ros/jazzy/share:/opt/ros/jazzy/share/nav2_minimal_tb4_sim/worlds:/opt/ros/jazzy/share",
+      "GZ_SIM_SYSTEM_PLUGIN_PATH": "/opt/ros/jazzy/lib",
+      "PATH": "/home/jinho/projects/factory_physical_ai/.venv-sim/bin:/home/jinho/.local/bin:/home/jinho/.codex/tmp/arg0/codex-arg0tRIgs2:/home/jinho/.vscode-server/bin/07f806f999227108933c2e30515b26eecc1fda74/bin/remote-cli:/home/jinho/.local/bin:/home/jinho/.local/bin:/opt/ros/jazzy/opt/gz_msgs_vendor/bin:/opt/ros/jazzy/opt/gz_tools_vendor/bin:/opt/ros/jazzy/opt/gz_ogre_next_vendor/bin:/opt/ros/jazzy/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/usr/lib/wsl/lib:/mnt/c/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v10.0/bin:/mnt/c/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v10.0/libnvvp:/mnt/c/Program Files (x86)/VMware/VMware Player/bin/:/mnt/c/Windows/system32:/mnt/c/Windows:/mnt/c/Windows/System32/Wbem:/mnt/c/Windows/System32/WindowsPowerShell/v1.0/:/mnt/c/Windows/System32/OpenSSH/:/mnt/c/WINDOWS/system32:/mnt/c/WINDOWS:/mnt/c/WINDOWS/System32/Wbem:/mnt/c/WINDOWS/System32/WindowsPowerShell/v1.0/:/mnt/c/WINDOWS/System32/OpenSSH/:/mnt/c/Program Files (x86)/PuTTY/:/mnt/c/Program Files (x86)/NVIDIA Corporation/PhysX/Common:/mnt/c/swigwin-3.0.12:/mnt/c/mingw64/bin:/mnt/c/Program Files/CMake/bin:/mnt/c/Program Files (x86)/GnuWin32/bin:/mnt/c/Program Files/vcpkg:/mnt/c/Program Files/OpenNI2/Redist:/mnt/c/Program Files/PCL 1.13.0/3rdParty:/mnt/c/Program Files/PCL 1.13.0/3rdParty/VTK/bin:/mnt/c/Users/Jinho/Documents/Projects/TF_src/DeepLearningMath/ffmpeg/bin:/mnt/c/Program Files/NVIDIA Corporation/NVIDIA app/NvDLISR:/mnt/c/Users/Jinho/AppData/Roaming/Python/Python310/Scripts:/mnt/c/Program Files/Git/cmd:/mnt/c/Program Files/WSL/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python310/Scripts/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python310/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python313/Scripts/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python313/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python37/Scripts/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python37/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python36/Scripts/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python36/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python39/Scripts/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python39/:/mnt/c/Users/Jinho/AppData/Local/Microsoft/WindowsApps:/mnt/c/Users/Jinho/AppData/Local/Programs/Microsoft VS Code/bin:/mnt/c/Users/Jinho/AppData/Local/Programs/DockerDesktop/resources/bin:/snap/bin:/home/jinho/.vscode-server/extensions/openai.chatgpt-26.930.41038-linux-x64/bin/linux-x86_64",
+      "ROS_DOMAIN_ID": "164",
+      "ROS_LOG_DIR": "/tmp/sim004-ros-9uakungz",
+      "WAYLAND_DISPLAY": "wayland-0"
+    },
+    "exe": "/opt/ros/jazzy/lib/robot_state_publisher/robot_state_publisher",
+    "pid": 191904,
+    "start_ticks": "4795467"
+  },
+  {
+    "cmdline": [
+      "/opt/ros/jazzy/lib/rclcpp_components/component_container_isolated",
+      "--ros-args",
+      "--log-level",
+      "info",
+      "--ros-args",
+      "-r",
+      "__node:=nav2_container",
+      "--params-file",
+      "/tmp/launch_params_jqcj1hrg",
+      "--params-file",
+      "/tmp/launch_params_sojp_8c4",
+      "-r",
+      "/tf:=tf",
+      "-r",
+      "/tf_static:=tf_static"
+    ],
+    "cwd": "/tmp/sim008-3d-demo-vyhdzvhb",
+    "env": {
+      "DISPLAY": ":0",
+      "GZ_CONFIG_PATH": "/opt/ros/jazzy/opt/gz_sim_vendor/share/gz:/opt/ros/jazzy/opt/sdformat_vendor/share/gz:/opt/ros/jazzy/opt/gz_gui_vendor/share/gz:/opt/ros/jazzy/opt/gz_transport_vendor/share/gz:/opt/ros/jazzy/opt/gz_rendering_vendor/share/gz:/opt/ros/jazzy/opt/gz_plugin_vendor/share/gz:/opt/ros/jazzy/opt/gz_fuel_tools_vendor/share/gz:/opt/ros/jazzy/opt/gz_msgs_vendor/share/gz:/opt/ros/jazzy/opt/gz_common_vendor/share/gz",
+      "GZ_PARTITION": "sim004-24d450e36346",
+      "GZ_SIM_RESOURCE_PATH": "/opt/ros/jazzy/share:/opt/ros/jazzy/share/nav2_minimal_tb4_sim/worlds:/opt/ros/jazzy/share",
+      "GZ_SIM_SYSTEM_PLUGIN_PATH": "/opt/ros/jazzy/lib",
+      "PATH": "/home/jinho/projects/factory_physical_ai/.venv-sim/bin:/home/jinho/.local/bin:/home/jinho/.codex/tmp/arg0/codex-arg0tRIgs2:/home/jinho/.vscode-server/bin/07f806f999227108933c2e30515b26eecc1fda74/bin/remote-cli:/home/jinho/.local/bin:/home/jinho/.local/bin:/opt/ros/jazzy/opt/gz_msgs_vendor/bin:/opt/ros/jazzy/opt/gz_tools_vendor/bin:/opt/ros/jazzy/opt/gz_ogre_next_vendor/bin:/opt/ros/jazzy/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/usr/lib/wsl/lib:/mnt/c/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v10.0/bin:/mnt/c/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v10.0/libnvvp:/mnt/c/Program Files (x86)/VMware/VMware Player/bin/:/mnt/c/Windows/system32:/mnt/c/Windows:/mnt/c/Windows/System32/Wbem:/mnt/c/Windows/System32/WindowsPowerShell/v1.0/:/mnt/c/Windows/System32/OpenSSH/:/mnt/c/WINDOWS/system32:/mnt/c/WINDOWS:/mnt/c/WINDOWS/System32/Wbem:/mnt/c/WINDOWS/System32/WindowsPowerShell/v1.0/:/mnt/c/WINDOWS/System32/OpenSSH/:/mnt/c/Program Files (x86)/PuTTY/:/mnt/c/Program Files (x86)/NVIDIA Corporation/PhysX/Common:/mnt/c/swigwin-3.0.12:/mnt/c/mingw64/bin:/mnt/c/Program Files/CMake/bin:/mnt/c/Program Files (x86)/GnuWin32/bin:/mnt/c/Program Files/vcpkg:/mnt/c/Program Files/OpenNI2/Redist:/mnt/c/Program Files/PCL 1.13.0/3rdParty:/mnt/c/Program Files/PCL 1.13.0/3rdParty/VTK/bin:/mnt/c/Users/Jinho/Documents/Projects/TF_src/DeepLearningMath/ffmpeg/bin:/mnt/c/Program Files/NVIDIA Corporation/NVIDIA app/NvDLISR:/mnt/c/Users/Jinho/AppData/Roaming/Python/Python310/Scripts:/mnt/c/Program Files/Git/cmd:/mnt/c/Program Files/WSL/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python310/Scripts/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python310/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python313/Scripts/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python313/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python37/Scripts/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python37/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python36/Scripts/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python36/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python39/Scripts/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python39/:/mnt/c/Users/Jinho/AppData/Local/Microsoft/WindowsApps:/mnt/c/Users/Jinho/AppData/Local/Programs/Microsoft VS Code/bin:/mnt/c/Users/Jinho/AppData/Local/Programs/DockerDesktop/resources/bin:/snap/bin:/home/jinho/.vscode-server/extensions/openai.chatgpt-26.930.41038-linux-x64/bin/linux-x86_64",
+      "ROS_DOMAIN_ID": "164",
+      "ROS_LOG_DIR": "/tmp/sim004-ros-9uakungz",
+      "WAYLAND_DISPLAY": "wayland-0"
+    },
+    "exe": "/opt/ros/jazzy/lib/rclcpp_components/component_container_isolated",
+    "pid": 191906,
+    "start_ticks": "4795467"
+  },
+  {
+    "cmdline": [
+      "gz sim -v 4 -g"
+    ],
+    "cwd": "/home/jinho/projects/factory_physical_ai_simDemo",
+    "env": {
+      "DISPLAY": ":0",
+      "GZ_CONFIG_PATH": "/opt/ros/jazzy/opt/gz_sim_vendor/share/gz:/opt/ros/jazzy/opt/sdformat_vendor/share/gz:/opt/ros/jazzy/opt/gz_gui_vendor/share/gz:/opt/ros/jazzy/opt/gz_transport_vendor/share/gz:/opt/ros/jazzy/opt/gz_rendering_vendor/share/gz:/opt/ros/jazzy/opt/gz_plugin_vendor/share/gz:/opt/ros/jazzy/opt/gz_fuel_tools_vendor/share/gz:/opt/ros/jazzy/opt/gz_msgs_vendor/share/gz:/opt/ros/jazzy/opt/gz_common_vendor/share/gz",
+      "GZ_PARTITION": "sim004-24d450e36346",
+      "GZ_SIM_RESOURCE_PATH": "/opt/ros/jazzy/share:/opt/ros/jazzy/share/nav2_minimal_tb4_sim/worlds:/opt/ros/jazzy/share",
+      "GZ_SIM_SYSTEM_PLUGIN_PATH": "/opt/ros/jazzy/lib",
+      "IGN_PARTITION": "sim004-24d450e36346",
+      "PATH": "/home/jinho/projects/factory_physical_ai/.venv-sim/bin:/home/jinho/.local/bin:/home/jinho/.codex/tmp/arg0/codex-arg0tRIgs2:/home/jinho/.vscode-server/bin/07f806f999227108933c2e30515b26eecc1fda74/bin/remote-cli:/home/jinho/.local/bin:/home/jinho/.local/bin:/opt/ros/jazzy/opt/gz_msgs_vendor/bin:/opt/ros/jazzy/opt/gz_tools_vendor/bin:/opt/ros/jazzy/opt/gz_ogre_next_vendor/bin:/opt/ros/jazzy/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/usr/lib/wsl/lib:/mnt/c/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v10.0/bin:/mnt/c/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v10.0/libnvvp:/mnt/c/Program Files (x86)/VMware/VMware Player/bin/:/mnt/c/Windows/system32:/mnt/c/Windows:/mnt/c/Windows/System32/Wbem:/mnt/c/Windows/System32/WindowsPowerShell/v1.0/:/mnt/c/Windows/System32/OpenSSH/:/mnt/c/WINDOWS/system32:/mnt/c/WINDOWS:/mnt/c/WINDOWS/System32/Wbem:/mnt/c/WINDOWS/System32/WindowsPowerShell/v1.0/:/mnt/c/WINDOWS/System32/OpenSSH/:/mnt/c/Program Files (x86)/PuTTY/:/mnt/c/Program Files (x86)/NVIDIA Corporation/PhysX/Common:/mnt/c/swigwin-3.0.12:/mnt/c/mingw64/bin:/mnt/c/Program Files/CMake/bin:/mnt/c/Program Files (x86)/GnuWin32/bin:/mnt/c/Program Files/vcpkg:/mnt/c/Program Files/OpenNI2/Redist:/mnt/c/Program Files/PCL 1.13.0/3rdParty:/mnt/c/Program Files/PCL 1.13.0/3rdParty/VTK/bin:/mnt/c/Users/Jinho/Documents/Projects/TF_src/DeepLearningMath/ffmpeg/bin:/mnt/c/Program Files/NVIDIA Corporation/NVIDIA app/NvDLISR:/mnt/c/Users/Jinho/AppData/Roaming/Python/Python310/Scripts:/mnt/c/Program Files/Git/cmd:/mnt/c/Program Files/WSL/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python310/Scripts/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python310/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python313/Scripts/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python313/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python37/Scripts/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python37/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python36/Scripts/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python36/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python39/Scripts/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python39/:/mnt/c/Users/Jinho/AppData/Local/Microsoft/WindowsApps:/mnt/c/Users/Jinho/AppData/Local/Programs/Microsoft VS Code/bin:/mnt/c/Users/Jinho/AppData/Local/Programs/DockerDesktop/resources/bin:/snap/bin:/home/jinho/.vscode-server/extensions/openai.chatgpt-26.930.41038-linux-x64/bin/linux-x86_64",
+      "ROS_DOMAIN_ID": "164",
+      "WAYLAND_DISPLAY": "wayland-0"
+    },
+    "exe": "/usr/bin/ruby3.2",
+    "pid": 191978,
+    "start_ticks": "4795485"
+  },
+  {
+    "cmdline": [
+      "/usr/bin/python3",
+      "/opt/ros/jazzy/bin/ros2",
+      "action",
+      "list",
+      "-t"
+    ],
+    "cwd": "/tmp/sim008-3d-demo-vyhdzvhb",
+    "env": {
+      "DISPLAY": ":0",
+      "GZ_CONFIG_PATH": "/opt/ros/jazzy/opt/gz_sim_vendor/share/gz:/opt/ros/jazzy/opt/sdformat_vendor/share/gz:/opt/ros/jazzy/opt/gz_gui_vendor/share/gz:/opt/ros/jazzy/opt/gz_transport_vendor/share/gz:/opt/ros/jazzy/opt/gz_rendering_vendor/share/gz:/opt/ros/jazzy/opt/gz_plugin_vendor/share/gz:/opt/ros/jazzy/opt/gz_fuel_tools_vendor/share/gz:/opt/ros/jazzy/opt/gz_msgs_vendor/share/gz:/opt/ros/jazzy/opt/gz_common_vendor/share/gz",
+      "GZ_PARTITION": "sim004-24d450e36346",
+      "GZ_SIM_RESOURCE_PATH": "/opt/ros/jazzy/share",
+      "GZ_SIM_SYSTEM_PLUGIN_PATH": "/opt/ros/jazzy/lib",
+      "PATH": "/home/jinho/projects/factory_physical_ai/.venv-sim/bin:/home/jinho/.local/bin:/home/jinho/.codex/tmp/arg0/codex-arg0tRIgs2:/home/jinho/.vscode-server/bin/07f806f999227108933c2e30515b26eecc1fda74/bin/remote-cli:/home/jinho/.local/bin:/home/jinho/.local/bin:/opt/ros/jazzy/opt/gz_msgs_vendor/bin:/opt/ros/jazzy/opt/gz_tools_vendor/bin:/opt/ros/jazzy/opt/gz_ogre_next_vendor/bin:/opt/ros/jazzy/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/usr/lib/wsl/lib:/mnt/c/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v10.0/bin:/mnt/c/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v10.0/libnvvp:/mnt/c/Program Files (x86)/VMware/VMware Player/bin/:/mnt/c/Windows/system32:/mnt/c/Windows:/mnt/c/Windows/System32/Wbem:/mnt/c/Windows/System32/WindowsPowerShell/v1.0/:/mnt/c/Windows/System32/OpenSSH/:/mnt/c/WINDOWS/system32:/mnt/c/WINDOWS:/mnt/c/WINDOWS/System32/Wbem:/mnt/c/WINDOWS/System32/WindowsPowerShell/v1.0/:/mnt/c/WINDOWS/System32/OpenSSH/:/mnt/c/Program Files (x86)/PuTTY/:/mnt/c/Program Files (x86)/NVIDIA Corporation/PhysX/Common:/mnt/c/swigwin-3.0.12:/mnt/c/mingw64/bin:/mnt/c/Program Files/CMake/bin:/mnt/c/Program Files (x86)/GnuWin32/bin:/mnt/c/Program Files/vcpkg:/mnt/c/Program Files/OpenNI2/Redist:/mnt/c/Program Files/PCL 1.13.0/3rdParty:/mnt/c/Program Files/PCL 1.13.0/3rdParty/VTK/bin:/mnt/c/Users/Jinho/Documents/Projects/TF_src/DeepLearningMath/ffmpeg/bin:/mnt/c/Program Files/NVIDIA Corporation/NVIDIA app/NvDLISR:/mnt/c/Users/Jinho/AppData/Roaming/Python/Python310/Scripts:/mnt/c/Program Files/Git/cmd:/mnt/c/Program Files/WSL/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python310/Scripts/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python310/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python313/Scripts/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python313/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python37/Scripts/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python37/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python36/Scripts/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python36/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python39/Scripts/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python39/:/mnt/c/Users/Jinho/AppData/Local/Microsoft/WindowsApps:/mnt/c/Users/Jinho/AppData/Local/Programs/Microsoft VS Code/bin:/mnt/c/Users/Jinho/AppData/Local/Programs/DockerDesktop/resources/bin:/snap/bin:/home/jinho/.vscode-server/extensions/openai.chatgpt-26.930.41038-linux-x64/bin/linux-x86_64",
+      "ROS_DOMAIN_ID": "164",
+      "ROS_LOG_DIR": "/tmp/sim004-ros-9uakungz",
+      "WAYLAND_DISPLAY": "wayland-0"
+    },
+    "exe": "/usr/bin/python3.12",
+    "pid": 192079,
+    "start_ticks": "4795701"
+  },
+  {
+    "cmdline": [
+      "/usr/bin/python3",
+      "/opt/ros/jazzy/bin/ros2",
+      "lifecycle",
+      "get",
+      "/map_server"
+    ],
+    "cwd": "/tmp/sim008-3d-demo-vyhdzvhb",
+    "env": {
+      "DISPLAY": ":0",
+      "GZ_CONFIG_PATH": "/opt/ros/jazzy/opt/gz_sim_vendor/share/gz:/opt/ros/jazzy/opt/sdformat_vendor/share/gz:/opt/ros/jazzy/opt/gz_gui_vendor/share/gz:/opt/ros/jazzy/opt/gz_transport_vendor/share/gz:/opt/ros/jazzy/opt/gz_rendering_vendor/share/gz:/opt/ros/jazzy/opt/gz_plugin_vendor/share/gz:/opt/ros/jazzy/opt/gz_fuel_tools_vendor/share/gz:/opt/ros/jazzy/opt/gz_msgs_vendor/share/gz:/opt/ros/jazzy/opt/gz_common_vendor/share/gz",
+      "GZ_PARTITION": "sim004-24d450e36346",
+      "GZ_SIM_RESOURCE_PATH": "/opt/ros/jazzy/share",
+      "GZ_SIM_SYSTEM_PLUGIN_PATH": "/opt/ros/jazzy/lib",
+      "PATH": "/home/jinho/projects/factory_physical_ai/.venv-sim/bin:/home/jinho/.local/bin:/home/jinho/.codex/tmp/arg0/codex-arg0tRIgs2:/home/jinho/.vscode-server/bin/07f806f999227108933c2e30515b26eecc1fda74/bin/remote-cli:/home/jinho/.local/bin:/home/jinho/.local/bin:/opt/ros/jazzy/opt/gz_msgs_vendor/bin:/opt/ros/jazzy/opt/gz_tools_vendor/bin:/opt/ros/jazzy/opt/gz_ogre_next_vendor/bin:/opt/ros/jazzy/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/usr/lib/wsl/lib:/mnt/c/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v10.0/bin:/mnt/c/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v10.0/libnvvp:/mnt/c/Program Files (x86)/VMware/VMware Player/bin/:/mnt/c/Windows/system32:/mnt/c/Windows:/mnt/c/Windows/System32/Wbem:/mnt/c/Windows/System32/WindowsPowerShell/v1.0/:/mnt/c/Windows/System32/OpenSSH/:/mnt/c/WINDOWS/system32:/mnt/c/WINDOWS:/mnt/c/WINDOWS/System32/Wbem:/mnt/c/WINDOWS/System32/WindowsPowerShell/v1.0/:/mnt/c/WINDOWS/System32/OpenSSH/:/mnt/c/Program Files (x86)/PuTTY/:/mnt/c/Program Files (x86)/NVIDIA Corporation/PhysX/Common:/mnt/c/swigwin-3.0.12:/mnt/c/mingw64/bin:/mnt/c/Program Files/CMake/bin:/mnt/c/Program Files (x86)/GnuWin32/bin:/mnt/c/Program Files/vcpkg:/mnt/c/Program Files/OpenNI2/Redist:/mnt/c/Program Files/PCL 1.13.0/3rdParty:/mnt/c/Program Files/PCL 1.13.0/3rdParty/VTK/bin:/mnt/c/Users/Jinho/Documents/Projects/TF_src/DeepLearningMath/ffmpeg/bin:/mnt/c/Program Files/NVIDIA Corporation/NVIDIA app/NvDLISR:/mnt/c/Users/Jinho/AppData/Roaming/Python/Python310/Scripts:/mnt/c/Program Files/Git/cmd:/mnt/c/Program Files/WSL/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python310/Scripts/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python310/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python313/Scripts/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python313/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python37/Scripts/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python37/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python36/Scripts/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python36/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python39/Scripts/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python39/:/mnt/c/Users/Jinho/AppData/Local/Microsoft/WindowsApps:/mnt/c/Users/Jinho/AppData/Local/Programs/Microsoft VS Code/bin:/mnt/c/Users/Jinho/AppData/Local/Programs/DockerDesktop/resources/bin:/snap/bin:/home/jinho/.vscode-server/extensions/openai.chatgpt-26.930.41038-linux-x64/bin/linux-x86_64",
+      "ROS_DOMAIN_ID": "164",
+      "ROS_LOG_DIR": "/tmp/sim004-ros-9uakungz",
+      "WAYLAND_DISPLAY": "wayland-0"
+    },
+    "exe": "/usr/bin/python3.12",
+    "pid": 192096,
+    "start_ticks": "4795768"
+  },
+  {
+    "cmdline": [
+      "/usr/bin/python3",
+      "/opt/ros/jazzy/bin/ros2",
+      "action",
+      "list",
+      "-t"
+    ],
+    "cwd": "/tmp/sim008-3d-demo-vyhdzvhb",
+    "env": {
+      "DISPLAY": ":0",
+      "GZ_CONFIG_PATH": "/opt/ros/jazzy/opt/gz_sim_vendor/share/gz:/opt/ros/jazzy/opt/sdformat_vendor/share/gz:/opt/ros/jazzy/opt/gz_gui_vendor/share/gz:/opt/ros/jazzy/opt/gz_transport_vendor/share/gz:/opt/ros/jazzy/opt/gz_rendering_vendor/share/gz:/opt/ros/jazzy/opt/gz_plugin_vendor/share/gz:/opt/ros/jazzy/opt/gz_fuel_tools_vendor/share/gz:/opt/ros/jazzy/opt/gz_msgs_vendor/share/gz:/opt/ros/jazzy/opt/gz_common_vendor/share/gz",
+      "GZ_PARTITION": "sim004-24d450e36346",
+      "GZ_SIM_RESOURCE_PATH": "/opt/ros/jazzy/share",
+      "GZ_SIM_SYSTEM_PLUGIN_PATH": "/opt/ros/jazzy/lib",
+      "PATH": "/home/jinho/projects/factory_physical_ai/.venv-sim/bin:/home/jinho/.local/bin:/home/jinho/.codex/tmp/arg0/codex-arg0tRIgs2:/home/jinho/.vscode-server/bin/07f806f999227108933c2e30515b26eecc1fda74/bin/remote-cli:/home/jinho/.local/bin:/home/jinho/.local/bin:/opt/ros/jazzy/opt/gz_msgs_vendor/bin:/opt/ros/jazzy/opt/gz_tools_vendor/bin:/opt/ros/jazzy/opt/gz_ogre_next_vendor/bin:/opt/ros/jazzy/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/usr/lib/wsl/lib:/mnt/c/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v10.0/bin:/mnt/c/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v10.0/libnvvp:/mnt/c/Program Files (x86)/VMware/VMware Player/bin/:/mnt/c/Windows/system32:/mnt/c/Windows:/mnt/c/Windows/System32/Wbem:/mnt/c/Windows/System32/WindowsPowerShell/v1.0/:/mnt/c/Windows/System32/OpenSSH/:/mnt/c/WINDOWS/system32:/mnt/c/WINDOWS:/mnt/c/WINDOWS/System32/Wbem:/mnt/c/WINDOWS/System32/WindowsPowerShell/v1.0/:/mnt/c/WINDOWS/System32/OpenSSH/:/mnt/c/Program Files (x86)/PuTTY/:/mnt/c/Program Files (x86)/NVIDIA Corporation/PhysX/Common:/mnt/c/swigwin-3.0.12:/mnt/c/mingw64/bin:/mnt/c/Program Files/CMake/bin:/mnt/c/Program Files (x86)/GnuWin32/bin:/mnt/c/Program Files/vcpkg:/mnt/c/Program Files/OpenNI2/Redist:/mnt/c/Program Files/PCL 1.13.0/3rdParty:/mnt/c/Program Files/PCL 1.13.0/3rdParty/VTK/bin:/mnt/c/Users/Jinho/Documents/Projects/TF_src/DeepLearningMath/ffmpeg/bin:/mnt/c/Program Files/NVIDIA Corporation/NVIDIA app/NvDLISR:/mnt/c/Users/Jinho/AppData/Roaming/Python/Python310/Scripts:/mnt/c/Program Files/Git/cmd:/mnt/c/Program Files/WSL/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python310/Scripts/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python310/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python313/Scripts/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python313/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python37/Scripts/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python37/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python36/Scripts/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python36/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python39/Scripts/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python39/:/mnt/c/Users/Jinho/AppData/Local/Microsoft/WindowsApps:/mnt/c/Users/Jinho/AppData/Local/Programs/Microsoft VS Code/bin:/mnt/c/Users/Jinho/AppData/Local/Programs/DockerDesktop/resources/bin:/snap/bin:/home/jinho/.vscode-server/extensions/openai.chatgpt-26.930.41038-linux-x64/bin/linux-x86_64",
+      "ROS_DOMAIN_ID": "164",
+      "ROS_LOG_DIR": "/tmp/sim004-ros-9uakungz",
+      "WAYLAND_DISPLAY": "wayland-0"
+    },
+    "exe": "/usr/bin/python3.12",
+    "pid": 192120,
+    "start_ticks": "4795930"
+  },
+  {
+    "cmdline": [
+      "/usr/bin/python3",
+      "/opt/ros/jazzy/bin/ros2",
+      "lifecycle",
+      "get",
+      "/map_server"
+    ],
+    "cwd": "/tmp/sim008-3d-demo-vyhdzvhb",
+    "env": {
+      "DISPLAY": ":0",
+      "GZ_CONFIG_PATH": "/opt/ros/jazzy/opt/gz_sim_vendor/share/gz:/opt/ros/jazzy/opt/sdformat_vendor/share/gz:/opt/ros/jazzy/opt/gz_gui_vendor/share/gz:/opt/ros/jazzy/opt/gz_transport_vendor/share/gz:/opt/ros/jazzy/opt/gz_rendering_vendor/share/gz:/opt/ros/jazzy/opt/gz_plugin_vendor/share/gz:/opt/ros/jazzy/opt/gz_fuel_tools_vendor/share/gz:/opt/ros/jazzy/opt/gz_msgs_vendor/share/gz:/opt/ros/jazzy/opt/gz_common_vendor/share/gz",
+      "GZ_PARTITION": "sim004-24d450e36346",
+      "GZ_SIM_RESOURCE_PATH": "/opt/ros/jazzy/share",
+      "GZ_SIM_SYSTEM_PLUGIN_PATH": "/opt/ros/jazzy/lib",
+      "PATH": "/home/jinho/projects/factory_physical_ai/.venv-sim/bin:/home/jinho/.local/bin:/home/jinho/.codex/tmp/arg0/codex-arg0tRIgs2:/home/jinho/.vscode-server/bin/07f806f999227108933c2e30515b26eecc1fda74/bin/remote-cli:/home/jinho/.local/bin:/home/jinho/.local/bin:/opt/ros/jazzy/opt/gz_msgs_vendor/bin:/opt/ros/jazzy/opt/gz_tools_vendor/bin:/opt/ros/jazzy/opt/gz_ogre_next_vendor/bin:/opt/ros/jazzy/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/usr/lib/wsl/lib:/mnt/c/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v10.0/bin:/mnt/c/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v10.0/libnvvp:/mnt/c/Program Files (x86)/VMware/VMware Player/bin/:/mnt/c/Windows/system32:/mnt/c/Windows:/mnt/c/Windows/System32/Wbem:/mnt/c/Windows/System32/WindowsPowerShell/v1.0/:/mnt/c/Windows/System32/OpenSSH/:/mnt/c/WINDOWS/system32:/mnt/c/WINDOWS:/mnt/c/WINDOWS/System32/Wbem:/mnt/c/WINDOWS/System32/WindowsPowerShell/v1.0/:/mnt/c/WINDOWS/System32/OpenSSH/:/mnt/c/Program Files (x86)/PuTTY/:/mnt/c/Program Files (x86)/NVIDIA Corporation/PhysX/Common:/mnt/c/swigwin-3.0.12:/mnt/c/mingw64/bin:/mnt/c/Program Files/CMake/bin:/mnt/c/Program Files (x86)/GnuWin32/bin:/mnt/c/Program Files/vcpkg:/mnt/c/Program Files/OpenNI2/Redist:/mnt/c/Program Files/PCL 1.13.0/3rdParty:/mnt/c/Program Files/PCL 1.13.0/3rdParty/VTK/bin:/mnt/c/Users/Jinho/Documents/Projects/TF_src/DeepLearningMath/ffmpeg/bin:/mnt/c/Program Files/NVIDIA Corporation/NVIDIA app/NvDLISR:/mnt/c/Users/Jinho/AppData/Roaming/Python/Python310/Scripts:/mnt/c/Program Files/Git/cmd:/mnt/c/Program Files/WSL/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python310/Scripts/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python310/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python313/Scripts/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python313/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python37/Scripts/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python37/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python36/Scripts/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python36/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python39/Scripts/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python39/:/mnt/c/Users/Jinho/AppData/Local/Microsoft/WindowsApps:/mnt/c/Users/Jinho/AppData/Local/Programs/Microsoft VS Code/bin:/mnt/c/Users/Jinho/AppData/Local/Programs/DockerDesktop/resources/bin:/snap/bin:/home/jinho/.vscode-server/extensions/openai.chatgpt-26.930.41038-linux-x64/bin/linux-x86_64",
+      "ROS_DOMAIN_ID": "164",
+      "ROS_LOG_DIR": "/tmp/sim004-ros-9uakungz",
+      "WAYLAND_DISPLAY": "wayland-0"
+    },
+    "exe": "/usr/bin/python3.12",
+    "pid": 192123,
+    "start_ticks": "4795987"
+  },
+  {
+    "cmdline": [
+      "/usr/bin/python3",
+      "/opt/ros/jazzy/bin/ros2",
+      "action",
+      "list",
+      "-t"
+    ],
+    "cwd": "/tmp/sim008-3d-demo-vyhdzvhb",
+    "env": {
+      "DISPLAY": ":0",
+      "GZ_CONFIG_PATH": "/opt/ros/jazzy/opt/gz_sim_vendor/share/gz:/opt/ros/jazzy/opt/sdformat_vendor/share/gz:/opt/ros/jazzy/opt/gz_gui_vendor/share/gz:/opt/ros/jazzy/opt/gz_transport_vendor/share/gz:/opt/ros/jazzy/opt/gz_rendering_vendor/share/gz:/opt/ros/jazzy/opt/gz_plugin_vendor/share/gz:/opt/ros/jazzy/opt/gz_fuel_tools_vendor/share/gz:/opt/ros/jazzy/opt/gz_msgs_vendor/share/gz:/opt/ros/jazzy/opt/gz_common_vendor/share/gz",
+      "GZ_PARTITION": "sim004-24d450e36346",
+      "GZ_SIM_RESOURCE_PATH": "/opt/ros/jazzy/share",
+      "GZ_SIM_SYSTEM_PLUGIN_PATH": "/opt/ros/jazzy/lib",
+      "PATH": "/home/jinho/projects/factory_physical_ai/.venv-sim/bin:/home/jinho/.local/bin:/home/jinho/.codex/tmp/arg0/codex-arg0tRIgs2:/home/jinho/.vscode-server/bin/07f806f999227108933c2e30515b26eecc1fda74/bin/remote-cli:/home/jinho/.local/bin:/home/jinho/.local/bin:/opt/ros/jazzy/opt/gz_msgs_vendor/bin:/opt/ros/jazzy/opt/gz_tools_vendor/bin:/opt/ros/jazzy/opt/gz_ogre_next_vendor/bin:/opt/ros/jazzy/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/usr/lib/wsl/lib:/mnt/c/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v10.0/bin:/mnt/c/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v10.0/libnvvp:/mnt/c/Program Files (x86)/VMware/VMware Player/bin/:/mnt/c/Windows/system32:/mnt/c/Windows:/mnt/c/Windows/System32/Wbem:/mnt/c/Windows/System32/WindowsPowerShell/v1.0/:/mnt/c/Windows/System32/OpenSSH/:/mnt/c/WINDOWS/system32:/mnt/c/WINDOWS:/mnt/c/WINDOWS/System32/Wbem:/mnt/c/WINDOWS/System32/WindowsPowerShell/v1.0/:/mnt/c/WINDOWS/System32/OpenSSH/:/mnt/c/Program Files (x86)/PuTTY/:/mnt/c/Program Files (x86)/NVIDIA Corporation/PhysX/Common:/mnt/c/swigwin-3.0.12:/mnt/c/mingw64/bin:/mnt/c/Program Files/CMake/bin:/mnt/c/Program Files (x86)/GnuWin32/bin:/mnt/c/Program Files/vcpkg:/mnt/c/Program Files/OpenNI2/Redist:/mnt/c/Program Files/PCL 1.13.0/3rdParty:/mnt/c/Program Files/PCL 1.13.0/3rdParty/VTK/bin:/mnt/c/Users/Jinho/Documents/Projects/TF_src/DeepLearningMath/ffmpeg/bin:/mnt/c/Program Files/NVIDIA Corporation/NVIDIA app/NvDLISR:/mnt/c/Users/Jinho/AppData/Roaming/Python/Python310/Scripts:/mnt/c/Program Files/Git/cmd:/mnt/c/Program Files/WSL/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python310/Scripts/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python310/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python313/Scripts/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python313/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python37/Scripts/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python37/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python36/Scripts/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python36/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python39/Scripts/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python39/:/mnt/c/Users/Jinho/AppData/Local/Microsoft/WindowsApps:/mnt/c/Users/Jinho/AppData/Local/Programs/Microsoft VS Code/bin:/mnt/c/Users/Jinho/AppData/Local/Programs/DockerDesktop/resources/bin:/snap/bin:/home/jinho/.vscode-server/extensions/openai.chatgpt-26.930.41038-linux-x64/bin/linux-x86_64",
+      "ROS_DOMAIN_ID": "164",
+      "ROS_LOG_DIR": "/tmp/sim004-ros-9uakungz",
+      "WAYLAND_DISPLAY": "wayland-0"
+    },
+    "exe": "/usr/bin/python3.12",
+    "pid": 192140,
+    "start_ticks": "4796167"
+  },
+  {
+    "cmdline": [
+      "/usr/bin/python3",
+      "/opt/ros/jazzy/bin/ros2",
+      "lifecycle",
+      "get",
+      "/map_server"
+    ],
+    "cwd": "/tmp/sim008-3d-demo-vyhdzvhb",
+    "env": {
+      "DISPLAY": ":0",
+      "GZ_CONFIG_PATH": "/opt/ros/jazzy/opt/gz_sim_vendor/share/gz:/opt/ros/jazzy/opt/sdformat_vendor/share/gz:/opt/ros/jazzy/opt/gz_gui_vendor/share/gz:/opt/ros/jazzy/opt/gz_transport_vendor/share/gz:/opt/ros/jazzy/opt/gz_rendering_vendor/share/gz:/opt/ros/jazzy/opt/gz_plugin_vendor/share/gz:/opt/ros/jazzy/opt/gz_fuel_tools_vendor/share/gz:/opt/ros/jazzy/opt/gz_msgs_vendor/share/gz:/opt/ros/jazzy/opt/gz_common_vendor/share/gz",
+      "GZ_PARTITION": "sim004-24d450e36346",
+      "GZ_SIM_RESOURCE_PATH": "/opt/ros/jazzy/share",
+      "GZ_SIM_SYSTEM_PLUGIN_PATH": "/opt/ros/jazzy/lib",
+      "PATH": "/home/jinho/projects/factory_physical_ai/.venv-sim/bin:/home/jinho/.local/bin:/home/jinho/.codex/tmp/arg0/codex-arg0tRIgs2:/home/jinho/.vscode-server/bin/07f806f999227108933c2e30515b26eecc1fda74/bin/remote-cli:/home/jinho/.local/bin:/home/jinho/.local/bin:/opt/ros/jazzy/opt/gz_msgs_vendor/bin:/opt/ros/jazzy/opt/gz_tools_vendor/bin:/opt/ros/jazzy/opt/gz_ogre_next_vendor/bin:/opt/ros/jazzy/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/usr/lib/wsl/lib:/mnt/c/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v10.0/bin:/mnt/c/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v10.0/libnvvp:/mnt/c/Program Files (x86)/VMware/VMware Player/bin/:/mnt/c/Windows/system32:/mnt/c/Windows:/mnt/c/Windows/System32/Wbem:/mnt/c/Windows/System32/WindowsPowerShell/v1.0/:/mnt/c/Windows/System32/OpenSSH/:/mnt/c/WINDOWS/system32:/mnt/c/WINDOWS:/mnt/c/WINDOWS/System32/Wbem:/mnt/c/WINDOWS/System32/WindowsPowerShell/v1.0/:/mnt/c/WINDOWS/System32/OpenSSH/:/mnt/c/Program Files (x86)/PuTTY/:/mnt/c/Program Files (x86)/NVIDIA Corporation/PhysX/Common:/mnt/c/swigwin-3.0.12:/mnt/c/mingw64/bin:/mnt/c/Program Files/CMake/bin:/mnt/c/Program Files (x86)/GnuWin32/bin:/mnt/c/Program Files/vcpkg:/mnt/c/Program Files/OpenNI2/Redist:/mnt/c/Program Files/PCL 1.13.0/3rdParty:/mnt/c/Program Files/PCL 1.13.0/3rdParty/VTK/bin:/mnt/c/Users/Jinho/Documents/Projects/TF_src/DeepLearningMath/ffmpeg/bin:/mnt/c/Program Files/NVIDIA Corporation/NVIDIA app/NvDLISR:/mnt/c/Users/Jinho/AppData/Roaming/Python/Python310/Scripts:/mnt/c/Program Files/Git/cmd:/mnt/c/Program Files/WSL/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python310/Scripts/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python310/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python313/Scripts/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python313/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python37/Scripts/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python37/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python36/Scripts/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python36/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python39/Scripts/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python39/:/mnt/c/Users/Jinho/AppData/Local/Microsoft/WindowsApps:/mnt/c/Users/Jinho/AppData/Local/Programs/Microsoft VS Code/bin:/mnt/c/Users/Jinho/AppData/Local/Programs/DockerDesktop/resources/bin:/snap/bin:/home/jinho/.vscode-server/extensions/openai.chatgpt-26.930.41038-linux-x64/bin/linux-x86_64",
+      "ROS_DOMAIN_ID": "164",
+      "ROS_LOG_DIR": "/tmp/sim004-ros-9uakungz",
+      "WAYLAND_DISPLAY": "wayland-0"
+    },
+    "exe": "/usr/bin/python3.12",
+    "pid": 192143,
+    "start_ticks": "4796248"
+  },
+  {
+    "cmdline": [
+      "/usr/bin/python3",
+      "/opt/ros/jazzy/bin/ros2",
+      "action",
+      "list",
+      "-t"
+    ],
+    "cwd": "/tmp/sim008-3d-demo-vyhdzvhb",
+    "env": {
+      "DISPLAY": ":0",
+      "GZ_CONFIG_PATH": "/opt/ros/jazzy/opt/gz_sim_vendor/share/gz:/opt/ros/jazzy/opt/sdformat_vendor/share/gz:/opt/ros/jazzy/opt/gz_gui_vendor/share/gz:/opt/ros/jazzy/opt/gz_transport_vendor/share/gz:/opt/ros/jazzy/opt/gz_rendering_vendor/share/gz:/opt/ros/jazzy/opt/gz_plugin_vendor/share/gz:/opt/ros/jazzy/opt/gz_fuel_tools_vendor/share/gz:/opt/ros/jazzy/opt/gz_msgs_vendor/share/gz:/opt/ros/jazzy/opt/gz_common_vendor/share/gz",
+      "GZ_PARTITION": "sim004-24d450e36346",
+      "GZ_SIM_RESOURCE_PATH": "/opt/ros/jazzy/share",
+      "GZ_SIM_SYSTEM_PLUGIN_PATH": "/opt/ros/jazzy/lib",
+      "PATH": "/home/jinho/projects/factory_physical_ai/.venv-sim/bin:/home/jinho/.local/bin:/home/jinho/.codex/tmp/arg0/codex-arg0tRIgs2:/home/jinho/.vscode-server/bin/07f806f999227108933c2e30515b26eecc1fda74/bin/remote-cli:/home/jinho/.local/bin:/home/jinho/.local/bin:/opt/ros/jazzy/opt/gz_msgs_vendor/bin:/opt/ros/jazzy/opt/gz_tools_vendor/bin:/opt/ros/jazzy/opt/gz_ogre_next_vendor/bin:/opt/ros/jazzy/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/usr/lib/wsl/lib:/mnt/c/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v10.0/bin:/mnt/c/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v10.0/libnvvp:/mnt/c/Program Files (x86)/VMware/VMware Player/bin/:/mnt/c/Windows/system32:/mnt/c/Windows:/mnt/c/Windows/System32/Wbem:/mnt/c/Windows/System32/WindowsPowerShell/v1.0/:/mnt/c/Windows/System32/OpenSSH/:/mnt/c/WINDOWS/system32:/mnt/c/WINDOWS:/mnt/c/WINDOWS/System32/Wbem:/mnt/c/WINDOWS/System32/WindowsPowerShell/v1.0/:/mnt/c/WINDOWS/System32/OpenSSH/:/mnt/c/Program Files (x86)/PuTTY/:/mnt/c/Program Files (x86)/NVIDIA Corporation/PhysX/Common:/mnt/c/swigwin-3.0.12:/mnt/c/mingw64/bin:/mnt/c/Program Files/CMake/bin:/mnt/c/Program Files (x86)/GnuWin32/bin:/mnt/c/Program Files/vcpkg:/mnt/c/Program Files/OpenNI2/Redist:/mnt/c/Program Files/PCL 1.13.0/3rdParty:/mnt/c/Program Files/PCL 1.13.0/3rdParty/VTK/bin:/mnt/c/Users/Jinho/Documents/Projects/TF_src/DeepLearningMath/ffmpeg/bin:/mnt/c/Program Files/NVIDIA Corporation/NVIDIA app/NvDLISR:/mnt/c/Users/Jinho/AppData/Roaming/Python/Python310/Scripts:/mnt/c/Program Files/Git/cmd:/mnt/c/Program Files/WSL/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python310/Scripts/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python310/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python313/Scripts/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python313/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python37/Scripts/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python37/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python36/Scripts/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python36/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python39/Scripts/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python39/:/mnt/c/Users/Jinho/AppData/Local/Microsoft/WindowsApps:/mnt/c/Users/Jinho/AppData/Local/Programs/Microsoft VS Code/bin:/mnt/c/Users/Jinho/AppData/Local/Programs/DockerDesktop/resources/bin:/snap/bin:/home/jinho/.vscode-server/extensions/openai.chatgpt-26.930.41038-linux-x64/bin/linux-x86_64",
+      "ROS_DOMAIN_ID": "164",
+      "ROS_LOG_DIR": "/tmp/sim004-ros-9uakungz",
+      "WAYLAND_DISPLAY": "wayland-0"
+    },
+    "exe": "/usr/bin/python3.12",
+    "pid": 192168,
+    "start_ticks": "4796431"
+  },
+  {
+    "cmdline": [
+      "/usr/bin/python3",
+      "/opt/ros/jazzy/bin/ros2",
+      "lifecycle",
+      "get",
+      "/map_server"
+    ],
+    "cwd": "/tmp/sim008-3d-demo-vyhdzvhb",
+    "env": {
+      "DISPLAY": ":0",
+      "GZ_CONFIG_PATH": "/opt/ros/jazzy/opt/gz_sim_vendor/share/gz:/opt/ros/jazzy/opt/sdformat_vendor/share/gz:/opt/ros/jazzy/opt/gz_gui_vendor/share/gz:/opt/ros/jazzy/opt/gz_transport_vendor/share/gz:/opt/ros/jazzy/opt/gz_rendering_vendor/share/gz:/opt/ros/jazzy/opt/gz_plugin_vendor/share/gz:/opt/ros/jazzy/opt/gz_fuel_tools_vendor/share/gz:/opt/ros/jazzy/opt/gz_msgs_vendor/share/gz:/opt/ros/jazzy/opt/gz_common_vendor/share/gz",
+      "GZ_PARTITION": "sim004-24d450e36346",
+      "GZ_SIM_RESOURCE_PATH": "/opt/ros/jazzy/share",
+      "GZ_SIM_SYSTEM_PLUGIN_PATH": "/opt/ros/jazzy/lib",
+      "PATH": "/home/jinho/projects/factory_physical_ai/.venv-sim/bin:/home/jinho/.local/bin:/home/jinho/.codex/tmp/arg0/codex-arg0tRIgs2:/home/jinho/.vscode-server/bin/07f806f999227108933c2e30515b26eecc1fda74/bin/remote-cli:/home/jinho/.local/bin:/home/jinho/.local/bin:/opt/ros/jazzy/opt/gz_msgs_vendor/bin:/opt/ros/jazzy/opt/gz_tools_vendor/bin:/opt/ros/jazzy/opt/gz_ogre_next_vendor/bin:/opt/ros/jazzy/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/usr/lib/wsl/lib:/mnt/c/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v10.0/bin:/mnt/c/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v10.0/libnvvp:/mnt/c/Program Files (x86)/VMware/VMware Player/bin/:/mnt/c/Windows/system32:/mnt/c/Windows:/mnt/c/Windows/System32/Wbem:/mnt/c/Windows/System32/WindowsPowerShell/v1.0/:/mnt/c/Windows/System32/OpenSSH/:/mnt/c/WINDOWS/system32:/mnt/c/WINDOWS:/mnt/c/WINDOWS/System32/Wbem:/mnt/c/WINDOWS/System32/WindowsPowerShell/v1.0/:/mnt/c/WINDOWS/System32/OpenSSH/:/mnt/c/Program Files (x86)/PuTTY/:/mnt/c/Program Files (x86)/NVIDIA Corporation/PhysX/Common:/mnt/c/swigwin-3.0.12:/mnt/c/mingw64/bin:/mnt/c/Program Files/CMake/bin:/mnt/c/Program Files (x86)/GnuWin32/bin:/mnt/c/Program Files/vcpkg:/mnt/c/Program Files/OpenNI2/Redist:/mnt/c/Program Files/PCL 1.13.0/3rdParty:/mnt/c/Program Files/PCL 1.13.0/3rdParty/VTK/bin:/mnt/c/Users/Jinho/Documents/Projects/TF_src/DeepLearningMath/ffmpeg/bin:/mnt/c/Program Files/NVIDIA Corporation/NVIDIA app/NvDLISR:/mnt/c/Users/Jinho/AppData/Roaming/Python/Python310/Scripts:/mnt/c/Program Files/Git/cmd:/mnt/c/Program Files/WSL/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python310/Scripts/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python310/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python313/Scripts/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python313/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python37/Scripts/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python37/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python36/Scripts/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python36/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python39/Scripts/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python39/:/mnt/c/Users/Jinho/AppData/Local/Microsoft/WindowsApps:/mnt/c/Users/Jinho/AppData/Local/Programs/Microsoft VS Code/bin:/mnt/c/Users/Jinho/AppData/Local/Programs/DockerDesktop/resources/bin:/snap/bin:/home/jinho/.vscode-server/extensions/openai.chatgpt-26.930.41038-linux-x64/bin/linux-x86_64",
+      "ROS_DOMAIN_ID": "164",
+      "ROS_LOG_DIR": "/tmp/sim004-ros-9uakungz",
+      "WAYLAND_DISPLAY": "wayland-0"
+    },
+    "exe": "/usr/bin/python3.12",
+    "pid": 192171,
+    "start_ticks": "4796511"
+  },
+  {
+    "cmdline": [
+      "/usr/bin/python3",
+      "/opt/ros/jazzy/bin/ros2",
+      "action",
+      "list",
+      "-t"
+    ],
+    "cwd": "/tmp/sim008-3d-demo-vyhdzvhb",
+    "env": {
+      "DISPLAY": ":0",
+      "GZ_CONFIG_PATH": "/opt/ros/jazzy/opt/gz_sim_vendor/share/gz:/opt/ros/jazzy/opt/sdformat_vendor/share/gz:/opt/ros/jazzy/opt/gz_gui_vendor/share/gz:/opt/ros/jazzy/opt/gz_transport_vendor/share/gz:/opt/ros/jazzy/opt/gz_rendering_vendor/share/gz:/opt/ros/jazzy/opt/gz_plugin_vendor/share/gz:/opt/ros/jazzy/opt/gz_fuel_tools_vendor/share/gz:/opt/ros/jazzy/opt/gz_msgs_vendor/share/gz:/opt/ros/jazzy/opt/gz_common_vendor/share/gz",
+      "GZ_PARTITION": "sim004-24d450e36346",
+      "GZ_SIM_RESOURCE_PATH": "/opt/ros/jazzy/share",
+      "GZ_SIM_SYSTEM_PLUGIN_PATH": "/opt/ros/jazzy/lib",
+      "PATH": "/home/jinho/projects/factory_physical_ai/.venv-sim/bin:/home/jinho/.local/bin:/home/jinho/.codex/tmp/arg0/codex-arg0tRIgs2:/home/jinho/.vscode-server/bin/07f806f999227108933c2e30515b26eecc1fda74/bin/remote-cli:/home/jinho/.local/bin:/home/jinho/.local/bin:/opt/ros/jazzy/opt/gz_msgs_vendor/bin:/opt/ros/jazzy/opt/gz_tools_vendor/bin:/opt/ros/jazzy/opt/gz_ogre_next_vendor/bin:/opt/ros/jazzy/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/usr/lib/wsl/lib:/mnt/c/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v10.0/bin:/mnt/c/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v10.0/libnvvp:/mnt/c/Program Files (x86)/VMware/VMware Player/bin/:/mnt/c/Windows/system32:/mnt/c/Windows:/mnt/c/Windows/System32/Wbem:/mnt/c/Windows/System32/WindowsPowerShell/v1.0/:/mnt/c/Windows/System32/OpenSSH/:/mnt/c/WINDOWS/system32:/mnt/c/WINDOWS:/mnt/c/WINDOWS/System32/Wbem:/mnt/c/WINDOWS/System32/WindowsPowerShell/v1.0/:/mnt/c/WINDOWS/System32/OpenSSH/:/mnt/c/Program Files (x86)/PuTTY/:/mnt/c/Program Files (x86)/NVIDIA Corporation/PhysX/Common:/mnt/c/swigwin-3.0.12:/mnt/c/mingw64/bin:/mnt/c/Program Files/CMake/bin:/mnt/c/Program Files (x86)/GnuWin32/bin:/mnt/c/Program Files/vcpkg:/mnt/c/Program Files/OpenNI2/Redist:/mnt/c/Program Files/PCL 1.13.0/3rdParty:/mnt/c/Program Files/PCL 1.13.0/3rdParty/VTK/bin:/mnt/c/Users/Jinho/Documents/Projects/TF_src/DeepLearningMath/ffmpeg/bin:/mnt/c/Program Files/NVIDIA Corporation/NVIDIA app/NvDLISR:/mnt/c/Users/Jinho/AppData/Roaming/Python/Python310/Scripts:/mnt/c/Program Files/Git/cmd:/mnt/c/Program Files/WSL/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python310/Scripts/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python310/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python313/Scripts/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python313/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python37/Scripts/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python37/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python36/Scripts/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python36/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python39/Scripts/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python39/:/mnt/c/Users/Jinho/AppData/Local/Microsoft/WindowsApps:/mnt/c/Users/Jinho/AppData/Local/Programs/Microsoft VS Code/bin:/mnt/c/Users/Jinho/AppData/Local/Programs/DockerDesktop/resources/bin:/snap/bin:/home/jinho/.vscode-server/extensions/openai.chatgpt-26.930.41038-linux-x64/bin/linux-x86_64",
+      "ROS_DOMAIN_ID": "164",
+      "ROS_LOG_DIR": "/tmp/sim004-ros-9uakungz",
+      "WAYLAND_DISPLAY": "wayland-0"
+    },
+    "exe": "/usr/bin/python3.12",
+    "pid": 192183,
+    "start_ticks": "4796727"
+  },
+  {
+    "cmdline": [
+      "/usr/bin/python3",
+      "/opt/ros/jazzy/bin/ros2",
+      "lifecycle",
+      "get",
+      "/map_server"
+    ],
+    "cwd": "/tmp/sim008-3d-demo-vyhdzvhb",
+    "env": {
+      "DISPLAY": ":0",
+      "GZ_CONFIG_PATH": "/opt/ros/jazzy/opt/gz_sim_vendor/share/gz:/opt/ros/jazzy/opt/sdformat_vendor/share/gz:/opt/ros/jazzy/opt/gz_gui_vendor/share/gz:/opt/ros/jazzy/opt/gz_transport_vendor/share/gz:/opt/ros/jazzy/opt/gz_rendering_vendor/share/gz:/opt/ros/jazzy/opt/gz_plugin_vendor/share/gz:/opt/ros/jazzy/opt/gz_fuel_tools_vendor/share/gz:/opt/ros/jazzy/opt/gz_msgs_vendor/share/gz:/opt/ros/jazzy/opt/gz_common_vendor/share/gz",
+      "GZ_PARTITION": "sim004-24d450e36346",
+      "GZ_SIM_RESOURCE_PATH": "/opt/ros/jazzy/share",
+      "GZ_SIM_SYSTEM_PLUGIN_PATH": "/opt/ros/jazzy/lib",
+      "PATH": "/home/jinho/projects/factory_physical_ai/.venv-sim/bin:/home/jinho/.local/bin:/home/jinho/.codex/tmp/arg0/codex-arg0tRIgs2:/home/jinho/.vscode-server/bin/07f806f999227108933c2e30515b26eecc1fda74/bin/remote-cli:/home/jinho/.local/bin:/home/jinho/.local/bin:/opt/ros/jazzy/opt/gz_msgs_vendor/bin:/opt/ros/jazzy/opt/gz_tools_vendor/bin:/opt/ros/jazzy/opt/gz_ogre_next_vendor/bin:/opt/ros/jazzy/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/usr/lib/wsl/lib:/mnt/c/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v10.0/bin:/mnt/c/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v10.0/libnvvp:/mnt/c/Program Files (x86)/VMware/VMware Player/bin/:/mnt/c/Windows/system32:/mnt/c/Windows:/mnt/c/Windows/System32/Wbem:/mnt/c/Windows/System32/WindowsPowerShell/v1.0/:/mnt/c/Windows/System32/OpenSSH/:/mnt/c/WINDOWS/system32:/mnt/c/WINDOWS:/mnt/c/WINDOWS/System32/Wbem:/mnt/c/WINDOWS/System32/WindowsPowerShell/v1.0/:/mnt/c/WINDOWS/System32/OpenSSH/:/mnt/c/Program Files (x86)/PuTTY/:/mnt/c/Program Files (x86)/NVIDIA Corporation/PhysX/Common:/mnt/c/swigwin-3.0.12:/mnt/c/mingw64/bin:/mnt/c/Program Files/CMake/bin:/mnt/c/Program Files (x86)/GnuWin32/bin:/mnt/c/Program Files/vcpkg:/mnt/c/Program Files/OpenNI2/Redist:/mnt/c/Program Files/PCL 1.13.0/3rdParty:/mnt/c/Program Files/PCL 1.13.0/3rdParty/VTK/bin:/mnt/c/Users/Jinho/Documents/Projects/TF_src/DeepLearningMath/ffmpeg/bin:/mnt/c/Program Files/NVIDIA Corporation/NVIDIA app/NvDLISR:/mnt/c/Users/Jinho/AppData/Roaming/Python/Python310/Scripts:/mnt/c/Program Files/Git/cmd:/mnt/c/Program Files/WSL/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python310/Scripts/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python310/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python313/Scripts/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python313/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python37/Scripts/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python37/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python36/Scripts/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python36/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python39/Scripts/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python39/:/mnt/c/Users/Jinho/AppData/Local/Microsoft/WindowsApps:/mnt/c/Users/Jinho/AppData/Local/Programs/Microsoft VS Code/bin:/mnt/c/Users/Jinho/AppData/Local/Programs/DockerDesktop/resources/bin:/snap/bin:/home/jinho/.vscode-server/extensions/openai.chatgpt-26.930.41038-linux-x64/bin/linux-x86_64",
+      "ROS_DOMAIN_ID": "164",
+      "ROS_LOG_DIR": "/tmp/sim004-ros-9uakungz",
+      "WAYLAND_DISPLAY": "wayland-0"
+    },
+    "exe": "/usr/bin/python3.12",
+    "pid": 192219,
+    "start_ticks": "4796872"
+  },
+  {
+    "cmdline": [
+      "/usr/bin/python3",
+      "/opt/ros/jazzy/bin/ros2",
+      "action",
+      "list",
+      "-t"
+    ],
+    "cwd": "/tmp/sim008-3d-demo-vyhdzvhb",
+    "env": {
+      "DISPLAY": ":0",
+      "GZ_CONFIG_PATH": "/opt/ros/jazzy/opt/gz_sim_vendor/share/gz:/opt/ros/jazzy/opt/sdformat_vendor/share/gz:/opt/ros/jazzy/opt/gz_gui_vendor/share/gz:/opt/ros/jazzy/opt/gz_transport_vendor/share/gz:/opt/ros/jazzy/opt/gz_rendering_vendor/share/gz:/opt/ros/jazzy/opt/gz_plugin_vendor/share/gz:/opt/ros/jazzy/opt/gz_fuel_tools_vendor/share/gz:/opt/ros/jazzy/opt/gz_msgs_vendor/share/gz:/opt/ros/jazzy/opt/gz_common_vendor/share/gz",
+      "GZ_PARTITION": "sim004-24d450e36346",
+      "GZ_SIM_RESOURCE_PATH": "/opt/ros/jazzy/share",
+      "GZ_SIM_SYSTEM_PLUGIN_PATH": "/opt/ros/jazzy/lib",
+      "PATH": "/home/jinho/projects/factory_physical_ai/.venv-sim/bin:/home/jinho/.local/bin:/home/jinho/.codex/tmp/arg0/codex-arg0tRIgs2:/home/jinho/.vscode-server/bin/07f806f999227108933c2e30515b26eecc1fda74/bin/remote-cli:/home/jinho/.local/bin:/home/jinho/.local/bin:/opt/ros/jazzy/opt/gz_msgs_vendor/bin:/opt/ros/jazzy/opt/gz_tools_vendor/bin:/opt/ros/jazzy/opt/gz_ogre_next_vendor/bin:/opt/ros/jazzy/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/usr/lib/wsl/lib:/mnt/c/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v10.0/bin:/mnt/c/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v10.0/libnvvp:/mnt/c/Program Files (x86)/VMware/VMware Player/bin/:/mnt/c/Windows/system32:/mnt/c/Windows:/mnt/c/Windows/System32/Wbem:/mnt/c/Windows/System32/WindowsPowerShell/v1.0/:/mnt/c/Windows/System32/OpenSSH/:/mnt/c/WINDOWS/system32:/mnt/c/WINDOWS:/mnt/c/WINDOWS/System32/Wbem:/mnt/c/WINDOWS/System32/WindowsPowerShell/v1.0/:/mnt/c/WINDOWS/System32/OpenSSH/:/mnt/c/Program Files (x86)/PuTTY/:/mnt/c/Program Files (x86)/NVIDIA Corporation/PhysX/Common:/mnt/c/swigwin-3.0.12:/mnt/c/mingw64/bin:/mnt/c/Program Files/CMake/bin:/mnt/c/Program Files (x86)/GnuWin32/bin:/mnt/c/Program Files/vcpkg:/mnt/c/Program Files/OpenNI2/Redist:/mnt/c/Program Files/PCL 1.13.0/3rdParty:/mnt/c/Program Files/PCL 1.13.0/3rdParty/VTK/bin:/mnt/c/Users/Jinho/Documents/Projects/TF_src/DeepLearningMath/ffmpeg/bin:/mnt/c/Program Files/NVIDIA Corporation/NVIDIA app/NvDLISR:/mnt/c/Users/Jinho/AppData/Roaming/Python/Python310/Scripts:/mnt/c/Program Files/Git/cmd:/mnt/c/Program Files/WSL/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python310/Scripts/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python310/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python313/Scripts/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python313/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python37/Scripts/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python37/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python36/Scripts/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python36/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python39/Scripts/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python39/:/mnt/c/Users/Jinho/AppData/Local/Microsoft/WindowsApps:/mnt/c/Users/Jinho/AppData/Local/Programs/Microsoft VS Code/bin:/mnt/c/Users/Jinho/AppData/Local/Programs/DockerDesktop/resources/bin:/snap/bin:/home/jinho/.vscode-server/extensions/openai.chatgpt-26.930.41038-linux-x64/bin/linux-x86_64",
+      "ROS_DOMAIN_ID": "164",
+      "ROS_LOG_DIR": "/tmp/sim004-ros-9uakungz",
+      "WAYLAND_DISPLAY": "wayland-0"
+    },
+    "exe": "/usr/bin/python3.12",
+    "pid": 192229,
+    "start_ticks": "4797092"
+  },
+  {
+    "cmdline": [
+      "/usr/bin/python3",
+      "/opt/ros/jazzy/bin/ros2",
+      "lifecycle",
+      "get",
+      "/map_server"
+    ],
+    "cwd": "/tmp/sim008-3d-demo-vyhdzvhb",
+    "env": {
+      "DISPLAY": ":0",
+      "GZ_CONFIG_PATH": "/opt/ros/jazzy/opt/gz_sim_vendor/share/gz:/opt/ros/jazzy/opt/sdformat_vendor/share/gz:/opt/ros/jazzy/opt/gz_gui_vendor/share/gz:/opt/ros/jazzy/opt/gz_transport_vendor/share/gz:/opt/ros/jazzy/opt/gz_rendering_vendor/share/gz:/opt/ros/jazzy/opt/gz_plugin_vendor/share/gz:/opt/ros/jazzy/opt/gz_fuel_tools_vendor/share/gz:/opt/ros/jazzy/opt/gz_msgs_vendor/share/gz:/opt/ros/jazzy/opt/gz_common_vendor/share/gz",
+      "GZ_PARTITION": "sim004-24d450e36346",
+      "GZ_SIM_RESOURCE_PATH": "/opt/ros/jazzy/share",
+      "GZ_SIM_SYSTEM_PLUGIN_PATH": "/opt/ros/jazzy/lib",
+      "PATH": "/home/jinho/projects/factory_physical_ai/.venv-sim/bin:/home/jinho/.local/bin:/home/jinho/.codex/tmp/arg0/codex-arg0tRIgs2:/home/jinho/.vscode-server/bin/07f806f999227108933c2e30515b26eecc1fda74/bin/remote-cli:/home/jinho/.local/bin:/home/jinho/.local/bin:/opt/ros/jazzy/opt/gz_msgs_vendor/bin:/opt/ros/jazzy/opt/gz_tools_vendor/bin:/opt/ros/jazzy/opt/gz_ogre_next_vendor/bin:/opt/ros/jazzy/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/usr/lib/wsl/lib:/mnt/c/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v10.0/bin:/mnt/c/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v10.0/libnvvp:/mnt/c/Program Files (x86)/VMware/VMware Player/bin/:/mnt/c/Windows/system32:/mnt/c/Windows:/mnt/c/Windows/System32/Wbem:/mnt/c/Windows/System32/WindowsPowerShell/v1.0/:/mnt/c/Windows/System32/OpenSSH/:/mnt/c/WINDOWS/system32:/mnt/c/WINDOWS:/mnt/c/WINDOWS/System32/Wbem:/mnt/c/WINDOWS/System32/WindowsPowerShell/v1.0/:/mnt/c/WINDOWS/System32/OpenSSH/:/mnt/c/Program Files (x86)/PuTTY/:/mnt/c/Program Files (x86)/NVIDIA Corporation/PhysX/Common:/mnt/c/swigwin-3.0.12:/mnt/c/mingw64/bin:/mnt/c/Program Files/CMake/bin:/mnt/c/Program Files (x86)/GnuWin32/bin:/mnt/c/Program Files/vcpkg:/mnt/c/Program Files/OpenNI2/Redist:/mnt/c/Program Files/PCL 1.13.0/3rdParty:/mnt/c/Program Files/PCL 1.13.0/3rdParty/VTK/bin:/mnt/c/Users/Jinho/Documents/Projects/TF_src/DeepLearningMath/ffmpeg/bin:/mnt/c/Program Files/NVIDIA Corporation/NVIDIA app/NvDLISR:/mnt/c/Users/Jinho/AppData/Roaming/Python/Python310/Scripts:/mnt/c/Program Files/Git/cmd:/mnt/c/Program Files/WSL/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python310/Scripts/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python310/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python313/Scripts/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python313/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python37/Scripts/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python37/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python36/Scripts/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python36/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python39/Scripts/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python39/:/mnt/c/Users/Jinho/AppData/Local/Microsoft/WindowsApps:/mnt/c/Users/Jinho/AppData/Local/Programs/Microsoft VS Code/bin:/mnt/c/Users/Jinho/AppData/Local/Programs/DockerDesktop/resources/bin:/snap/bin:/home/jinho/.vscode-server/extensions/openai.chatgpt-26.930.41038-linux-x64/bin/linux-x86_64",
+      "ROS_DOMAIN_ID": "164",
+      "ROS_LOG_DIR": "/tmp/sim004-ros-9uakungz",
+      "WAYLAND_DISPLAY": "wayland-0"
+    },
+    "exe": "/usr/bin/python3.12",
+    "pid": 192238,
+    "start_ticks": "4797209"
+  },
+  {
+    "cmdline": [
+      "/usr/bin/python3",
+      "/opt/ros/jazzy/bin/ros2",
+      "topic",
+      "echo",
+      "--once",
+      "/clock",
+      "rosgraph_msgs/msg/Clock"
+    ],
+    "cwd": "/tmp/sim008-3d-demo-vyhdzvhb",
+    "env": {
+      "DISPLAY": ":0",
+      "GZ_CONFIG_PATH": "/opt/ros/jazzy/opt/gz_sim_vendor/share/gz:/opt/ros/jazzy/opt/sdformat_vendor/share/gz:/opt/ros/jazzy/opt/gz_gui_vendor/share/gz:/opt/ros/jazzy/opt/gz_transport_vendor/share/gz:/opt/ros/jazzy/opt/gz_rendering_vendor/share/gz:/opt/ros/jazzy/opt/gz_plugin_vendor/share/gz:/opt/ros/jazzy/opt/gz_fuel_tools_vendor/share/gz:/opt/ros/jazzy/opt/gz_msgs_vendor/share/gz:/opt/ros/jazzy/opt/gz_common_vendor/share/gz",
+      "GZ_PARTITION": "sim004-24d450e36346",
+      "GZ_SIM_RESOURCE_PATH": "/opt/ros/jazzy/share",
+      "GZ_SIM_SYSTEM_PLUGIN_PATH": "/opt/ros/jazzy/lib",
+      "PATH": "/home/jinho/projects/factory_physical_ai/.venv-sim/bin:/home/jinho/.local/bin:/home/jinho/.codex/tmp/arg0/codex-arg0tRIgs2:/home/jinho/.vscode-server/bin/07f806f999227108933c2e30515b26eecc1fda74/bin/remote-cli:/home/jinho/.local/bin:/home/jinho/.local/bin:/opt/ros/jazzy/opt/gz_msgs_vendor/bin:/opt/ros/jazzy/opt/gz_tools_vendor/bin:/opt/ros/jazzy/opt/gz_ogre_next_vendor/bin:/opt/ros/jazzy/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/usr/lib/wsl/lib:/mnt/c/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v10.0/bin:/mnt/c/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v10.0/libnvvp:/mnt/c/Program Files (x86)/VMware/VMware Player/bin/:/mnt/c/Windows/system32:/mnt/c/Windows:/mnt/c/Windows/System32/Wbem:/mnt/c/Windows/System32/WindowsPowerShell/v1.0/:/mnt/c/Windows/System32/OpenSSH/:/mnt/c/WINDOWS/system32:/mnt/c/WINDOWS:/mnt/c/WINDOWS/System32/Wbem:/mnt/c/WINDOWS/System32/WindowsPowerShell/v1.0/:/mnt/c/WINDOWS/System32/OpenSSH/:/mnt/c/Program Files (x86)/PuTTY/:/mnt/c/Program Files (x86)/NVIDIA Corporation/PhysX/Common:/mnt/c/swigwin-3.0.12:/mnt/c/mingw64/bin:/mnt/c/Program Files/CMake/bin:/mnt/c/Program Files (x86)/GnuWin32/bin:/mnt/c/Program Files/vcpkg:/mnt/c/Program Files/OpenNI2/Redist:/mnt/c/Program Files/PCL 1.13.0/3rdParty:/mnt/c/Program Files/PCL 1.13.0/3rdParty/VTK/bin:/mnt/c/Users/Jinho/Documents/Projects/TF_src/DeepLearningMath/ffmpeg/bin:/mnt/c/Program Files/NVIDIA Corporation/NVIDIA app/NvDLISR:/mnt/c/Users/Jinho/AppData/Roaming/Python/Python310/Scripts:/mnt/c/Program Files/Git/cmd:/mnt/c/Program Files/WSL/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python310/Scripts/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python310/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python313/Scripts/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python313/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python37/Scripts/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python37/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python36/Scripts/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python36/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python39/Scripts/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python39/:/mnt/c/Users/Jinho/AppData/Local/Microsoft/WindowsApps:/mnt/c/Users/Jinho/AppData/Local/Programs/Microsoft VS Code/bin:/mnt/c/Users/Jinho/AppData/Local/Programs/DockerDesktop/resources/bin:/snap/bin:/home/jinho/.vscode-server/extensions/openai.chatgpt-26.930.41038-linux-x64/bin/linux-x86_64",
+      "ROS_DOMAIN_ID": "164",
+      "ROS_LOG_DIR": "/tmp/sim004-ros-9uakungz",
+      "WAYLAND_DISPLAY": "wayland-0"
+    },
+    "exe": "/usr/bin/python3.12",
+    "pid": 192255,
+    "start_ticks": "4797437"
+  },
+  {
+    "cmdline": [
+      "/usr/bin/python3",
+      "/opt/ros/jazzy/bin/ros2",
+      "topic",
+      "echo",
+      "--once",
+      "/clock",
+      "rosgraph_msgs/msg/Clock"
+    ],
+    "cwd": "/tmp/sim008-3d-demo-vyhdzvhb",
+    "env": {
+      "DISPLAY": ":0",
+      "GZ_CONFIG_PATH": "/opt/ros/jazzy/opt/gz_sim_vendor/share/gz:/opt/ros/jazzy/opt/sdformat_vendor/share/gz:/opt/ros/jazzy/opt/gz_gui_vendor/share/gz:/opt/ros/jazzy/opt/gz_transport_vendor/share/gz:/opt/ros/jazzy/opt/gz_rendering_vendor/share/gz:/opt/ros/jazzy/opt/gz_plugin_vendor/share/gz:/opt/ros/jazzy/opt/gz_fuel_tools_vendor/share/gz:/opt/ros/jazzy/opt/gz_msgs_vendor/share/gz:/opt/ros/jazzy/opt/gz_common_vendor/share/gz",
+      "GZ_PARTITION": "sim004-24d450e36346",
+      "GZ_SIM_RESOURCE_PATH": "/opt/ros/jazzy/share",
+      "GZ_SIM_SYSTEM_PLUGIN_PATH": "/opt/ros/jazzy/lib",
+      "PATH": "/home/jinho/projects/factory_physical_ai/.venv-sim/bin:/home/jinho/.local/bin:/home/jinho/.codex/tmp/arg0/codex-arg0tRIgs2:/home/jinho/.vscode-server/bin/07f806f999227108933c2e30515b26eecc1fda74/bin/remote-cli:/home/jinho/.local/bin:/home/jinho/.local/bin:/opt/ros/jazzy/opt/gz_msgs_vendor/bin:/opt/ros/jazzy/opt/gz_tools_vendor/bin:/opt/ros/jazzy/opt/gz_ogre_next_vendor/bin:/opt/ros/jazzy/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/usr/lib/wsl/lib:/mnt/c/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v10.0/bin:/mnt/c/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v10.0/libnvvp:/mnt/c/Program Files (x86)/VMware/VMware Player/bin/:/mnt/c/Windows/system32:/mnt/c/Windows:/mnt/c/Windows/System32/Wbem:/mnt/c/Windows/System32/WindowsPowerShell/v1.0/:/mnt/c/Windows/System32/OpenSSH/:/mnt/c/WINDOWS/system32:/mnt/c/WINDOWS:/mnt/c/WINDOWS/System32/Wbem:/mnt/c/WINDOWS/System32/WindowsPowerShell/v1.0/:/mnt/c/WINDOWS/System32/OpenSSH/:/mnt/c/Program Files (x86)/PuTTY/:/mnt/c/Program Files (x86)/NVIDIA Corporation/PhysX/Common:/mnt/c/swigwin-3.0.12:/mnt/c/mingw64/bin:/mnt/c/Program Files/CMake/bin:/mnt/c/Program Files (x86)/GnuWin32/bin:/mnt/c/Program Files/vcpkg:/mnt/c/Program Files/OpenNI2/Redist:/mnt/c/Program Files/PCL 1.13.0/3rdParty:/mnt/c/Program Files/PCL 1.13.0/3rdParty/VTK/bin:/mnt/c/Users/Jinho/Documents/Projects/TF_src/DeepLearningMath/ffmpeg/bin:/mnt/c/Program Files/NVIDIA Corporation/NVIDIA app/NvDLISR:/mnt/c/Users/Jinho/AppData/Roaming/Python/Python310/Scripts:/mnt/c/Program Files/Git/cmd:/mnt/c/Program Files/WSL/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python310/Scripts/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python310/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python313/Scripts/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python313/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python37/Scripts/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python37/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python36/Scripts/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python36/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python39/Scripts/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python39/:/mnt/c/Users/Jinho/AppData/Local/Microsoft/WindowsApps:/mnt/c/Users/Jinho/AppData/Local/Programs/Microsoft VS Code/bin:/mnt/c/Users/Jinho/AppData/Local/Programs/DockerDesktop/resources/bin:/snap/bin:/home/jinho/.vscode-server/extensions/openai.chatgpt-26.930.41038-linux-x64/bin/linux-x86_64",
+      "ROS_DOMAIN_ID": "164",
+      "ROS_LOG_DIR": "/tmp/sim004-ros-9uakungz",
+      "WAYLAND_DISPLAY": "wayland-0"
+    },
+    "exe": "/usr/bin/python3.12",
+    "pid": 192299,
+    "start_ticks": "4798040"
+  },
+  {
+    "cmdline": [
+      "/usr/bin/python3",
+      "/opt/ros/jazzy/bin/ros2",
+      "topic",
+      "echo",
+      "--once",
+      "/clock",
+      "rosgraph_msgs/msg/Clock"
+    ],
+    "cwd": "/tmp/sim008-3d-demo-vyhdzvhb",
+    "env": {
+      "DISPLAY": ":0",
+      "GZ_CONFIG_PATH": "/opt/ros/jazzy/opt/gz_sim_vendor/share/gz:/opt/ros/jazzy/opt/sdformat_vendor/share/gz:/opt/ros/jazzy/opt/gz_gui_vendor/share/gz:/opt/ros/jazzy/opt/gz_transport_vendor/share/gz:/opt/ros/jazzy/opt/gz_rendering_vendor/share/gz:/opt/ros/jazzy/opt/gz_plugin_vendor/share/gz:/opt/ros/jazzy/opt/gz_fuel_tools_vendor/share/gz:/opt/ros/jazzy/opt/gz_msgs_vendor/share/gz:/opt/ros/jazzy/opt/gz_common_vendor/share/gz",
+      "GZ_PARTITION": "sim004-24d450e36346",
+      "GZ_SIM_RESOURCE_PATH": "/opt/ros/jazzy/share",
+      "GZ_SIM_SYSTEM_PLUGIN_PATH": "/opt/ros/jazzy/lib",
+      "PATH": "/home/jinho/projects/factory_physical_ai/.venv-sim/bin:/home/jinho/.local/bin:/home/jinho/.codex/tmp/arg0/codex-arg0tRIgs2:/home/jinho/.vscode-server/bin/07f806f999227108933c2e30515b26eecc1fda74/bin/remote-cli:/home/jinho/.local/bin:/home/jinho/.local/bin:/opt/ros/jazzy/opt/gz_msgs_vendor/bin:/opt/ros/jazzy/opt/gz_tools_vendor/bin:/opt/ros/jazzy/opt/gz_ogre_next_vendor/bin:/opt/ros/jazzy/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/usr/lib/wsl/lib:/mnt/c/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v10.0/bin:/mnt/c/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v10.0/libnvvp:/mnt/c/Program Files (x86)/VMware/VMware Player/bin/:/mnt/c/Windows/system32:/mnt/c/Windows:/mnt/c/Windows/System32/Wbem:/mnt/c/Windows/System32/WindowsPowerShell/v1.0/:/mnt/c/Windows/System32/OpenSSH/:/mnt/c/WINDOWS/system32:/mnt/c/WINDOWS:/mnt/c/WINDOWS/System32/Wbem:/mnt/c/WINDOWS/System32/WindowsPowerShell/v1.0/:/mnt/c/WINDOWS/System32/OpenSSH/:/mnt/c/Program Files (x86)/PuTTY/:/mnt/c/Program Files (x86)/NVIDIA Corporation/PhysX/Common:/mnt/c/swigwin-3.0.12:/mnt/c/mingw64/bin:/mnt/c/Program Files/CMake/bin:/mnt/c/Program Files (x86)/GnuWin32/bin:/mnt/c/Program Files/vcpkg:/mnt/c/Program Files/OpenNI2/Redist:/mnt/c/Program Files/PCL 1.13.0/3rdParty:/mnt/c/Program Files/PCL 1.13.0/3rdParty/VTK/bin:/mnt/c/Users/Jinho/Documents/Projects/TF_src/DeepLearningMath/ffmpeg/bin:/mnt/c/Program Files/NVIDIA Corporation/NVIDIA app/NvDLISR:/mnt/c/Users/Jinho/AppData/Roaming/Python/Python310/Scripts:/mnt/c/Program Files/Git/cmd:/mnt/c/Program Files/WSL/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python310/Scripts/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python310/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python313/Scripts/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python313/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python37/Scripts/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python37/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python36/Scripts/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python36/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python39/Scripts/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python39/:/mnt/c/Users/Jinho/AppData/Local/Microsoft/WindowsApps:/mnt/c/Users/Jinho/AppData/Local/Programs/Microsoft VS Code/bin:/mnt/c/Users/Jinho/AppData/Local/Programs/DockerDesktop/resources/bin:/snap/bin:/home/jinho/.vscode-server/extensions/openai.chatgpt-26.930.41038-linux-x64/bin/linux-x86_64",
+      "ROS_DOMAIN_ID": "164",
+      "ROS_LOG_DIR": "/tmp/sim004-ros-9uakungz",
+      "WAYLAND_DISPLAY": "wayland-0"
+    },
+    "exe": "/usr/bin/python3.12",
+    "pid": 192349,
+    "start_ticks": "4798642"
+  },
+  {
+    "cmdline": [
+      "/usr/bin/python3",
+      "/opt/ros/jazzy/bin/ros2",
+      "topic",
+      "echo",
+      "--once",
+      "/clock",
+      "rosgraph_msgs/msg/Clock"
+    ],
+    "cwd": "/tmp/sim008-3d-demo-vyhdzvhb",
+    "env": {
+      "DISPLAY": ":0",
+      "GZ_CONFIG_PATH": "/opt/ros/jazzy/opt/gz_sim_vendor/share/gz:/opt/ros/jazzy/opt/sdformat_vendor/share/gz:/opt/ros/jazzy/opt/gz_gui_vendor/share/gz:/opt/ros/jazzy/opt/gz_transport_vendor/share/gz:/opt/ros/jazzy/opt/gz_rendering_vendor/share/gz:/opt/ros/jazzy/opt/gz_plugin_vendor/share/gz:/opt/ros/jazzy/opt/gz_fuel_tools_vendor/share/gz:/opt/ros/jazzy/opt/gz_msgs_vendor/share/gz:/opt/ros/jazzy/opt/gz_common_vendor/share/gz",
+      "GZ_PARTITION": "sim004-24d450e36346",
+      "GZ_SIM_RESOURCE_PATH": "/opt/ros/jazzy/share",
+      "GZ_SIM_SYSTEM_PLUGIN_PATH": "/opt/ros/jazzy/lib",
+      "PATH": "/home/jinho/projects/factory_physical_ai/.venv-sim/bin:/home/jinho/.local/bin:/home/jinho/.codex/tmp/arg0/codex-arg0tRIgs2:/home/jinho/.vscode-server/bin/07f806f999227108933c2e30515b26eecc1fda74/bin/remote-cli:/home/jinho/.local/bin:/home/jinho/.local/bin:/opt/ros/jazzy/opt/gz_msgs_vendor/bin:/opt/ros/jazzy/opt/gz_tools_vendor/bin:/opt/ros/jazzy/opt/gz_ogre_next_vendor/bin:/opt/ros/jazzy/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/usr/lib/wsl/lib:/mnt/c/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v10.0/bin:/mnt/c/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v10.0/libnvvp:/mnt/c/Program Files (x86)/VMware/VMware Player/bin/:/mnt/c/Windows/system32:/mnt/c/Windows:/mnt/c/Windows/System32/Wbem:/mnt/c/Windows/System32/WindowsPowerShell/v1.0/:/mnt/c/Windows/System32/OpenSSH/:/mnt/c/WINDOWS/system32:/mnt/c/WINDOWS:/mnt/c/WINDOWS/System32/Wbem:/mnt/c/WINDOWS/System32/WindowsPowerShell/v1.0/:/mnt/c/WINDOWS/System32/OpenSSH/:/mnt/c/Program Files (x86)/PuTTY/:/mnt/c/Program Files (x86)/NVIDIA Corporation/PhysX/Common:/mnt/c/swigwin-3.0.12:/mnt/c/mingw64/bin:/mnt/c/Program Files/CMake/bin:/mnt/c/Program Files (x86)/GnuWin32/bin:/mnt/c/Program Files/vcpkg:/mnt/c/Program Files/OpenNI2/Redist:/mnt/c/Program Files/PCL 1.13.0/3rdParty:/mnt/c/Program Files/PCL 1.13.0/3rdParty/VTK/bin:/mnt/c/Users/Jinho/Documents/Projects/TF_src/DeepLearningMath/ffmpeg/bin:/mnt/c/Program Files/NVIDIA Corporation/NVIDIA app/NvDLISR:/mnt/c/Users/Jinho/AppData/Roaming/Python/Python310/Scripts:/mnt/c/Program Files/Git/cmd:/mnt/c/Program Files/WSL/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python310/Scripts/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python310/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python313/Scripts/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python313/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python37/Scripts/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python37/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python36/Scripts/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python36/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python39/Scripts/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python39/:/mnt/c/Users/Jinho/AppData/Local/Microsoft/WindowsApps:/mnt/c/Users/Jinho/AppData/Local/Programs/Microsoft VS Code/bin:/mnt/c/Users/Jinho/AppData/Local/Programs/DockerDesktop/resources/bin:/snap/bin:/home/jinho/.vscode-server/extensions/openai.chatgpt-26.930.41038-linux-x64/bin/linux-x86_64",
+      "ROS_DOMAIN_ID": "164",
+      "ROS_LOG_DIR": "/tmp/sim004-ros-9uakungz",
+      "WAYLAND_DISPLAY": "wayland-0"
+    },
+    "exe": "/usr/bin/python3.12",
+    "pid": 192392,
+    "start_ticks": "4799244"
+  },
+  {
+    "cmdline": [
+      "/usr/bin/python3",
+      "/opt/ros/jazzy/bin/ros2",
+      "topic",
+      "echo",
+      "--once",
+      "/clock",
+      "rosgraph_msgs/msg/Clock"
+    ],
+    "cwd": "/tmp/sim008-3d-demo-vyhdzvhb",
+    "env": {
+      "DISPLAY": ":0",
+      "GZ_CONFIG_PATH": "/opt/ros/jazzy/opt/gz_sim_vendor/share/gz:/opt/ros/jazzy/opt/sdformat_vendor/share/gz:/opt/ros/jazzy/opt/gz_gui_vendor/share/gz:/opt/ros/jazzy/opt/gz_transport_vendor/share/gz:/opt/ros/jazzy/opt/gz_rendering_vendor/share/gz:/opt/ros/jazzy/opt/gz_plugin_vendor/share/gz:/opt/ros/jazzy/opt/gz_fuel_tools_vendor/share/gz:/opt/ros/jazzy/opt/gz_msgs_vendor/share/gz:/opt/ros/jazzy/opt/gz_common_vendor/share/gz",
+      "GZ_PARTITION": "sim004-24d450e36346",
+      "GZ_SIM_RESOURCE_PATH": "/opt/ros/jazzy/share",
+      "GZ_SIM_SYSTEM_PLUGIN_PATH": "/opt/ros/jazzy/lib",
+      "PATH": "/home/jinho/projects/factory_physical_ai/.venv-sim/bin:/home/jinho/.local/bin:/home/jinho/.codex/tmp/arg0/codex-arg0tRIgs2:/home/jinho/.vscode-server/bin/07f806f999227108933c2e30515b26eecc1fda74/bin/remote-cli:/home/jinho/.local/bin:/home/jinho/.local/bin:/opt/ros/jazzy/opt/gz_msgs_vendor/bin:/opt/ros/jazzy/opt/gz_tools_vendor/bin:/opt/ros/jazzy/opt/gz_ogre_next_vendor/bin:/opt/ros/jazzy/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/usr/lib/wsl/lib:/mnt/c/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v10.0/bin:/mnt/c/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v10.0/libnvvp:/mnt/c/Program Files (x86)/VMware/VMware Player/bin/:/mnt/c/Windows/system32:/mnt/c/Windows:/mnt/c/Windows/System32/Wbem:/mnt/c/Windows/System32/WindowsPowerShell/v1.0/:/mnt/c/Windows/System32/OpenSSH/:/mnt/c/WINDOWS/system32:/mnt/c/WINDOWS:/mnt/c/WINDOWS/System32/Wbem:/mnt/c/WINDOWS/System32/WindowsPowerShell/v1.0/:/mnt/c/WINDOWS/System32/OpenSSH/:/mnt/c/Program Files (x86)/PuTTY/:/mnt/c/Program Files (x86)/NVIDIA Corporation/PhysX/Common:/mnt/c/swigwin-3.0.12:/mnt/c/mingw64/bin:/mnt/c/Program Files/CMake/bin:/mnt/c/Program Files (x86)/GnuWin32/bin:/mnt/c/Program Files/vcpkg:/mnt/c/Program Files/OpenNI2/Redist:/mnt/c/Program Files/PCL 1.13.0/3rdParty:/mnt/c/Program Files/PCL 1.13.0/3rdParty/VTK/bin:/mnt/c/Users/Jinho/Documents/Projects/TF_src/DeepLearningMath/ffmpeg/bin:/mnt/c/Program Files/NVIDIA Corporation/NVIDIA app/NvDLISR:/mnt/c/Users/Jinho/AppData/Roaming/Python/Python310/Scripts:/mnt/c/Program Files/Git/cmd:/mnt/c/Program Files/WSL/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python310/Scripts/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python310/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python313/Scripts/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python313/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python37/Scripts/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python37/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python36/Scripts/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python36/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python39/Scripts/:/mnt/c/Users/Jinho/AppData/Local/Programs/Python/Python39/:/mnt/c/Users/Jinho/AppData/Local/Microsoft/WindowsApps:/mnt/c/Users/Jinho/AppData/Local/Programs/Microsoft VS Code/bin:/mnt/c/Users/Jinho/AppData/Local/Programs/DockerDesktop/resources/bin:/snap/bin:/home/jinho/.vscode-server/extensions/openai.chatgpt-26.930.41038-linux-x64/bin/linux-x86_64",
+      "ROS_DOMAIN_ID": "164",
+      "ROS_LOG_DIR": "/tmp/sim004-ros-9uakungz",
+      "WAYLAND_DISPLAY": "wayland-0"
+    },
+    "exe": "/usr/bin/python3.12",
+    "pid": 192435,
+    "start_ticks": "4799846"
+  }
+]

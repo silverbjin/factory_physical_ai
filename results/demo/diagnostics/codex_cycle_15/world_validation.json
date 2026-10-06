@@ -1,0 +1,6 @@
+{
+  "pass": true,
+  "response": "data: \"sim008_normal_system_world\"\n\n",
+  "server_pid": 200717,
+  "service": "/gazebo/worlds"
+}

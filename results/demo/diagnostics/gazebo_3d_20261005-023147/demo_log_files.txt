@@ -1,0 +1,2 @@
+gazebo_gui_normal.log
+normal_runner.log

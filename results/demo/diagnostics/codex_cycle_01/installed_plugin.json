@@ -1,0 +1,8 @@
+{
+  "definition": {
+    "name": "gz::sim::systems::SceneBroadcaster",
+    "filename": "gz-sim-scene-broadcaster-system"
+  },
+  "example": "/opt/ros/jazzy/share/ros_gz_sim_demos/worlds/default.sdf",
+  "libraries": "/usr/lib/x86_64-linux-gnu/libgz-sim8-scene-broadcaster-system.so.8.14.0\n/usr/lib/x86_64-linux-gnu/gz-sim-8/plugins/libgz-sim8-scene-broadcaster-system.so.8.14.0\n/opt/ros/jazzy/opt/gz_sim_vendor/lib/libgz-sim8-scene-broadcaster-system.so.8.11.0\n/opt/ros/jazzy/opt/gz_sim_vendor/lib/gz-sim-8/plugins/libgz-sim8-scene-broadcaster-system.so.8.11.0\n"
+}

@@ -1,0 +1,23 @@
+.FPreparing worktree (detached HEAD c2951b7)
+F
+======================================================================
+FAIL: test_incomplete_invocation_cannot_reuse_old_passing_gates (__main__.InvocationLifecycle.test_incomplete_invocation_cannot_reuse_old_passing_gates)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/home/jinho/projects/factory_physical_ai_simDemo/demo_3d/diagnostics/test_invocation_lifecycle.py", line 46, in test_incomplete_invocation_cannot_reuse_old_passing_gates
+    self.assertNotEqual(cp.returncode,0,'Incomplete invocation reused stale success')
+AssertionError: 0 == 0 : Incomplete invocation reused stale success
+
+======================================================================
+FAIL: test_patch_failure_removes_the_real_detached_worktree (__main__.InvocationLifecycle.test_patch_failure_removes_the_real_detached_worktree)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/home/jinho/projects/factory_physical_ai_simDemo/demo_3d/diagnostics/test_invocation_lifecycle.py", line 24, in test_patch_failure_removes_the_real_detached_worktree
+    self.assertEqual(worktrees(),before,'Preparation leaked a registered worktree')
+AssertionError: Items in the first set but not the second:
+'/tmp/sim008-3d-demo-oz9j0hnq' : Preparation leaked a registered worktree
+
+----------------------------------------------------------------------
+Ran 3 tests in 0.193s
+
+FAILED (failures=2)

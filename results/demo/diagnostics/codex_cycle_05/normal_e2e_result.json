@@ -1,0 +1,415 @@
+{
+  "accepted_bindings": {
+    "SIM-005": {
+      "acceptance": {
+        "accepted_commit": "542514a4d10bc03087834e8a5f672d53afe6aa21",
+        "evidence": {
+          "path": "results/simulation/SIM-005_mujoco_vla_backend.json",
+          "sha256": "f4d41fdb1f13978e1b1e5c91b95e31b38a69825a0d432a8284ff7731a3beb84f"
+        },
+        "review_record": "docs/task_history/TASK-SIM-005/04_review.md",
+        "schema_version": 1,
+        "status": "ACCEPT",
+        "task_id": "TASK-SIM-005"
+      },
+      "acceptance_sha256": "021ed2d2877244cc2c08b2f53f0e961ad7a84c77b3e60cfa543c377ef72bca06"
+    },
+    "SIM-007": {
+      "acceptance": {
+        "accepted_commit": "228eb7745aa05c230e1b272184601b5afd53853b",
+        "evidence": {
+          "path": "results/simulation/SIM-007_mission_integration.json",
+          "sha256": "7247f8db76c874e533f615f1c8c3f32febb7a7e2377790ff05e3e93320531711"
+        },
+        "review_record": "docs/task_history/TASK-SIM-007/06_review.md",
+        "schema_version": 1,
+        "status": "ACCEPT",
+        "task_id": "TASK-SIM-007"
+      },
+      "acceptance_sha256": "157acb70290f068f533d82a7cdc6adeac006afc70b540b02410ca5fd47e7ed76"
+    }
+  },
+  "execution": {
+    "duration_ms": 76328.5,
+    "lifecycle": {
+      "cleanup_complete": true,
+      "startup_attempted": true
+    },
+    "mission": {
+      "checkpoint_revision": 6,
+      "component_version": "sim008-normal-system-e2e-v1",
+      "message_type": "result",
+      "mission_id": "1332f418-e48c-437c-ba37-a1b903cafdcc",
+      "operation": "mission.execute",
+      "outcome": "completed",
+      "request_id": "784b017e-4725-4985-b66a-37a437d0dfa2",
+      "result": "success",
+      "schema_version": "1.0",
+      "source_kind": "mock",
+      "status": "completed",
+      "timestamp": "2026-10-04T18:41:03.890Z",
+      "trace_id": "f3531ccd-6879-4507-b9d9-a30d6887f4ea"
+    },
+    "mission_request": {
+      "component_version": "sim008-normal-system-e2e-v1",
+      "deadline_at": "2026-10-04T18:41:17.383Z",
+      "goal": {
+        "approval_context": {
+          "approved": true,
+          "authorized_by": "TASK-SIM-008",
+          "simulation_only": true
+        },
+        "destination_id": "line-b-drop",
+        "line_id": "line-b",
+        "mission_type": "line_side_supply",
+        "part_id": "brake-ecu-b",
+        "priority": 50,
+        "quantity": 1,
+        "source_id": "warehouse-a"
+      },
+      "idempotency_key": "SIM_NORMAL_BRAKE_ECU_LINE_B:mission",
+      "message_type": "request",
+      "mission_id": "1332f418-e48c-437c-ba37-a1b903cafdcc",
+      "operation": "mission.execute",
+      "request_id": "784b017e-4725-4985-b66a-37a437d0dfa2",
+      "schema_version": "1.0",
+      "timeout_ms": 30000,
+      "timestamp": "2026-10-04T18:40:47.383Z",
+      "trace_id": "f3531ccd-6879-4507-b9d9-a30d6887f4ea"
+    },
+    "steps": [
+      {
+        "name": "source_navigation",
+        "request": {
+          "action_id": "4ff211b0-28e1-4a6e-9089-0ac5908ebb5b",
+          "attempt": 1,
+          "component_version": "sim008-normal-system-e2e-v1",
+          "deadline_at": "2026-10-04T18:41:17.390Z",
+          "destination_id": "warehouse-a",
+          "idempotency_key": "SIM_NORMAL_BRAKE_ECU_LINE_B:navigation.execute:4ff211b0-28e1-4a6e-9089-0ac5908ebb5b",
+          "message_type": "request",
+          "mission_id": "1332f418-e48c-437c-ba37-a1b903cafdcc",
+          "operation": "navigation.execute",
+          "request_id": "3ebc8b34-b02a-41aa-85c8-94aa9506e30c",
+          "retry_budget_remaining": 0,
+          "robot_id": "amr-sim-001",
+          "schema_version": "1.0",
+          "speed_profile_id": "sim-safe-v1",
+          "timeout_ms": 30000,
+          "timestamp": "2026-10-04T18:40:47.390Z",
+          "trace_id": "f3531ccd-6879-4507-b9d9-a30d6887f4ea"
+        },
+        "result": {
+          "action_id": "4ff211b0-28e1-4a6e-9089-0ac5908ebb5b",
+          "arrival": {
+            "destination_id": "warehouse-a",
+            "verified": true
+          },
+          "component_version": "sim004-navigation-backend-v2",
+          "evidence_refs": [
+            {
+              "sha256": "a3f5a9f8142809dc0b23c8afa253139159158f5dfb172a151a8df5066e5c2686",
+              "uri": "urn:factory-evidence:sim-004:4ff211b0-28e1-4a6e-9089-0ac5908ebb5b"
+            }
+          ],
+          "message_type": "result",
+          "mission_id": "1332f418-e48c-437c-ba37-a1b903cafdcc",
+          "operation": "navigation.execute",
+          "request_id": "3ebc8b34-b02a-41aa-85c8-94aa9506e30c",
+          "result": "success",
+          "schema_version": "1.0",
+          "source_kind": "mock",
+          "status": "succeeded",
+          "timestamp": "2026-10-04T18:40:52.012Z",
+          "trace_id": "f3531ccd-6879-4507-b9d9-a30d6887f4ea"
+        }
+      },
+      {
+        "expected_state": {
+          "location_id": "warehouse-a",
+          "part_id": "brake-ecu-b"
+        },
+        "name": "source_verification",
+        "observation": {
+          "entity_id": "brake-ecu-type-b-001",
+          "entity_name": "brake_ecu_type_b_001",
+          "observation_source": "/world/sim008_normal_system_world/generate_world_sdf",
+          "observed_at": "2026-10-04T18:40:53.421Z",
+          "pose": {
+            "x": -6.5,
+            "y": 0.0,
+            "z": 0.2
+          },
+          "runtime_backend": "gz_sim_harmonic",
+          "semantic_state": {
+            "location_id": "warehouse-a",
+            "part_id": "brake-ecu-b"
+          },
+          "simulation_time": {
+            "nsec": 703000000,
+            "sec": 23
+          },
+          "snapshot_sha256": "8cb98238ef1931be25b69e381def26e1e0d1514c5224f87de97ddd9b427b1aab",
+          "world_name": "sim008_normal_system_world"
+        },
+        "result": {
+          "action_id": "4ff211b0-28e1-4a6e-9089-0ac5908ebb5b",
+          "component_version": "sim006-verification-backend-v1",
+          "confidence": 1.0,
+          "evidence_refs": [
+            {
+              "sha256": "c8f30eab1652c164ecd6eb55f043e235451345e4dde35386f35f075382318153",
+              "uri": "urn:factory-evidence:sim-006:gazebo_system:sim008-gazebo-4ff211b0-28e1-4a6e-9089-0ac5908ebb5b"
+            }
+          ],
+          "message_type": "result",
+          "mission_id": "1332f418-e48c-437c-ba37-a1b903cafdcc",
+          "operation": "verification.verify",
+          "request_id": "d6f5e32e-a970-4c24-a3f5-70522ff6e965",
+          "result": "success",
+          "schema_version": "1.0",
+          "source_kind": "mock",
+          "status": "succeeded",
+          "timestamp": "2026-10-04T18:40:53.441Z",
+          "trace_id": "f3531ccd-6879-4507-b9d9-a30d6887f4ea",
+          "verdict": "pass",
+          "verification_profile_version": "sim-exact-match-v1"
+        }
+      },
+      {
+        "name": "destination_navigation",
+        "request": {
+          "action_id": "1de66a78-b165-4c21-b83f-6c4ece39a89b",
+          "attempt": 1,
+          "component_version": "sim008-normal-system-e2e-v1",
+          "deadline_at": "2026-10-04T18:41:23.447Z",
+          "destination_id": "line-b-drop",
+          "idempotency_key": "SIM_NORMAL_BRAKE_ECU_LINE_B:navigation.execute:1de66a78-b165-4c21-b83f-6c4ece39a89b",
+          "message_type": "request",
+          "mission_id": "1332f418-e48c-437c-ba37-a1b903cafdcc",
+          "operation": "navigation.execute",
+          "request_id": "851149e0-40b1-4334-9937-c1b225ffee9e",
+          "retry_budget_remaining": 0,
+          "robot_id": "amr-sim-001",
+          "schema_version": "1.0",
+          "speed_profile_id": "sim-safe-v1",
+          "timeout_ms": 30000,
+          "timestamp": "2026-10-04T18:40:53.447Z",
+          "trace_id": "f3531ccd-6879-4507-b9d9-a30d6887f4ea"
+        },
+        "result": {
+          "action_id": "1de66a78-b165-4c21-b83f-6c4ece39a89b",
+          "arrival": {
+            "destination_id": "line-b-drop",
+            "verified": true
+          },
+          "component_version": "sim004-navigation-backend-v2",
+          "evidence_refs": [
+            {
+              "sha256": "b23f8591e467ca9f52acde5c6c33f6545e8acc4db06bcb44780849879171df2a",
+              "uri": "urn:factory-evidence:sim-004:1de66a78-b165-4c21-b83f-6c4ece39a89b"
+            }
+          ],
+          "message_type": "result",
+          "mission_id": "1332f418-e48c-437c-ba37-a1b903cafdcc",
+          "operation": "navigation.execute",
+          "request_id": "851149e0-40b1-4334-9937-c1b225ffee9e",
+          "result": "success",
+          "schema_version": "1.0",
+          "source_kind": "mock",
+          "status": "succeeded",
+          "timestamp": "2026-10-04T18:41:00.593Z",
+          "trace_id": "f3531ccd-6879-4507-b9d9-a30d6887f4ea"
+        }
+      },
+      {
+        "name": "vla.execute",
+        "request": {
+          "action_id": "7ced3a39-1601-4d09-a75c-ccd3f0bed613",
+          "attempt": 1,
+          "component_version": "sim008-normal-system-e2e-v1",
+          "deadline_at": "2026-10-04T18:41:30.600Z",
+          "idempotency_key": "SIM_NORMAL_BRAKE_ECU_LINE_B:vla.execute:7ced3a39-1601-4d09-a75c-ccd3f0bed613",
+          "message_type": "request",
+          "mission_id": "1332f418-e48c-437c-ba37-a1b903cafdcc",
+          "observation_refs": [
+            {
+              "content_sha256": "c8f30eab1652c164ecd6eb55f043e235451345e4dde35386f35f075382318153",
+              "fixture_id": "sim008-gazebo-4ff211b0-28e1-4a6e-9089-0ac5908ebb5b",
+              "fixture_set_id": "SIM_FIXTURE_SET_V1",
+              "fixture_version": "1.0",
+              "source_kind": "mock",
+              "timestamp": "2026-10-04T18:40:53.421Z"
+            }
+          ],
+          "operation": "vla.execute",
+          "policy_version": "sim008-gazebo-surrogate-v1",
+          "request_id": "b04f2466-aa18-443c-bfc6-bc8e1be5990c",
+          "retry_budget_remaining": 0,
+          "robot_id": "manipulator-sim-001",
+          "schema_version": "1.0",
+          "task_id": "place-brake-ecu",
+          "timeout_ms": 30000,
+          "timestamp": "2026-10-04T18:41:00.600Z",
+          "trace_id": "f3531ccd-6879-4507-b9d9-a30d6887f4ea",
+          "workspace_profile_id": "sim008-workspace-v1"
+        },
+        "result": {
+          "action_id": "7ced3a39-1601-4d09-a75c-ccd3f0bed613",
+          "component_version": "sim008-normal-system-e2e-v1",
+          "latency_ms": 1,
+          "message_type": "result",
+          "mission_id": "1332f418-e48c-437c-ba37-a1b903cafdcc",
+          "operation": "vla.execute",
+          "request_id": "b04f2466-aa18-443c-bfc6-bc8e1be5990c",
+          "result": "success",
+          "schema_version": "1.0",
+          "skill_outcome": "succeeded",
+          "source_kind": "mock",
+          "status": "succeeded",
+          "timestamp": "2026-10-04T18:41:02.632Z",
+          "trace_id": "f3531ccd-6879-4507-b9d9-a30d6887f4ea",
+          "verifier_input_refs": [
+            {
+              "sha256": "93960cb31423b4beef99b8a503168c76c1475a992755e4c29364e66773d84085",
+              "uri": "urn:factory-evidence:sim008:7ced3a39-1601-4d09-a75c-ccd3f0bed613"
+            }
+          ]
+        }
+      },
+      {
+        "expected_state": {
+          "location_id": "line-b-drop",
+          "part_id": "brake-ecu-b"
+        },
+        "name": "final_verification",
+        "observation": {
+          "entity_id": "brake-ecu-type-b-001",
+          "entity_name": "brake_ecu_type_b_001",
+          "observation_source": "/world/sim008_normal_system_world/generate_world_sdf",
+          "observed_at": "2026-10-04T18:41:03.852Z",
+          "pose": {
+            "x": -6.0,
+            "y": 0.0,
+            "z": 0.2
+          },
+          "runtime_backend": "gz_sim_harmonic",
+          "semantic_state": {
+            "location_id": "line-b-drop",
+            "part_id": "brake-ecu-b"
+          },
+          "simulation_time": {
+            "nsec": 203000000,
+            "sec": 28
+          },
+          "snapshot_sha256": "56f0897989553d1ff89b5f86798d8a3e54302bde042c165aa0be227f67e6e785",
+          "world_name": "sim008_normal_system_world"
+        },
+        "result": {
+          "action_id": "7ced3a39-1601-4d09-a75c-ccd3f0bed613",
+          "component_version": "sim006-verification-backend-v1",
+          "confidence": 1.0,
+          "evidence_refs": [
+            {
+              "sha256": "e55cc90c72ac74a4b7717606b2d07f0a666401e7fa5be7c768ca38481a9e0f26",
+              "uri": "urn:factory-evidence:sim-006:gazebo_system:sim008-gazebo-7ced3a39-1601-4d09-a75c-ccd3f0bed613"
+            }
+          ],
+          "message_type": "result",
+          "mission_id": "1332f418-e48c-437c-ba37-a1b903cafdcc",
+          "operation": "verification.verify",
+          "request_id": "90391ba5-3658-48ee-8dc2-587fe5b13c05",
+          "result": "success",
+          "schema_version": "1.0",
+          "source_kind": "mock",
+          "status": "succeeded",
+          "timestamp": "2026-10-04T18:41:03.871Z",
+          "trace_id": "f3531ccd-6879-4507-b9d9-a30d6887f4ea",
+          "verdict": "pass",
+          "verification_profile_version": "sim-exact-match-v1"
+        }
+      }
+    ],
+    "transitions": [
+      {
+        "from": "created",
+        "to": "ready"
+      },
+      {
+        "from": "ready",
+        "to": "executing"
+      },
+      {
+        "from": "executing",
+        "to": "completed"
+      }
+    ]
+  },
+  "generated_at": "2026-10-04T18:41:04.019Z",
+  "mujoco_component_evidence": {
+    "acceptance": {
+      "acceptance": {
+        "accepted_commit": "542514a4d10bc03087834e8a5f672d53afe6aa21",
+        "evidence": {
+          "path": "results/simulation/SIM-005_mujoco_vla_backend.json",
+          "sha256": "f4d41fdb1f13978e1b1e5c91b95e31b38a69825a0d432a8284ff7731a3beb84f"
+        },
+        "review_record": "docs/task_history/TASK-SIM-005/04_review.md",
+        "schema_version": 1,
+        "status": "ACCEPT",
+        "task_id": "TASK-SIM-005"
+      },
+      "acceptance_sha256": "021ed2d2877244cc2c08b2f53f0e961ad7a84c77b3e60cfa543c377ef72bca06"
+    },
+    "live_coupled": false,
+    "purpose": "accepted supporting component proof only"
+  },
+  "scenario": {
+    "config_sha256": "1da47e9dd0a174a2124ee6493b534d295d0b93be77b5446c8661fd863888beb4",
+    "initial_state": {
+      "location_id": "warehouse-a",
+      "part_id": "brake-ecu-b"
+    },
+    "model": "factory_parts_supply_proxy_v1",
+    "object": {
+      "gazebo_entity_name": "brake_ecu_type_b_001",
+      "id": "brake-ecu-type-b-001",
+      "part_id": "brake-ecu-b"
+    },
+    "process_bounds_ms": {
+      "cleanup": 5000,
+      "execution": 20000,
+      "startup": 20000
+    },
+    "profile": "system",
+    "regions": {
+      "destination": {
+        "id": "line-b-drop",
+        "x": -6.0,
+        "y": 0.0,
+        "z": 0.2
+      },
+      "source": {
+        "id": "warehouse-a",
+        "x": -6.5,
+        "y": 0.0,
+        "z": 0.2
+      }
+    },
+    "scenario_id": "SIM_NORMAL_BRAKE_ECU_LINE_B",
+    "scenario_sha256": "457539366ac5ae2a0044f82c15f07b4473b12168363a6b2efe15df3894a06912",
+    "scenario_version": "1.0",
+    "world": "data/simulation/sim008_normal_system_world.sdf",
+    "world_sha256": "0c3cbb88f084096281a5882214c22cefd652fc7b7ff5681a2ecf76a91629ed96"
+  },
+  "schema_version": "1.0",
+  "source_git_sha": "c2951b70241ed0c6abcc02e47bcc1321639040b9",
+  "system_profile": {
+    "dual_world": false,
+    "integrated_world": "gazebo_harmonic",
+    "mujoco_live_world": false,
+    "name": "system"
+  },
+  "task_id": "TASK-SIM-008",
+  "task_specific_result": "SIM_NORMAL_E2E_READY"
+}

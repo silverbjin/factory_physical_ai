@@ -1,0 +1,224 @@
+{
+  "measurements": {
+    "started_at": "2026-10-04T19:07:15.311Z",
+    "processes": [
+      {
+        "name": "gazebo_nav2_proxy",
+        "pid": 193764,
+        "pgid": 193764,
+        "command": [
+          "/opt/ros/jazzy/bin/ros2",
+          "launch",
+          "nav2_bringup",
+          "tb4_simulation_launch.py",
+          "headless:=True",
+          "use_rviz:=False",
+          "autostart:=False",
+          "x_pose:=-6.5",
+          "y_pose:=0.0",
+          "yaw:=0.0",
+          "world:=/tmp/sim008-3d-demo-i6m2i19h/data/simulation/sim008_normal_system_world.sdf"
+        ],
+        "log_path": "/tmp/sim004-ros-opnpvibj/gazebo_nav2_proxy.log",
+        "started_ms": 0.548,
+        "log_tail": "[INFO] [launch]: All log files can be found below /tmp/sim004-ros-opnpvibj/2026-10-05-04-07-15-740562-DESKTOP-4B51LPI-193764\n[INFO] [launch]: Default logging verbosity is set to INFO\n[INFO] [xacro-1]: process started with pid [193840]\n[INFO] [parameter_bridge-2]: process started with pid [193841]\n[INFO] [image_bridge-3]: process started with pid [193842]\n[INFO] [image_bridge-4]: process started with pid [193843]\n[INFO] [create-5]: process started with pid [193844]\n[INFO] [gz-6]: process started with pid [193845]\n[INFO] [robot_state_publisher-7]: process started with pid [193846]\n[INFO] [component_container_isolated-8]: process started with pid [193849]\n[INFO] [xacro-1]: process has finished cleanly [pid 193840]\n"
+      }
+    ],
+    "readiness": [
+      {
+        "command": [
+          "/opt/ros/jazzy/bin/ros2",
+          "action",
+          "list",
+          "-t"
+        ],
+        "returncode": 0,
+        "navigate_to_pose": false,
+        "duration_ms": 1323.569
+      },
+      {
+        "command": [
+          "/opt/ros/jazzy/bin/ros2",
+          "action",
+          "list",
+          "-t"
+        ],
+        "returncode": 0,
+        "navigate_to_pose": false,
+        "duration_ms": 585.144
+      },
+      {
+        "command": [
+          "/opt/ros/jazzy/bin/ros2",
+          "action",
+          "list",
+          "-t"
+        ],
+        "returncode": 0,
+        "navigate_to_pose": false,
+        "duration_ms": 552.818
+      },
+      {
+        "command": [
+          "/opt/ros/jazzy/bin/ros2",
+          "action",
+          "list",
+          "-t"
+        ],
+        "returncode": 0,
+        "navigate_to_pose": false,
+        "duration_ms": 592.566
+      },
+      {
+        "command": [
+          "/opt/ros/jazzy/bin/ros2",
+          "action",
+          "list",
+          "-t"
+        ],
+        "returncode": 0,
+        "navigate_to_pose": false,
+        "duration_ms": 696.427
+      },
+      {
+        "command": [
+          "/opt/ros/jazzy/bin/ros2",
+          "action",
+          "list",
+          "-t"
+        ],
+        "returncode": 0,
+        "navigate_to_pose": false,
+        "duration_ms": 1345.008
+      },
+      {
+        "command": [
+          "/opt/ros/jazzy/bin/ros2",
+          "action",
+          "list",
+          "-t"
+        ],
+        "returncode": 0,
+        "navigate_to_pose": false,
+        "duration_ms": 1203.12
+      },
+      {
+        "command": [
+          "/opt/ros/jazzy/bin/ros2",
+          "action",
+          "list",
+          "-t"
+        ],
+        "returncode": 0,
+        "navigate_to_pose": false,
+        "duration_ms": 1187.807
+      },
+      {
+        "localization_ready": false,
+        "reason": "SIMULATION_CLOCK_UNAVAILABLE"
+      }
+    ],
+    "cleanup": {
+      "bound_ms": 5000,
+      "processes": [
+        {
+          "pid": 193764,
+          "returncode": -15
+        }
+      ],
+      "owned_process_groups": [
+        193764
+      ],
+      "complete": true
+    },
+    "localization": {
+      "initial_pose": {
+        "frame_id": "map",
+        "x": -6.5,
+        "y": 0.0,
+        "yaw": 0.0,
+        "source": "SIM-008 scenario.regions.source"
+      },
+      "probes": [
+        {
+          "label": "simulation_clock",
+          "command": [
+            "/opt/ros/jazzy/bin/ros2",
+            "topic",
+            "echo",
+            "--once",
+            "/clock",
+            "rosgraph_msgs/msg/Clock"
+          ],
+          "duration_ms": 5011.954,
+          "timed_out": true
+        },
+        {
+          "label": "simulation_clock",
+          "command": [
+            "/opt/ros/jazzy/bin/ros2",
+            "topic",
+            "echo",
+            "--once",
+            "/clock",
+            "rosgraph_msgs/msg/Clock"
+          ],
+          "duration_ms": 5012.596,
+          "timed_out": true
+        },
+        {
+          "label": "simulation_clock",
+          "command": [
+            "/opt/ros/jazzy/bin/ros2",
+            "topic",
+            "echo",
+            "--once",
+            "/clock",
+            "rosgraph_msgs/msg/Clock"
+          ],
+          "duration_ms": 5017.554,
+          "timed_out": true
+        },
+        {
+          "label": "simulation_clock",
+          "command": [
+            "/opt/ros/jazzy/bin/ros2",
+            "topic",
+            "echo",
+            "--once",
+            "/clock",
+            "rosgraph_msgs/msg/Clock"
+          ],
+          "duration_ms": 5013.135,
+          "timed_out": true
+        },
+        {
+          "label": "simulation_clock",
+          "command": [
+            "/opt/ros/jazzy/bin/ros2",
+            "topic",
+            "echo",
+            "--once",
+            "/clock",
+            "rosgraph_msgs/msg/Clock"
+          ],
+          "duration_ms": 5014.586,
+          "timed_out": true
+        }
+      ],
+      "clock_available": false,
+      "failure": "SIMULATION_CLOCK_UNAVAILABLE"
+    },
+    "session_readiness": {
+      "ready": false,
+      "stage": "CLOCK",
+      "error": "SIMULATION_CLOCK_UNAVAILABLE"
+    }
+  },
+  "transport": {
+    "ROS_DOMAIN_ID": "15",
+    "GZ_PARTITION": "sim004-516953465351",
+    "ROS_LOG_DIR": "/tmp/sim004-ros-opnpvibj"
+  },
+  "disclosure": "DEMO_RUNTIME_OBSERVATION: existing measurements exported after original cleanup"
+}

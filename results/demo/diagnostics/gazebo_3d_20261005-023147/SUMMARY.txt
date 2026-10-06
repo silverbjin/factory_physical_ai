@@ -1,0 +1,10 @@
+DIAGNOSIS=UNRESOLVED
+transport_match=1
+world_topics=1
+world_name=sim008_normal_system_world
+scene_probe=NO_SCENE_TOPIC
+sdf_entities=1
+server_alive_after_probe=1
+render_hint=NO_OBVIOUS_RENDER_ERROR
+
+NEXT_ACTION=Inspect generated files manually.
